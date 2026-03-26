@@ -1,4 +1,4 @@
-# reqmd
+# rqmd
 
 Reusable requirements and acceptance-criteria workflow CLI.
 
@@ -49,13 +49,13 @@ uv sync --extra dev
 Then run:
 
 ```bash
-uv run reqmd --help
+uv run rqmd --help
 ```
 
 Module entrypoint:
 
 ```bash
-uv run python -m reqmd --help
+uv run python -m rqmd --help
 ```
 
 ## Core commands
@@ -63,19 +63,19 @@ uv run python -m reqmd --help
 Check summaries only:
 
 ```bash
-uv run reqmd --check
+uv run rqmd --check
 ```
 
 Interactive mode:
 
 ```bash
-uv run reqmd
+uv run rqmd
 ```
 
 Initialize docs scaffold (index + starter domain file):
 
 ```bash
-uv run reqmd --init
+uv run rqmd --init
 ```
 
 `--init` prompts for a starter requirement key prefix (default: `REQ`; recommended to customize).
@@ -83,57 +83,57 @@ uv run reqmd --init
 Set one criterion non-interactively:
 
 ```bash
-uv run reqmd --set-criterion-id AC-EXAMPLE-001 --set-status implemented
+uv run rqmd --set-criterion-id AC-EXAMPLE-001 --set-status implemented
 ```
 
 Use a different ID prefix:
 
 ```bash
-uv run reqmd --id-prefix R --set-criterion-id R-EXAMPLE-001 --set-status implemented
+uv run rqmd --id-prefix R --set-criterion-id R-EXAMPLE-001 --set-status implemented
 ```
 
 Bulk set by repeated flags:
 
 ```bash
-uv run reqmd --set AC-EXAMPLE-001=implemented --set AC-EXAMPLE-002=verified
+uv run rqmd --set AC-EXAMPLE-001=implemented --set AC-EXAMPLE-002=verified
 ```
 
 Batch set from file:
 
 ```bash
-uv run reqmd --set-file tmp/ac-updates.jsonl
+uv run rqmd --set-file tmp/ac-updates.jsonl
 ```
 
 Allow custom prefixes such as `REQ-` in a repo:
 
 ```bash
-uv run reqmd --id-prefix REQ --filter-status proposed --tree
+uv run rqmd --id-prefix REQ --filter-status proposed --tree
 ```
 
 Filter walk:
 
 ```bash
-uv run reqmd --filter-status proposed
+uv run rqmd --filter-status proposed
 ```
 
 Filter tree only:
 
 ```bash
-uv run reqmd --filter-status proposed --tree
+uv run rqmd --filter-status proposed --tree
 ```
 
 Filter as JSON for automation/AI parsing:
 
 ```bash
-uv run reqmd --filter-status proposed --json
+uv run rqmd --filter-status proposed --json
 ```
 
 Summary/check/set JSON examples:
 
 ```bash
-uv run reqmd --json --no-interactive
-uv run reqmd --check --json --no-interactive
-uv run reqmd --set-criterion-id AC-EXAMPLE-001 --set-status verified --json
+uv run rqmd --json --no-interactive
+uv run rqmd --check --json --no-interactive
+uv run rqmd --set-criterion-id AC-EXAMPLE-001 --set-status verified --json
 ```
 
 ## Tests
@@ -188,29 +188,29 @@ Auto-detect preference is deterministic:
 You can override both:
 
 ```bash
-uv run reqmd --repo-root /path/to/project --criteria-dir docs/requirements
+uv run rqmd --repo-root /path/to/project --criteria-dir docs/requirements
 ```
 
 `--criteria-dir` can be absolute or relative to `--repo-root`.
-When auto-detection is used, reqmd reports which index path it selected.
+When auto-detection is used, rqmd reports which index path it selected.
 
 Requirement header prefixes are configurable with `--id-prefix`.
-When omitted, reqmd auto-detects prefixes by reading the selected `README.md` requirements index and linked domain docs when available.
-If no prefixes are discovered, it falls back to `AC-`, `R-`, and `REQMD-`.
+When omitted, rqmd auto-detects prefixes by reading the selected `README.md` requirements index and linked domain docs when available.
+If no prefixes are discovered, it falls back to `AC-`, `R-`, and `RQMD-`.
 
 ## Recommended docs recipe for projects
 
 1. Keep an index doc at `docs/requirements/README.md` or `requirements/README.md`.
 2. Keep domain files in that same directory.
 3. Ensure each requirement has exactly one status line directly under the `### <PREFIX>-...` header.
-4. Run `uv run reqmd --check` in CI to prevent stale summary blocks.
+4. Run `uv run rqmd --check` in CI to prevent stale summary blocks.
 5. Use non-interactive `--set`/`--set-file` in automation.
 
 ## Packaging notes
 
-- Package name: `reqmd`
-- Console script entrypoint: `reqmd`
-- Source package: `src/reqmd`
+- Package name: `rqmd`
+- Console script entrypoint: `rqmd`
+- Source package: `src/rqmd`
 
 When ready for PyPI:
 

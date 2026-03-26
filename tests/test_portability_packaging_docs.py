@@ -3,11 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from click.testing import CliRunner
+from rqmd import cli
 
-from reqmd import cli
 
-
-def test_REQMD_portability_001_and_002_repo_root_and_criteria_dir_flags(tmp_path: Path) -> None:
+def test_RQMD_portability_001_and_002_repo_root_and_criteria_dir_flags(tmp_path: Path) -> None:
     repo = tmp_path / "another-repo"
     criteria = repo / "custom" / "ac"
     criteria.mkdir(parents=True)
@@ -38,7 +37,7 @@ Scope: x.
     assert result.exit_code == 1
 
 
-def test_REQMD_portability_003_default_conventions(monkeypatch, repo_with_domain_docs: Path) -> None:
+def test_RQMD_portability_003_default_conventions(monkeypatch, repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():
         # Build default docs/requirements under isolated CWD.
@@ -63,7 +62,7 @@ Scope: demo.
         assert result.exit_code == 1
 
 
-def test_REQMD_portability_004_relative_source_display(tmp_path: Path, capsys) -> None:
+def test_RQMD_portability_004_relative_source_display(tmp_path: Path, capsys) -> None:
     repo = tmp_path / "repo"
     path = repo / "docs" / "requirements" / "demo.md"
     path.parent.mkdir(parents=True)
@@ -83,7 +82,7 @@ Scope: demo.
     assert "Source: docs/requirements/demo.md" in output
 
 
-def test_REQMD_portability_005_generic_project_assumptions(tmp_path: Path) -> None:
+def test_RQMD_portability_005_generic_project_assumptions(tmp_path: Path) -> None:
     repo = tmp_path / "generic"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -110,7 +109,7 @@ Scope: generic.
     assert result.exit_code == 0
 
 
-def test_REQMD_portability_008a_auto_detects_requirements_dir_without_explicit_flag(tmp_path: Path) -> None:
+def test_RQMD_portability_008a_auto_detects_requirements_dir_without_explicit_flag(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -140,7 +139,7 @@ Scope: demo.
     assert "REQ-DEMO-001" in result.output
 
 
-def test_REQMD_portability_008b_auto_detection_prefers_nearest_requirements_dir_from_cwd(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_portability_008b_auto_detection_prefers_nearest_requirements_dir_from_cwd(tmp_path: Path, monkeypatch) -> None:
     repo = tmp_path / "repo"
     root_criteria_dir = repo / "requirements"
     nested_root = repo / "packages" / "feature"
@@ -189,19 +188,19 @@ Scope: feature.
     assert "AC-ROOT-001" not in result.output
 
 
-def test_REQMD_packaging_001_to_005_metadata_and_layout() -> None:
+def test_RQMD_packaging_001_to_005_metadata_and_layout() -> None:
     project_root = Path(__file__).resolve().parents[1]
 
-    assert (project_root / "src" / "reqmd" / "cli.py").exists()
-    assert (project_root / "src" / "reqmd" / "__main__.py").exists()
+    assert (project_root / "src" / "rqmd" / "cli.py").exists()
+    assert (project_root / "src" / "rqmd" / "__main__.py").exists()
 
     pyproject = (project_root / "pyproject.toml").read_text(encoding="utf-8")
-    assert "reqmd = \"reqmd.cli:main\"" in pyproject
+    assert "rqmd = \"rqmd.cli:main\"" in pyproject
     assert "click>=8.1.0" in pyproject
     assert "tabulate>=0.9.0" in pyproject
 
     readme = (project_root / "README.md").read_text(encoding="utf-8")
-    assert "reqmd --check" in readme
+    assert "rqmd --check" in readme
     assert "--repo-root" in readme
     assert "--criteria-dir" in readme
     assert "--id-prefix" in readme
@@ -214,7 +213,7 @@ def test_REQMD_packaging_001_to_005_metadata_and_layout() -> None:
     assert "Keep a Changelog" in changelog
 
 
-def test_REQMD_portability_008_scratch_corpus_runs_from_requirements_dir_without_docs_prefix() -> None:
+def test_RQMD_portability_008_scratch_corpus_runs_from_requirements_dir_without_docs_prefix() -> None:
     project_root = Path(__file__).resolve().parents[1]
     scratch_root = project_root / "scratch"
 

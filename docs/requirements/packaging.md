@@ -6,63 +6,63 @@ Scope: package layout, installability, module entrypoints, and publication readi
 Summary: 3💡 6🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
-### REQMD-PACKAGING-001: src-layout package structure
+### RQMD-PACKAGING-001: src-layout package structure
 - **Status:** 🔧 Implemented
 - Given the package source tree
 - When inspected
-- Then Python package code lives under `src/reqmd`
+- Then Python package code lives under `src/rqmd`
 - And project metadata is defined in `pyproject.toml`.
 
-### REQMD-PACKAGING-002: Console entrypoint
+### RQMD-PACKAGING-002: Console entrypoint
 - **Status:** 🔧 Implemented
 - Given package is installed
-- When user runs `reqmd`
+- When user runs `rqmd`
 - Then command invokes package main CLI handler
 - And matches module behavior.
 
-### REQMD-PACKAGING-003: Module entrypoint
+### RQMD-PACKAGING-003: Module entrypoint
 - **Status:** 🔧 Implemented
 - Given package source is available
-- When user runs `python -m reqmd`
+- When user runs `python -m rqmd`
 - Then CLI starts successfully
 - And exposes same command options as console script.
 
-### REQMD-PACKAGING-004: Runtime dependencies declared
+### RQMD-PACKAGING-004: Runtime dependencies declared
 - **Status:** 🔧 Implemented
 - Given project metadata in pyproject
 - When package is installed
 - Then required dependencies include click and tabulate
 - And missing dependency crashes are avoided at runtime.
 
-### REQMD-PACKAGING-005: Readme-backed usage docs
+### RQMD-PACKAGING-005: Readme-backed usage docs
 - **Status:** 🔧 Implemented
 - Given package folder is copied to a new project
 - When user reads README
 - Then install and command examples are present
 - And portability plus ID-prefix flags are documented.
 
-### REQMD-PACKAGING-006: PyPI metadata hardening
+### RQMD-PACKAGING-006: PyPI metadata hardening
 - **Status:** 💡 Proposed
 - Given package is prepared for public release
 - When metadata is finalized
 - Then author/license/classifiers/urls are complete
 - And build+upload instructions remain valid.
 
-### REQMD-PACKAGING-007: Semantic versioning policy
+### RQMD-PACKAGING-007: Semantic versioning policy
 - **Status:** 💡 Proposed
 - Given package evolves across projects
 - When versions are tagged
 - Then backward-compatible changes use minor/patch bumps
 - And breaking CLI changes trigger major version bumps.
 
-### REQMD-PACKAGING-008: Publish to PyPI on GitHub release
+### RQMD-PACKAGING-008: Publish to PyPI on GitHub release
 - **Status:** 💡 Proposed
 - Given a GitHub release is created for this repository
 - When the release workflow runs
 - Then the tagged package version is published to pypi.org automatically
 - And publication uses repository automation rather than a manual local upload.
 
-### REQMD-PACKAGING-009: Keep a Changelog maintained
+### RQMD-PACKAGING-009: Keep a Changelog maintained
 - **Status:** 🔧 Implemented
 - Given contributors ship notable changes
 - When release and pre-release updates are prepared

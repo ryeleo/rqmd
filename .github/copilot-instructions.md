@@ -9,10 +9,10 @@ Goal:
 
 ## Package Overview
 
-- Package root: scripts/reqmd
-- Source package: src/reqmd
-- Main CLI module: src/reqmd/cli.py
-- Entrypoint command: reqmd
+- Package root: scripts/rqmd
+- Source package: src/rqmd
+- Main CLI module: src/rqmd/cli.py
+- Entrypoint command: rqmd
 
 Core flow in `cli.py`:
 1. Discover requirement domain markdown files.
@@ -63,7 +63,7 @@ Normalization behavior:
 Important options:
 - `--repo-root`: root of target project (default `.`)
 - `--criteria-dir`: AC markdown directory (default `docs/requirements`)
-- `--id-prefix`: allowed header prefixes for requirement IDs (auto-detected from requirements index/linked docs when omitted; fallback `AC,R,REQMD`)
+- `--id-prefix`: allowed header prefixes for requirement IDs (auto-detected from requirements index/linked docs when omitted; fallback `AC,R,RQMD`)
 - `--check`: verify summaries only, no writes
 - `--interactive/--no-interactive`: interactive mode toggle
 - `--set-criterion-id` + `--set-status`: single non-interactive update
@@ -117,22 +117,22 @@ When adding statuses:
 After changes, run from this folder:
 
 1. Syntax/import check:
-- `uv run reqmd --help`
+- `uv run rqmd --help`
 
 2. Summary consistency check against a target repo:
-- `uv run reqmd --repo-root <project> --check --no-interactive`
+- `uv run rqmd --repo-root <project> --check --no-interactive`
 
 3. Non-interactive status mutation smoke test:
-- `uv run reqmd --repo-root <project> --set R-EXAMPLE-001=implemented --no-interactive`
+- `uv run rqmd --repo-root <project> --set R-EXAMPLE-001=implemented --no-interactive`
 
 4. Filter/tree smoke test:
-- `uv run reqmd --repo-root <project> --filter-status proposed --tree --no-interactive`
+- `uv run rqmd --repo-root <project> --filter-status proposed --tree --no-interactive`
 
 ## Packaging Notes
 
 Current package metadata is in `pyproject.toml`:
-- Name: `reqmd`
-- Entry point: `reqmd = reqmd.cli:main`
+- Name: `rqmd`
+- Entry point: `rqmd = rqmd.cli:main`
 - Dependencies: `click`, `tabulate`
 
 Before publishing to PyPI, ensure:

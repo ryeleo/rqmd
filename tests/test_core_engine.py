@@ -3,11 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from click.testing import CliRunner
+from rqmd import cli
 
-from reqmd import cli
 
-
-def test_REQMD_core_001_iter_domain_files_sorted_and_markdown_only(tmp_path: Path) -> None:
+def test_RQMD_core_001_iter_domain_files_sorted_and_markdown_only(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     domain_dir = repo / "docs" / "requirements"
     domain_dir.mkdir(parents=True)
@@ -19,7 +18,7 @@ def test_REQMD_core_001_iter_domain_files_sorted_and_markdown_only(tmp_path: Pat
     assert [p.name for p in files] == ["a.md", "z.md"]
 
 
-def test_REQMD_core_002_and_007_parse_and_find_criterion() -> None:
+def test_RQMD_core_002_and_007_parse_and_find_criterion() -> None:
     text = """# Demo Acceptance Criteria
 
 Scope: demo.
@@ -41,7 +40,7 @@ Scope: demo.
         assert cli.find_criterion_by_id(path, "ac-demo-002")["title"] == "Second"
 
 
-def test_REQMD_core_002b_parse_requirement_ids_with_configured_prefix() -> None:
+def test_RQMD_core_002b_parse_requirement_ids_with_configured_prefix() -> None:
     text = """# Demo Requirements
 
 Scope: demo.
@@ -60,7 +59,7 @@ Scope: demo.
         assert cli.find_criterion_by_id(path, "r-demo-001", id_prefixes=("R",))["title"] == "First"
 
 
-def test_REQMD_core_003_normalize_status_aliases() -> None:
+def test_RQMD_core_003_normalize_status_aliases() -> None:
     original = """### AC-DEMO-001: First
 - **Status:** ✅ Done
 """
@@ -69,7 +68,7 @@ def test_REQMD_core_003_normalize_status_aliases() -> None:
     assert "- **Status:** ✅ Verified" in normalized
 
 
-def test_REQMD_core_004_and_005_insert_or_replace_summary_block() -> None:
+def test_RQMD_core_004_and_005_insert_or_replace_summary_block() -> None:
     text = """# Demo Acceptance Criteria
 
 Scope: demo.
@@ -89,7 +88,7 @@ Scope: demo.
     assert "Summary: 0💡 1🔧" in replaced
 
 
-def test_REQMD_core_006_count_statuses_model() -> None:
+def test_RQMD_core_006_count_statuses_model() -> None:
     text = "\n".join(
         [
             "- **Status:** 💡 Proposed",
@@ -107,7 +106,7 @@ def test_REQMD_core_006_count_statuses_model() -> None:
     assert counts["🗑️ Deprecated"] == 1
 
 
-def test_REQMD_core_006b_build_summary_block_uses_five_status_order() -> None:
+def test_RQMD_core_006b_build_summary_block_uses_five_status_order() -> None:
     counts = {label: 0 for label, _ in cli.STATUS_ORDER}
     counts["💡 Proposed"] = 2
     counts["🔧 Implemented"] = 3
@@ -119,7 +118,7 @@ def test_REQMD_core_006b_build_summary_block_uses_five_status_order() -> None:
     assert "Summary: 2💡 3🔧 4✅ 1⛔ 5🗑️" in summary
 
 
-def test_REQMD_core_008_process_file_idempotent(tmp_path: Path) -> None:
+def test_RQMD_core_008_process_file_idempotent(tmp_path: Path) -> None:
     path = tmp_path / "demo.md"
     path.write_text(
         """# Demo Acceptance Criteria
@@ -138,7 +137,7 @@ Scope: demo.
     assert changed_second is False
 
 
-def test_REQMD_core_010_update_status_handles_blocked_and_deprecated_reasons(tmp_path: Path) -> None:
+def test_RQMD_core_010_update_status_handles_blocked_and_deprecated_reasons(tmp_path: Path) -> None:
     path = tmp_path / "demo.md"
     path.write_text(
         """# Demo Acceptance Criteria
@@ -167,7 +166,7 @@ Scope: demo.
     assert "**Deprecated:** Replaced" in deprecated_text
 
 
-def test_REQMD_core_011_and_012_init_scaffold_creates_index_and_starter(tmp_path: Path) -> None:
+def test_RQMD_core_011_and_012_init_scaffold_creates_index_and_starter(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
     runner = CliRunner()
@@ -196,7 +195,7 @@ def test_REQMD_core_011_and_012_init_scaffold_creates_index_and_starter(tmp_path
     assert cli.SUMMARY_START in starter_text
 
 
-def test_REQMD_core_012b_init_scaffold_allows_custom_starter_key(tmp_path: Path) -> None:
+def test_RQMD_core_012b_init_scaffold_allows_custom_starter_key(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
     runner = CliRunner()
@@ -218,7 +217,7 @@ def test_REQMD_core_012b_init_scaffold_allows_custom_starter_key(tmp_path: Path)
     assert "### TEAM-HELLO-001: Replace this starter requirement" in starter_text
 
 
-def test_REQMD_core_011b_init_scaffold_is_idempotent(tmp_path: Path) -> None:
+def test_RQMD_core_011b_init_scaffold_is_idempotent(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
     runner = CliRunner()
@@ -251,7 +250,7 @@ def test_REQMD_core_011b_init_scaffold_is_idempotent(tmp_path: Path) -> None:
     assert "already present" in second.output
 
 
-def test_REQMD_core_011c_init_scaffold_supports_custom_criteria_dir(tmp_path: Path) -> None:
+def test_RQMD_core_011c_init_scaffold_supports_custom_criteria_dir(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
     runner = CliRunner()
@@ -273,7 +272,7 @@ def test_REQMD_core_011c_init_scaffold_supports_custom_criteria_dir(tmp_path: Pa
     assert (repo / "custom" / "ac" / "starter.md").exists()
 
 
-def test_REQMD_core_011d_init_cannot_be_combined_with_check(tmp_path: Path) -> None:
+def test_RQMD_core_011d_init_cannot_be_combined_with_check(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
     runner = CliRunner()
@@ -295,7 +294,7 @@ def test_REQMD_core_011d_init_cannot_be_combined_with_check(tmp_path: Path) -> N
     assert "--init cannot be combined" in result.output
 
 
-def test_REQMD_core_005b_file_priority_sort_key_uses_current_statuses() -> None:
+def test_RQMD_core_005b_file_priority_sort_key_uses_current_statuses() -> None:
     implemented = {
         "💡 Proposed": 0,
         "🔧 Implemented": 2,
@@ -316,7 +315,7 @@ def test_REQMD_core_005b_file_priority_sort_key_uses_current_statuses() -> None:
     assert key_impl < key_ver
 
 
-def test_REQMD_core_005c_file_priority_sort_key_tie_breaks_by_label() -> None:
+def test_RQMD_core_005c_file_priority_sort_key_tie_breaks_by_label() -> None:
     same_counts = {
         "💡 Proposed": 1,
         "🔧 Implemented": 1,

@@ -1,6 +1,6 @@
 # Requirements
 
-This document is the source-of-truth index for reqmd requirements.
+This document is the source-of-truth index for rqmd requirements.
 
 ## How To Use
 
@@ -34,16 +34,16 @@ Status workflow:
 
 | Prefix | Domain |
 |---|---|
-| REQMD-CORE-* | Core Engine |
-| REQMD-INTERACTIVE-* | Interactive UX |
-| REQMD-AUTOMATION-* | Automation API |
-| REQMD-SORTING-* | Sorting |
-| REQMD-ROLLUP-* | Roll-up |
-| REQMD-PORTABILITY-* | Portability |
-| REQMD-PACKAGING-* | Packaging |
+| RQMD-CORE-* | Core Engine |
+| RQMD-INTERACTIVE-* | Interactive UX |
+| RQMD-AUTOMATION-* | Automation API |
+| RQMD-SORTING-* | Sorting |
+| RQMD-ROLLUP-* | Roll-up |
+| RQMD-PORTABILITY-* | Portability |
+| RQMD-PACKAGING-* | Packaging |
 
 ## Tracking Rule
 
-- Run reqmd --check to validate summaries.
-- Run reqmd to update summaries and optionally edit requirement statuses interactively.
+- Run rqmd --check to validate summaries.
+- Run rqmd to update summaries and optionally edit requirement statuses interactively.
 - Use --id-prefix to limit or expand which header prefixes are recognized.

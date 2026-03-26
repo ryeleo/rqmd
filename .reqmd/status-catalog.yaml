@@ -1,0 +1,48 @@
+# Example status-catalog showing statuses, rollup_mode, and bucket mapping
+rollup_mode: bucketed # options: per_status | bucketed | monochrome
+
+bucket_map:
+  proposed: proposed
+  implemented: in_progress
+  verified: done
+  blocked: blocked
+  deprecated: deprecated
+
+statuses:
+  - name: Proposed
+    shortcode: PRO
+    emoji: "💡"
+    color: cyan
+    rollup_color: blue
+
+  - name: Implemented
+    shortcode: IMP
+    emoji: "🔧"
+    color: yellow
+    rollup_color: in_progress
+
+  - name: Verified
+    shortcode: VER
+    emoji: "✅"
+    color: green
+    rollup_color: done
+
+  - name: Blocked
+    shortcode: BLK
+    emoji: "⛔"
+    color: red
+    rollup_color: blocked
+
+  - name: Deprecated
+    shortcode: DEP
+    emoji: "🗑️"
+    color: grey
+    rollup_color: deprecated
+
+# Optional: per-bucket color overrides (used when rollup_mode=bucketed)
+bucket_colors:
+  done: green
+  in_progress: yellow
+  proposed: blue
+  blocked: red
+  deprecated: grey

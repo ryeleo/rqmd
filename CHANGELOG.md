@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Switched requirements index layout from sibling requirements.md files to in-directory README.md files.
-- Updated reqmd auto-detection to use docs/requirements/README.md and requirements/README.md.
+- Updated rqmd auto-detection to use docs/requirements/README.md and requirements/README.md.
 - Updated scaffold generation to create README.md inside the requirements directory.
 - Updated portability, core-engine, and README documentation to match the new requirements index contract.
 
@@ -25,4 +25,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial reqmd package release with interactive and automation-friendly requirements status workflows.
+- Initial rqmd package release with interactive and automation-friendly requirements status workflows.

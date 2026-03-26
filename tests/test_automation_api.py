@@ -5,11 +5,10 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
+from rqmd import cli
 
-from reqmd import cli
 
-
-def test_REQMD_automation_001_check_only_mode_detects_needed_changes(repo_with_domain_docs: Path) -> None:
+def test_RQMD_automation_001_check_only_mode_detects_needed_changes(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     target = repo_with_domain_docs / "docs" / "requirements" / "demo.md"
     before = target.read_text(encoding="utf-8")
@@ -31,7 +30,7 @@ def test_REQMD_automation_001_check_only_mode_detects_needed_changes(repo_with_d
     assert target.read_text(encoding="utf-8") == before
 
 
-def test_REQMD_automation_002_single_set_updates_criterion(repo_with_domain_docs: Path) -> None:
+def test_RQMD_automation_002_single_set_updates_criterion(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
@@ -52,7 +51,7 @@ def test_REQMD_automation_002_single_set_updates_criterion(repo_with_domain_docs
     assert "- **Status:** ✅ Verified" in text
 
 
-def test_REQMD_automation_002b_single_set_updates_r_prefixed_requirement(tmp_path: Path) -> None:
+def test_RQMD_automation_002b_single_set_updates_r_prefixed_requirement(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -90,7 +89,7 @@ Scope: demo.
     assert "- **Status:** ✅ Verified" in text
 
 
-def test_REQMD_automation_003_repeatable_set_bulk_updates(repo_with_domain_docs: Path) -> None:
+def test_RQMD_automation_003_repeatable_set_bulk_updates(repo_with_domain_docs: Path) -> None:
     domain = repo_with_domain_docs / "docs" / "requirements"
     (domain / "extra.md").write_text(
         """# Extra Acceptance Criteria
@@ -123,7 +122,7 @@ Scope: extra.
     assert "✅ Verified" in (domain / "extra.md").read_text(encoding="utf-8")
 
 
-def test_REQMD_automation_003b_repeatable_set_rejects_removed_legacy_status(repo_with_domain_docs: Path) -> None:
+def test_RQMD_automation_003b_repeatable_set_rejects_removed_legacy_status(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
@@ -142,7 +141,7 @@ def test_REQMD_automation_003b_repeatable_set_rejects_removed_legacy_status(repo
     assert "Unrecognized status input" in result.output
 
 
-def test_REQMD_automation_004_and_005_set_file_jsonl_with_alias_keys(repo_with_domain_docs: Path, tmp_path: Path) -> None:
+def test_RQMD_automation_004_and_005_set_file_jsonl_with_alias_keys(repo_with_domain_docs: Path, tmp_path: Path) -> None:
     update_file = tmp_path / "updates.jsonl"
     rows = [
         {"id": "AC-HELLO-001", "status": "blocked", "blocked_reason": "Pending"},
@@ -169,7 +168,7 @@ def test_REQMD_automation_004_and_005_set_file_jsonl_with_alias_keys(repo_with_d
 
 
 @pytest.mark.parametrize("key_name", ["criterion_id", "id", "ac_id", "requirement_id", "r_id"])
-def test_REQMD_automation_005b_set_file_accepts_all_id_alias_keys(
+def test_RQMD_automation_005b_set_file_accepts_all_id_alias_keys(
     repo_with_domain_docs: Path,
     tmp_path: Path,
     key_name: str,
@@ -197,7 +196,7 @@ def test_REQMD_automation_005b_set_file_accepts_all_id_alias_keys(
     assert "- **Status:** ✅ Verified" in text
 
 
-def test_REQMD_automation_004b_set_file_csv_and_tsv_apply_rows(repo_with_domain_docs: Path, tmp_path: Path) -> None:
+def test_RQMD_automation_004b_set_file_csv_and_tsv_apply_rows(repo_with_domain_docs: Path, tmp_path: Path) -> None:
     csv_file = tmp_path / "updates.csv"
     csv_file.write_text("criterion_id,status\nAC-HELLO-001,blocked\n", encoding="utf-8")
 
@@ -239,7 +238,7 @@ def test_REQMD_automation_004b_set_file_csv_and_tsv_apply_rows(repo_with_domain_
     assert "- **Status:** ✅ Verified" in text_after_tsv
 
 
-def test_REQMD_automation_004c_set_file_jsonl_invalid_row_reports_path_and_line(tmp_path: Path) -> None:
+def test_RQMD_automation_004c_set_file_jsonl_invalid_row_reports_path_and_line(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -276,7 +275,7 @@ Scope: demo.
     assert ":1" in result.output
 
 
-def test_REQMD_automation_006_conflicting_mode_guardrails(repo_with_domain_docs: Path, tmp_path: Path) -> None:
+def test_RQMD_automation_006_conflicting_mode_guardrails(repo_with_domain_docs: Path, tmp_path: Path) -> None:
     update_file = tmp_path / "updates.jsonl"
     update_file.write_text('{"criterion_id":"AC-HELLO-001","status":"done"}\n', encoding="utf-8")
 
@@ -298,7 +297,7 @@ def test_REQMD_automation_006_conflicting_mode_guardrails(repo_with_domain_docs:
     assert "exactly one non-interactive update mode" in result.output
 
 
-def test_REQMD_automation_007_file_scope_disambiguation(two_file_repo: Path) -> None:
+def test_RQMD_automation_007_file_scope_disambiguation(two_file_repo: Path) -> None:
     runner = CliRunner()
 
     ambiguous = runner.invoke(
@@ -341,7 +340,7 @@ def test_REQMD_automation_007_file_scope_disambiguation(two_file_repo: Path) -> 
     assert "✅ Verified" not in second_text
 
 
-def test_REQMD_automation_008_filtered_tree_output(repo_with_domain_docs: Path) -> None:
+def test_RQMD_automation_008_filtered_tree_output(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
@@ -361,7 +360,7 @@ def test_REQMD_automation_008_filtered_tree_output(repo_with_domain_docs: Path) 
     assert "AC-HELLO-001" in result.output
 
 
-def test_REQMD_automation_008b_filtered_tree_output_supports_reqmd_prefix_by_default(tmp_path: Path) -> None:
+def test_RQMD_automation_008b_filtered_tree_output_supports_rqmd_prefix_by_default(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -370,7 +369,7 @@ def test_REQMD_automation_008b_filtered_tree_output_supports_reqmd_prefix_by_def
 
 Scope: core.
 
-### REQMD-CORE-001: Core behavior
+### RQMD-CORE-001: Core behavior
 - **Status:** 🔧 Implemented
 """,
         encoding="utf-8",
@@ -393,10 +392,10 @@ Scope: core.
     )
 
     assert result.exit_code == 0
-    assert "REQMD-CORE-001" in result.output
+    assert "RQMD-CORE-001" in result.output
 
 
-def test_REQMD_automation_008c_filtered_tree_auto_detects_prefix_from_requirements_index(tmp_path: Path) -> None:
+def test_RQMD_automation_008c_filtered_tree_auto_detects_prefix_from_requirements_index(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
@@ -441,7 +440,7 @@ Scope: custom.
     assert "TEAM-CORE-001" in result.output
 
 
-def test_REQMD_automation_009_no_summary_table_suppresses_table(repo_with_domain_docs: Path) -> None:
+def test_RQMD_automation_009_no_summary_table_suppresses_table(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
@@ -459,7 +458,7 @@ def test_REQMD_automation_009_no_summary_table_suppresses_table(repo_with_domain
     assert "File" not in result.output
 
 
-def test_REQMD_automation_008d_filtered_tree_accepts_plain_proposed_label(two_file_repo: Path) -> None:
+def test_RQMD_automation_008d_filtered_tree_accepts_plain_proposed_label(two_file_repo: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
@@ -482,7 +481,7 @@ def test_REQMD_automation_008d_filtered_tree_accepts_plain_proposed_label(two_fi
     assert "first.md" not in result.output
 
 
-def test_REQMD_automation_008e_filtered_json_output_for_proposed(two_file_repo: Path) -> None:
+def test_RQMD_automation_008e_filtered_json_output_for_proposed(two_file_repo: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
@@ -508,7 +507,7 @@ def test_REQMD_automation_008e_filtered_json_output_for_proposed(two_file_repo: 
     assert payload["files"][0]["criteria"][0]["id"] == "AC-OVERLAP-001"
 
 
-def test_REQMD_automation_008f_json_summary_output_without_filter_status(repo_with_domain_docs: Path) -> None:
+def test_RQMD_automation_008f_json_summary_output_without_filter_status(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
@@ -531,7 +530,7 @@ def test_REQMD_automation_008f_json_summary_output_without_filter_status(repo_wi
     assert payload["totals"]["🔧 Implemented"] >= 1
 
 
-def test_REQMD_automation_008g_json_check_mode_reports_failure(repo_with_domain_docs: Path) -> None:
+def test_RQMD_automation_008g_json_check_mode_reports_failure(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
@@ -554,7 +553,7 @@ def test_REQMD_automation_008g_json_check_mode_reports_failure(repo_with_domain_
     assert len(payload["changed_files"]) >= 1
 
 
-def test_REQMD_automation_008h_json_set_mode_reports_updates(repo_with_domain_docs: Path) -> None:
+def test_RQMD_automation_008h_json_set_mode_reports_updates(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
@@ -579,7 +578,7 @@ def test_REQMD_automation_008h_json_set_mode_reports_updates(repo_with_domain_do
     assert payload["updates"][0]["status"] == "✅ Verified"
 
 
-def test_REQMD_automation_009b_summary_table_uses_five_status_headers(repo_with_domain_docs: Path) -> None:
+def test_RQMD_automation_009b_summary_table_uses_five_status_headers(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
         cli.main,

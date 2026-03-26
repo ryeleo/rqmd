@@ -21,22 +21,22 @@ done
 cd "$ROOT_DIR"
 
 if ! command -v "$UV_BIN" >/dev/null 2>&1; then
-  echo "[reqmd] uv is required for this developer workflow" >&2
+  echo "[rqmd] uv is required for this developer workflow" >&2
   exit 1
 fi
 
-echo "[reqmd] uv: $UV_BIN"
+echo "[rqmd] uv: $UV_BIN"
 "$UV_BIN" --version
 
 if [[ "$SKIP_INSTALL" != "true" ]]; then
-  echo "[reqmd] Syncing project + dev dependencies"
+  echo "[rqmd] Syncing project + dev dependencies"
   "$UV_BIN" sync --extra dev
 fi
 
-echo "[reqmd] Running pytest"
+echo "[rqmd] Running pytest"
 "$UV_BIN" run pytest -q
 
-echo "[reqmd] Running acceptance summary check"
-"$UV_BIN" run reqmd --repo-root . --criteria-dir docs/requirements --check --no-interactive --no-summary-table
+echo "[rqmd] Running acceptance summary check"
+"$UV_BIN" run rqmd --repo-root . --criteria-dir docs/requirements --check --no-interactive --no-summary-table
 
-echo "[reqmd] Smoke checks passed"
+echo "[rqmd] Smoke checks passed"

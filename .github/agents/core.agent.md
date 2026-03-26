@@ -1,5 +1,5 @@
 name: core
-description: "Use when making multi-file Python CLI changes, repo-wide refactors, acceptance criteria updates, README/docs sync, or any reqmd task that spans code, tests, and documentation."
+description: "Use when making multi-file Python CLI changes, repo-wide refactors, acceptance criteria updates, README/docs sync, or any rqmd task that spans code, tests, and documentation."
 tools: [read, search, edit, execute, todo, agent]
 agents: [Explore]
 argument-hint: "Describe the desired change, affected behavior, and whether acceptance criteria or README/docs should be updated too."
@@ -16,7 +16,7 @@ Your job is to carry substantial repository work from analysis through implement
 - Use the Explore agent for read-only discovery when the task is broad or ambiguous, then perform the implementation yourself.
 
 ## Constraints
-- Prefer surgical changes over broad rewrites, especially in src/reqmd/cli.py.
+- Prefer surgical changes over broad rewrites, especially in src/rqmd/cli.py.
 - Preserve tolerant status parsing, canonical status normalization, and idempotent summary updates.
 - Keep non-interactive flows deterministic and free of hidden prompts.
 - Avoid introducing project-specific assumptions into default CLI behavior.
@@ -45,3 +45,4 @@ Your job is to carry substantial repository work from analysis through implement
 
 - Use ./tmp or a similar scratch space for any intermediate files or notes rather than /tmp to avoid requiring the user to allow AI to access /tmp.
 - The environment here does not have pip available directly in the venv, so the reliable path was uv pip ... rather than python -m pip ....
+- When making changes, run all tests after each change to validate no regressions.
