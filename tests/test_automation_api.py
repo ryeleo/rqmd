@@ -734,6 +734,53 @@ def test_RQMD_rollup_007_cli_map_takes_precedence_over_rollup_config(repo_with_d
     assert [column["label"] for column in payload["rollup_columns"]] == ["FromCli"]
 
 
+def test_RQMD_automation_010_filter_status_implemented_json_entries_match_live_requirements() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    runner = CliRunner()
+
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_root),
+            "--requirements-dir",
+            "docs/requirements",
+            "--filter-status",
+            "Implemented",
+            "--json",
+            "--no-summary-table",
+            "--no-interactive",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-status"
+    assert payload["status"] == "🔧 Implemented"
+
+    flattened = [
+        (file_entry["path"], requirement["id"], requirement["title"])
+        for file_entry in payload["files"]
+        for requirement in file_entry["requirements"]
+    ]
+    assert payload["total"] == len(flattened)
+    assert payload["total"] > 0
+
+    seen_ids: set[tuple[str, str]] = set()
+    for rel_path, requirement_id, requirement_title in flattened:
+        assert (rel_path, requirement_id) not in seen_ids
+        seen_ids.add((rel_path, requirement_id))
+
+        file_path = repo_root / rel_path
+        assert file_path.exists()
+
+        parsed = cli.parse_criteria(file_path)
+        matching = [item for item in parsed if str(item["id"]) == requirement_id]
+        assert len(matching) == 1
+        assert str(matching[0]["status"]) == "🔧 Implemented"
+        assert str(matching[0]["title"]) == requirement_title
+
+
 def test_RQMD_automation_009b_summary_table_uses_five_status_headers(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
