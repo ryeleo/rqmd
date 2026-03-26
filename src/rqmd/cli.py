@@ -93,8 +93,7 @@ from .markdown_io import (auto_detect_criteria_dir, check_files_writable,
                           validate_files_readable)
 from .menus import (apply_background_preserving_styles,
                     file_sort_key_by_priority, select_from_menu)
-from .rollup_config import (compute_rollup_column_values,
-                            resolve_rollup_columns)
+from .rollup_config import compute_rollup_column_values, resolve_rollup_columns
 from .status_model import (build_color_rollup_text, normalize_status_input,
                            style_status_count, style_status_label)
 from .status_update import (apply_status_change_by_id, print_criterion_panel,
@@ -105,8 +104,8 @@ from .summary import (build_summary_block, build_summary_line,
                       build_summary_table, collect_summary_rows,
                       count_statuses, insert_or_replace_summary,
                       normalize_status_lines, print_custom_rollup_table,
-                      print_global_rollup_table,
-                      print_summary_table, process_file)
+                      print_global_rollup_table, print_summary_table,
+                      process_file)
 from .workflows import (build_filtered_criteria_payload, build_summary_payload,
                         print_criteria_tree)
 
@@ -670,6 +669,45 @@ def main(
                     "status": normalized,
                     "file": row_file_filter,
                     "changed": changed,
+                }
+            )
+
+        _, table_rows = collect_summary_rows(domain_files, check_only=True, display_name_fn=display_name_from_h1)
+        if json_output:
+            payload = build_summary_payload(repo_root, resolved_criteria_dir, domain_files, [])
+            payload["mode"] = "set"
+            payload["updates"] = update_results
+            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            raise SystemExit(0)
+
+        if summary_table:
+            print_summary_table(table_rows, emoji_columns=emoji_columns)
+        raise SystemExit(0)
+
+    if json_output:
+        payload = dict(summary_payload)
+        payload["ok"] = True
+        click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+        raise SystemExit(0)
+
+    if interactive and not check:
+        # RQMD-INTERACTIVE-011: preflight write-permission gate
+        check_files_writable(domain_files, repo_root)
+        raise SystemExit(
+            interactive_update_loop(
+                repo_root,
+                resolved_criteria_dir_input,
+                domain_files,
+                emoji_columns=emoji_columns,
+                sort_files=False,
+                sort_strategy=sort_strategy,
+                id_prefixes=id_prefixes,
+            )
+        )
+
+
+if __name__ == "__main__":
+    main()                    "changed": changed,
                 }
             )
 
