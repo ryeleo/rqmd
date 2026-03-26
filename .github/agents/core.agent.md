@@ -44,3 +44,4 @@ Your job is to carry substantial repository work from analysis through implement
 ## Reduce Excess Interactions Required from Developers
 
 - Use ./tmp or a similar scratch space for any intermediate files or notes rather than /tmp to avoid requiring the user to allow AI to access /tmp.
+- The environment here does not have pip available directly in the venv, so the reliable path was uv pip ... rather than python -m pip ....

@@ -3,7 +3,7 @@
 Scope: cross-project operation, path configuration, and repo-agnostic behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 5💡 5🔧 0✅ 0⛔ 0🗑️
+Summary: 4💡 6🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### REQMD-PORTABILITY-001: Configurable repo root
@@ -58,10 +58,10 @@ Summary: 5💡 5🔧 0✅ 0⛔ 0🗑️
 - And JSON is required initially, with YAML support optional for future extension.
 
 ### REQMD-PORTABILITY-008: Automatic requirements-dir search from current path
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - Given users run reqmd without an explicit `--criteria-dir`
 - When reqmd scans from the current working path
-- Then reqmd searches for viable requirements locations including `docs/requirements/`, `requirements/`, and `requirements.md`
+- Then reqmd searches for viable requirements index locations including `docs/requirements/README.md` and `requirements/README.md`
 - And the `docs/` prefix is optional rather than required
 - And reqmd selects the best matching candidate deterministically
 - And reqmd reports which path was selected.

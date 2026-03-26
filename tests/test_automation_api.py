@@ -401,12 +401,12 @@ def test_REQMD_automation_008c_filtered_tree_auto_detects_prefix_from_requiremen
     domain = repo / "docs" / "requirements"
     domain.mkdir(parents=True)
 
-    (repo / "docs" / "requirements.md").write_text(
+    (repo / "docs" / "requirements" / "README.md").write_text(
         """# Requirements
 
 ## Domain Documents
 
-- [Custom](docs/requirements/custom.md)
+- [Custom](custom.md)
 """,
         encoding="utf-8",
     )
@@ -457,6 +457,126 @@ def test_REQMD_automation_009_no_summary_table_suppresses_table(repo_with_domain
     assert result.exit_code == 0
     assert "WaitVR" not in result.output
     assert "File" not in result.output
+
+
+def test_REQMD_automation_008d_filtered_tree_accepts_plain_proposed_label(two_file_repo: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(two_file_repo),
+            "--criteria-dir",
+            "docs/requirements",
+            "--filter-status",
+            "proposed",
+            "--tree",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "second.md" in result.output
+    assert "AC-OVERLAP-001" in result.output
+    assert "first.md" not in result.output
+
+
+def test_REQMD_automation_008e_filtered_json_output_for_proposed(two_file_repo: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(two_file_repo),
+            "--criteria-dir",
+            "docs/requirements",
+            "--filter-status",
+            "proposed",
+            "--json",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["status"] == "💡 Proposed"
+    assert payload["criteria_dir"] == "docs/requirements"
+    assert payload["total"] == 1
+    assert payload["files"][0]["path"].endswith("second.md")
+    assert payload["files"][0]["criteria"][0]["id"] == "AC-OVERLAP-001"
+
+
+def test_REQMD_automation_008f_json_summary_output_without_filter_status(repo_with_domain_docs: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--criteria-dir",
+            "docs/requirements",
+            "--json",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "summary"
+    assert payload["ok"] is True
+    assert payload["criteria_dir"] == "docs/requirements"
+    assert payload["totals"]["🔧 Implemented"] >= 1
+
+
+def test_REQMD_automation_008g_json_check_mode_reports_failure(repo_with_domain_docs: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--criteria-dir",
+            "docs/requirements",
+            "--check",
+            "--json",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 1
+    payload = json.loads(result.output)
+    assert payload["mode"] == "check"
+    assert payload["ok"] is False
+    assert len(payload["changed_files"]) >= 1
+
+
+def test_REQMD_automation_008h_json_set_mode_reports_updates(repo_with_domain_docs: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--criteria-dir",
+            "docs/requirements",
+            "--set-criterion-id",
+            "AC-HELLO-001",
+            "--set-status",
+            "verified",
+            "--json",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "set"
+    assert payload["updates"][0]["criterion_id"] == "AC-HELLO-001"
+    assert payload["updates"][0]["status"] == "✅ Verified"
 
 
 def test_REQMD_automation_009b_summary_table_uses_five_status_headers(repo_with_domain_docs: Path) -> None:

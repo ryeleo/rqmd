@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 0🔧 9✅ 0⛔ 0🗑️
+Summary: 0💡 0🔧 10✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### REQMD-AUTOMATION-001: Check-only mode
@@ -68,3 +68,11 @@ Summary: 0💡 0🔧 9✅ 0⛔ 0🗑️
 - When `--no-summary-table` is used
 - Then summary table output is suppressed
 - And command behavior otherwise remains unchanged.
+
+### REQMD-AUTOMATION-010: JSON output for filtered status queries
+- **Status:** ✅ Verified
+- Given machine consumers need parse-friendly output
+- When `--json` is used in non-interactive command flows
+- Then reqmd prints valid JSON for summary/check/set/filter-status modes
+- And filter mode includes status, criteria_dir, total, and grouped criteria by file
+- And reqmd exits without interactive prompts or tree formatting noise.

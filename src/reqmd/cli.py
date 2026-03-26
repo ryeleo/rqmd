@@ -90,6 +90,8 @@ except ImportError:
 SUMMARY_START = "<!-- acceptance-status-summary:start -->"
 SUMMARY_END = "<!-- acceptance-status-summary:end -->"
 DEFAULT_ID_PREFIXES = ("AC", "R", "REQMD")
+DEFAULT_CRITERIA_DIR = "docs/requirements"
+REQUIREMENTS_INDEX_NAME = "README.md"
 STATUS_ORDER = [
     ("💡 Proposed", "proposed"),
     ("🔧 Implemented", "implemented"),
@@ -167,7 +169,7 @@ def detect_id_prefixes_from_requirements_index(repo_root: Path, criteria_dir_inp
     if not criteria_dir.is_absolute():
         criteria_dir = (repo_root / criteria_dir).resolve()
 
-    index_path = criteria_dir.with_suffix(".md")
+    index_path = criteria_dir / REQUIREMENTS_INDEX_NAME
     if not index_path.exists() or not index_path.is_file():
         return ()
 
@@ -252,6 +254,62 @@ def prompt_for_init_prefix(default_prefix: str = "REQ") -> str:
     if not value or not ID_PREFIX_PATTERN.fullmatch(value):
         raise click.ClickException("Invalid key prefix. Use uppercase letters/numbers, for example REQ, AC, or TEAM1.")
     return value
+
+
+def format_path_display(path: Path, repo_root: Path) -> str:
+    try:
+        return path.relative_to(repo_root).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def iter_criteria_search_roots(repo_root: Path, search_start: Path | None = None) -> list[Path]:
+    current = (search_start or Path.cwd()).resolve()
+    try:
+        current.relative_to(repo_root)
+    except ValueError:
+        return [repo_root]
+
+    roots: list[Path] = []
+    while True:
+        roots.append(current)
+        if current == repo_root:
+            break
+        current = current.parent
+    return roots
+
+
+def auto_detect_criteria_dir(repo_root: Path, search_start: Path | None = None) -> tuple[Path | None, str | None]:
+    search_roots = iter_criteria_search_roots(repo_root, search_start)
+    candidate_specs = (
+        ("docs/requirements/README.md", "docs/requirements"),
+        ("requirements/README.md", "requirements"),
+    )
+
+    for root in search_roots:
+        for relative_path, derived_dir in candidate_specs:
+            candidate = (root / relative_path).resolve()
+            derived = (root / derived_dir).resolve()
+            if candidate.is_file() and derived.is_dir() and any(path.name != REQUIREMENTS_INDEX_NAME for path in derived.glob("*.md")):
+                return derived, format_path_display(candidate, repo_root)
+
+    return None, None
+
+
+def resolve_criteria_dir(repo_root: Path, criteria_dir_input: str | None) -> tuple[Path, str | None]:
+    if criteria_dir_input:
+        criteria_dir = Path(criteria_dir_input)
+        if not criteria_dir.is_absolute():
+            criteria_dir = (repo_root / criteria_dir).resolve()
+        return criteria_dir, None
+
+    detected, detected_display = auto_detect_criteria_dir(repo_root)
+    if detected is None:
+        raise click.ClickException(
+            "No requirement docs found. Tried auto-detecting docs/requirements/README.md and requirements/README.md from the current working path. "
+            "Pass --criteria-dir to select a different location."
+        )
+    return detected, f"Auto-selected requirement docs: {detected_display}"
 
 
 def style_status_count(status_label: str, value: object) -> str:
@@ -542,7 +600,7 @@ def iter_domain_files(repo_root: Path, criteria_dir_input: str) -> list[Path]:
     criteria_dir = Path(criteria_dir_input)
     if not criteria_dir.is_absolute():
         criteria_dir = (repo_root / criteria_dir).resolve()
-    return sorted(criteria_dir.glob("*.md"))
+    return sorted(path for path in criteria_dir.glob("*.md") if path.name != REQUIREMENTS_INDEX_NAME)
 
 
 def initialize_requirements_scaffold(repo_root: Path, criteria_dir_input: str, starter_prefix: str) -> list[Path]:
@@ -552,9 +610,10 @@ def initialize_requirements_scaffold(repo_root: Path, criteria_dir_input: str, s
 
     criteria_dir.mkdir(parents=True, exist_ok=True)
 
-    index_path = criteria_dir.with_suffix(".md")
+    index_path = criteria_dir / REQUIREMENTS_INDEX_NAME
     starter_domain_path = criteria_dir / "starter.md"
     criteria_dir_display = criteria_dir.relative_to(repo_root).as_posix()
+    index_display = index_path.relative_to(repo_root).as_posix()
     starter_display = starter_domain_path.relative_to(repo_root).as_posix()
 
     created_paths: list[Path] = []
@@ -571,6 +630,7 @@ This document is the source-of-truth index for reqmd requirements.
 - Keep one status line directly below each requirement heading.
 - Use Given/When/Then when a requirement needs explicit acceptance detail.
 - Simple one-line requirements with only a title and status are also valid.
+- Keep this index at {index_display}.
 - Keep domain docs under {criteria_dir_display}/.
 
 Status workflow:
@@ -1228,6 +1288,70 @@ def print_criteria_tree(repo_root: Path, criteria_by_file: dict[Path, list[dict[
     click.echo()
 
 
+def build_filtered_criteria_payload(
+    repo_root: Path,
+    criteria_dir: Path,
+    criteria_by_file: dict[Path, list[dict[str, object]]],
+    target_status: str,
+) -> dict[str, object]:
+    files_payload: list[dict[str, object]] = []
+    total = 0
+
+    for path in sorted(criteria_by_file.keys()):
+        relative_path = format_path_display(path, repo_root)
+        criteria_payload: list[dict[str, str]] = []
+        for criterion in criteria_by_file[path]:
+            criteria_payload.append(
+                {
+                    "id": str(criterion["id"]),
+                    "title": str(criterion["title"]),
+                }
+            )
+        files_payload.append({"path": relative_path, "criteria": criteria_payload})
+        total += len(criteria_payload)
+
+    return {
+        "mode": "filter-status",
+        "status": target_status,
+        "criteria_dir": format_path_display(criteria_dir, repo_root),
+        "total": total,
+        "files": files_payload,
+    }
+
+
+def build_summary_payload(
+    repo_root: Path,
+    criteria_dir: Path,
+    domain_files: list[Path],
+    changed_paths: list[Path],
+) -> dict[str, object]:
+    files_payload: list[dict[str, object]] = []
+    totals = {label: 0 for label, _ in STATUS_ORDER}
+    changed_set = {path.resolve() for path in changed_paths}
+
+    for path in domain_files:
+        counts = count_statuses(path.read_text(encoding="utf-8"))
+        for label, _slug in STATUS_ORDER:
+            totals[label] += counts[label]
+
+        files_payload.append(
+            {
+                "path": format_path_display(path, repo_root),
+                "display_name": display_name_from_h1(path),
+                "changed": path.resolve() in changed_set,
+                "counts": {label: counts[label] for label, _slug in STATUS_ORDER},
+            }
+        )
+
+    return {
+        "mode": "summary",
+        "criteria_dir": format_path_display(criteria_dir, repo_root),
+        "changed_files": [format_path_display(path, repo_root) for path in changed_paths],
+        "totals": totals,
+        "files": files_payload,
+    }
+
+
 def filtered_interactive_loop(
     repo_root: Path,
     domain_files: list[Path],
@@ -1456,6 +1580,7 @@ def apply_status_change_by_id(
     blocked_reason: str | None = None,
     deprecated_reason: str | None = None,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    emit_output: bool = True,
 ) -> bool:
     target_paths: list[Path]
     if file_filter:
@@ -1496,10 +1621,11 @@ def apply_status_change_by_id(
     )
     process_file(path, check_only=False)
 
-    if changed:
-        click.echo(f"Updated {criterion['id']} in {path.relative_to(repo_root).as_posix()} -> {new_status}")
-    else:
-        click.echo(f"No change for {criterion['id']} in {path.relative_to(repo_root).as_posix()} ({new_status})")
+    if emit_output:
+        if changed:
+            click.echo(f"Updated {criterion['id']} in {path.relative_to(repo_root).as_posix()} -> {new_status}")
+        else:
+            click.echo(f"No change for {criterion['id']} in {path.relative_to(repo_root).as_posix()} ({new_status})")
     return changed
 
 
@@ -1757,6 +1883,12 @@ def print_summary_table(table_rows: list[list[object]], emoji_columns: bool) -> 
     help="Print the summary table output (disable in automation with --no-summary-table).",
 )
 @click.option(
+    "--json",
+    "json_output",
+    is_flag=True,
+    help="Print machine-readable JSON output for non-interactive workflows.",
+)
+@click.option(
     "--repo-root",
     type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
     default=Path("."),
@@ -1766,9 +1898,8 @@ def print_summary_table(table_rows: list[list[object]], emoji_columns: bool) -> 
 @click.option(
     "--criteria-dir",
     type=str,
-    default="docs/requirements",
-    show_default=True,
-    help="Directory (absolute or relative to --repo-root) containing requirement markdown files.",
+    default=None,
+    help="Directory (absolute or relative to --repo-root) containing requirement markdown files. When omitted, reqmd auto-detects from the current working path.",
 )
 @click.option(
     "--id-prefix",
@@ -1799,8 +1930,9 @@ def main(
     filter_status: str | None,
     tree: bool,
     summary_table: bool,
+    json_output: bool,
     repo_root: Path,
-    criteria_dir: str,
+    criteria_dir: str | None,
     id_prefixes: tuple[str, ...],
     init_scaffold: bool,
     criterion_id: str | None,
@@ -1821,7 +1953,11 @@ def main(
         except ValueError as exc:
             raise click.ClickException(str(exc)) from exc
 
-        created = initialize_requirements_scaffold(repo_root, criteria_dir, starter_prefix=starter_prefix)
+        created = initialize_requirements_scaffold(
+            repo_root,
+            criteria_dir or DEFAULT_CRITERIA_DIR,
+            starter_prefix=starter_prefix,
+        )
         if created:
             click.echo("Initialized requirement scaffold:")
             for path in created:
@@ -1830,14 +1966,19 @@ def main(
             click.echo("Requirement scaffold already present; no files created.")
         raise SystemExit(0)
 
+    resolved_criteria_dir, criteria_dir_message = resolve_criteria_dir(repo_root, criteria_dir)
+    resolved_criteria_dir_input = str(resolved_criteria_dir)
+    if criteria_dir_message and not json_output:
+        click.echo(criteria_dir_message)
+
     try:
-        id_prefixes = resolve_id_prefixes(repo_root, criteria_dir, id_prefixes)
+        id_prefixes = resolve_id_prefixes(repo_root, resolved_criteria_dir_input, id_prefixes)
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
 
-    domain_files = iter_domain_files(repo_root, criteria_dir)
+    domain_files = iter_domain_files(repo_root, resolved_criteria_dir_input)
     if not domain_files:
-        print(f"No requirement markdown files found under: {criteria_dir}", file=sys.stderr)
+        print(f"No requirement markdown files found under: {format_path_display(resolved_criteria_dir, repo_root)}", file=sys.stderr)
         raise SystemExit(1)
 
     # Positional ID lookup: find the requirement, show panel + status menu, done.
@@ -1857,8 +1998,9 @@ def main(
         )
 
     changed_paths, table_rows = collect_summary_rows(repo_root, domain_files, check_only=check)
+    summary_payload = build_summary_payload(repo_root, resolved_criteria_dir, domain_files, changed_paths)
 
-    if summary_table and verbose:
+    if summary_table and verbose and not json_output:
         for row, path in zip(table_rows, domain_files):
             marker = "UPDATE" if path in changed_paths else "OK"
             parts = [
@@ -1867,10 +2009,16 @@ def main(
             ]
             summary = ", ".join(parts)
             click.echo(f"[{marker}] {path.relative_to(repo_root)} :: {summary}")
-    elif summary_table:
+    elif summary_table and not json_output:
         print_summary_table(table_rows, emoji_columns=emoji_columns)
 
     if check and changed_paths:
+        if json_output:
+            payload = dict(summary_payload)
+            payload["mode"] = "check"
+            payload["ok"] = False
+            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            raise SystemExit(1)
         if verbose:
             print(
                 f"{len(changed_paths)} requirement file(s) need summary updates.",
@@ -1899,6 +2047,15 @@ def main(
             normalized_status,
             id_prefixes=id_prefixes,
         )
+        if json_output:
+            payload = build_filtered_criteria_payload(
+                repo_root,
+                resolved_criteria_dir,
+                criteria_by_file,
+                normalized_status,
+            )
+            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            raise SystemExit(0)
         if tree or not interactive:
             # Non-interactive: just print the tree and exit.
             print_criteria_tree(repo_root, criteria_by_file, normalized_status)
@@ -1958,6 +2115,7 @@ def main(
         if (set_blocked_reason or set_deprecated_reason) and len(update_requests) != 1:
             raise click.ClickException("--set-blocked-reason/--set-deprecated-reason currently support single-target updates only.")
 
+        update_results: list[dict[str, object]] = []
         for request in update_requests:
             criterion_id_value = str(request["criterion_id"])
             status_value = str(request["status"])
@@ -1971,7 +2129,7 @@ def main(
             if "Deprecated" not in normalized:
                 deprecated_reason = None
 
-            apply_status_change_by_id(
+            changed = apply_status_change_by_id(
                 repo_root,
                 domain_files,
                 criterion_id=criterion_id_value,
@@ -1980,11 +2138,33 @@ def main(
                 blocked_reason=blocked_reason,
                 deprecated_reason=deprecated_reason,
                 id_prefixes=id_prefixes,
+                emit_output=not json_output,
+            )
+            update_results.append(
+                {
+                    "criterion_id": criterion_id_value,
+                    "status": normalized,
+                    "file": row_file_filter,
+                    "changed": changed,
+                }
             )
 
+        _, table_rows = collect_summary_rows(repo_root, domain_files, check_only=True)
+        if json_output:
+            payload = build_summary_payload(repo_root, resolved_criteria_dir, domain_files, [])
+            payload["mode"] = "set"
+            payload["updates"] = update_results
+            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            raise SystemExit(0)
+
         if summary_table:
-            _, table_rows = collect_summary_rows(repo_root, domain_files, check_only=True)
             print_summary_table(table_rows, emoji_columns=emoji_columns)
+        raise SystemExit(0)
+
+    if json_output:
+        payload = dict(summary_payload)
+        payload["ok"] = True
+        click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
         raise SystemExit(0)
 
     if interactive and not check:

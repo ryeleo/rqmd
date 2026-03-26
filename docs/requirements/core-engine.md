@@ -80,7 +80,7 @@ Summary: 1💡 9🔧 5✅ 0⛔ 0🗑️
 - **Status:** ✅ Verified
 - Given a project does not yet have AC documentation
 - When an initialization command is run
-- Then boilerplate docs are created including `docs/requirements.md`
+- Then boilerplate docs are created including `docs/requirements/README.md`
 - And a starter domain directory `docs/requirements/` is created
 - And generated content follows the AC index/domain pattern used by this tool.
 
@@ -102,7 +102,7 @@ Summary: 1💡 9🔧 5✅ 0⛔ 0🗑️
 ### REQMD-CORE-014: Automatic ID prefix detection from requirements index
 - **Status:** ✅ Verified
 - Given users do not pass `--id-prefix`
-- When reqmd reads `docs/requirements.md` and linked domain docs
+- When reqmd reads `docs/requirements/README.md` and linked domain docs
 - Then requirement ID prefixes are auto-detected from discovered criterion headers
 - And filter/lookup/update flows use those detected prefixes without extra CLI flags.
 

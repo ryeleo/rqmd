@@ -185,7 +185,7 @@ def test_REQMD_core_011_and_012_init_scaffold_creates_index_and_starter(tmp_path
     )
 
     assert result.exit_code == 0
-    index_path = repo / "docs" / "requirements.md"
+    index_path = repo / "docs" / "requirements" / "README.md"
     starter_path = repo / "docs" / "requirements" / "starter.md"
     assert index_path.exists()
     assert starter_path.exists()
@@ -269,7 +269,7 @@ def test_REQMD_core_011c_init_scaffold_supports_custom_criteria_dir(tmp_path: Pa
     )
 
     assert result.exit_code == 0
-    assert (repo / "custom" / "ac.md").exists()
+    assert (repo / "custom" / "ac" / "README.md").exists()
     assert (repo / "custom" / "ac" / "starter.md").exists()
 
 
@@ -314,3 +314,17 @@ def test_REQMD_core_005b_file_priority_sort_key_uses_current_statuses() -> None:
     key_impl = cli.file_sort_key_by_priority(implemented, "A")
     key_ver = cli.file_sort_key_by_priority(verified, "B")
     assert key_impl < key_ver
+
+
+def test_REQMD_core_005c_file_priority_sort_key_tie_breaks_by_label() -> None:
+    same_counts = {
+        "💡 Proposed": 1,
+        "🔧 Implemented": 1,
+        "✅ Verified": 1,
+        "⛔ Blocked": 0,
+        "🗑️ Deprecated": 0,
+    }
+
+    key_a = cli.file_sort_key_by_priority(same_counts, "a-file")
+    key_b = cli.file_sort_key_by_priority(same_counts, "b-file")
+    assert key_a < key_b
