@@ -41,9 +41,9 @@ Scope: x.
 def test_ac_acccli_portability_003_default_conventions(monkeypatch, repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     with runner.isolated_filesystem():
-        # Build default docs/acceptance-criteria under isolated CWD.
+        # Build default docs/requirements under isolated CWD.
         cwd = Path.cwd()
-        domain = cwd / "docs" / "acceptance-criteria"
+        domain = cwd / "docs" / "requirements"
         domain.mkdir(parents=True)
         (domain / "demo.md").write_text(
             """# Demo Acceptance Criteria
@@ -61,7 +61,7 @@ Scope: demo.
 
 def test_ac_acccli_portability_004_relative_source_display(tmp_path: Path, capsys) -> None:
     repo = tmp_path / "repo"
-    path = repo / "docs" / "acceptance-criteria" / "demo.md"
+    path = repo / "docs" / "requirements" / "demo.md"
     path.parent.mkdir(parents=True)
     path.write_text(
         """# Demo Acceptance Criteria
@@ -76,12 +76,12 @@ Scope: demo.
     criterion = cli.find_criterion_by_id(path, "AC-HELLO-001")
     cli.print_criterion_panel(path, criterion, repo)
     output = capsys.readouterr().out
-    assert "Source: docs/acceptance-criteria/demo.md" in output
+    assert "Source: docs/requirements/demo.md" in output
 
 
 def test_ac_acccli_portability_005_generic_project_assumptions(tmp_path: Path) -> None:
     repo = tmp_path / "generic"
-    criteria_dir = repo / "docs" / "acceptance-criteria"
+    criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
     (criteria_dir / "generic.md").write_text(
         """# Generic Acceptance Criteria
@@ -97,7 +97,7 @@ Scope: generic.
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
-        ["--repo-root", str(repo), "--criteria-dir", "docs/acceptance-criteria", "--no-interactive", "--no-summary-table"],
+        ["--repo-root", str(repo), "--criteria-dir", "docs/requirements", "--no-interactive", "--no-summary-table"],
     )
     assert result.exit_code == 0
 
@@ -117,3 +117,4 @@ def test_ac_acccli_packaging_001_to_005_metadata_and_layout() -> None:
     assert "ac-cli --check" in readme
     assert "--repo-root" in readme
     assert "--criteria-dir" in readme
+    assert "--id-prefix" in readme

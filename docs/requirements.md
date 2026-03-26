@@ -8,7 +8,7 @@ This document is the source-of-truth index for ac-docs-cli requirements.
 - Keep one status line directly below each requirement heading.
 - Use Given/When/Then when a requirement needs explicit acceptance detail.
 - Simple one-line requirements with only a title and status are also valid.
-- Keep domain docs under docs/acceptance-criteria/.
+- Keep domain docs under docs/requirements/.
 
 Status workflow:
 - 💡 Proposed -> 🔧 Implemented -> 💻 Desktop-Verified -> 🎮 VR-Verified -> ✅ Done
@@ -17,11 +17,11 @@ Status workflow:
 ## Domain Documents
 
 ### AC CLI
-- [Core Engine](docs/acceptance-criteria/core-engine.md) - parsing, normalization, summaries, criteria extraction
-- [Interactive UX](docs/acceptance-criteria/interactive-ux.md) - keyboard-driven status update flows
-- [Automation API](docs/acceptance-criteria/automation-api.md) - non-interactive set/set-file/filter behavior
-- [Portability](docs/acceptance-criteria/portability.md) - repo root, criteria directory, cross-project assumptions
-- [Packaging](docs/acceptance-criteria/packaging.md) - package layout, entrypoints, install/run behavior
+- [Core Engine](docs/requirements/core-engine.md) - parsing, normalization, summaries, criteria extraction
+- [Interactive UX](docs/requirements/interactive-ux.md) - keyboard-driven status update flows
+- [Automation API](docs/requirements/automation-api.md) - non-interactive set/set-file/filter behavior
+- [Portability](docs/requirements/portability.md) - repo root, criteria directory, cross-project assumptions
+- [Packaging](docs/requirements/packaging.md) - package layout, entrypoints, install/run behavior
 
 ## Verification
 

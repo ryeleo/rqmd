@@ -1,9 +1,9 @@
 # AC Docs CLI - Copilot Instructions
 
-This folder contains a reusable Python CLI package for maintaining Acceptance Criteria (AC) documentation.
+This folder contains a reusable Python CLI package for maintaining requirements and acceptance-criteria documentation.
 
 Goal:
-- Keep AC status lines canonical.
+- Keep requirement status lines canonical.
 - Keep per-file status summary blocks in sync.
 - Provide fast interactive and automation-friendly status updates.
 
@@ -15,7 +15,7 @@ Goal:
 - Entrypoint command: ac-cli
 
 Core flow in `cli.py`:
-1. Discover AC domain markdown files.
+1. Discover requirement domain markdown files.
 2. Normalize status lines to canonical labels.
 3. Count statuses per file.
 4. Insert/update summary comment block.
@@ -26,8 +26,9 @@ Core flow in `cli.py`:
 The parser expects domain docs that follow these patterns:
 
 1. Criterion headers:
-- `### AC-<ID>: <Title>`
+- `### <PREFIX>-<ID>: <Title>`
 - Parsed via `CRITERION_HEADER_PATTERN`.
+- Prefixes default to `AC` and `R` and are configurable via `--id-prefix`.
 
 2. Status lines:
 - `- **Status:** <Status Label>`
@@ -63,11 +64,12 @@ Normalization behavior:
 
 Important options:
 - `--repo-root`: root of target project (default `.`)
-- `--criteria-dir`: AC markdown directory (default `docs/acceptance-criteria`)
+- `--criteria-dir`: AC markdown directory (default `docs/requirements`)
+- `--id-prefix`: allowed header prefixes for requirement IDs (default `AC,R`)
 - `--check`: verify summaries only, no writes
 - `--interactive/--no-interactive`: interactive mode toggle
 - `--set-criterion-id` + `--set-status`: single non-interactive update
-- `--set AC-ID=STATUS`: repeatable bulk updates
+- `--set ID=STATUS`: repeatable bulk updates
 - `--set-file`: JSONL/CSV/TSV batch updates
 - `--filter-status`: filtered walk or tree output with `--tree`
 
@@ -123,7 +125,7 @@ After changes, run from this folder:
 - `uv run ac-cli --repo-root <project> --check --no-interactive`
 
 3. Non-interactive status mutation smoke test:
-- `uv run ac-cli --repo-root <project> --set AC-EXAMPLE-001=implemented --no-interactive`
+- `uv run ac-cli --repo-root <project> --set R-EXAMPLE-001=implemented --no-interactive`
 
 4. Filter/tree smoke test:
 - `uv run ac-cli --repo-root <project> --filter-status proposed --tree --no-interactive`

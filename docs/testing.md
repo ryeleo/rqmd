@@ -1,6 +1,6 @@
 # Testing
 
-This folder uses a pytest suite to validate implemented acceptance criteria behavior.
+This folder uses a pytest suite to validate implemented requirement behavior.
 
 ## Run Tests
 
@@ -24,17 +24,18 @@ bash scripts/local-smoke.sh
 ## Coverage Map
 
 - tests/test_core_engine.py:
-  - AC-ACCLI-CORE-001..010
+  - REQMD-CORE-001..010
 - tests/test_automation_api.py:
-  - AC-ACCLI-AUTOMATION-001..009
+  - REQMD-AUTOMATION-001..009
 - tests/test_interactive_and_colors.py:
-  - AC-ACCLI-INTERACTIVE-001..009, AC-ACCLI-INTERACTIVE-006A, AC-ACCLI-INTERACTIVE-006B
+  - REQMD-INTERACTIVE-001..009, REQMD-INTERACTIVE-006A, REQMD-INTERACTIVE-006B
 - tests/test_portability_packaging_docs.py:
-  - AC-ACCLI-PORTABILITY-001..005
-  - AC-ACCLI-PACKAGING-001..005
+  - REQMD-PORTABILITY-001..005
+  - REQMD-PACKAGING-001..005
 
 ## Notes
 
 - Proposed criteria are intentionally not treated as hard pass/fail requirements in this suite.
+- Header IDs can use AC/R or custom prefixes when explicitly configured.
 - This suite is designed to be copied with the package to new repositories.
 - CI workflow: `.github/workflows/pytest.yml` runs this suite on push and pull_request.

@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 
-
 SAMPLE_DOMAIN_TEXT = """# Demo Domain Acceptance Criteria
 
 Scope: demo criteria.
@@ -20,7 +19,7 @@ Scope: demo criteria.
 @pytest.fixture
 def repo_with_domain_docs(tmp_path: Path) -> Path:
     repo = tmp_path / "repo"
-    domain_dir = repo / "docs" / "acceptance-criteria"
+    domain_dir = repo / "docs" / "requirements"
     domain_dir.mkdir(parents=True)
     (domain_dir / "demo.md").write_text(SAMPLE_DOMAIN_TEXT, encoding="utf-8")
     return repo
@@ -29,7 +28,7 @@ def repo_with_domain_docs(tmp_path: Path) -> Path:
 @pytest.fixture
 def two_file_repo(tmp_path: Path) -> Path:
     repo = tmp_path / "repo"
-    domain_dir = repo / "docs" / "acceptance-criteria"
+    domain_dir = repo / "docs" / "requirements"
     domain_dir.mkdir(parents=True)
 
     first = """# First Acceptance Criteria

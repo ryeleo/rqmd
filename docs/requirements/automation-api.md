@@ -6,63 +6,63 @@ Scope: non-interactive updates, machine-friendly batch operations, and CI-friend
 Summary: 0💡 9🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
-### AC-ACCLI-AUTOMATION-001: Check-only mode
+### REQMD-AUTOMATION-001: Check-only mode
 - **Status:** 🔧 Implemented
 - Given docs may be out of sync
 - When `--check` is used
 - Then no files are written
 - And process exits non-zero if any summary changes would be required.
 
-### AC-ACCLI-AUTOMATION-002: Single criterion update mode
+### REQMD-AUTOMATION-002: Single criterion update mode
 - **Status:** 🔧 Implemented
 - Given criterion ID and status are provided
 - When `--set-criterion-id` and `--set-status` are used
 - Then only that criterion is updated
 - And summary block for its file is refreshed.
 
-### AC-ACCLI-AUTOMATION-003: Repeatable bulk set mode
+### REQMD-AUTOMATION-003: Repeatable bulk set mode
 - **Status:** 🔧 Implemented
 - Given multiple `--set AC-ID=STATUS` arguments
 - When command runs
 - Then each update is applied in argument order
 - And command exits successfully when all updates succeed.
 
-### AC-ACCLI-AUTOMATION-004: Batch updates via file
+### REQMD-AUTOMATION-004: Batch updates via file
 - **Status:** 🔧 Implemented
 - Given a JSONL/CSV/TSV update file
 - When `--set-file` is used
 - Then each row is parsed and applied
 - And row-level validation errors include file and line context.
 
-### AC-ACCLI-AUTOMATION-005: Batch row schema aliases
+### REQMD-AUTOMATION-005: Batch row schema aliases
 - **Status:** 🔧 Implemented
 - Given batch rows use `criterion_id`, `id`, or `ac_id`
 - When parser reads rows
 - Then any supported key is accepted for criterion identifier
 - And status remains required.
 
-### AC-ACCLI-AUTOMATION-006: Conflicting mode guardrails
+### REQMD-AUTOMATION-006: Conflicting mode guardrails
 - **Status:** 🔧 Implemented
 - Given user combines incompatible command modes
 - When arguments are validated
 - Then command fails fast with explicit message
 - And no file writes are performed.
 
-### AC-ACCLI-AUTOMATION-007: File scope disambiguation
+### REQMD-AUTOMATION-007: File scope disambiguation
 - **Status:** 🔧 Implemented
 - Given duplicate criterion IDs might exist across files
 - When user provides `--file` scope
 - Then update resolves only within that file
 - And ambiguity errors are avoided.
 
-### AC-ACCLI-AUTOMATION-008: Filtered tree output
+### REQMD-AUTOMATION-008: Filtered tree output
 - **Status:** 🔧 Implemented
 - Given `--filter-status` with `--tree`
 - When command runs in non-interactive mode
 - Then tool prints grouped criteria tree by file
 - And exits without opening interactive menus.
 
-### AC-ACCLI-AUTOMATION-009: Summary table control
+### REQMD-AUTOMATION-009: Summary table control
 - **Status:** 🔧 Implemented
 - Given automation may not want console tables
 - When `--no-summary-table` is used

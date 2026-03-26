@@ -31,7 +31,7 @@ Your job is to carry substantial repository work from analysis through implement
 5. Summarize what changed, what was validated, and any remaining risks or follow-up work.
 
 ## Repo-Specific Guidance
-- Treat docs/acceptance-criteria/*.md as part of the product surface, not as optional notes.
+- Treat docs/requirements/*.md as part of the product surface, not as optional notes.
 - If statuses, aliases, summaries, CLI options, or interactive flows change, check for README and acceptance criteria drift.
 - Maintain ANSI display hygiene and visible-width handling in terminal output.
 - Favor additive options and backward-compatible behavior when extending the tool.

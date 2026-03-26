@@ -37,6 +37,6 @@ echo "[ac-cli] Running pytest"
 "$UV_BIN" run pytest -q
 
 echo "[ac-cli] Running acceptance summary check"
-"$UV_BIN" run ac-cli --repo-root . --criteria-dir docs/acceptance-criteria --check --no-interactive --no-summary-table
+"$UV_BIN" run ac-cli --repo-root . --criteria-dir docs/requirements --check --no-interactive --no-summary-table
 
 echo "[ac-cli] Smoke checks passed"

@@ -1,13 +1,14 @@
 # ac-docs-cli
 
-Reusable Acceptance Criteria documentation workflow CLI.
+Reusable requirements and acceptance-criteria workflow CLI.
 
-This package extracts the AC maintenance workflow used in this repository into a portable Python package that can be copied to other projects and eventually published to PyPI.
+This package extracts the markdown status-tracking workflow used in this repository into a portable Python package that can be copied to other projects and eventually published to PyPI.
 
 ## What this tool does
 
-- Scans AC markdown files in a criteria directory (default: `docs/acceptance-criteria`).
+- Scans requirement markdown files in a criteria directory (default: `docs/requirements`).
 - Normalizes `- **Status:** ...` lines to canonical statuses.
+- Parses requirement headers such as `### AC-FOO-001: Title` or `### R-FOO-001: Title`.
 - Regenerates per-file summary blocks:
 
 ```md
@@ -18,6 +19,8 @@ Summary: 10💡 2🔧 1💻 0🎮 3✅ 0⛔ 1🗑️
 
 - Supports interactive status editing with keyboard navigation.
 - Supports non-interactive updates for automation/agents.
+
+Requirement bodies can be as short as a title plus status line, or include richer Given/When/Then acceptance detail under the same heading.
 
 ## Status model
 
@@ -75,6 +78,12 @@ Set one criterion non-interactively:
 uv run ac-cli --set-criterion-id AC-EXAMPLE-001 --set-status implemented
 ```
 
+Use a different ID prefix:
+
+```bash
+uv run ac-cli --id-prefix R --set-criterion-id R-EXAMPLE-001 --set-status implemented
+```
+
 Bulk set by repeated flags:
 
 ```bash
@@ -85,6 +94,12 @@ Batch set from file:
 
 ```bash
 uv run ac-cli --set-file tmp/ac-updates.jsonl
+```
+
+Allow custom prefixes such as `REQ-` in a repo:
+
+```bash
+uv run ac-cli --id-prefix REQ --filter-status proposed --tree
 ```
 
 Filter walk:
@@ -139,21 +154,23 @@ This package includes a GitHub Actions workflow at `.github/workflows/pytest.yml
 
 By default, the tool targets the current directory as repo root and reads from:
 
-- `docs/acceptance-criteria/*.md`
+- `docs/requirements/*.md`
 
 You can override both:
 
 ```bash
-uv run ac-cli --repo-root /path/to/project --criteria-dir docs/acceptance-criteria
+uv run ac-cli --repo-root /path/to/project --criteria-dir docs/requirements
 ```
 
 `--criteria-dir` can be absolute or relative to `--repo-root`.
 
+Requirement header prefixes are configurable with `--id-prefix`. By default the tool accepts both `AC-` and `R-`.
+
 ## Recommended docs recipe for projects
 
-1. Keep a top-level index doc (example: `docs/acceptance-criteria.md`).
-2. Keep domain files in `docs/acceptance-criteria/`.
-3. Ensure each criterion has exactly one status line directly under the `### AC-...` header.
+1. Keep a top-level index doc (example: `docs/requirements.md`).
+2. Keep domain files in `docs/requirements/`.
+3. Ensure each requirement has exactly one status line directly under the `### <PREFIX>-...` header.
 4. Run `uv run ac-cli --check` in CI to prevent stale summary blocks.
 5. Use non-interactive `--set`/`--set-file` in automation.
 

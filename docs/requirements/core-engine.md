@@ -6,92 +6,92 @@ Scope: parsing, status normalization, summary generation, and criterion discover
 Summary: 3💡 10🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
-### AC-ACCLI-CORE-001: Domain file discovery
+### REQMD-CORE-001: Domain file discovery
 - **Status:** 🔧 Implemented
 - Given repo root and criteria directory are configured
 - When the tool scans for domain docs
 - Then all markdown files in that directory are discovered in stable sorted order
 - And non-markdown files are ignored.
 
-### AC-ACCLI-CORE-002: Status line parsing
+### REQMD-CORE-002: Status line parsing
 - **Status:** 🔧 Implemented
 - Given a criterion block with a status line
 - When the parser reads the document
 - Then the status is extracted from `- **Status:** ...`
 - And criterion metadata retains status line location for edits.
 
-### AC-ACCLI-CORE-003: Canonical status normalization
+### REQMD-CORE-003: Canonical status normalization
 - **Status:** 🔧 Implemented
 - Given variant status spellings or aliases
 - When normalization runs
 - Then the status is rewritten to canonical labels
 - And unsupported values remain unchanged unless explicitly updated by user action.
 
-### AC-ACCLI-CORE-004: Summary block insertion
+### REQMD-CORE-004: Summary block insertion
 - **Status:** 🔧 Implemented
 - Given a domain file without a summary block
 - When processing runs
 - Then a summary block is inserted near the top of the file
 - And the block format uses acceptance-status-summary markers.
 
-### AC-ACCLI-CORE-005: Summary block replacement
+### REQMD-CORE-005: Summary block replacement
 - **Status:** 🔧 Implemented
 - Given a domain file with an existing summary block
 - When status counts change
 - Then only the existing summary block content is replaced
 - And unrelated document content is preserved.
 
-### AC-ACCLI-CORE-006: Status count model
+### REQMD-CORE-006: Status count model
 - **Status:** 🔧 Implemented
 - Given canonical statuses are present in a file
 - When counts are computed
 - Then counts include all supported statuses in fixed order
 - And summary output uses count+emoji format.
 
-### AC-ACCLI-CORE-007: Criterion header matching
+### REQMD-CORE-007: Criterion header matching
 - **Status:** 🔧 Implemented
 - Given criterion headings follow `### AC-...: ...`
 - When parsing runs
 - Then each matching criterion is discoverable by ID
 - And title text is preserved for menu and reporting output.
 
-### AC-ACCLI-CORE-008: Idempotent processing
+### REQMD-CORE-008: Idempotent processing
 - **Status:** 🔧 Implemented
 - Given no status or summary changes are needed
 - When processing runs repeatedly
 - Then generated output remains byte-stable for those files
 - And no unnecessary rewrites occur.
 
-### AC-ACCLI-CORE-009: Missing domain docs handling
+### REQMD-CORE-009: Missing domain docs handling
 - **Status:** 🔧 Implemented
 - Given no domain markdown files are found
 - When the command is run
 - Then the process exits non-zero
 - And prints a clear error message.
 
-### AC-ACCLI-CORE-010: Blocked/deprecated reason extraction
+### REQMD-CORE-010: Blocked/deprecated reason extraction
 - **Status:** 🔧 Implemented
 - Given a criterion includes blocked or deprecated reason lines
 - When parsing runs
 - Then those reason lines are captured with line references
 - And can be updated or removed consistently by status mutation paths.
 
-### AC-ACCLI-CORE-011: Project AC scaffold initialization
+### REQMD-CORE-011: Project AC scaffold initialization
 - **Status:** 💡 Proposed
 - Given a project does not yet have AC documentation
 - When an initialization command is run
-- Then boilerplate docs are created including `docs/acceptance-criteria.md`
-- And a starter domain directory `docs/acceptance-criteria/` is created
+- Then boilerplate docs are created including `docs/requirements.md`
+- And a starter domain directory `docs/requirements/` is created
 - And generated content follows the AC index/domain pattern used by this tool.
 
-### AC-ACCLI-CORE-012: Starter dummy criterion generation
+### REQMD-CORE-012: Starter dummy criterion generation
 - **Status:** 💡 Proposed
 - Given initialization is generating starter AC content
 - When starter domain docs are created
 - Then at least one easy-to-delete sample criterion `AC-HELLO-001` is included
 - And the sample clearly indicates it is a handoff placeholder for teams to replace.
 
-### AC-ACCLI-CORE-013: Domain-sync maintenance over time
+### REQMD-CORE-013: Domain-sync maintenance over time
 - **Status:** 💡 Proposed
 - Given users add or evolve domain documentation over time
 - When sync/maintenance commands run

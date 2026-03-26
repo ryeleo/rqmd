@@ -7,13 +7,13 @@ from ac_cli import cli
 
 def test_ac_acccli_core_001_iter_domain_files_sorted_and_markdown_only(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
-    domain_dir = repo / "docs" / "acceptance-criteria"
+    domain_dir = repo / "docs" / "requirements"
     domain_dir.mkdir(parents=True)
     (domain_dir / "z.md").write_text("# Z\n", encoding="utf-8")
     (domain_dir / "a.md").write_text("# A\n", encoding="utf-8")
     (domain_dir / "note.txt").write_text("ignore", encoding="utf-8")
 
-    files = cli.iter_domain_files(repo, "docs/acceptance-criteria")
+    files = cli.iter_domain_files(repo, "docs/requirements")
     assert [p.name for p in files] == ["a.md", "z.md"]
 
 
@@ -37,6 +37,25 @@ Scope: demo.
         criteria = cli.parse_criteria(path)
         assert [c["id"] for c in criteria] == ["AC-DEMO-001", "AC-DEMO-002"]
         assert cli.find_criterion_by_id(path, "ac-demo-002")["title"] == "Second"
+
+
+def test_ac_acccli_core_002b_parse_requirement_ids_with_configured_prefix() -> None:
+    text = """# Demo Requirements
+
+Scope: demo.
+
+### R-DEMO-001: First
+- **Status:** 🔧 Implemented
+"""
+
+    from tempfile import TemporaryDirectory
+
+    with TemporaryDirectory() as td:
+        path = Path(td) / "demo.md"
+        path.write_text(text, encoding="utf-8")
+        criteria = cli.parse_criteria(path, id_prefixes=("R",))
+        assert [c["id"] for c in criteria] == ["R-DEMO-001"]
+        assert cli.find_criterion_by_id(path, "r-demo-001", id_prefixes=("R",))["title"] == "First"
 
 
 def test_ac_acccli_core_003_normalize_status_aliases() -> None:

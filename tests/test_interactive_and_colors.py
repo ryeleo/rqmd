@@ -82,9 +82,10 @@ def test_ac_acccli_interactive_008_reason_prompt_helpers(monkeypatch) -> None:
 def test_ac_acccli_interactive_009_positional_lookup_mode(monkeypatch, repo_with_domain_docs: Path) -> None:
     called = {"value": False}
 
-    def fake_lookup(repo_root, domain_files, criterion_id, emoji_columns):
+    def fake_lookup(repo_root, domain_files, criterion_id, emoji_columns, id_prefixes):
         called["value"] = True
         assert criterion_id == "AC-HELLO-001"
+        assert id_prefixes == ("AC", "R")
         return 0
 
     monkeypatch.setattr(cli, "lookup_criterion_interactive", fake_lookup)
@@ -96,7 +97,7 @@ def test_ac_acccli_interactive_009_positional_lookup_mode(monkeypatch, repo_with
             "--repo-root",
             str(repo_with_domain_docs),
             "--criteria-dir",
-            "docs/acceptance-criteria",
+            "docs/requirements",
             "--no-summary-table",
         ],
     )
@@ -108,8 +109,9 @@ def test_ac_acccli_interactive_009_positional_lookup_mode(monkeypatch, repo_with
 def test_ac_acccli_interactive_001_default_invokes_interactive_loop(monkeypatch, repo_with_domain_docs: Path) -> None:
     called = {"value": False}
 
-    def fake_loop(repo_root, criteria_dir, domain_files, emoji_columns, sort_files):
+    def fake_loop(repo_root, criteria_dir, domain_files, emoji_columns, sort_files, id_prefixes):
         called["value"] = True
+        assert id_prefixes == ("AC", "R")
         return 0
 
     monkeypatch.setattr(cli, "interactive_update_loop", fake_loop)
@@ -120,7 +122,7 @@ def test_ac_acccli_interactive_001_default_invokes_interactive_loop(monkeypatch,
             "--repo-root",
             str(repo_with_domain_docs),
             "--criteria-dir",
-            "docs/acceptance-criteria",
+            "docs/requirements",
             "--no-summary-table",
         ],
     )
