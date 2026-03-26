@@ -3,7 +3,7 @@
 Scope: cross-project operation, path configuration, and repo-agnostic behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 5🔧 0✅ 0⛔ 0🗑️
+Summary: 4💡 5🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### REQMD-PORTABILITY-001: Configurable repo root
@@ -56,3 +56,20 @@ Summary: 2💡 5🔧 0✅ 0⛔ 0🗑️
 - And the tool supports explicit override via `--status-config <path>`
 - And effective precedence is: CLI override file > project default file > built-in defaults
 - And JSON is required initially, with YAML support optional for future extension.
+
+### REQMD-PORTABILITY-008: Automatic requirements-dir search from current path
+- **Status:** 💡 Proposed
+- Given users run reqmd without an explicit `--criteria-dir`
+- When reqmd scans from the current working path
+- Then reqmd searches for viable requirements locations including `docs/requirements/`, `requirements/`, and `requirements.md`
+- And the `docs/` prefix is optional rather than required
+- And reqmd selects the best matching candidate deterministically
+- And reqmd reports which path was selected.
+
+### REQMD-PORTABILITY-009: Graceful startup errors for docs availability and permissions
+- **Status:** 💡 Proposed
+- Given reqmd cannot open requirements docs because files are missing or inaccessible
+- When startup validation fails
+- Then reqmd exits with a clear, actionable error message
+- And the message distinguishes not-found conditions from permission-denied conditions
+- And no partial interactive session is started.

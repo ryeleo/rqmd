@@ -70,6 +70,14 @@ Interactive mode:
 uv run reqmd
 ```
 
+Initialize docs scaffold (index + starter domain file):
+
+```bash
+uv run reqmd --init
+```
+
+`--init` prompts for a starter requirement key prefix (default: `REQ`; recommended to customize).
+
 Set one criterion non-interactively:
 
 ```bash
@@ -162,7 +170,9 @@ uv run reqmd --repo-root /path/to/project --criteria-dir docs/requirements
 
 `--criteria-dir` can be absolute or relative to `--repo-root`.
 
-Requirement header prefixes are configurable with `--id-prefix`. By default the tool accepts both `AC-` and `R-`.
+Requirement header prefixes are configurable with `--id-prefix`.
+When omitted, reqmd auto-detects prefixes by reading `docs/requirements.md` and linked domain docs.
+If no prefixes are discovered, it falls back to `AC-`, `R-`, and `REQMD-`.
 
 ## Recommended docs recipe for projects
 

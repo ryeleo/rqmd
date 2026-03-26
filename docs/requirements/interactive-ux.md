@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session criterion status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 11🔧 0✅ 0⛔ 0🗑️
+Summary: 2💡 13🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### REQMD-INTERACTIVE-001: Interactive mode default
@@ -30,9 +30,16 @@ Summary: 1💡 11🔧 0✅ 0⛔ 0🗑️
 ### REQMD-INTERACTIVE-004: Criterion next/prev shortcuts
 - **Status:** 🔧 Implemented
 - Given the status menu for a criterion is open
-- When user presses criterion next/prev keys
+- When user presses `n` (next) or `p` (prev)
 - Then focus moves across criteria in current ordering
 - And history-aware navigation supports backtracking.
+
+### REQMD-INTERACTIVE-004A: Next/prev stack semantics
+- **Status:** 🔧 Implemented
+- Given users navigate criteria using `n` and `p`
+- When users move forward and backward across criteria
+- Then reqmd preserves a history stack semantics for backtracking
+- And `p` returns to the previously visited criterion context.
 
 ### REQMD-INTERACTIVE-005: Sort toggles
 - **Status:** 🔧 Implemented
@@ -63,7 +70,6 @@ Summary: 1💡 11🔧 0✅ 0⛔ 0🗑️
 - When roll-up text is rendered
 - Then blue/proposed, green/completed, normal/in-progress, and dimmed/blocked+deprecated buckets are visually distinct
 - And zebra striping remains visible even when inline ANSI status colors are present
-- And waiting-for-VR roll-up value uses a distinct cyan treatment in summary tables.
 
 ### REQMD-INTERACTIVE-007: Auto-advance after update
 - **Status:** 🔧 Implemented
@@ -86,6 +92,13 @@ Summary: 1💡 11🔧 0✅ 0⛔ 0🗑️
 - Then matching criterion panel opens directly
 - And user can set status once then exit.
 
+### REQMD-INTERACTIVE-009A: Up key for hierarchical navigation
+- **Status:** 🔧 Implemented
+- Given users are in interactive menus
+- When users press `u` (up)
+- Then reqmd moves up exactly one level in the menu hierarchy
+- And reqmd no longer uses `r` as the back/up key.
+
 ### REQMD-INTERACTIVE-010: Customizable status catalog and colors
 - **Status:** 💡 Proposed
 - Given teams have different status taxonomies
@@ -94,3 +107,11 @@ Summary: 1💡 11🔧 0✅ 0⛔ 0🗑️
 - And status color style can be customized per status
 - And roll-up bucket color behavior can be customized independently from per-status styling
 - And interactive and non-interactive outputs both use the same configured status catalog.
+
+### REQMD-INTERACTIVE-011: Preflight write-permission gate before interactive mode
+- **Status:** 💡 Proposed
+- Given interactive mode can modify markdown requirement files
+- When reqmd is about to open interactive menus
+- Then reqmd validates write permissions for target requirement files up front
+- And if any file is not writable reqmd exits before opening interactive navigation
+- And reqmd prints a clear per-file permission failure report with remediation guidance.

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 
 from reqmd import cli
@@ -122,6 +123,25 @@ Scope: extra.
     assert "✅ Verified" in (domain / "extra.md").read_text(encoding="utf-8")
 
 
+def test_REQMD_automation_003b_repeatable_set_rejects_removed_legacy_status(repo_with_domain_docs: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--criteria-dir",
+            "docs/requirements",
+            "--set",
+            "AC-HELLO-001=desktop-verified",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Unrecognized status input" in result.output
+
+
 def test_REQMD_automation_004_and_005_set_file_jsonl_with_alias_keys(repo_with_domain_docs: Path, tmp_path: Path) -> None:
     update_file = tmp_path / "updates.jsonl"
     rows = [
@@ -146,6 +166,114 @@ def test_REQMD_automation_004_and_005_set_file_jsonl_with_alias_keys(repo_with_d
     text = (repo_with_domain_docs / "docs" / "requirements" / "demo.md").read_text(encoding="utf-8")
     assert "- **Status:** ⛔ Blocked" in text
     assert "**Blocked:** Pending" in text
+
+
+@pytest.mark.parametrize("key_name", ["criterion_id", "id", "ac_id", "requirement_id", "r_id"])
+def test_REQMD_automation_005b_set_file_accepts_all_id_alias_keys(
+    repo_with_domain_docs: Path,
+    tmp_path: Path,
+    key_name: str,
+) -> None:
+    update_file = tmp_path / "updates.jsonl"
+    row = {key_name: "AC-HELLO-001", "status": "verified"}
+    update_file.write_text(json.dumps(row) + "\n", encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--criteria-dir",
+            "docs/requirements",
+            "--set-file",
+            str(update_file),
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    text = (repo_with_domain_docs / "docs" / "requirements" / "demo.md").read_text(encoding="utf-8")
+    assert "- **Status:** ✅ Verified" in text
+
+
+def test_REQMD_automation_004b_set_file_csv_and_tsv_apply_rows(repo_with_domain_docs: Path, tmp_path: Path) -> None:
+    csv_file = tmp_path / "updates.csv"
+    csv_file.write_text("criterion_id,status\nAC-HELLO-001,blocked\n", encoding="utf-8")
+
+    tsv_file = tmp_path / "updates.tsv"
+    tsv_file.write_text("criterion_id\tstatus\nAC-HELLO-001\tverified\n", encoding="utf-8")
+
+    runner = CliRunner()
+
+    csv_result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--criteria-dir",
+            "docs/requirements",
+            "--set-file",
+            str(csv_file),
+            "--no-summary-table",
+        ],
+    )
+    assert csv_result.exit_code == 0
+    text_after_csv = (repo_with_domain_docs / "docs" / "requirements" / "demo.md").read_text(encoding="utf-8")
+    assert "- **Status:** ⛔ Blocked" in text_after_csv
+
+    tsv_result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--criteria-dir",
+            "docs/requirements",
+            "--set-file",
+            str(tsv_file),
+            "--no-summary-table",
+        ],
+    )
+    assert tsv_result.exit_code == 0
+    text_after_tsv = (repo_with_domain_docs / "docs" / "requirements" / "demo.md").read_text(encoding="utf-8")
+    assert "- **Status:** ✅ Verified" in text_after_tsv
+
+
+def test_REQMD_automation_004c_set_file_jsonl_invalid_row_reports_path_and_line(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-HELLO-001: Hello requirement
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    update_file = tmp_path / "bad.jsonl"
+    update_file.write_text('{"status":"blocked"}\n', encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--criteria-dir",
+            "docs/requirements",
+            "--set-file",
+            str(update_file),
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert str(update_file) in result.output
+    assert ":1" in result.output
 
 
 def test_REQMD_automation_006_conflicting_mode_guardrails(repo_with_domain_docs: Path, tmp_path: Path) -> None:
@@ -233,6 +361,86 @@ def test_REQMD_automation_008_filtered_tree_output(repo_with_domain_docs: Path) 
     assert "AC-HELLO-001" in result.output
 
 
+def test_REQMD_automation_008b_filtered_tree_output_supports_reqmd_prefix_by_default(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "core.md").write_text(
+        """# Core Requirements
+
+Scope: core.
+
+### REQMD-CORE-001: Core behavior
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--criteria-dir",
+            "docs/requirements",
+            "--filter-status",
+            "Implemented",
+            "--tree",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "REQMD-CORE-001" in result.output
+
+
+def test_REQMD_automation_008c_filtered_tree_auto_detects_prefix_from_requirements_index(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+
+    (repo / "docs" / "requirements.md").write_text(
+        """# Requirements
+
+## Domain Documents
+
+- [Custom](docs/requirements/custom.md)
+""",
+        encoding="utf-8",
+    )
+    (domain / "custom.md").write_text(
+        """# Custom Requirements
+
+Scope: custom.
+
+### TEAM-CORE-001: Team custom criterion
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--criteria-dir",
+            "docs/requirements",
+            "--filter-status",
+            "Implemented",
+            "--tree",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "TEAM-CORE-001" in result.output
+
+
 def test_REQMD_automation_009_no_summary_table_suppresses_table(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
@@ -249,3 +457,25 @@ def test_REQMD_automation_009_no_summary_table_suppresses_table(repo_with_domain
     assert result.exit_code == 0
     assert "WaitVR" not in result.output
     assert "File" not in result.output
+
+
+def test_REQMD_automation_009b_summary_table_uses_five_status_headers(repo_with_domain_docs: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--criteria-dir",
+            "docs/requirements",
+            "--no-interactive",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "P" in result.output
+    assert "I" in result.output
+    assert "Ver" in result.output
+    assert "Blk" in result.output
+    assert "Dep" in result.output
+    assert "WaitVR" not in result.output

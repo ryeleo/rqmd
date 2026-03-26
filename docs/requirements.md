@@ -20,6 +20,8 @@ Status workflow:
 - [Core Engine](docs/requirements/core-engine.md) - parsing, normalization, summaries, criteria extraction
 - [Interactive UX](docs/requirements/interactive-ux.md) - keyboard-driven status update flows
 - [Automation API](docs/requirements/automation-api.md) - non-interactive set/set-file/filter behavior
+- [Sorting](docs/requirements/sorting.md) - ordering rules, toggles, deterministic ranking behavior
+- [Roll-up](docs/requirements/roll-up.md) - summary counts, bucket rendering, and visual roll-up output
 - [Portability](docs/requirements/portability.md) - repo root, criteria directory, cross-project assumptions
 - [Packaging](docs/requirements/packaging.md) - package layout, entrypoints, install/run behavior
 
@@ -34,6 +36,8 @@ Status workflow:
 | REQMD-CORE-* | Core Engine |
 | REQMD-INTERACTIVE-* | Interactive UX |
 | REQMD-AUTOMATION-* | Automation API |
+| REQMD-SORTING-* | Sorting |
+| REQMD-ROLLUP-* | Roll-up |
 | REQMD-PORTABILITY-* | Portability |
 | REQMD-PACKAGING-* | Packaging |
 
@@ -41,4 +45,4 @@ Status workflow:
 
 - Run reqmd --check to validate summaries.
 - Run reqmd to update summaries and optionally edit requirement statuses interactively.
-- Use --id-prefix to limit or expand which header prefixes are recognized. Default: AC and R.
+- Use --id-prefix to limit or expand which header prefixes are recognized.

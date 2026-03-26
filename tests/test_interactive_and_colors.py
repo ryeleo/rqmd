@@ -22,6 +22,24 @@ def test_REQMD_interactive_003_paging_controls(monkeypatch) -> None:
     assert result == 9
 
 
+def test_REQMD_interactive_003b_up_navigation_key(monkeypatch) -> None:
+    keys = iter(["u"])
+    monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
+    result = cli.select_from_menu("Pick", ["A", "B"])
+    assert result == "up"
+
+
+def test_REQMD_interactive_003c_menu_legend_uses_up_not_back(monkeypatch, capsys) -> None:
+    keys = iter(["q"])
+    monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
+    result = cli.select_from_menu("Pick", ["A", "B"])
+    output = capsys.readouterr().out
+
+    assert result is None
+    assert "u=up" in output
+    assert "back" not in output.lower()
+
+
 def test_REQMD_interactive_004_nav_shortcuts(monkeypatch) -> None:
     keys = iter(["n"])
     monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
@@ -84,7 +102,7 @@ def test_REQMD_interactive_009_positional_lookup_mode(monkeypatch, repo_with_dom
     def fake_lookup(repo_root, domain_files, criterion_id, emoji_columns, id_prefixes):
         called["value"] = True
         assert criterion_id == "AC-HELLO-001"
-        assert id_prefixes == ("AC", "R")
+        assert id_prefixes == ("AC", "R", "REQMD")
         return 0
 
     monkeypatch.setattr(cli, "lookup_criterion_interactive", fake_lookup)
@@ -105,12 +123,42 @@ def test_REQMD_interactive_009_positional_lookup_mode(monkeypatch, repo_with_dom
     assert called["value"] is True
 
 
+def test_REQMD_interactive_009a_lookup_mode_up_exits(monkeypatch, repo_with_domain_docs: Path) -> None:
+    domain_file = repo_with_domain_docs / "docs" / "requirements" / "demo.md"
+    monkeypatch.setattr(cli, "select_from_menu", lambda *args, **kwargs: "up")
+
+    result = cli.lookup_criterion_interactive(
+        repo_root=repo_with_domain_docs,
+        domain_files=[domain_file],
+        criterion_id="AC-HELLO-001",
+        emoji_columns=False,
+        id_prefixes=("AC",),
+    )
+
+    assert result == 0
+
+
+def test_REQMD_interactive_009b_filtered_walk_up_exits(monkeypatch, repo_with_domain_docs: Path) -> None:
+    domain_file = repo_with_domain_docs / "docs" / "requirements" / "demo.md"
+    monkeypatch.setattr(cli, "select_from_menu", lambda *args, **kwargs: "up")
+
+    result = cli.filtered_interactive_loop(
+        repo_root=repo_with_domain_docs,
+        domain_files=[domain_file],
+        target_status="🔧 Implemented",
+        emoji_columns=False,
+        id_prefixes=("AC",),
+    )
+
+    assert result == 0
+
+
 def test_REQMD_interactive_001_default_invokes_interactive_loop(monkeypatch, repo_with_domain_docs: Path) -> None:
     called = {"value": False}
 
     def fake_loop(repo_root, criteria_dir, domain_files, emoji_columns, sort_files, id_prefixes):
         called["value"] = True
-        assert id_prefixes == ("AC", "R")
+        assert id_prefixes == ("AC", "R", "REQMD")
         return 0
 
     monkeypatch.setattr(cli, "interactive_update_loop", fake_loop)

@@ -1,0 +1,7 @@
+{
+  "chat.notifyWindowOnConfirmation": "always",
+  "accessibility.signals.chatUserActionRequired": {
+    "sound": "on",
+    "announcement": "off"
+  }
+}

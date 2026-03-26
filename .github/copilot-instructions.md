@@ -63,7 +63,7 @@ Normalization behavior:
 Important options:
 - `--repo-root`: root of target project (default `.`)
 - `--criteria-dir`: AC markdown directory (default `docs/requirements`)
-- `--id-prefix`: allowed header prefixes for requirement IDs (default `AC,R`)
+- `--id-prefix`: allowed header prefixes for requirement IDs (auto-detected from requirements index/linked docs when omitted; fallback `AC,R,REQMD`)
 - `--check`: verify summaries only, no writes
 - `--interactive/--no-interactive`: interactive mode toggle
 - `--set-criterion-id` + `--set-status`: single non-interactive update

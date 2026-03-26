@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and criterion discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 10🔧 0✅ 0⛔ 0🗑️
+Summary: 1💡 9🔧 5✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### REQMD-CORE-001: Domain file discovery
@@ -42,7 +42,7 @@ Summary: 3💡 10🔧 0✅ 0⛔ 0🗑️
 - And unrelated document content is preserved.
 
 ### REQMD-CORE-006: Status count model
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given canonical statuses are present in a file
 - When counts are computed
 - Then counts include all supported statuses in fixed order
@@ -77,7 +77,7 @@ Summary: 3💡 10🔧 0✅ 0⛔ 0🗑️
 - And can be updated or removed consistently by status mutation paths.
 
 ### REQMD-CORE-011: Project AC scaffold initialization
-- **Status:** 💡 Proposed
+- **Status:** ✅ Verified
 - Given a project does not yet have AC documentation
 - When an initialization command is run
 - Then boilerplate docs are created including `docs/requirements.md`
@@ -85,10 +85,10 @@ Summary: 3💡 10🔧 0✅ 0⛔ 0🗑️
 - And generated content follows the AC index/domain pattern used by this tool.
 
 ### REQMD-CORE-012: Starter dummy criterion generation
-- **Status:** 💡 Proposed
+- **Status:** ✅ Verified
 - Given initialization is generating starter AC content
 - When starter domain docs are created
-- Then at least one easy-to-delete sample criterion `AC-HELLO-001` is included
+- Then at least one easy-to-delete sample criterion `<PREFIX>-HELLO-001` is included
 - And the sample clearly indicates it is a handoff placeholder for teams to replace.
 
 ### REQMD-CORE-013: Domain-sync maintenance over time
@@ -98,3 +98,18 @@ Summary: 3💡 10🔧 0✅ 0⛔ 0🗑️
 - Then index and domain-document references are kept consistent with current domain files
 - And stale or missing domain links are flagged with actionable output
 - And summary/state regeneration remains accurate after domain additions, removals, or renames.
+
+### REQMD-CORE-014: Automatic ID prefix detection from requirements index
+- **Status:** ✅ Verified
+- Given users do not pass `--id-prefix`
+- When reqmd reads `docs/requirements.md` and linked domain docs
+- Then requirement ID prefixes are auto-detected from discovered criterion headers
+- And filter/lookup/update flows use those detected prefixes without extra CLI flags.
+
+### REQMD-CORE-015: Init key prompt with customizable default
+- **Status:** ✅ Verified
+- Given users run `reqmd --init`
+- When scaffold initialization starts
+- Then reqmd prompts for a starter requirement key prefix
+- And Enter accepts default `REQ`
+- And generated starter criterion IDs use the selected prefix.

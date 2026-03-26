@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "./scripts/play-agent-notification.sh finish",
+        "timeout": 5
+      }
+    ]
+  }
+}

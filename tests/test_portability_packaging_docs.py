@@ -118,3 +118,28 @@ def test_REQMD_packaging_001_to_005_metadata_and_layout() -> None:
     assert "--repo-root" in readme
     assert "--criteria-dir" in readme
     assert "--id-prefix" in readme
+
+
+def test_REQMD_portability_008_scratch_corpus_runs_from_requirements_dir_without_docs_prefix() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    scratch_root = project_root / "scratch"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(scratch_root),
+            "--criteria-dir",
+            "requirements",
+            "--filter-status",
+            "Implemented",
+            "--tree",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "REQ-PAG-002" in result.output
+    assert "REQ-PAG-037" in result.output

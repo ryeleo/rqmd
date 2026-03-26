@@ -18,7 +18,7 @@ Interactive workflow highlights:
 - Select file, then requirement, then status.
 - Fast single-key input via click.getchar() for menu navigation.
 - Paging keys:
-    n = next page, p = previous page, r = back, q = quit.
+    n = next page, p = previous page, u = up, q = quit.
 - Requirement-level next/prev shortcuts at status menu:
     n = next requirement, p = previous requirement (history-aware).
 - Optional sort toggles (s) at file and requirement selection levels.
@@ -89,7 +89,7 @@ except ImportError:
 
 SUMMARY_START = "<!-- acceptance-status-summary:start -->"
 SUMMARY_END = "<!-- acceptance-status-summary:end -->"
-DEFAULT_ID_PREFIXES = ("AC", "R")
+DEFAULT_ID_PREFIXES = ("AC", "R", "REQMD")
 STATUS_ORDER = [
     ("💡 Proposed", "proposed"),
     ("🔧 Implemented", "implemented"),
@@ -105,7 +105,7 @@ STATUS_PARSE_ALIASES = {
     "proposal": "💡 Proposed",
     "propose": "💡 Proposed",
 }
-MENU_BACK = "r"
+MENU_UP = "u"
 MENU_QUIT = "q"
 MENU_NEXT = "n"
 MENU_PREV = "p"
@@ -115,6 +115,10 @@ STATUS_PATTERN = re.compile(r"^- \*\*Status:\*\* (?P<status>.+?)\s*$", re.MULTIL
 BLOCKED_REASON_PATTERN = re.compile(r"^\*\*Blocked:\*\*\s*(.+?)\s*$", re.MULTILINE)
 DEPRECATED_REASON_PATTERN = re.compile(r"^\*\*Deprecated:\*\*\s*(.+?)\s*$", re.MULTILINE)
 ID_PREFIX_PATTERN = re.compile(r"^[A-Z][A-Z0-9]*$")
+GENERIC_CRITERION_HEADER_PATTERN = re.compile(
+    r"^###\s+(?P<id>(?P<prefix>[A-Z][A-Z0-9]*)-[A-Z0-9-]+):\s*(?P<title>.+?)\s*$"
+)
+MARKDOWN_LINK_PATTERN = re.compile(r"\[[^\]]+\]\((?P<target>[^)#?]+\.md)(?:#[^)]+)?\)")
 ANSI_ESCAPE_PATTERN = re.compile(r"\x1b\[[0-9;]*m")
 NON_ALNUM_PREFIX_PATTERN = re.compile(r"^[^a-zA-Z0-9]+")
 NON_ALNUM_PATTERN = re.compile(r"[^a-z0-9]+")
@@ -156,6 +160,98 @@ def normalize_id_prefixes(raw_prefixes: tuple[str, ...] | list[str] | None) -> t
         raise ValueError("At least one non-empty id prefix is required.")
 
     return tuple(prefixes)
+
+
+def detect_id_prefixes_from_requirements_index(repo_root: Path, criteria_dir_input: str) -> tuple[str, ...]:
+    criteria_dir = Path(criteria_dir_input)
+    if not criteria_dir.is_absolute():
+        criteria_dir = (repo_root / criteria_dir).resolve()
+
+    index_path = criteria_dir.with_suffix(".md")
+    if not index_path.exists() or not index_path.is_file():
+        return ()
+
+    discovered: list[str] = []
+    seen: set[str] = set()
+
+    def add_prefix(prefix: str) -> None:
+        normalized = prefix.strip().upper().rstrip("-")
+        if not normalized:
+            return
+        if not ID_PREFIX_PATTERN.fullmatch(normalized):
+            return
+        if normalized in seen:
+            return
+        seen.add(normalized)
+        discovered.append(normalized)
+
+    def scan_markdown_for_prefixes(text: str) -> None:
+        for line in text.splitlines():
+            match = GENERIC_CRITERION_HEADER_PATTERN.match(line)
+            if match:
+                add_prefix(match.group("prefix"))
+
+    try:
+        index_text = index_path.read_text(encoding="utf-8")
+    except OSError:
+        return ()
+
+    scan_markdown_for_prefixes(index_text)
+
+    # Read linked markdown docs from the index to infer real-world prefixes.
+    for match in MARKDOWN_LINK_PATTERN.finditer(index_text):
+        target = match.group("target").strip()
+        if not target:
+            continue
+
+        raw_path = Path(target)
+        candidates = []
+        if raw_path.is_absolute():
+            candidates.append(raw_path)
+        else:
+            candidates.append((index_path.parent / raw_path).resolve())
+            candidates.append((repo_root / raw_path).resolve())
+
+        selected: Path | None = next((candidate for candidate in candidates if candidate.exists() and candidate.is_file()), None)
+        if not selected:
+            continue
+
+        try:
+            scan_markdown_for_prefixes(selected.read_text(encoding="utf-8"))
+        except OSError:
+            continue
+
+    return tuple(discovered)
+
+
+def resolve_id_prefixes(
+    repo_root: Path,
+    criteria_dir_input: str,
+    raw_prefixes: tuple[str, ...] | list[str] | None,
+) -> tuple[str, ...]:
+    if raw_prefixes:
+        return normalize_id_prefixes(raw_prefixes)
+
+    detected = detect_id_prefixes_from_requirements_index(repo_root, criteria_dir_input)
+    if detected:
+        return detected
+
+    return DEFAULT_ID_PREFIXES
+
+
+def prompt_for_init_prefix(default_prefix: str = "REQ") -> str:
+    click.echo("Initialize scaffold: choose a requirement ID key prefix (for example AC, R, REQMD).")
+    click.echo("Tip: customize this for your project to avoid generic IDs.")
+
+    raw = click.prompt(
+        "Starter key prefix (without trailing '-')",
+        default=default_prefix,
+        show_default=True,
+    )
+    value = str(raw).strip().upper().rstrip("-")
+    if not value or not ID_PREFIX_PATTERN.fullmatch(value):
+        raise click.ClickException("Invalid key prefix. Use uppercase letters/numbers, for example REQ, AC, or TEAM1.")
+    return value
 
 
 def style_status_count(status_label: str, value: object) -> str:
@@ -344,10 +440,10 @@ def right_align_menu_suffix(label: str, suffix: str, index_width: int = 1) -> st
 
 
 def file_sort_key_by_priority(counts: dict[str, int], label: str) -> tuple[int, int, int, str]:
-    # Priority buckets: Black (Implemented + Desktop-Verified), then Blue, then Green.
-    black = counts["🔧 Implemented"] + counts["💻 Desktop-Verified"]
+    # Priority buckets: in-progress (Implemented), then Proposed, then completed (Verified).
+    black = counts["🔧 Implemented"]
     blue = counts["💡 Proposed"]
-    green = counts["🎮 VR-Verified"] + counts["✅ Done"]
+    green = counts["✅ Verified"]
     return (-black, -blue, -green, label)
 
 
@@ -447,6 +543,67 @@ def iter_domain_files(repo_root: Path, criteria_dir_input: str) -> list[Path]:
     if not criteria_dir.is_absolute():
         criteria_dir = (repo_root / criteria_dir).resolve()
     return sorted(criteria_dir.glob("*.md"))
+
+
+def initialize_requirements_scaffold(repo_root: Path, criteria_dir_input: str, starter_prefix: str) -> list[Path]:
+    criteria_dir = Path(criteria_dir_input)
+    if not criteria_dir.is_absolute():
+        criteria_dir = (repo_root / criteria_dir).resolve()
+
+    criteria_dir.mkdir(parents=True, exist_ok=True)
+
+    index_path = criteria_dir.with_suffix(".md")
+    starter_domain_path = criteria_dir / "starter.md"
+    criteria_dir_display = criteria_dir.relative_to(repo_root).as_posix()
+    starter_display = starter_domain_path.relative_to(repo_root).as_posix()
+
+    created_paths: list[Path] = []
+
+    if not index_path.exists():
+        index_path.write_text(
+            f"""# Requirements
+
+This document is the source-of-truth index for reqmd requirements.
+
+## How To Use
+
+- Keep requirement IDs stable and unique.
+- Keep one status line directly below each requirement heading.
+- Use Given/When/Then when a requirement needs explicit acceptance detail.
+- Simple one-line requirements with only a title and status are also valid.
+- Keep domain docs under {criteria_dir_display}/.
+
+Status workflow:
+- 💡 Proposed -> 🔧 Implemented -> ✅ Verified
+- Use ⛔ Blocked or 🗑️ Deprecated when needed.
+
+## Domain Documents
+
+### Starter
+- [Starter]({starter_display}) - bootstrap requirement for first-run setup
+""",
+            encoding="utf-8",
+        )
+        created_paths.append(index_path)
+
+    if not starter_domain_path.exists():
+        starter_domain_path.write_text(
+            f"""# Starter Requirements
+
+Scope: starter bootstrap content.
+
+### {starter_prefix}-HELLO-001: Replace this starter requirement
+- **Status:** 💡 Proposed
+- Given a newly initialized requirements catalog
+- When teams adopt this tool in their project
+- Then this requirement serves as an easy-to-delete handoff placeholder.
+""",
+            encoding="utf-8",
+        )
+        process_file(starter_domain_path, check_only=False)
+        created_paths.append(starter_domain_path)
+
+    return created_paths
 
 
 def display_name_from_h1(path: Path) -> str:
@@ -577,7 +734,7 @@ def extract_criterion_block(
 
 
 def _rule_style_kwargs(status_label: str) -> dict:
-    if status_label in ("✅ Done", "🎮 VR-Verified"):
+    if status_label == "✅ Verified":
         return {"fg": "green"}
     if status_label == "💡 Proposed":
         return {"fg": "bright_blue"}
@@ -759,10 +916,10 @@ def select_from_menu(
 
         if allow_paging_nav:
             keys_line = (
-                f"keys: 1-9 select | {MENU_PREV}=prev | {MENU_NEXT}=next | {MENU_BACK}=back | {MENU_QUIT}=quit"
+                f"keys: 1-9 select | {MENU_PREV}=prev | {MENU_NEXT}=next | {MENU_UP}=up | {MENU_QUIT}=quit"
             )
         else:
-            keys_line = f"keys: 1-9 select | {MENU_BACK}=back | {MENU_QUIT}=quit"
+            keys_line = f"keys: 1-9 select | {MENU_UP}=up | {MENU_QUIT}=quit"
         if extra_key:
             extra_help = extra_key_help if extra_key_help else "action"
             keys_line = f"{keys_line} | {extra_key}={extra_help}"
@@ -781,8 +938,8 @@ def select_from_menu(
             raise click.Abort()
         if choice == MENU_QUIT:
             return None
-        if choice == MENU_BACK:
-            return "back"
+        if choice == MENU_UP:
+            return "up"
         if extra_key and choice == extra_key:
             return extra_key_return
         if extra_keys and choice in extra_keys:
@@ -858,7 +1015,7 @@ def interactive_update_loop(
         )
         if file_choice is None:
             return 0
-        if file_choice == "back":
+        if file_choice == "up":
             continue
         if file_choice == "toggle-sort":
             current_sort_files = not current_sort_files
@@ -909,7 +1066,7 @@ def interactive_update_loop(
                 )
                 if criterion_choice is None:
                     return 0
-                if criterion_choice == "back":
+                if criterion_choice == "up":
                     break
                 if criterion_choice == "toggle-sort":
                     current_sort_criteria = not current_sort_criteria
@@ -941,7 +1098,7 @@ def interactive_update_loop(
                 current_status_idx = None
             # Background for highlighted status row mirrors the status color family.
             STATUS_HIGHLIGHT_BG = "\x1b[48;5;220m"   # amber — visible on both light/dark
-            if current_status in ("✅ Done", "🎮 VR-Verified"):
+            if current_status == "✅ Verified":
                 STATUS_HIGHLIGHT_BG = "\x1b[48;5;28m"   # dark green
             elif current_status == "💡 Proposed":
                 STATUS_HIGHLIGHT_BG = "\x1b[48;5;27m"   # bright blue
@@ -954,13 +1111,13 @@ def interactive_update_loop(
                 show_page_indicator=False,
                 allow_paging_nav=False,
                 extra_keys={"n": "nav-next", "p": "nav-prev"},
-                extra_keys_help={"n": "next-req", "p": "prev-req"},
+                extra_keys_help={"n": "next", "p": "prev"},
                 selected_option_index=current_status_idx,
                 selected_option_bg=STATUS_HIGHLIGHT_BG,
             )
             if status_choice is None:
                 return 0
-            if status_choice == "back":
+            if status_choice == "up":
                 criterion_index = None
                 continue
             if status_choice == "nav-prev":
@@ -1125,7 +1282,7 @@ def filtered_interactive_loop(
             current_status_idx = None
 
         STATUS_HIGHLIGHT_BG = "\x1b[48;5;220m"   # amber
-        if current_status in ("\u2705 Done", "\U0001f3ae VR-Verified"):
+        if current_status == "\u2705 Verified":
             STATUS_HIGHLIGHT_BG = "\x1b[48;5;28m"   # dark green
         elif current_status == "\U0001f4a1 Proposed":
             STATUS_HIGHLIGHT_BG = "\x1b[48;5;27m"   # bright blue
@@ -1138,14 +1295,14 @@ def filtered_interactive_loop(
             show_page_indicator=False,
             allow_paging_nav=False,
             extra_keys={"n": "nav-next", "p": "nav-prev"},
-            extra_keys_help={"n": "next-req", "p": "prev-req"},
+            extra_keys_help={"n": "next", "p": "prev"},
             selected_option_index=current_status_idx,
             selected_option_bg=STATUS_HIGHLIGHT_BG,
         )
 
         if status_choice is None:
             return 0
-        if status_choice == "back":
+        if status_choice == "up":
             return 0
         if status_choice == "nav-prev":
             if index > 0:
@@ -1246,7 +1403,7 @@ def lookup_criterion_interactive(
             current_status_idx = None
 
         STATUS_HIGHLIGHT_BG = "\x1b[48;5;220m"   # amber
-        if current_status in ("\u2705 Done", "\U0001f3ae VR-Verified"):
+        if current_status == "\u2705 Verified":
             STATUS_HIGHLIGHT_BG = "\x1b[48;5;28m"   # dark green
         elif current_status == "\U0001f4a1 Proposed":
             STATUS_HIGHLIGHT_BG = "\x1b[48;5;27m"   # bright blue
@@ -1262,7 +1419,7 @@ def lookup_criterion_interactive(
             selected_option_bg=STATUS_HIGHLIGHT_BG,
         )
 
-        if status_choice is None or status_choice == "back":
+        if status_choice is None or status_choice == "up":
             return 0
 
         new_status = status_labels[int(status_choice)]
@@ -1553,7 +1710,7 @@ def print_summary_table(table_rows: list[list[object]], emoji_columns: bool) -> 
     "--set-status",
     "set_status",
     type=str,
-    help="Non-interactive mode: target status (label, plain text, or slug, e.g. 'Implemented' or 'desktop-verified').",
+    help="Non-interactive mode: target status (label, plain text, or slug, e.g. 'Implemented' or 'verified').",
 )
 @click.option(
     "--set",
@@ -1617,9 +1774,14 @@ def print_summary_table(table_rows: list[list[object]], emoji_columns: bool) -> 
     "--id-prefix",
     "id_prefixes",
     multiple=True,
-    default=DEFAULT_ID_PREFIXES,
-    show_default=True,
+    default=(),
     help="Allowed header ID prefixes. Repeat or comma-separate values, for example --id-prefix R or --id-prefix AC,R.",
+)
+@click.option(
+    "--init",
+    "init_scaffold",
+    is_flag=True,
+    help="Initialize docs scaffold (index + starter domain file) and exit.",
 )
 def main(
     check: bool,
@@ -1640,15 +1802,39 @@ def main(
     repo_root: Path,
     criteria_dir: str,
     id_prefixes: tuple[str, ...],
+    init_scaffold: bool,
     criterion_id: str | None,
 ) -> None:
+    repo_root = repo_root.resolve()
+
+    if init_scaffold:
+        if check or filter_status or set_criterion_id or set_status or set_updates or set_file_input or set_file or tree or criterion_id:
+            raise click.ClickException(
+                "--init cannot be combined with --check, positional ID, --filter-status/--tree, or --set-* options."
+            )
+
+        try:
+            if id_prefixes:
+                starter_prefix = normalize_id_prefixes(id_prefixes)[0]
+            else:
+                starter_prefix = prompt_for_init_prefix(default_prefix="REQ")
+        except ValueError as exc:
+            raise click.ClickException(str(exc)) from exc
+
+        created = initialize_requirements_scaffold(repo_root, criteria_dir, starter_prefix=starter_prefix)
+        if created:
+            click.echo("Initialized requirement scaffold:")
+            for path in created:
+                click.echo(f"  + {path.relative_to(repo_root)}")
+        else:
+            click.echo("Requirement scaffold already present; no files created.")
+        raise SystemExit(0)
 
     try:
-        id_prefixes = normalize_id_prefixes(id_prefixes)
+        id_prefixes = resolve_id_prefixes(repo_root, criteria_dir, id_prefixes)
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
 
-    repo_root = repo_root.resolve()
     domain_files = iter_domain_files(repo_root, criteria_dir)
     if not domain_files:
         print(f"No requirement markdown files found under: {criteria_dir}", file=sys.stderr)
