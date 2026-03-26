@@ -707,43 +707,4 @@ def main(
 
 
 if __name__ == "__main__":
-    main()                    "changed": changed,
-                }
-            )
-
-        _, table_rows = collect_summary_rows(domain_files, check_only=True, display_name_fn=display_name_from_h1)
-        if json_output:
-            payload = build_summary_payload(repo_root, resolved_criteria_dir, domain_files, [])
-            payload["mode"] = "set"
-            payload["updates"] = update_results
-            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
-            raise SystemExit(0)
-
-        if summary_table:
-            print_summary_table(table_rows, emoji_columns=emoji_columns)
-        raise SystemExit(0)
-
-    if json_output:
-        payload = dict(summary_payload)
-        payload["ok"] = True
-        click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
-        raise SystemExit(0)
-
-    if interactive and not check:
-        # RQMD-INTERACTIVE-011: preflight write-permission gate
-        check_files_writable(domain_files, repo_root)
-        raise SystemExit(
-            interactive_update_loop(
-                repo_root,
-                resolved_criteria_dir_input,
-                domain_files,
-                emoji_columns=emoji_columns,
-                sort_files=False,
-                sort_strategy=sort_strategy,
-                id_prefixes=id_prefixes,
-            )
-        )
-
-
-if __name__ == "__main__":
     main()
