@@ -3,7 +3,7 @@
 Scope: cross-project operation, path configuration, and repo-agnostic behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 5🔧 0✅ 0⛔ 0🗑️
+Summary: 5💡 5🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### REQMD-PORTABILITY-001: Configurable repo root
@@ -73,3 +73,16 @@ Summary: 4💡 5🔧 0✅ 0⛔ 0🗑️
 - Then reqmd exits with a clear, actionable error message
 - And the message distinguishes not-found conditions from permission-denied conditions
 - And no partial interactive session is started.
+
+### REQMD-PORTABILITY-010: One-time emoji strip and restore commands
+- **Status:** 💡 Proposed
+- Given a team prefers plain-text status labels for platform compatibility or readability
+- When `--strip-status-emojis` is run once against the docs
+- Then all emoji prefixes are removed from every status line across all criteria files
+- And subsequent runs infer emoji-free mode from the absence of emojis in existing statuses and do not reintroduce them
+- And summary blocks are regenerated without emoji characters.
+- Given a team wants to restore emoji-prefixed statuses
+- When `--restore-status-emojis` is run once against the docs
+- Then the canonical emoji is prepended to every status line across all criteria files
+- And subsequent runs resume normal emoji-inclusive behavior.
+- And both operations are idempotent and produce no diff if already in the target mode.

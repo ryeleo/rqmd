@@ -143,3 +143,4 @@ def test_REQMD_portability_008_scratch_corpus_runs_from_requirements_dir_without
     assert result.exit_code == 0
     assert "REQ-PAG-002" in result.output
     assert "REQ-PAG-037" in result.output
+    assert "REQ-PAG-227" in result.output
