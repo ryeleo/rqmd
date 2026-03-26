@@ -161,6 +161,25 @@ Explicit global roll-up totals:
 uv run rqmd --rollup --no-interactive
 ```
 
+Custom roll-up columns from CLI equations:
+
+```bash
+uv run rqmd --rollup --rollup-map "C1=I+V" --rollup-map "C2=P" --no-interactive
+```
+
+Custom roll-up columns from config (`.json`, `.yml`, `.yaml`):
+
+```bash
+uv run rqmd --rollup --rollup-config .rqmd-rollup.yaml --json --no-interactive
+```
+
+When no CLI map/config is passed, rqmd resolves roll-up mappings with this precedence:
+
+1. `--rollup-map` CLI equations
+2. project config (`.rqmd-rollup.json|yaml|yml` in `--repo-root`)
+3. user config (`~/.config/rqmd/rollup.json|yaml|yml`)
+4. built-in canonical status totals
+
 ## Tests
 
 Run full pytest suite from this folder:

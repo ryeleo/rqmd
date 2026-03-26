@@ -16,8 +16,8 @@ from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
 from .criteria_parser import find_criterion_by_id, parse_criteria
 from .markdown_io import (display_name_from_h1, format_path_display,
                           iter_domain_files)
-from .menus import (right_align_menu_suffix, select_from_menu,
-                    truncate_text, visible_length)
+from .menus import (right_align_menu_suffix, select_from_menu, truncate_text,
+                    visible_length)
 from .status_model import (build_color_rollup_text, status_emoji,
                            style_status_label, style_status_line)
 from .status_update import (print_criterion_panel, prompt_for_blocked_reason,
@@ -25,7 +25,6 @@ from .status_update import (print_criterion_panel, prompt_for_blocked_reason,
                             update_criterion_status)
 from .summary import (collect_summary_rows, count_statuses,
                       print_summary_table, process_file)
-
 
 SORT_STRATEGY_SPECS: dict[str, dict[str, object]] = {
     "standard": {
@@ -39,13 +38,13 @@ SORT_STRATEGY_SPECS: dict[str, dict[str, object]] = {
         "file_default_key": "name",
         "file_default_ascending": False,
         "criterion_columns": [
+            ("status", "status"),
             ("title", "title"),
             ("id", "id"),
-            ("status", "status"),
         ],
-        "criterion_default_key": None,
+        "criterion_default_key": "status",
         "criterion_default_ascending": False,
-        "criterion_cycle_wrap": False,
+        "criterion_cycle_wrap": True,
     },
     "status-focus": {
         "file_columns": [
@@ -77,12 +76,12 @@ SORT_STRATEGY_SPECS: dict[str, dict[str, object]] = {
         "file_default_key": "name",
         "file_default_ascending": True,
         "criterion_columns": [
+            ("status", "status"),
             ("title", "title"),
             ("id", "id"),
-            ("status", "status"),
         ],
-        "criterion_default_key": "title",
-        "criterion_default_ascending": True,
+        "criterion_default_key": "status",
+        "criterion_default_ascending": False,
         "criterion_cycle_wrap": True,
     },
 }
@@ -99,9 +98,9 @@ FILE_SORT_COLUMNS: list[tuple[str, str]] = [
 ]
 
 CRITERION_SORT_COLUMNS: list[tuple[str, str]] = [
+    ("status", "status"),
     ("title", "title"),
     ("id", "id"),
-    ("status", "status"),
 ]
 
 
@@ -127,7 +126,8 @@ def _sort_indicator(ascending: bool) -> str:
 
 
 def _format_sort_token(label: str, active: bool, ascending: bool) -> str:
-    text = f"{label} {_sort_indicator(ascending)}" if active else label
+    indicator = _sort_indicator(ascending) if active else " "
+    text = f"{label} {indicator}"
     return click.style(text, bold=True) if active else text
 
 
@@ -143,28 +143,74 @@ def _build_sort_title(base_title: str, default_label: str, columns: list[tuple[s
     return f"{base_title}\nsort: {' | '.join(tokens)}"
 
 
+def _right_align_text(left: str, right: str) -> str:
+    term_width = shutil.get_terminal_size(fallback=(120, 24)).columns
+    pad = term_width - visible_length(left) - visible_length(right)
+    if pad < 1:
+        pad = 1
+    return f"{left}{' ' * pad}{right}"
+
+
+def _build_file_stats_header(active_key: str, ascending: bool, emoji_columns: bool = False) -> str:
+    labels = {
+        "proposed": "💡" if emoji_columns else "P",
+        "implemented": "🔧" if emoji_columns else "I",
+        "verified": "✅" if emoji_columns else "Ver",
+        "blocked_deprecated": "⛔/🗑️" if emoji_columns else "Blk/Dep",
+    }
+
+    def cell(key: str, width: int) -> str:
+        label = labels[key]
+        indicator = _sort_indicator(ascending) if active_key == key else " "
+        styled = click.style(f"{label} {indicator}", bold=(active_key == key))
+        return _right_align_sort_token(styled, width)
+
+    return " | ".join(
+        [
+            cell("proposed", 5),
+            cell("implemented", 5),
+            cell("verified", 5),
+            cell("blocked_deprecated", 9 if not emoji_columns else 8),
+        ]
+    )
+
+
 def _build_file_sort_title(
     base_title: str,
     active_key: str,
     ascending: bool,
     columns: list[tuple[str, str]],
+    emoji_columns: bool = False,
 ) -> str:
-    width_map = {
-        "name": 4,
-        "proposed": 3,
-        "implemented": 3,
-        "verified": 3,
-        "blocked_deprecated": 7,
-    }
-    tokens: list[str] = []
-    for key, label in columns:
-        token = _format_sort_token(label, active_key == key, ascending)
-        if key == "name":
-            tokens.append(token)
-            continue
-        width = max(width_map[key], visible_length(f"{label} {_sort_indicator(ascending)}") if active_key == key else width_map[key])
-        tokens.append(_right_align_sort_token(token, width))
-    return f"{base_title}\nsort: {' | '.join(tokens)}"
+    name_indicator = _sort_indicator(ascending) if active_key == "name" else " "
+    name_label = click.style(
+        f"name {name_indicator}",
+        bold=(active_key == "name"),
+    )
+    left = f"sort: {name_label}"
+    right = _build_file_stats_header(active_key, ascending, emoji_columns=emoji_columns)
+    return f"{base_title}\n{_right_align_text(left, right)}"
+
+
+def _build_criterion_sort_title(base_title: str, active_key: str | None, ascending: bool) -> str:
+    status_indicator = _sort_indicator(ascending) if active_key == "status" else " "
+    status_label = click.style(
+        f"status {status_indicator}",
+        bold=(active_key == "status"),
+    )
+    title_indicator = _sort_indicator(ascending) if active_key == "title" else " "
+    title_label = click.style(
+        f"title {title_indicator}",
+        bold=(active_key == "title"),
+    )
+    id_indicator = _sort_indicator(ascending) if active_key == "id" else " "
+    id_label = click.style(
+        f"id {id_indicator}",
+        bold=(active_key == "id"),
+    )
+
+    left = f"sort: {status_label} | {title_label}"
+    return f"{base_title}\n{_right_align_text(left, id_label)}"
 
 
 def get_sort_strategy_spec(name: str) -> dict[str, object]:
@@ -387,6 +433,7 @@ def interactive_update_loop(
                 active_key=current_file_sort_key,
                 ascending=current_file_sort_ascending,
                 columns=file_columns,
+                emoji_columns=emoji_columns,
             ),
             file_options,
             repeat_choice_right=True,
@@ -448,10 +495,8 @@ def interactive_update_loop(
                     for c in criteria
                 ]
                 criterion_choice = select_from_menu_fn(
-                    _build_sort_title(
+                    _build_criterion_sort_title(
                         f"Select requirement in {selected_path.relative_to(repo_root).as_posix()}",
-                        default_label="document",
-                        columns=criterion_columns,
                         active_key=current_criterion_sort_key,
                         ascending=current_criterion_sort_ascending,
                     ),
@@ -783,6 +828,24 @@ def lookup_criterion_interactive(
         new_status = status_labels[int(status_choice)]
         blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
         deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+
+        changed = update_criterion_status(
+            path,
+            criterion,
+            new_status,
+            blocked_reason=blocked_reason,
+            deprecated_reason=deprecated_reason,
+        )
+        process_file(path, check_only=False)
+
+        if changed:
+            click.echo(f"Updated {criterion['id']} -> {new_status}")
+        else:
+            click.echo(f"No change for {criterion['id']} ({new_status})")
+
+        _, table_rows = collect_summary_rows(domain_files, check_only=True, display_name_fn=display_name_from_h1)
+        print_summary_table(table_rows, emoji_columns=emoji_columns)
+        return 0
 
         changed = update_criterion_status(
             path,

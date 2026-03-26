@@ -3,7 +3,7 @@
 Scope: status aggregation, per-file summary generation, and roll-up display output.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 1🔧 4✅ 0⛔ 1🗑️
+Summary: 0💡 1🔧 5✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-ROLLUP-001: Summary count generation per status
@@ -35,7 +35,7 @@ Summary: 1💡 1🔧 4✅ 0⛔ 1🗑️
 - And zebra/background styling remains legible.
 
 ### RQMD-ROLLUP-005: Cross-file/global roll-up report mode
-- **Status:** 🔧 Implemented
+- **Status:** ✅ Verified
 - Given teams need quick portfolio-level visibility
 - When a global roll-up mode is added
 - Then rqmd can output aggregate status totals across all domain files
@@ -51,7 +51,7 @@ Summary: 1💡 1🔧 4✅ 0⛔ 1🗑️
 - And invalid project roll-up settings produce clear validation messages referencing the config file path and offending keys.
 
 ### RQMD-ROLLUP-007: Custom roll-up expressions and mappings
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - Given teams may want full control over how individual statuses aggregate into roll-up columns
 - When a project-level config defines roll-up mappings
 - Then rqmd supports a declarative `rollup_map` (or `rollup_equations`) where each roll-up column may be defined by an expression of statuses, for example:

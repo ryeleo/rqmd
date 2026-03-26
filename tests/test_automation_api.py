@@ -636,6 +636,104 @@ def test_RQMD_rollup_005_json_mode_reports_global_totals(repo_with_domain_docs: 
     assert payload["totals"]["🔧 Implemented"] >= 1
 
 
+def test_RQMD_rollup_007_cli_rollup_map_equations_apply_in_text_mode(repo_with_domain_docs: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--criteria-dir",
+            "docs/requirements",
+            "--rollup",
+            "--rollup-map",
+            "C1=I+V",
+            "--rollup-map",
+            "C2=P",
+            "--no-summary-table",
+            "--no-interactive",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "All files" in result.output
+    assert "C1" in result.output
+    assert "C2" in result.output
+    assert "Ver" not in result.output
+
+
+def test_RQMD_rollup_007_json_mode_includes_custom_columns_from_config(repo_with_domain_docs: Path, tmp_path: Path) -> None:
+    config = tmp_path / "rollup.json"
+    config.write_text(
+        json.dumps(
+            {
+                "rollup_map": {
+                    "InFlight": ["implemented", "verified"],
+                    "Pending": ["proposed"],
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--criteria-dir",
+            "docs/requirements",
+            "--rollup",
+            "--rollup-config",
+            str(config),
+            "--json",
+            "--no-summary-table",
+            "--no-interactive",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "rollup"
+    assert payload["rollup_source"] == str(config)
+    labels = [column["label"] for column in payload["rollup_columns"]]
+    assert labels == ["InFlight", "Pending"]
+    assert payload["rollup_columns"][0]["statuses"] == ["🔧 Implemented", "✅ Verified"]
+
+
+def test_RQMD_rollup_007_cli_map_takes_precedence_over_rollup_config(repo_with_domain_docs: Path, tmp_path: Path) -> None:
+    config = tmp_path / "rollup.json"
+    config.write_text(
+        json.dumps({"rollup_map": {"FromConfig": ["proposed"]}}),
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--criteria-dir",
+            "docs/requirements",
+            "--rollup",
+            "--rollup-config",
+            str(config),
+            "--rollup-map",
+            "FromCli=I+V",
+            "--json",
+            "--no-summary-table",
+            "--no-interactive",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["rollup_source"] == "cli"
+    assert [column["label"] for column in payload["rollup_columns"]] == ["FromCli"]
+
+
 def test_RQMD_automation_009b_summary_table_uses_five_status_headers(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(

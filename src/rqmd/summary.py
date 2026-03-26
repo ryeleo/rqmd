@@ -176,3 +176,9 @@ def build_global_rollup_row(totals: dict[str, int]) -> list[object]:
 
 def print_global_rollup_table(totals: dict[str, int], emoji_columns: bool) -> None:
     print_summary_table([build_global_rollup_row(totals)], emoji_columns=emoji_columns)
+
+
+def print_custom_rollup_table(columns: list[tuple[str, int]]) -> None:
+    headers = ["File"] + [label for label, _ in columns]
+    row: list[object] = ["All files"] + [value for _label, value in columns]
+    click.echo(tabulate([row], headers=headers, tablefmt="simple"))

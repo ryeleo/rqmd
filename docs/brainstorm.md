@@ -1,5 +1,10 @@
 RQMD-CORE-013 (domain/index sync maintenance) since it would reduce manual doc drift over time.
 
+
+## sort orders
+
+The default sort should also effect the inital summary output! (Looks to be ascending names instead of descending right now)
+
 ## "[Shift+]s=sort"
 
 Optionally make it so holding shift while pressing `s` in interactive mode goes to the prior column instead of the next column.

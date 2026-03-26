@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import shutil
 from pathlib import Path
 
@@ -121,8 +122,49 @@ def test_RQMD_sorting_006_default_file_menu_uses_name_sort_desc(monkeypatch, tmp
     assert "A Domain" in captured["options"][1]
     assert "filesystem" not in str(captured["title"])
     assert "\x1b[1mname ↓\x1b[0m" in str(captured["title"])
-    assert "|   P |   I | Ver | Blk/Dep" in str(captured["title"])
+    title_plain = re.sub(r"\x1b\[[0-9;]*m", "", str(captured["title"]))
+    assert re.search(r"P\s+\|\s+I\s+\|\s+Ver\s+\|\s+Blk/Dep", title_plain)
     assert captured["legend"] == "keys: 1-9 select | n=next | p=prev | u=up | s=sort | d=[dsc] | r=rfrsh | q=quit"
+
+
+def test_RQMD_sorting_006b_emoji_columns_affect_select_file_header(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "README.md").write_text(
+        "# Requirements\n\n## Domain Documents\n\n- [A](a.md)\n",
+        encoding="utf-8",
+    )
+    (criteria_dir / "a.md").write_text(
+        "# A Domain Acceptance Criteria\n\nScope: a.\n\n### AC-A-001: A\n- **Status:** 💡 Proposed\n",
+        encoding="utf-8",
+    )
+
+    captured: dict[str, object] = {}
+
+    def fake_select(title, options, **kwargs):
+        if title.startswith("Select file"):
+            captured["title"] = title
+        return None
+
+    monkeypatch.setattr(cli, "select_from_menu", fake_select)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--criteria-dir",
+            "docs/requirements",
+            "--emoji-columns",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    title_plain = re.sub(r"\x1b\[[0-9;]*m", "", str(captured["title"]))
+    assert re.search(r"💡\s+\|\s+🔧\s+\|\s+✅\s+\|\s+⛔/🗑️", title_plain)
 
 
 def test_RQMD_sorting_007_and_011_file_menu_cycles_columns_and_shows_indicator(monkeypatch, tmp_path: Path) -> None:
@@ -175,6 +217,60 @@ def test_RQMD_sorting_007_and_011_file_menu_cycles_columns_and_shows_indicator(m
     assert "Z Domain" in captured["options"][0]
     assert "A Domain" in captured["options"][1]
     assert captured["legend"] == "keys: 1-9 select | n=next | p=prev | u=up | s=sort | d=[dsc] | r=rfrsh | q=quit"
+
+
+def test_RQMD_sorting_011_header_columns_stay_fixed_when_indicator_moves(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "README.md").write_text(
+        "# Requirements\n\n## Domain Documents\n\n- [A](a.md)\n- [B](b.md)\n",
+        encoding="utf-8",
+    )
+    (criteria_dir / "a.md").write_text(
+        "# A Domain Acceptance Criteria\n\nScope: a.\n\n### AC-A-001: A\n- **Status:** 💡 Proposed\n",
+        encoding="utf-8",
+    )
+    (criteria_dir / "b.md").write_text(
+        "# B Domain Acceptance Criteria\n\nScope: b.\n\n### AC-B-001: B\n- **Status:** 🔧 Implemented\n",
+        encoding="utf-8",
+    )
+
+    state = {"call": 0}
+    titles: list[str] = []
+
+    def fake_select(title, options, **kwargs):
+        if title.startswith("Select file"):
+            titles.append(title)
+            state["call"] += 1
+            if state["call"] == 1:
+                return "cycle-sort"
+        return None
+
+    monkeypatch.setattr(cli, "select_from_menu", fake_select)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--criteria-dir",
+            "docs/requirements",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert len(titles) >= 2
+
+    def sort_line(menu_title: str) -> str:
+        line = menu_title.splitlines()[1]
+        return re.sub(r"\x1b\[[0-9;]*m", "", line)
+
+    first = sort_line(titles[0])
+    second = sort_line(titles[1])
+    assert [i for i, ch in enumerate(first) if ch == "|"] == [i for i, ch in enumerate(second) if ch == "|"]
 
 
 def test_RQMD_sorting_008_direction_token_updates_in_legend(monkeypatch, tmp_path: Path) -> None:
@@ -544,8 +640,8 @@ def test_RQMD_interactive_010_deep_paging_and_status_updates_with_scratch(monkey
         updated = selected.read_text(encoding="utf-8")
         assert "### AC-F01-001: First criterion" in updated
         assert "### AC-F01-002: Second criterion" in updated
-        assert "### AC-F01-001: First criterion\n- **Status:** 🔧 Implemented" in updated
-        assert "### AC-F01-002: Second criterion\n- **Status:** ✅ Verified" in updated
+        assert "### AC-F01-001: First criterion\n- **Status:** ✅ Verified" in updated
+        assert "### AC-F01-002: Second criterion\n- **Status:** 🔧 Implemented" in updated
     finally:
         # Cleanup scratch data so this test leaves the working tree unchanged.
         if scratch_root.exists():

@@ -78,9 +78,8 @@ from . import workflows as workflows_mod
 from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
                            parse_batch_update_jsonl, parse_set_entry)
 from .constants import (DEFAULT_CRITERIA_DIR, DEFAULT_ID_PREFIXES,
-                        ID_PREFIX_PATTERN, MENU_REFRESH,
-                        MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT,
-                        STATUS_ORDER, SUMMARY_END,
+                        ID_PREFIX_PATTERN, MENU_REFRESH, MENU_TOGGLE_DIRECTION,
+                        MENU_TOGGLE_SORT, STATUS_ORDER, SUMMARY_END,
                         SUMMARY_START)
 from .criteria_parser import (collect_criteria_by_status, find_criterion_by_id,
                               normalize_id_prefixes, parse_criteria,
@@ -94,6 +93,8 @@ from .markdown_io import (auto_detect_criteria_dir, check_files_writable,
                           validate_files_readable)
 from .menus import (apply_background_preserving_styles,
                     file_sort_key_by_priority, select_from_menu)
+from .rollup_config import (compute_rollup_column_values,
+                            resolve_rollup_columns)
 from .status_model import (build_color_rollup_text, normalize_status_input,
                            style_status_count, style_status_label)
 from .status_update import (apply_status_change_by_id, print_criterion_panel,
@@ -103,9 +104,9 @@ from .status_update import (apply_status_change_by_id, print_criterion_panel,
 from .summary import (build_summary_block, build_summary_line,
                       build_summary_table, collect_summary_rows,
                       count_statuses, insert_or_replace_summary,
-                      normalize_status_lines, print_global_rollup_table,
-                      print_summary_table,
-                      process_file)
+                      normalize_status_lines, print_custom_rollup_table,
+                      print_global_rollup_table,
+                      print_summary_table, process_file)
 from .workflows import (build_filtered_criteria_payload, build_summary_payload,
                         print_criteria_tree)
 
@@ -312,6 +313,19 @@ def lookup_criterion_interactive(
     help="Print aggregate status totals across all requirement files and exit.",
 )
 @click.option(
+    "--rollup-map",
+    "rollup_map_entries",
+    multiple=True,
+    type=str,
+    help="Custom rollup column equation, repeatable (for example --rollup-map 'C1=I+V').",
+)
+@click.option(
+    "--rollup-config",
+    type=str,
+    default=None,
+    help="Optional path to rollup config (.json/.yml/.yaml) containing rollup_map or rollup_equations.",
+)
+@click.option(
     "--json",
     "json_output",
     is_flag=True,
@@ -367,6 +381,8 @@ def main(
     summary_table: bool,
     sort_strategy: str,
     rollup_mode: bool,
+    rollup_map_entries: tuple[str, ...],
+    rollup_config: str | None,
     json_output: bool,
     repo_root: Path,
     criteria_dir: str | None,
@@ -484,6 +500,13 @@ def main(
     if rollup_mode:
         if check or filter_status or set_criterion_id or set_status or set_updates or set_file_input or set_file or tree:
             raise click.ClickException("--rollup cannot be combined with --check, --filter-status, --tree, or --set-* options.")
+        rollup_columns, rollup_source = resolve_rollup_columns(
+            repo_root,
+            cli_rollup_map=rollup_map_entries,
+            rollup_config_path=rollup_config,
+        )
+        rollup_column_values = compute_rollup_column_values(summary_payload["totals"], rollup_columns)
+
         if json_output:
             payload = {
                 "mode": "rollup",
@@ -491,8 +514,25 @@ def main(
                 "file_count": len(domain_files),
                 "totals": summary_payload["totals"],
             }
+            if rollup_column_values:
+                payload["rollup_source"] = rollup_source
+                payload["rollup_columns"] = [
+                    {
+                        "label": label,
+                        "statuses": statuses,
+                        "count": value,
+                    }
+                    for label, value, statuses in rollup_column_values
+                ]
             click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
             raise SystemExit(0)
+
+        if rollup_column_values:
+            print_custom_rollup_table([(label, value) for label, value, _statuses in rollup_column_values])
+            if rollup_source and rollup_source != "cli":
+                click.echo(f"Using rollup config: {rollup_source}")
+            raise SystemExit(0)
+
         print_global_rollup_table(summary_payload["totals"], emoji_columns=emoji_columns)
         raise SystemExit(0)
 
