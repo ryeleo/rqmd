@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-SAMPLE_DOMAIN_TEXT = """# Demo Domain Acceptance Criteria
+SAMPLE_DOMAIN_TEXT = """# Demo Domain Requirement
 
-Scope: demo criteria.
+Scope: demo requirements.
 
-### AC-HELLO-001: Hello criterion
+### AC-HELLO-001: Hello requirement
 - **Status:** 🔧 Implemented
 - Given a demo state
 - When the demo runs
@@ -31,14 +31,14 @@ def two_file_repo(tmp_path: Path) -> Path:
     domain_dir = repo / "docs" / "requirements"
     domain_dir.mkdir(parents=True)
 
-    first = """# First Acceptance Criteria
+    first = """# First Requirement
 
 Scope: first.
 
 ### AC-OVERLAP-001: Shared ID
 - **Status:** 🔧 Implemented
 """
-    second = """# Second Acceptance Criteria
+    second = """# Second Requirement
 
 Scope: second.
 

@@ -19,7 +19,7 @@ def test_RQMD_core_001_iter_domain_files_sorted_and_markdown_only(tmp_path: Path
 
 
 def test_RQMD_core_002_and_007_parse_and_find_criterion() -> None:
-    text = """# Demo Acceptance Criteria
+    text = """# Demo Requirement
 
 Scope: demo.
 
@@ -35,8 +35,8 @@ Scope: demo.
     with TemporaryDirectory() as td:
         path = Path(td) / "demo.md"
         path.write_text(text, encoding="utf-8")
-        criteria = cli.parse_criteria(path)
-        assert [c["id"] for c in criteria] == ["AC-DEMO-001", "AC-DEMO-002"]
+        requirements = cli.parse_criteria(path)
+        assert [c["id"] for c in requirements] == ["AC-DEMO-001", "AC-DEMO-002"]
         assert cli.find_criterion_by_id(path, "ac-demo-002")["title"] == "Second"
 
 
@@ -54,8 +54,8 @@ Scope: demo.
     with TemporaryDirectory() as td:
         path = Path(td) / "demo.md"
         path.write_text(text, encoding="utf-8")
-        criteria = cli.parse_criteria(path, id_prefixes=("R",))
-        assert [c["id"] for c in criteria] == ["R-DEMO-001"]
+        requirements = cli.parse_criteria(path, id_prefixes=("R",))
+        assert [c["id"] for c in requirements] == ["R-DEMO-001"]
         assert cli.find_criterion_by_id(path, "r-demo-001", id_prefixes=("R",))["title"] == "First"
 
 
@@ -69,7 +69,7 @@ def test_RQMD_core_003_normalize_status_aliases() -> None:
 
 
 def test_RQMD_core_004_and_005_insert_or_replace_summary_block() -> None:
-    text = """# Demo Acceptance Criteria
+    text = """# Demo Requirement
 
 Scope: demo.
 
@@ -121,7 +121,7 @@ def test_RQMD_core_006b_build_summary_block_uses_five_status_order() -> None:
 def test_RQMD_core_008_process_file_idempotent(tmp_path: Path) -> None:
     path = tmp_path / "demo.md"
     path.write_text(
-        """# Demo Acceptance Criteria
+        """# Demo Requirement
 
 Scope: demo.
 
@@ -140,7 +140,7 @@ Scope: demo.
 def test_RQMD_core_010_update_status_handles_blocked_and_deprecated_reasons(tmp_path: Path) -> None:
     path = tmp_path / "demo.md"
     path.write_text(
-        """# Demo Acceptance Criteria
+        """# Demo Requirement
 
 Scope: demo.
 
@@ -149,16 +149,16 @@ Scope: demo.
 """,
         encoding="utf-8",
     )
-    criterion = cli.find_criterion_by_id(path, "AC-DEMO-001")
+    requirement = cli.find_criterion_by_id(path, "AC-DEMO-001")
 
-    changed = cli.update_criterion_status(path, criterion, "⛔ Blocked", blocked_reason="Need API")
+    changed = cli.update_criterion_status(path, requirement, "⛔ Blocked", blocked_reason="Need API")
     assert changed is True
     blocked_text = path.read_text(encoding="utf-8")
     assert "- **Status:** ⛔ Blocked" in blocked_text
     assert "**Blocked:** Need API" in blocked_text
 
-    criterion = cli.find_criterion_by_id(path, "AC-DEMO-001")
-    changed = cli.update_criterion_status(path, criterion, "🗑️ Deprecated", deprecated_reason="Replaced")
+    requirement = cli.find_criterion_by_id(path, "AC-DEMO-001")
+    changed = cli.update_criterion_status(path, requirement, "🗑️ Deprecated", deprecated_reason="Replaced")
     assert changed is True
     deprecated_text = path.read_text(encoding="utf-8")
     assert "- **Status:** 🗑️ Deprecated" in deprecated_text
@@ -176,7 +176,7 @@ def test_RQMD_core_011_and_012_init_scaffold_creates_index_and_starter(tmp_path:
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--init",
         ],
@@ -205,7 +205,7 @@ def test_RQMD_core_012b_init_scaffold_allows_custom_starter_key(tmp_path: Path) 
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--init",
         ],
@@ -227,7 +227,7 @@ def test_RQMD_core_011b_init_scaffold_is_idempotent(tmp_path: Path) -> None:
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--init",
         ],
@@ -240,7 +240,7 @@ def test_RQMD_core_011b_init_scaffold_is_idempotent(tmp_path: Path) -> None:
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--init",
         ],
@@ -260,7 +260,7 @@ def test_RQMD_core_011c_init_scaffold_supports_custom_criteria_dir(tmp_path: Pat
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "custom/ac",
             "--init",
         ],
@@ -282,7 +282,7 @@ def test_RQMD_core_011d_init_cannot_be_combined_with_check(tmp_path: Path) -> No
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--init",
             "--check",

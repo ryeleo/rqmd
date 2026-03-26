@@ -127,7 +127,7 @@ def parse_criteria(
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
 ) -> list[dict[str, object]]:
     lines = path.read_text(encoding="utf-8").splitlines()
-    criteria: list[dict[str, object]] = []
+    requirements: list[dict[str, object]] = []
     current: dict[str, object] | None = None
     header_pattern = build_criterion_header_pattern(id_prefixes)
 
@@ -144,7 +144,7 @@ def parse_criteria(
                 "deprecated_reason": None,
                 "deprecated_reason_line": None,
             }
-            criteria.append(current)
+            requirements.append(current)
             continue
 
         status_match = STATUS_PATTERN.match(line)
@@ -168,7 +168,7 @@ def parse_criteria(
             current["deprecated_reason"] = deprecated_match.group(1).strip()
             current["deprecated_reason_line"] = index
 
-    return [criterion for criterion in criteria if criterion["status_line"] is not None]
+    return [requirement for requirement in requirements if requirement["status_line"] is not None]
 
 
 def find_criterion_by_id(
@@ -177,9 +177,9 @@ def find_criterion_by_id(
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
 ) -> dict[str, object] | None:
     target = criterion_id.strip().upper()
-    for criterion in parse_criteria(path, id_prefixes=id_prefixes):
-        if str(criterion["id"]).upper() == target:
-            return criterion
+    for requirement in parse_criteria(path, id_prefixes=id_prefixes):
+        if str(requirement["id"]).upper() == target:
+            return requirement
     return None
 
 
@@ -220,8 +220,8 @@ def collect_criteria_by_status(
     del repo_root
     result: dict[Path, list[dict[str, object]]] = {}
     for path in domain_files:
-        criteria = parse_criteria(path, id_prefixes=id_prefixes)
-        matching = [c for c in criteria if c["status"] == target_status]
+        requirements = parse_criteria(path, id_prefixes=id_prefixes)
+        matching = [c for c in requirements if c["status"] == target_status]
         if matching:
             result[path] = matching
     return result

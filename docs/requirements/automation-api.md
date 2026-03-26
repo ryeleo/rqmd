@@ -1,4 +1,4 @@
-# Automation API Acceptance Criteria
+# Automation API Requirement
 
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
@@ -13,11 +13,11 @@ Summary: 0💡 0🔧 10✅ 0⛔ 0🗑️
 - Then no files are written
 - And process exits non-zero if any summary changes would be required.
 
-### RQMD-AUTOMATION-002: Single criterion update mode
+### RQMD-AUTOMATION-002: Single requirement update mode
 - **Status:** ✅ Verified
-- Given criterion ID and status are provided
-- When `--set-criterion-id` and `--set-status` are used
-- Then only that criterion is updated
+- Given requirement ID and status are provided
+- When `--set-requirement-id` and `--set-status` are used
+- Then only that requirement is updated
 - And summary block for its file is refreshed.
 
 ### RQMD-AUTOMATION-003: Repeatable bulk set mode
@@ -38,7 +38,7 @@ Summary: 0💡 0🔧 10✅ 0⛔ 0🗑️
 - **Status:** ✅ Verified
 - Given batch rows use `criterion_id`, `id`, or `ac_id`
 - When parser reads rows
-- Then any supported key is accepted for criterion identifier
+- Then any supported key is accepted for requirement identifier
 - And status remains required.
 
 ### RQMD-AUTOMATION-006: Conflicting mode guardrails
@@ -50,7 +50,7 @@ Summary: 0💡 0🔧 10✅ 0⛔ 0🗑️
 
 ### RQMD-AUTOMATION-007: File scope disambiguation
 - **Status:** ✅ Verified
-- Given duplicate criterion IDs might exist across files
+- Given duplicate requirement IDs might exist across files
 - When user provides `--file` scope
 - Then update resolves only within that file
 - And ambiguity errors are avoided.
@@ -59,7 +59,7 @@ Summary: 0💡 0🔧 10✅ 0⛔ 0🗑️
 - **Status:** ✅ Verified
 - Given `--filter-status` with `--tree`
 - When command runs in non-interactive mode
-- Then tool prints grouped criteria tree by file
+- Then tool prints grouped requirements tree by file
 - And exits without opening interactive menus.
 
 ### RQMD-AUTOMATION-009: Summary table control
@@ -74,5 +74,5 @@ Summary: 0💡 0🔧 10✅ 0⛔ 0🗑️
 - Given machine consumers need parse-friendly output
 - When `--json` is used in non-interactive command flows
 - Then rqmd prints valid JSON for summary/check/set/filter-status modes
-- And filter mode includes status, criteria_dir, total, and grouped criteria by file
+- And filter mode includes status, criteria_dir, total, and grouped requirements by file
 - And rqmd exits without interactive prompts or tree formatting noise.

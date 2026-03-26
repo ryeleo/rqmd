@@ -29,13 +29,13 @@ def _rule_style_kwargs(status_label: str) -> dict:
 
 def print_criterion_panel(
     path: Path,
-    criterion: dict[str, object],
+    requirement: dict[str, object],
     repo_root: Path,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
 ) -> None:
-    criterion_id = str(criterion["id"])
-    title = str(criterion["title"])
-    status = str(criterion.get("status") or "")
+    criterion_id = str(requirement["id"])
+    title = str(requirement["title"])
+    status = str(requirement.get("status") or "")
     criterion_text = extract_criterion_block(path, criterion_id, id_prefixes=id_prefixes)
     term_width = shutil.get_terminal_size(fallback=(120, 24)).columns
     rule = "=" * max(24, min(term_width, 100))
@@ -53,17 +53,17 @@ def print_criterion_panel(
 
 def update_criterion_status(
     path: Path,
-    criterion: dict[str, object],
+    requirement: dict[str, object],
     new_status: str,
     blocked_reason: str | None = None,
     deprecated_reason: str | None = None,
 ) -> bool:
     lines = path.read_text(encoding="utf-8").splitlines()
-    status_line = criterion["status_line"]
-    blocked_reason_line = criterion.get("blocked_reason_line")
-    deprecated_reason_line = criterion.get("deprecated_reason_line")
+    status_line = requirement["status_line"]
+    blocked_reason_line = requirement.get("blocked_reason_line")
+    deprecated_reason_line = requirement.get("deprecated_reason_line")
     if not isinstance(status_line, int):
-        raise ValueError("Invalid criterion status line.")
+        raise ValueError("Invalid requirement status line.")
 
     new_status_line_text = f"- **Status:** {new_status}"
     status_changed = lines[status_line] != new_status_line_text
@@ -154,9 +154,9 @@ def apply_status_change_by_id(
 
     matches: list[tuple[Path, dict[str, object]]] = []
     for path in target_paths:
-        criterion = find_criterion_by_id(path, criterion_id, id_prefixes=id_prefixes)
-        if criterion:
-            matches.append((path, criterion))
+        requirement = find_criterion_by_id(path, criterion_id, id_prefixes=id_prefixes)
+        if requirement:
+            matches.append((path, requirement))
 
     if not matches:
         if file_filter:
@@ -168,14 +168,14 @@ def apply_status_change_by_id(
     if len(matches) > 1 and not file_filter:
         locations = ", ".join(path.relative_to(repo_root).as_posix() for path, _ in matches)
         raise click.ClickException(
-            f"Criterion '{criterion_id}' matched multiple files: {locations}. Use --file to disambiguate."
+            f"Requirement '{criterion_id}' matched multiple files: {locations}. Use --file to disambiguate."
         )
 
-    path, criterion = matches[0]
+    path, requirement = matches[0]
     new_status = normalize_status_input(new_status_input)
     changed = update_criterion_status(
         path,
-        criterion,
+        requirement,
         new_status,
         blocked_reason=blocked_reason,
         deprecated_reason=deprecated_reason,
@@ -184,7 +184,7 @@ def apply_status_change_by_id(
 
     if emit_output:
         if changed:
-            click.echo(f"Updated {criterion['id']} in {path.relative_to(repo_root).as_posix()} -> {new_status}")
+            click.echo(f"Updated {requirement['id']} in {path.relative_to(repo_root).as_posix()} -> {new_status}")
         else:
-            click.echo(f"No change for {criterion['id']} in {path.relative_to(repo_root).as_posix()} ({new_status})")
+            click.echo(f"No change for {requirement['id']} in {path.relative_to(repo_root).as_posix()} ({new_status})")
     return changed

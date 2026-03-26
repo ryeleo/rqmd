@@ -18,7 +18,7 @@ def test_RQMD_automation_001_check_only_mode_detects_needed_changes(repo_with_do
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--check",
             "--no-interactive",
@@ -37,9 +37,9 @@ def test_RQMD_automation_002_single_set_updates_criterion(repo_with_domain_docs:
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
-            "--set-criterion-id",
+            "--set-requirement-id",
             "AC-HELLO-001",
             "--set-status",
             "done",
@@ -72,11 +72,11 @@ Scope: demo.
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--id-prefix",
             "R",
-            "--set-criterion-id",
+            "--set-requirement-id",
             "R-HELLO-001",
             "--set-status",
             "done",
@@ -92,7 +92,7 @@ Scope: demo.
 def test_RQMD_automation_003_repeatable_set_bulk_updates(repo_with_domain_docs: Path) -> None:
     domain = repo_with_domain_docs / "docs" / "requirements"
     (domain / "extra.md").write_text(
-        """# Extra Acceptance Criteria
+        """# Extra Requirement
 
 Scope: extra.
 
@@ -108,7 +108,7 @@ Scope: extra.
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--set",
             "AC-HELLO-001=implemented",
@@ -129,7 +129,7 @@ def test_RQMD_automation_003b_repeatable_set_rejects_removed_legacy_status(repo_
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--set",
             "AC-HELLO-001=desktop-verified",
@@ -154,7 +154,7 @@ def test_RQMD_automation_004_and_005_set_file_jsonl_with_alias_keys(repo_with_do
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--set-file",
             str(update_file),
@@ -183,7 +183,7 @@ def test_RQMD_automation_005b_set_file_accepts_all_id_alias_keys(
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--set-file",
             str(update_file),
@@ -210,7 +210,7 @@ def test_RQMD_automation_004b_set_file_csv_and_tsv_apply_rows(repo_with_domain_d
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--set-file",
             str(csv_file),
@@ -226,7 +226,7 @@ def test_RQMD_automation_004b_set_file_csv_and_tsv_apply_rows(repo_with_domain_d
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--set-file",
             str(tsv_file),
@@ -262,7 +262,7 @@ Scope: demo.
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--set-file",
             str(update_file),
@@ -285,7 +285,7 @@ def test_RQMD_automation_006_conflicting_mode_guardrails(repo_with_domain_docs: 
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--set",
             "AC-HELLO-001=done",
@@ -305,9 +305,9 @@ def test_RQMD_automation_007_file_scope_disambiguation(two_file_repo: Path) -> N
         [
             "--repo-root",
             str(two_file_repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
-            "--set-criterion-id",
+            "--set-requirement-id",
             "AC-OVERLAP-001",
             "--set-status",
             "done",
@@ -322,9 +322,9 @@ def test_RQMD_automation_007_file_scope_disambiguation(two_file_repo: Path) -> N
         [
             "--repo-root",
             str(two_file_repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
-            "--set-criterion-id",
+            "--set-requirement-id",
             "AC-OVERLAP-001",
             "--set-status",
             "done",
@@ -347,7 +347,7 @@ def test_RQMD_automation_008_filtered_tree_output(repo_with_domain_docs: Path) -
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--filter-status",
             "implemented",
@@ -381,7 +381,7 @@ Scope: core.
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--filter-status",
             "Implemented",
@@ -414,7 +414,7 @@ def test_RQMD_automation_008c_filtered_tree_auto_detects_prefix_from_requirement
 
 Scope: custom.
 
-### TEAM-CORE-001: Team custom criterion
+### TEAM-CORE-001: Team custom requirement
 - **Status:** 🔧 Implemented
 """,
         encoding="utf-8",
@@ -426,7 +426,7 @@ Scope: custom.
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--filter-status",
             "Implemented",
@@ -447,7 +447,7 @@ def test_RQMD_automation_009_no_summary_table_suppresses_table(repo_with_domain_
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--no-summary-table",
             "--no-interactive",
@@ -465,7 +465,7 @@ def test_RQMD_automation_008d_filtered_tree_accepts_plain_proposed_label(two_fil
         [
             "--repo-root",
             str(two_file_repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--filter-status",
             "proposed",
@@ -488,7 +488,7 @@ def test_RQMD_automation_008e_filtered_json_output_for_proposed(two_file_repo: P
         [
             "--repo-root",
             str(two_file_repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--filter-status",
             "proposed",
@@ -504,7 +504,7 @@ def test_RQMD_automation_008e_filtered_json_output_for_proposed(two_file_repo: P
     assert payload["criteria_dir"] == "docs/requirements"
     assert payload["total"] == 1
     assert payload["files"][0]["path"].endswith("second.md")
-    assert payload["files"][0]["criteria"][0]["id"] == "AC-OVERLAP-001"
+    assert payload["files"][0]["requirements"][0]["id"] == "AC-OVERLAP-001"
 
 
 def test_RQMD_automation_008f_json_summary_output_without_filter_status(repo_with_domain_docs: Path) -> None:
@@ -514,7 +514,7 @@ def test_RQMD_automation_008f_json_summary_output_without_filter_status(repo_wit
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--json",
             "--no-interactive",
@@ -537,7 +537,7 @@ def test_RQMD_automation_008g_json_check_mode_reports_failure(repo_with_domain_d
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--check",
             "--json",
@@ -560,9 +560,9 @@ def test_RQMD_automation_008h_json_set_mode_reports_updates(repo_with_domain_doc
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
-            "--set-criterion-id",
+            "--set-requirement-id",
             "AC-HELLO-001",
             "--set-status",
             "verified",
@@ -581,11 +581,11 @@ def test_RQMD_automation_008h_json_set_mode_reports_updates(repo_with_domain_doc
 def test_RQMD_rollup_005_text_mode_prints_global_totals(repo_with_domain_docs: Path) -> None:
     domain = repo_with_domain_docs / "docs" / "requirements"
     (domain / "extra.md").write_text(
-        """# Extra Acceptance Criteria
+        """# Extra Requirement
 
 Scope: extra.
 
-### AC-EXTRA-001: Extra criterion
+### AC-EXTRA-001: Extra requirement
 - **Status:** 💡 Proposed
 """,
         encoding="utf-8",
@@ -597,7 +597,7 @@ Scope: extra.
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--rollup",
             "--no-summary-table",
@@ -619,7 +619,7 @@ def test_RQMD_rollup_005_json_mode_reports_global_totals(repo_with_domain_docs: 
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--rollup",
             "--json",
@@ -643,7 +643,7 @@ def test_RQMD_rollup_007_cli_rollup_map_equations_apply_in_text_mode(repo_with_d
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--rollup",
             "--rollup-map",
@@ -682,7 +682,7 @@ def test_RQMD_rollup_007_json_mode_includes_custom_columns_from_config(repo_with
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--rollup",
             "--rollup-config",
@@ -715,7 +715,7 @@ def test_RQMD_rollup_007_cli_map_takes_precedence_over_rollup_config(repo_with_d
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--rollup",
             "--rollup-config",
@@ -741,7 +741,7 @@ def test_RQMD_automation_009b_summary_table_uses_five_status_headers(repo_with_d
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--no-interactive",
         ],

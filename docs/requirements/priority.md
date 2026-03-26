@@ -1,6 +1,6 @@
-# Priority Acceptance Criteria
+# Priority Requirement
 
-Scope: add a first-class `Priority` field to requirement criteria, integrate priority into interactive and non-interactive flows, and allow priority-aware sorting and summaries.
+Scope: add a first-class `Priority` field to requirement requirements, integrate priority into interactive and non-interactive flows, and allow priority-aware sorting and summaries.
 
 <!-- acceptance-status-summary:start -->
 Summary: 6💡 0🔧 0✅ 0⛔ 0🗑️
@@ -8,10 +8,10 @@ Summary: 6💡 0🔧 0✅ 0⛔ 0🗑️
 
 ### RQMD-PRIORITY-001: First-class priority field
 - **Status:** 💡 Proposed
-- Given a requirement criterion block
+- Given a requirement requirement block
 - When parsed by rqmd
 - Then the parser recognizes an optional `- **Priority:** <label>` line adjacent to the status line
-- And the priority is stored as part of the criterion metadata alongside `status`, `id`, and `title`.
+- And the priority is stored as part of the requirement metadata alongside `status`, `id`, and `title`.
 
 ### RQMD-PRIORITY-002: Priority normalization and allowed values
 - **Status:** 💡 Proposed
@@ -23,7 +23,7 @@ Summary: 6💡 0🔧 0✅ 0⛔ 0🗑️
 ### RQMD-PRIORITY-003: Set status/priority combined UI
 - **Status:** 💡 Proposed
 - Given interactive status menus exist
-- When a user opens the status menu for a criterion
+- When a user opens the status menu for a requirement
 - Then the menu is extended to allow setting both `Status` and `Priority` without leaving the panel
 - And a single toggle key (e.g., `t`) switches the panel focus between `Status` and `Priority` entry modes
 - And the footer legend reflects the current target (`setting: status` or `setting: priority`).

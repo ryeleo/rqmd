@@ -1,4 +1,4 @@
-# Sorting Acceptance Criteria
+# Sorting Requirement
 
 Scope: deterministic ordering, sort toggles, and priority-based ranking in interactive views.
 
@@ -17,14 +17,14 @@ Summary: 0💡 8🔧 1✅ 0⛔ 2🗑️
 ### RQMD-SORTING-002: Sort toggle key behavior
 - **Status:** 🗑️ Deprecated
 - **Deprecated:** Replaced by RQMD-SORTING-007 which provides column-cycle sorting via `s` and clearer UX.
-- Given users are in file or criterion selection menus
+- Given users are in file or requirement selection menus
 - When users press the sort toggle key
 - Then rqmd switches between default and alternate ordering modes
 - And menu output clearly reflects the current mode.
 
 ### RQMD-SORTING-003: Stable deterministic ordering
 - **Status:** ✅ Verified
-- Given multiple files or criteria share equal priority values
+- Given multiple files or requirements share equal priority values
 - When rqmd renders sorted menus
 - Then ordering remains stable across repeated renders
 - And avoids jitter between refresh cycles, including going up/down the menu hierarchy.
@@ -41,7 +41,7 @@ Summary: 0💡 8🔧 1✅ 0⛔ 2🗑️
 - Given teams may want alternative ranking policies
 - When sort customization is introduced
 - Then rqmd allows selecting named sort strategies (for example `standard`, `status-focus`, `alpha-asc`) via CLI
-- And each strategy defines default active sort keys/directions and column cycle order for both file and criterion interactive menus
+- And each strategy defines default active sort keys/directions and column cycle order for both file and requirement interactive menus
 - And strategy selection applies consistently across interactive menus.
 
 ### RQMD-SORTING-006: Default name ordering
@@ -89,4 +89,4 @@ Summary: 0💡 8🔧 1✅ 0⛔ 2🗑️
 - When menus render
 - Then the active column label is rendered in bold and an ASCII arrow indicator is shown to indicate direction (`↑` for ascending, `↓` for descending)
 - And in file-list sort headers, non-`name` column labels are right-aligned for quick scanning while `name` remains left-aligned
-- And the same visual cue is present in file and criterion list headers and any columnized views so users can quickly identify the current sort context.
+- And the same visual cue is present in file and requirement list headers and any columnized views so users can quickly identify the current sort context.

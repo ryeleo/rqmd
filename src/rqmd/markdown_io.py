@@ -67,7 +67,7 @@ def resolve_criteria_dir(repo_root: Path, criteria_dir_input: str | None) -> tup
     if detected is None:
         raise click.ClickException(
             "No requirement docs found. Tried auto-detecting docs/requirements/README.md and requirements/README.md from the current working path. "
-            "Pass --criteria-dir to select a different location."
+            "Pass --requirements-dir to select a different location."
         )
     return detected, f"Auto-selected requirement docs: {detected_display}"
 
@@ -80,7 +80,7 @@ def iter_domain_files(repo_root: Path, criteria_dir_input: str) -> list[Path]:
     if not criteria_dir.exists():
         raise click.ClickException(
             f"Requirement docs directory not found: {format_path_display(criteria_dir, repo_root)}\n"
-            f"  Hint: run 'rqmd --init' to create a starter scaffold, or pass --criteria-dir to select a different location."
+            f"  Hint: run 'rqmd --init' to create a starter scaffold, or pass --requirements-dir to select a different location."
         )
 
     try:
@@ -179,7 +179,7 @@ def display_name_from_h1(path: Path) -> str:
     for line in text.splitlines():
         if line.startswith("# "):
             title = line[2:].strip()
-            shortened = title.replace("Acceptance Criteria", "").strip()
+            shortened = title.replace("Requirement", "").strip()
             shortened = shortened.replace("Requirements", "").strip()
             if shortened:
                 return shortened

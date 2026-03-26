@@ -6,8 +6,8 @@ This document is the source-of-truth index for rqmd requirements.
 
 - Keep requirement IDs stable and unique.
 - Keep one status line directly below each requirement heading.
-- Use Given/When/Then when a requirement needs explicit acceptance detail.
 - Simple one-line requirements with only a title and status are also valid.
+- Use Given/When/Then when a requirement needs explicit acceptance detail.
 - Keep this index at docs/requirements/README.md.
 - Keep domain docs under docs/requirements/.
 
@@ -18,12 +18,12 @@ Status workflow:
 ## Domain Documents
 
 ### AC CLI
-- [Core Engine](core-engine.md) - parsing, normalization, summaries, criteria extraction
+- [Core Engine](core-engine.md) - parsing, normalization, summaries, requirements extraction
 - [Interactive UX](interactive-ux.md) - keyboard-driven status update flows
 - [Automation API](automation-api.md) - non-interactive set/set-file/filter behavior
 - [Sorting](sorting.md) - ordering rules, toggles, deterministic ranking behavior
 - [Roll-up](roll-up.md) - summary counts, bucket rendering, and visual roll-up output
-- [Portability](portability.md) - repo root, criteria directory, cross-project assumptions
+- [Portability](portability.md) - repo root, requirements directory, cross-project assumptions
 - [Packaging](packaging.md) - package layout, entrypoints, install/run behavior
 
 ## Verification

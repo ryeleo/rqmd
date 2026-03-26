@@ -1,4 +1,4 @@
-# Portability Acceptance Criteria
+# Portability Requirement
 
 Scope: cross-project operation, path configuration, and repo-agnostic behavior.
 
@@ -13,10 +13,10 @@ Summary: 5💡 7🔧 0✅ 0⛔ 1🗑️
 - Then all file discovery and updates are scoped to that root
 - And relative paths are resolved against it.
 
-### RQMD-PORTABILITY-002: Configurable criteria directory
+### RQMD-PORTABILITY-002: Configurable requirements directory
 - **Status:** 🔧 Implemented
-- Given criteria docs live outside default location
-- When `--criteria-dir` is set
+- Given requirements docs live outside default location
+- When `--requirements-dir` is set
 - Then markdown discovery uses that directory
 - And supports absolute or repo-root-relative input.
 
@@ -25,11 +25,11 @@ Summary: 5💡 7🔧 0✅ 0⛔ 1🗑️
 - Given no portability flags are provided
 - When command runs
 - Then repo root defaults to current directory
-- And criteria directory defaults to docs/requirements.
+- And requirements directory defaults to docs/requirements.
 
 ### RQMD-PORTABILITY-004: Stable relative source display
 - **Status:** 🔧 Implemented
-- Given criterion panels and updates are printed
+- Given requirement panels and updates are printed
 - When output references file paths
 - Then source paths are shown relative to repo root
 - And remain readable across machines.
@@ -45,7 +45,7 @@ Summary: 5💡 7🔧 0✅ 0⛔ 1🗑️
 - **Status:** 💡 Proposed
 - Given teams may want fewer CLI flags
 - When a project config file is added in future
-- Then defaults for repo root and criteria path can be declared centrally
+- Then defaults for repo root and requirements path can be declared centrally
 - And command-line flags still override config values.
 
 ### RQMD-PORTABILITY-007: Status customization config location and precedence
@@ -59,7 +59,7 @@ Summary: 5💡 7🔧 0✅ 0⛔ 1🗑️
 
 ### RQMD-PORTABILITY-008: Automatic requirements-dir search from current path
 - **Status:** 🔧 Implemented
-- Given users run rqmd without an explicit `--criteria-dir`
+- Given users run rqmd without an explicit `--requirements-dir`
 - When rqmd scans from the current working path
 - Then rqmd searches for viable requirements index locations including `docs/requirements/README.md` and `requirements/README.md`
 - And the `docs/` prefix is optional rather than required
@@ -78,12 +78,12 @@ Summary: 5💡 7🔧 0✅ 0⛔ 1🗑️
 - **Status:** 💡 Proposed
 - Given a team prefers plain-text status labels for platform compatibility or readability
 - When `--strip-status-emojis` is run once against the docs
-- Then all emoji prefixes are removed from every status line across all criteria files
+- Then all emoji prefixes are removed from every status line across all requirements files
 - And subsequent runs infer emoji-free mode from the absence of emojis in existing statuses and do not reintroduce them
 - And summary blocks are regenerated without emoji characters.
 - Given a team wants to restore emoji-prefixed statuses
 - When `--restore-status-emojis` is run once against the docs
-- Then the canonical emoji is prepended to every status line across all criteria files
+- Then the canonical emoji is prepended to every status line across all requirements files
 - And subsequent runs resume normal emoji-inclusive behavior.
 - And both operations are idempotent and produce no diff if already in the target mode.
 

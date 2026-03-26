@@ -85,11 +85,11 @@ def test_RQMD_sorting_006_default_file_menu_uses_name_sort_desc(monkeypatch, tmp
         encoding="utf-8",
     )
     (criteria_dir / "a.md").write_text(
-        "# A Domain Acceptance Criteria\n\nScope: a.\n\n### AC-A-001: A\n- **Status:** 💡 Proposed\n",
+        "# A Domain Requirement\n\nScope: a.\n\n### AC-A-001: A\n- **Status:** 💡 Proposed\n",
         encoding="utf-8",
     )
     (criteria_dir / "b.md").write_text(
-        "# B Domain Acceptance Criteria\n\nScope: b.\n\n### AC-B-001: B\n- **Status:** 🔧 Implemented\n",
+        "# B Domain Requirement\n\nScope: b.\n\n### AC-B-001: B\n- **Status:** 🔧 Implemented\n",
         encoding="utf-8",
     )
 
@@ -110,7 +110,7 @@ def test_RQMD_sorting_006_default_file_menu_uses_name_sort_desc(monkeypatch, tmp
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--no-summary-table",
         ],
@@ -136,7 +136,7 @@ def test_RQMD_sorting_006b_emoji_columns_affect_select_file_header(monkeypatch, 
         encoding="utf-8",
     )
     (criteria_dir / "a.md").write_text(
-        "# A Domain Acceptance Criteria\n\nScope: a.\n\n### AC-A-001: A\n- **Status:** 💡 Proposed\n",
+        "# A Domain Requirement\n\nScope: a.\n\n### AC-A-001: A\n- **Status:** 💡 Proposed\n",
         encoding="utf-8",
     )
 
@@ -155,7 +155,7 @@ def test_RQMD_sorting_006b_emoji_columns_affect_select_file_header(monkeypatch, 
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--emoji-columns",
             "--no-summary-table",
@@ -176,11 +176,11 @@ def test_RQMD_sorting_007_and_011_file_menu_cycles_columns_and_shows_indicator(m
         encoding="utf-8",
     )
     (criteria_dir / "a.md").write_text(
-        "# Z Domain Acceptance Criteria\n\nScope: z.\n\n### AC-Z-001: Z\n- **Status:** 💡 Proposed\n",
+        "# Z Domain Requirement\n\nScope: z.\n\n### AC-Z-001: Z\n- **Status:** 💡 Proposed\n",
         encoding="utf-8",
     )
     (criteria_dir / "z.md").write_text(
-        "# A Domain Acceptance Criteria\n\nScope: a.\n\n### AC-A-001: A\n- **Status:** 🔧 Implemented\n",
+        "# A Domain Requirement\n\nScope: a.\n\n### AC-A-001: A\n- **Status:** 🔧 Implemented\n",
         encoding="utf-8",
     )
 
@@ -205,7 +205,7 @@ def test_RQMD_sorting_007_and_011_file_menu_cycles_columns_and_shows_indicator(m
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--no-summary-table",
         ],
@@ -228,11 +228,11 @@ def test_RQMD_sorting_011_header_columns_stay_fixed_when_indicator_moves(monkeyp
         encoding="utf-8",
     )
     (criteria_dir / "a.md").write_text(
-        "# A Domain Acceptance Criteria\n\nScope: a.\n\n### AC-A-001: A\n- **Status:** 💡 Proposed\n",
+        "# A Domain Requirement\n\nScope: a.\n\n### AC-A-001: A\n- **Status:** 💡 Proposed\n",
         encoding="utf-8",
     )
     (criteria_dir / "b.md").write_text(
-        "# B Domain Acceptance Criteria\n\nScope: b.\n\n### AC-B-001: B\n- **Status:** 🔧 Implemented\n",
+        "# B Domain Requirement\n\nScope: b.\n\n### AC-B-001: B\n- **Status:** 🔧 Implemented\n",
         encoding="utf-8",
     )
 
@@ -255,7 +255,7 @@ def test_RQMD_sorting_011_header_columns_stay_fixed_when_indicator_moves(monkeyp
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--no-summary-table",
         ],
@@ -282,7 +282,7 @@ def test_RQMD_sorting_008_direction_token_updates_in_legend(monkeypatch, tmp_pat
         encoding="utf-8",
     )
     (criteria_dir / "a.md").write_text(
-        "# A Domain Acceptance Criteria\n\nScope: a.\n\n### AC-A-001: A\n- **Status:** 🔧 Implemented\n",
+        "# A Domain Requirement\n\nScope: a.\n\n### AC-A-001: A\n- **Status:** 🔧 Implemented\n",
         encoding="utf-8",
     )
 
@@ -305,7 +305,7 @@ def test_RQMD_sorting_008_direction_token_updates_in_legend(monkeypatch, tmp_pat
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--no-summary-table",
         ],
@@ -325,7 +325,7 @@ def test_RQMD_sorting_009_refresh_reopens_file_menu(monkeypatch, tmp_path: Path)
         encoding="utf-8",
     )
     (criteria_dir / "a.md").write_text(
-        "# A Domain Acceptance Criteria\n\nScope: a.\n\n### AC-A-001: A\n- **Status:** 🔧 Implemented\n",
+        "# A Domain Requirement\n\nScope: a.\n\n### AC-A-001: A\n- **Status:** 🔧 Implemented\n",
         encoding="utf-8",
     )
 
@@ -346,7 +346,7 @@ def test_RQMD_sorting_009_refresh_reopens_file_menu(monkeypatch, tmp_path: Path)
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--no-summary-table",
         ],
@@ -379,7 +379,7 @@ def test_RQMD_interactive_009_positional_lookup_mode(monkeypatch, repo_with_doma
             "AC-HELLO-001",
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--no-summary-table",
         ],
@@ -435,7 +435,7 @@ def test_RQMD_interactive_001_default_invokes_interactive_loop(monkeypatch, repo
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--no-summary-table",
         ],
@@ -454,11 +454,11 @@ def test_RQMD_sorting_005_alpha_asc_strategy_changes_default_direction(monkeypat
         encoding="utf-8",
     )
     (criteria_dir / "a.md").write_text(
-        "# A Domain Acceptance Criteria\n\nScope: a.\n\n### AC-A-001: A\n- **Status:** 💡 Proposed\n",
+        "# A Domain Requirement\n\nScope: a.\n\n### AC-A-001: A\n- **Status:** 💡 Proposed\n",
         encoding="utf-8",
     )
     (criteria_dir / "b.md").write_text(
-        "# B Domain Acceptance Criteria\n\nScope: b.\n\n### AC-B-001: B\n- **Status:** 🔧 Implemented\n",
+        "# B Domain Requirement\n\nScope: b.\n\n### AC-B-001: B\n- **Status:** 🔧 Implemented\n",
         encoding="utf-8",
     )
 
@@ -479,7 +479,7 @@ def test_RQMD_sorting_005_alpha_asc_strategy_changes_default_direction(monkeypat
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--sort-strategy",
             "alpha-asc",
@@ -503,11 +503,11 @@ def test_RQMD_sorting_005_status_focus_strategy_uses_implemented_default(monkeyp
         encoding="utf-8",
     )
     (criteria_dir / "a.md").write_text(
-        "# Low Acceptance Criteria\n\nScope: low.\n\n### AC-L-001: L1\n- **Status:** 💡 Proposed\n",
+        "# Low Requirement\n\nScope: low.\n\n### AC-L-001: L1\n- **Status:** 💡 Proposed\n",
         encoding="utf-8",
     )
     (criteria_dir / "b.md").write_text(
-        "# High Acceptance Criteria\n\nScope: high.\n\n### AC-H-001: H1\n- **Status:** 🔧 Implemented\n\n### AC-H-002: H2\n- **Status:** 🔧 Implemented\n",
+        "# High Requirement\n\nScope: high.\n\n### AC-H-001: H1\n- **Status:** 🔧 Implemented\n\n### AC-H-002: H2\n- **Status:** 🔧 Implemented\n",
         encoding="utf-8",
     )
 
@@ -528,7 +528,7 @@ def test_RQMD_sorting_005_status_focus_strategy_uses_implemented_default(monkeyp
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--sort-strategy",
             "status-focus",
@@ -552,7 +552,7 @@ def test_RQMD_sorting_unsorted_flag_warns_as_deprecated_alias(monkeypatch, repo_
         [
             "--repo-root",
             str(repo_with_domain_docs),
-            "--criteria-dir",
+            "--requirements-dir",
             "docs/requirements",
             "--no-summary-table",
             "--unsorted",
@@ -603,17 +603,17 @@ def test_RQMD_interactive_010_deep_paging_and_status_updates_with_scratch(monkey
         text = (
             f"# Domain {idx:02d} Requirements\n\n"
             "Scope: interactive deep test.\n\n"
-            f"### AC-F{idx:02d}-001: First criterion\n"
+            f"### AC-F{idx:02d}-001: First requirement\n"
             "- **Status:** 💡 Proposed\n\n"
-            f"### AC-F{idx:02d}-002: Second criterion\n"
+            f"### AC-F{idx:02d}-002: Second requirement\n"
             "- **Status:** 💡 Proposed\n"
         )
         (criteria_dir / f"domain-{idx:02d}.md").write_text(text, encoding="utf-8")
 
     # File menu under default descending name sort: n (page2), p (page1), n (page2), 2 (pick file 01)
-    # Criterion menu: 1 (pick first criterion)
+    # Requirement menu: 1 (pick first requirement)
     # Status menus: 2 (Implemented), 3 (Verified)
-    # Then unwind: u (from wrapped status menu), u (from criterion menu), q (quit file menu)
+    # Then unwind: u (from wrapped status menu), u (from requirement menu), q (quit file menu)
     keys = iter(["n", "p", "n", "2", "1", "2", "3", "u", "u", "q"])
     monkeypatch.setattr(menus.click, "getchar", lambda: next(keys))
 
@@ -624,7 +624,7 @@ def test_RQMD_interactive_010_deep_paging_and_status_updates_with_scratch(monkey
             [
                 "--repo-root",
                 str(repo_root),
-                "--criteria-dir",
+                "--requirements-dir",
                 criteria_rel,
                 "--no-summary-table",
             ],
@@ -638,10 +638,10 @@ def test_RQMD_interactive_010_deep_paging_and_status_updates_with_scratch(monkey
         # Assert status updates were persisted in the selected file.
         selected = criteria_dir / "domain-01.md"
         updated = selected.read_text(encoding="utf-8")
-        assert "### AC-F01-001: First criterion" in updated
-        assert "### AC-F01-002: Second criterion" in updated
-        assert "### AC-F01-001: First criterion\n- **Status:** ✅ Verified" in updated
-        assert "### AC-F01-002: Second criterion\n- **Status:** 🔧 Implemented" in updated
+        assert "### AC-F01-001: First requirement" in updated
+        assert "### AC-F01-002: Second requirement" in updated
+        assert "### AC-F01-001: First requirement\n- **Status:** ✅ Verified" in updated
+        assert "### AC-F01-002: Second requirement\n- **Status:** 🔧 Implemented" in updated
     finally:
         # Cleanup scratch data so this test leaves the working tree unchanged.
         if scratch_root.exists():
@@ -673,7 +673,7 @@ def test_RQMD_interactive_011_unwritable_file_blocks_interactive_mode(tmp_path: 
             cli.main,
             [
                 "--repo-root", str(repo),
-                "--criteria-dir", "docs/requirements",
+                "--requirements-dir", "docs/requirements",
                 "--no-summary-table",
                 "--interactive",
             ],

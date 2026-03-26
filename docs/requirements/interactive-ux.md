@@ -1,6 +1,6 @@
-# Interactive UX Acceptance Criteria
+# Interactive UX Requirement
 
-Scope: interactive menus, keyboard navigation, and in-session criterion status editing.
+Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
 Summary: 3💡 14🔧 0✅ 0⛔ 2🗑️
@@ -11,7 +11,7 @@ Summary: 3💡 14🔧 0✅ 0⛔ 2🗑️
 - Given the command is run without non-interactive flags
 - When check mode is not enabled
 - Then interactive flow opens by default
-- And user can navigate file -> criterion -> status.
+- And user can navigate file -> requirement -> status.
 
 ### RQMD-INTERACTIVE-002: Single-key menu navigation
 - **Status:** 🔧 Implemented
@@ -27,30 +27,30 @@ Summary: 3💡 14🔧 0✅ 0⛔ 2🗑️
 - Then menu page changes accordingly
 - And selection remains scoped to visible page indices.
 
-### RQMD-INTERACTIVE-004: Criterion next/prev shortcuts
+### RQMD-INTERACTIVE-004: Requirement next/prev shortcuts
 - **Status:** 🔧 Implemented
-- Given the status menu for a criterion is open
+- Given the status menu for a requirement is open
 - When user presses `n` (next) or `p` (prev)
-- Then focus moves across criteria in current ordering
+- Then focus moves across requirements in current ordering
 - And history-aware navigation supports backtracking.
 
 ### RQMD-INTERACTIVE-004A: Next/prev stack semantics
 - **Status:** 🔧 Implemented
-- Given users navigate criteria using `n` and `p`
-- When users move forward and backward across criteria
+- Given users navigate requirements using `n` and `p`
+- When users move forward and backward across requirements
 - Then rqmd preserves a history stack semantics for backtracking
-- And `p` returns to the previously visited criterion context.
+- And `p` returns to the previously visited requirement context.
 
 ### RQMD-INTERACTIVE-005: Sort toggles
 - **Status:** 🔧 Implemented
-- Given file or criterion list menu is open
+- Given file or requirement list menu is open
 - When user toggles sort
 - Then ordering switches between default and priority sorting
 - And the menu reflects the new mode.
 
 ### RQMD-INTERACTIVE-006: Status highlight row
 - **Status:** 🔧 Implemented
-- Given status options are displayed for a criterion
+- Given status options are displayed for a requirement
 - When menu renders
 - Then current status row is highlighted
 - And highlight color aligns with status family.
@@ -73,9 +73,9 @@ Summary: 3💡 14🔧 0✅ 0⛔ 2🗑️
 
 ### RQMD-INTERACTIVE-007: Auto-advance after update
 - **Status:** 🔧 Implemented
-- Given a criterion status is changed in interactive flow
+- Given a requirement status is changed in interactive flow
 - When update succeeds
-- Then the interface advances to the next criterion
+- Then the interface advances to the next requirement
 - And summary table refreshes with updated counts.
 
 ### RQMD-INTERACTIVE-008: Optional reason prompts
@@ -85,11 +85,11 @@ Summary: 3💡 14🔧 0✅ 0⛔ 2🗑️
 - Then tool prompts for optional reason text
 - And reason line is inserted or updated when provided.
 
-### RQMD-INTERACTIVE-009: Positional criterion lookup mode
+### RQMD-INTERACTIVE-009: Positional requirement lookup mode
 - **Status:** 🔧 Implemented
-- Given a criterion ID is passed positionally
+- Given a requirement ID is passed positionally
 - When command executes
-- Then matching criterion panel opens directly
+- Then matching requirement panel opens directly
 - And user can set status once then exit.
 
 ### RQMD-INTERACTIVE-009A: Up key for hierarchical navigation
@@ -165,7 +165,7 @@ Summary: 3💡 14🔧 0✅ 0⛔ 2🗑️
 - When a column is the current sort key
 - Then the column label is rendered in bold and an ASCII arrow (`↑` or `↓`) is shown adjacent to the label to indicate ascending or descending order
 - And the same visual indicator appears in the menu footer or header where space-constrained views cannot bold column headers directly
-- And these visual cues are applied consistently across file lists, criterion lists, and summary tables so users can always identify the active sort and its direction.
+- And these visual cues are applied consistently across file lists, requirement lists, and summary tables so users can always identify the active sort and its direction.
  
 
 # optional status color overrides (names or hex)

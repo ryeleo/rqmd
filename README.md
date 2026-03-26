@@ -1,14 +1,14 @@
 # rqmd
 
-Reusable requirements and acceptance-criteria workflow CLI.
+Reusable requirements and acceptance-requirements workflow CLI.
 
 This package extracts the markdown status-tracking workflow used in this repository into a portable Python package that can be copied to other projects and eventually published to PyPI.
 
 ## What this tool does
 
-- Scans requirement markdown files in a criteria directory.
+- Scans requirement markdown files in a requirements directory.
 - Uses `README.md` inside that directory as the requirements index.
-- When `--criteria-dir` is omitted, auto-detects the nearest viable requirement index from the current working path.
+- When `--requirements-dir` is omitted, auto-detects the nearest viable requirement index from the current working path.
 - Normalizes `- **Status:** ...` lines to canonical statuses.
 - Parses requirement headers such as `### AC-FOO-001: Title` or `### R-FOO-001: Title`.
 - Regenerates per-file summary blocks:
@@ -98,16 +98,16 @@ uv run rqmd --init
 
 `--init` prompts for a starter requirement key prefix (default: `REQ`; recommended to customize).
 
-Set one criterion non-interactively:
+Set one requirement non-interactively:
 
 ```bash
-uv run rqmd --set-criterion-id AC-EXAMPLE-001 --set-status implemented
+uv run rqmd --set-requirement-id AC-EXAMPLE-001 --set-status implemented
 ```
 
 Use a different ID prefix:
 
 ```bash
-uv run rqmd --id-prefix R --set-criterion-id R-EXAMPLE-001 --set-status implemented
+uv run rqmd --id-prefix R --set-requirement-id R-EXAMPLE-001 --set-status implemented
 ```
 
 Bulk set by repeated flags:
@@ -151,7 +151,7 @@ Summary/check/set JSON examples:
 ```bash
 uv run rqmd --json --no-interactive
 uv run rqmd --check --json --no-interactive
-uv run rqmd --set-criterion-id AC-EXAMPLE-001 --set-status verified --json
+uv run rqmd --set-requirement-id AC-EXAMPLE-001 --set-status verified --json
 uv run rqmd --rollup --json --no-interactive
 ```
 
@@ -200,7 +200,7 @@ One-command shell smoke check (no make required):
 bash scripts/local-smoke.sh
 ```
 
-The test suite is organized to validate implemented acceptance-criteria behavior for:
+The test suite is organized to validate implemented acceptance-requirements behavior for:
 - core engine parsing and summary sync
 - interactive menu/color behavior
 - non-interactive automation flows
@@ -232,10 +232,10 @@ Auto-detect preference is deterministic:
 You can override both:
 
 ```bash
-uv run rqmd --repo-root /path/to/project --criteria-dir docs/requirements
+uv run rqmd --repo-root /path/to/project --requirements-dir docs/requirements
 ```
 
-`--criteria-dir` can be absolute or relative to `--repo-root`.
+`--requirements-dir` can be absolute or relative to `--repo-root`.
 When auto-detection is used, rqmd reports which index path it selected.
 
 Requirement header prefixes are configurable with `--id-prefix`.

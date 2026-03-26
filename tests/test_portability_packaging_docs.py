@@ -8,10 +8,10 @@ from rqmd import cli
 
 def test_RQMD_portability_001_and_002_repo_root_and_criteria_dir_flags(tmp_path: Path) -> None:
     repo = tmp_path / "another-repo"
-    criteria = repo / "custom" / "ac"
-    criteria.mkdir(parents=True)
-    (criteria / "x.md").write_text(
-        """# X Acceptance Criteria
+    requirements = repo / "custom" / "ac"
+    requirements.mkdir(parents=True)
+    (requirements / "x.md").write_text(
+        """# X Requirement
 
 Scope: x.
 
@@ -27,7 +27,7 @@ Scope: x.
         [
             "--repo-root",
             str(repo),
-            "--criteria-dir",
+            "--requirements-dir",
             "custom/ac",
             "--check",
             "--no-interactive",
@@ -49,11 +49,11 @@ def test_RQMD_portability_003_default_conventions(monkeypatch, repo_with_domain_
             encoding="utf-8",
         )
         (domain / "demo.md").write_text(
-            """# Demo Acceptance Criteria
+            """# Demo Requirement
 
 Scope: demo.
 
-### AC-HELLO-001: Hello criterion
+### AC-HELLO-001: Hello requirement
 - **Status:** 🔧 Implemented
 """,
             encoding="utf-8",
@@ -67,17 +67,17 @@ def test_RQMD_portability_004_relative_source_display(tmp_path: Path, capsys) ->
     path = repo / "docs" / "requirements" / "demo.md"
     path.parent.mkdir(parents=True)
     path.write_text(
-        """# Demo Acceptance Criteria
+        """# Demo Requirement
 
 Scope: demo.
 
-### AC-HELLO-001: Hello criterion
+### AC-HELLO-001: Hello requirement
 - **Status:** 🔧 Implemented
 """,
         encoding="utf-8",
     )
-    criterion = cli.find_criterion_by_id(path, "AC-HELLO-001")
-    cli.print_criterion_panel(path, criterion, repo)
+    requirement = cli.find_criterion_by_id(path, "AC-HELLO-001")
+    cli.print_criterion_panel(path, requirement, repo)
     output = capsys.readouterr().out
     assert "Source: docs/requirements/demo.md" in output
 
@@ -91,7 +91,7 @@ def test_RQMD_portability_005_generic_project_assumptions(tmp_path: Path) -> Non
         encoding="utf-8",
     )
     (criteria_dir / "generic.md").write_text(
-        """# Generic Acceptance Criteria
+        """# Generic Requirement
 
 Scope: generic.
 
@@ -104,7 +104,7 @@ Scope: generic.
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
-        ["--repo-root", str(repo), "--criteria-dir", "docs/requirements", "--no-interactive", "--no-summary-table"],
+        ["--repo-root", str(repo), "--requirements-dir", "docs/requirements", "--no-interactive", "--no-summary-table"],
     )
     assert result.exit_code == 0
 
@@ -118,11 +118,11 @@ def test_RQMD_portability_008a_auto_detects_requirements_dir_without_explicit_fl
         encoding="utf-8",
     )
     (criteria_dir / "demo.md").write_text(
-        """# Demo Acceptance Criteria
+        """# Demo Requirement
 
 Scope: demo.
 
-### REQ-DEMO-001: Demo criterion
+### REQ-DEMO-001: Demo requirement
 - **Status:** 🔧 Implemented
 """,
         encoding="utf-8",
@@ -155,21 +155,21 @@ def test_RQMD_portability_008b_auto_detection_prefers_nearest_requirements_dir_f
         encoding="utf-8",
     )
     (root_criteria_dir / "root.md").write_text(
-        """# Root Acceptance Criteria
+        """# Root Requirement
 
 Scope: root.
 
-### AC-ROOT-001: Root criterion
+### AC-ROOT-001: Root requirement
 - **Status:** 🔧 Implemented
 """,
         encoding="utf-8",
     )
     (nested_criteria_dir / "feature.md").write_text(
-        """# Feature Acceptance Criteria
+        """# Feature Requirement
 
 Scope: feature.
 
-### AC-FEATURE-001: Feature criterion
+### AC-FEATURE-001: Feature requirement
 - **Status:** 🔧 Implemented
 """,
         encoding="utf-8",
@@ -202,7 +202,7 @@ def test_RQMD_packaging_001_to_005_metadata_and_layout() -> None:
     readme = (project_root / "README.md").read_text(encoding="utf-8")
     assert "rqmd --check" in readme
     assert "--repo-root" in readme
-    assert "--criteria-dir" in readme
+    assert "--requirements-dir" in readme
     assert "--id-prefix" in readme
 
     changelog_path = project_root / "CHANGELOG.md"
@@ -223,7 +223,7 @@ def test_RQMD_portability_008_scratch_corpus_runs_from_requirements_dir_without_
         [
             "--repo-root",
             str(scratch_root),
-            "--criteria-dir",
+            "--requirements-dir",
             "requirements",
             "--filter-status",
             "Implemented",
@@ -253,7 +253,7 @@ def test_RQMD_portability_009_nonexistent_criteria_dir_gives_not_found_error(tmp
         cli.main,
         [
             "--repo-root", str(repo),
-            "--criteria-dir", "no/such/dir",
+            "--requirements-dir", "no/such/dir",
             "--check",
             "--no-interactive",
             "--no-summary-table",
@@ -262,7 +262,7 @@ def test_RQMD_portability_009_nonexistent_criteria_dir_gives_not_found_error(tmp
 
     assert result.exit_code != 0
     assert "not found" in result.output.lower()
-    assert "rqmd --init" in result.output or "criteria-dir" in result.output.lower()
+    assert "rqmd --init" in result.output or "requirements-dir" in result.output.lower()
 
 
 def test_RQMD_portability_009_unreadable_domain_file_gives_permission_error(tmp_path: Path) -> None:
@@ -285,7 +285,7 @@ def test_RQMD_portability_009_unreadable_domain_file_gives_permission_error(tmp_
             cli.main,
             [
                 "--repo-root", str(repo),
-                "--criteria-dir", "docs/requirements",
+                "--requirements-dir", "docs/requirements",
                 "--check",
                 "--no-interactive",
                 "--no-summary-table",

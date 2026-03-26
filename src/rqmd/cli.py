@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Requirements/criteria summary updater and fast interactive status editor.
+"""Requirements/requirements summary updater and fast interactive status editor.
 
 This tool keeps per-file status summaries synchronized and provides an
 optimized, keyboard-driven workflow for updating requirement statuses across a
@@ -43,7 +43,7 @@ Examples:
     rqmd --emoji-columns
 - Non-interactive single update:
     rqmd \
-            --set-criterion-id R-TELEMETRY-LOG-001 \
+            --set-requirement-id R-TELEMETRY-LOG-001 \
             --set-status implemented
 - Non-interactive bulk update:
     rqmd \
@@ -235,7 +235,7 @@ def lookup_criterion_interactive(
 @click.option(
     "--interactive/--no-interactive",
     default=True,
-    help="Open interactive file/criterion/status flow after summary table.",
+    help="Open interactive file/requirement/status flow after summary table.",
 )
 @click.option(
     "-u",
@@ -244,15 +244,17 @@ def lookup_criterion_interactive(
     help="Deprecated compatibility alias; filesystem ordering is already the default for Select file.",
 )
 @click.option(
-    "--set-criterion-id",
-    type=str,
-    help="Non-interactive mode: requirement id to update, for example R-TELEMETRY-LOG-001.",
-)
-@click.option(
     "--set-status",
     "set_status",
     type=str,
     help="Non-interactive mode: target status (label, plain text, or slug, e.g. 'Implemented' or 'verified').",
+)
+@click.option(
+    "--set-requirement-id",
+    "--set-criterion-id",
+    "set_criterion_id",
+    type=str,
+    help="Non-interactive mode: requirement id to update, for example R-TELEMETRY-LOG-001.",
 )
 @click.option(
     "--set",
@@ -338,7 +340,9 @@ def lookup_criterion_interactive(
     help="Project root containing requirement documentation.",
 )
 @click.option(
+    "--requirements-dir",
     "--criteria-dir",
+    "criteria_dir",
     type=str,
     default=None,
     help="Directory (absolute or relative to --repo-root) containing requirement markdown files. When omitted, rqmd auto-detects from the current working path.",
@@ -559,7 +563,7 @@ def main(
     # Handle --filter-status mode
     if filter_status:
         if check or set_criterion_id or set_status or set_updates or set_file_input or set_file:
-            raise click.ClickException("--filter-status cannot be combined with --check / --set-criterion-id / --set-status / --file.")
+            raise click.ClickException("--filter-status cannot be combined with --check / --set-requirement-id / --set-status / --file.")
         try:
             normalized_status = normalize_status_input(filter_status)
         except click.ClickException:
@@ -597,11 +601,11 @@ def main(
     non_interactive_requested = bool(set_criterion_id or set_status or set_updates or set_file_input or set_file)
     if non_interactive_requested:
         if check:
-            raise click.ClickException("--check cannot be combined with --set-criterion-id/--set-status.")
+            raise click.ClickException("--check cannot be combined with --set-requirement-id/--set-status.")
         mode_count = int(bool(set_updates)) + int(bool(set_file_input)) + int(bool(set_criterion_id or set_status))
         if mode_count > 1:
             raise click.ClickException(
-                "Use exactly one non-interactive update mode: --set-file, --set ID=STATUS (repeatable), or --set-criterion-id with --set-status."
+                "Use exactly one non-interactive update mode: --set-file, --set ID=STATUS (repeatable), or --set-requirement-id with --set-status."
             )
 
         update_requests: list[dict[str, str | None]] = []
@@ -624,7 +628,7 @@ def main(
             update_requests = parse_batch_update_file(repo_root, set_file_input)
         else:
             if set_criterion_id is None or set_status is None:
-                raise click.ClickException("Both --set-criterion-id and --set-status are required for non-interactive update mode.")
+                raise click.ClickException("Both --set-requirement-id and --set-status are required for non-interactive update mode.")
             update_requests = [
                 {
                     "criterion_id": set_criterion_id,

@@ -37,7 +37,7 @@ bash scripts/local-smoke.sh
 
 ## Notes
 
-- Proposed criteria are intentionally not treated as hard pass/fail requirements in this suite.
+- Proposed requirements are intentionally not treated as hard pass/fail requirements in this suite.
 - Header IDs can use AC/R/RQMD defaults, custom prefixes via `--id-prefix`, or auto-detection from requirements index + linked domain docs.
 - This suite is designed to be copied with the package to new repositories.
 - CI workflow: `.github/workflows/pytest.yml` runs this suite on push and pull_request.

@@ -1,4 +1,4 @@
-# Roll-up Acceptance Criteria
+# Roll-up Requirement
 
 Scope: status aggregation, per-file summary generation, and roll-up display output.
 
@@ -70,7 +70,7 @@ Summary: 0💡 1🔧 5✅ 0⛔ 1🗑️
 -   - "C1 = I + V"
 -   - "C2 = P"
 - ```
-- And evaluation semantics are simple set-union: a criterion with any of the listed statuses contributes to that roll-up column; a criterion may contribute to multiple roll-up columns if configured to do so.
+- And evaluation semantics are simple set-union: a requirement with any of the listed statuses contributes to that roll-up column; a requirement may contribute to multiple roll-up columns if configured to do so.
 - And validation ensures referenced status names or shortcodes exist in the configured status catalog and reports precise config errors with file/path context.
 - And precedence follows: CLI flags > project config rollup_map > user config > built-in defaults.
 - And UI/exports apply the configured roll-up mapping consistently in summary blocks, roll-up tables, and interactive menus.

@@ -265,28 +265,28 @@ def _criterion_status_rank(status: str) -> int:
 
 
 def _sort_criteria(
-    criteria: list[dict[str, object]],
+    requirements: list[dict[str, object]],
     sort_key: str | None,
     ascending: bool,
 ) -> list[dict[str, object]]:
     if sort_key is None:
-        return list(criteria)
+        return list(requirements)
     if sort_key == "title":
-        return sorted(criteria, key=lambda item: (str(item["title"]).lower(), str(item["id"]).lower()), reverse=not ascending)
+        return sorted(requirements, key=lambda item: (str(item["title"]).lower(), str(item["id"]).lower()), reverse=not ascending)
     if sort_key == "id":
-        return sorted(criteria, key=lambda item: str(item["id"]).lower(), reverse=not ascending)
+        return sorted(requirements, key=lambda item: str(item["id"]).lower(), reverse=not ascending)
     if sort_key == "status":
         return sorted(
-            criteria,
+            requirements,
             key=lambda item: (_criterion_status_rank(str(item["status"])), str(item["title"]).lower(), str(item["id"]).lower()),
             reverse=not ascending,
         )
-    raise ValueError(f"Unknown criterion sort key: {sort_key}")
+    raise ValueError(f"Unknown requirement sort key: {sort_key}")
 
 
 def print_criteria_tree(repo_root: Path, criteria_by_file: dict[Path, list[dict[str, object]]], target_status: str) -> None:
     if not criteria_by_file:
-        click.echo(f"No criteria found with status: {target_status}")
+        click.echo(f"No requirements found with status: {target_status}")
         return
 
     click.echo(click.style(f"\n{target_status}", bold=True))
@@ -299,13 +299,13 @@ def print_criteria_tree(repo_root: Path, criteria_by_file: dict[Path, list[dict[
         relative_path = path.relative_to(repo_root)
         click.echo(f"{file_prefix}{click.style(relative_path.as_posix(), dim=True)}")
 
-        criteria = criteria_by_file[path]
-        for crit_idx, criterion in enumerate(criteria):
-            is_last_crit = crit_idx == len(criteria) - 1
+        requirements = criteria_by_file[path]
+        for crit_idx, requirement in enumerate(requirements):
+            is_last_crit = crit_idx == len(requirements) - 1
             crit_prefix = "    " if is_last_file else "│   "
             branch = "└── " if is_last_crit else "├── "
-            crit_id = criterion["id"]
-            crit_title = criterion["title"]
+            crit_id = requirement["id"]
+            crit_title = requirement["title"]
             click.echo(f"{crit_prefix}{branch}{crit_id}: {crit_title}")
 
     click.echo()
@@ -323,14 +323,14 @@ def build_filtered_criteria_payload(
     for path in sorted(criteria_by_file.keys()):
         relative_path = format_path_display(path, repo_root)
         criteria_payload: list[dict[str, str]] = []
-        for criterion in criteria_by_file[path]:
+        for requirement in criteria_by_file[path]:
             criteria_payload.append(
                 {
-                    "id": str(criterion["id"]),
-                    "title": str(criterion["title"]),
+                    "id": str(requirement["id"]),
+                    "title": str(requirement["title"]),
                 }
             )
-        files_payload.append({"path": relative_path, "criteria": criteria_payload})
+        files_payload.append({"path": relative_path, "requirements": criteria_payload})
         total += len(criteria_payload)
 
     return {
@@ -478,7 +478,7 @@ def interactive_update_loop(
 
         while True:
             raw_criteria = parse_criteria(selected_path, id_prefixes=id_prefixes)
-            criteria = _sort_criteria(
+            requirements = _sort_criteria(
                 raw_criteria,
                 current_criterion_sort_key,
                 current_criterion_sort_ascending,
@@ -486,13 +486,13 @@ def interactive_update_loop(
 
             if criterion_index is None:
                 term_width = shutil.get_terminal_size(fallback=(80, 24)).columns
-                criterion_right_labels = [str(c["id"]) for c in criteria]
+                criterion_right_labels = [str(c["id"]) for c in requirements]
                 criterion_options = [
                     style_status_line(str(c["status"]), truncate_text(
                         f"{status_emoji(str(c['status']))} {c['title']}",
                         max(8, term_width - 5 - visible_length(str(c["id"])) - 2),
                     ))
-                    for c in criteria
+                    for c in requirements
                 ]
                 criterion_choice = select_from_menu_fn(
                     _build_criterion_sort_title(
@@ -521,14 +521,14 @@ def interactive_update_loop(
                         wrap_to_first=bool(strategy["criterion_cycle_wrap"]),
                     )
                     current_criterion_sort_ascending = False
-                    click.echo(f"Criterion sort: {current_criterion_sort_key or 'document'} (dsc)")
+                    click.echo(f"Requirement sort: {current_criterion_sort_key or 'document'} (dsc)")
                     continue
                 if criterion_choice == "toggle-direction":
                     current_criterion_sort_ascending = not current_criterion_sort_ascending
-                    click.echo(f"Criterion direction: {'asc' if current_criterion_sort_ascending else 'dsc'}")
+                    click.echo(f"Requirement direction: {'asc' if current_criterion_sort_ascending else 'dsc'}")
                     continue
                 if criterion_choice == "refresh":
-                    click.echo("Criterion list refreshed.")
+                    click.echo("Requirement list refreshed.")
                     continue
 
                 criterion_index = int(criterion_choice)
@@ -536,11 +536,11 @@ def interactive_update_loop(
                 history.append(criterion_index)
                 history_pos = len(history) - 1
 
-            selected_criterion = criteria[criterion_index] if criterion_index < len(criteria) else criteria[-1]
-            refreshed = next((c for c in criteria if str(c["id"]) == str(selected_criterion["id"])), None)
+            selected_criterion = requirements[criterion_index] if criterion_index < len(requirements) else requirements[-1]
+            refreshed = next((c for c in requirements if str(c["id"]) == str(selected_criterion["id"])), None)
             if refreshed:
                 selected_criterion = refreshed
-                criterion_index = criteria.index(refreshed)
+                criterion_index = requirements.index(refreshed)
 
             print_criterion_panel(selected_path, selected_criterion, repo_root, id_prefixes=id_prefixes)
 
@@ -585,7 +585,7 @@ def interactive_update_loop(
                 if history_pos < len(history) - 1:
                     history_pos += 1
                     criterion_index = history[history_pos]
-                elif criterion_index < len(criteria) - 1:
+                elif criterion_index < len(requirements) - 1:
                     criterion_index += 1
                     del history[history_pos + 1:]
                     history.append(criterion_index)
@@ -657,11 +657,11 @@ def filtered_interactive_loop(
 
     flat_list = build_flat_list()
     if not flat_list:
-        click.echo(f"No criteria found with status: {target_status}")
+        click.echo(f"No requirements found with status: {target_status}")
         return 0
 
     click.echo(click.style(
-        f"\nFiltered walk: {target_status} ({len(flat_list)} criteria across all files)",
+        f"\nFiltered walk: {target_status} ({len(flat_list)} requirements across all files)",
         bold=True,
     ))
 
@@ -669,21 +669,21 @@ def filtered_interactive_loop(
     while True:
         flat_list = build_flat_list()
         if not flat_list:
-            click.echo("No more criteria with this status.")
+            click.echo("No more requirements with this status.")
             return 0
         index = min(index, len(flat_list) - 1)
 
-        path, criterion = flat_list[index]
-        refreshed = find_criterion_by_id(path, str(criterion["id"]), id_prefixes=id_prefixes)
+        path, requirement = flat_list[index]
+        refreshed = find_criterion_by_id(path, str(requirement["id"]), id_prefixes=id_prefixes)
         if refreshed:
-            criterion = refreshed
+            requirement = refreshed
 
         click.echo(click.style(f"\n[{index + 1}/{len(flat_list)}]", dim=True))
-        print_criterion_panel(path, criterion, repo_root, id_prefixes=id_prefixes)
+        print_criterion_panel(path, requirement, repo_root, id_prefixes=id_prefixes)
 
         status_labels = [label for label, _ in STATUS_ORDER]
         status_options = [style_status_label(label) for label, _ in STATUS_ORDER]
-        current_status = str(criterion.get("status") or "")
+        current_status = str(requirement.get("status") or "")
         try:
             current_status_idx = status_labels.index(current_status)
         except ValueError:
@@ -698,7 +698,7 @@ def filtered_interactive_loop(
             highlight_bg = "\x1b[48;5;238m"
 
         status_choice = select_from_menu_fn(
-            f"Set status for {criterion['id']} [{index + 1}/{len(flat_list)}]",
+            f"Set status for {requirement['id']} [{index + 1}/{len(flat_list)}]",
             status_options,
             show_page_indicator=False,
             allow_paging_nav=False,
@@ -722,7 +722,7 @@ def filtered_interactive_loop(
             if index < len(flat_list) - 1:
                 index += 1
             else:
-                click.echo("End of filtered list. All criteria reviewed.")
+                click.echo("End of filtered list. All requirements reviewed.")
                 return 0
             continue
 
@@ -732,7 +732,7 @@ def filtered_interactive_loop(
 
         changed = update_criterion_status(
             path,
-            criterion,
+            requirement,
             new_status,
             blocked_reason=blocked_reason,
             deprecated_reason=deprecated_reason,
@@ -740,9 +740,9 @@ def filtered_interactive_loop(
         process_file(path, check_only=False)
 
         if changed:
-            click.echo(f"Updated {criterion['id']} -> {new_status}")
+            click.echo(f"Updated {requirement['id']} -> {new_status}")
         else:
-            click.echo(f"No change for {criterion['id']} ({new_status})")
+            click.echo(f"No change for {requirement['id']} ({new_status})")
 
         _, table_rows = collect_summary_rows(domain_files, check_only=True, display_name_fn=display_name_from_h1)
         print_summary_table(table_rows, emoji_columns=emoji_columns)
@@ -750,7 +750,7 @@ def filtered_interactive_loop(
         flat_after = build_flat_list()
         if changed and new_status != target_status:
             if not flat_after:
-                click.echo("All filtered criteria reviewed.")
+                click.echo("All filtered requirements reviewed.")
                 return 0
             index = min(index, len(flat_after) - 1)
         else:
@@ -760,7 +760,7 @@ def filtered_interactive_loop(
                 click.echo("End of filtered list, wrapping to first.")
                 index = 0
             else:
-                click.echo("All filtered criteria reviewed.")
+                click.echo("All filtered requirements reviewed.")
                 return 0
 
 
@@ -785,21 +785,21 @@ def lookup_criterion_interactive(
     if len(matches) > 1:
         locs = ", ".join(p.relative_to(repo_root).as_posix() for p, _ in matches)
         raise click.ClickException(
-            f"Criterion '{criterion_id}' found in multiple files: {locs}. Use --file to disambiguate."
+            f"Requirement '{criterion_id}' found in multiple files: {locs}. Use --file to disambiguate."
         )
 
-    path, criterion = matches[0]
+    path, requirement = matches[0]
 
     while True:
         refreshed = find_criterion_by_id(path, criterion_id, id_prefixes=id_prefixes)
         if refreshed:
-            criterion = refreshed
+            requirement = refreshed
 
-        print_criterion_panel(path, criterion, repo_root, id_prefixes=id_prefixes)
+        print_criterion_panel(path, requirement, repo_root, id_prefixes=id_prefixes)
 
         status_labels = [label for label, _ in STATUS_ORDER]
         status_options = [style_status_label(label) for label, _ in STATUS_ORDER]
-        current_status = str(criterion.get("status") or "")
+        current_status = str(requirement.get("status") or "")
         try:
             current_status_idx = status_labels.index(current_status)
         except ValueError:
@@ -814,7 +814,7 @@ def lookup_criterion_interactive(
             highlight_bg = "\x1b[48;5;238m"
 
         status_choice = select_from_menu_fn(
-            f"Set status for {criterion['id']}",
+            f"Set status for {requirement['id']}",
             status_options,
             show_page_indicator=False,
             allow_paging_nav=False,
@@ -831,7 +831,7 @@ def lookup_criterion_interactive(
 
         changed = update_criterion_status(
             path,
-            criterion,
+            requirement,
             new_status,
             blocked_reason=blocked_reason,
             deprecated_reason=deprecated_reason,
@@ -839,9 +839,9 @@ def lookup_criterion_interactive(
         process_file(path, check_only=False)
 
         if changed:
-            click.echo(f"Updated {criterion['id']} -> {new_status}")
+            click.echo(f"Updated {requirement['id']} -> {new_status}")
         else:
-            click.echo(f"No change for {criterion['id']} ({new_status})")
+            click.echo(f"No change for {requirement['id']} ({new_status})")
 
         _, table_rows = collect_summary_rows(domain_files, check_only=True, display_name_fn=display_name_from_h1)
         print_summary_table(table_rows, emoji_columns=emoji_columns)
@@ -849,7 +849,7 @@ def lookup_criterion_interactive(
 
         changed = update_criterion_status(
             path,
-            criterion,
+            requirement,
             new_status,
             blocked_reason=blocked_reason,
             deprecated_reason=deprecated_reason,
@@ -857,9 +857,9 @@ def lookup_criterion_interactive(
         process_file(path, check_only=False)
 
         if changed:
-            click.echo(f"Updated {criterion['id']} -> {new_status}")
+            click.echo(f"Updated {requirement['id']} -> {new_status}")
         else:
-            click.echo(f"No change for {criterion['id']} ({new_status})")
+            click.echo(f"No change for {requirement['id']} ({new_status})")
 
         _, table_rows = collect_summary_rows(domain_files, check_only=True, display_name_fn=display_name_from_h1)
         print_summary_table(table_rows, emoji_columns=emoji_columns)

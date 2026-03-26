@@ -1,6 +1,6 @@
-# Core Engine Acceptance Criteria
+# Core Engine Requirement
 
-Scope: parsing, status normalization, summary generation, and criterion discovery.
+Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
 Summary: 0💡 10🔧 5✅ 0⛔ 0🗑️
@@ -8,17 +8,17 @@ Summary: 0💡 10🔧 5✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-001: Domain file discovery
 - **Status:** 🔧 Implemented
-- Given repo root and criteria directory are configured
+- Given repo root and requirements directory are configured
 - When the tool scans for domain docs
 - Then all markdown files in that directory are discovered in stable sorted order
 - And non-markdown files are ignored.
 
 ### RQMD-CORE-002: Status line parsing
 - **Status:** 🔧 Implemented
-- Given a criterion block with a status line
+- Given a requirement block with a status line
 - When the parser reads the document
 - Then the status is extracted from `- **Status:** ...`
-- And criterion metadata retains status line location for edits.
+- And requirement metadata retains status line location for edits.
 
 ### RQMD-CORE-003: Canonical status normalization
 - **Status:** 🔧 Implemented
@@ -48,11 +48,11 @@ Summary: 0💡 10🔧 5✅ 0⛔ 0🗑️
 - Then counts include all supported statuses in fixed order
 - And summary output uses count+emoji format.
 
-### RQMD-CORE-007: Criterion header matching
+### RQMD-CORE-007: Requirement header matching
 - **Status:** 🔧 Implemented
-- Given criterion headings follow `### AC-...: ...`
+- Given requirement headings follow `### AC-...: ...`
 - When parsing runs
-- Then each matching criterion is discoverable by ID
+- Then each matching requirement is discoverable by ID
 - And title text is preserved for menu and reporting output.
 
 ### RQMD-CORE-008: Idempotent processing
@@ -71,7 +71,7 @@ Summary: 0💡 10🔧 5✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-010: Blocked/deprecated reason extraction
 - **Status:** 🔧 Implemented
-- Given a criterion includes blocked or deprecated reason lines
+- Given a requirement includes blocked or deprecated reason lines
 - When parsing runs
 - Then those reason lines are captured with line references
 - And can be updated or removed consistently by status mutation paths.
@@ -84,11 +84,11 @@ Summary: 0💡 10🔧 5✅ 0⛔ 0🗑️
 - And a starter domain directory `docs/requirements/` is created
 - And generated content follows the AC index/domain pattern used by this tool.
 
-### RQMD-CORE-012: Starter dummy criterion generation
+### RQMD-CORE-012: Starter dummy requirement generation
 - **Status:** ✅ Verified
 - Given initialization is generating starter AC content
 - When starter domain docs are created
-- Then at least one easy-to-delete sample criterion `<PREFIX>-HELLO-001` is included
+- Then at least one easy-to-delete sample requirement `<PREFIX>-HELLO-001` is included
 - And the sample clearly indicates it is a handoff placeholder for teams to replace.
 
 ### RQMD-CORE-013: Domain-sync maintenance over time
@@ -103,7 +103,7 @@ Summary: 0💡 10🔧 5✅ 0⛔ 0🗑️
 - **Status:** ✅ Verified
 - Given users do not pass `--id-prefix`
 - When rqmd reads `docs/requirements/README.md` and linked domain docs
-- Then requirement ID prefixes are auto-detected from discovered criterion headers
+- Then requirement ID prefixes are auto-detected from discovered requirement headers
 - And filter/lookup/update flows use those detected prefixes without extra CLI flags.
 
 ### RQMD-CORE-015: Init key prompt with customizable default
@@ -112,4 +112,15 @@ Summary: 0💡 10🔧 5✅ 0⛔ 0🗑️
 - When scaffold initialization starts
 - Then rqmd prompts for a starter requirement key prefix
 - And Enter accepts default `REQ`
-- And generated starter criterion IDs use the selected prefix.
+- And generated starter requirement IDs use the selected prefix.
+
+### RQMD-CORE-016: Initial scaffolding content/copy
+- **Status:** Proposed
+- Given users run `rqmd --init`
+- When scaffold initialization runs
+- Then generated `docs/requirements/README.md` includes a welcome message and instructions for getting started that is copied from:
+    - ./init-docs/README.md for the domain index (requirements/README.md)
+    - ./init-docs/domain-example.md for the starter domain doc (requirements/domain-example.md)
+- And those instructions are included in the python package README somewhere, so they are published on pypi.org as a simple web page.
+- And those documents are maintained in the "./init-docs" directory in this repo for easy editing and management.
+

@@ -1,4 +1,4 @@
-"""Reusable Acceptance Criteria CLI package."""
+"""Reusable Requirement CLI package."""
 
 __all__ = ["main"]
 
