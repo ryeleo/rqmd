@@ -3,7 +3,7 @@
 Scope: cross-project operation, path configuration, and repo-agnostic behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 5🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
+Summary: 2💡 5🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### REQMD-PORTABILITY-001: Configurable repo root

@@ -3,7 +3,7 @@
 Scope: package layout, installability, module entrypoints, and publication readiness.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 5🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
+Summary: 3💡 5🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### REQMD-PACKAGING-001: src-layout package structure

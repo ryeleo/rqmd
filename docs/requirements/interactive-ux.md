@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session criterion status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 11🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
+Summary: 1💡 11🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### REQMD-INTERACTIVE-001: Interactive mode default
@@ -53,7 +53,7 @@ Summary: 1💡 11🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
 - Given status-driven text appears in menus and tables
 - When status color styles are applied
 - Then Proposed uses the dedicated proposed color treatment
-- And Done plus VR-Verified use green styling
+- And Verified uses green styling
 - And Blocked plus Deprecated use dim styling
 - And non-terminal in-progress statuses retain neutral baseline readability.
 

@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and criterion discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 10🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
+Summary: 3💡 10🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### REQMD-CORE-001: Domain file discovery

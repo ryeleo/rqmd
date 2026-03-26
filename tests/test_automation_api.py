@@ -48,7 +48,7 @@ def test_REQMD_automation_002_single_set_updates_criterion(repo_with_domain_docs
     )
     assert result.exit_code == 0
     text = (repo_with_domain_docs / "docs" / "requirements" / "demo.md").read_text(encoding="utf-8")
-    assert "- **Status:** ✅ Done" in text
+    assert "- **Status:** ✅ Verified" in text
 
 
 def test_REQMD_automation_002b_single_set_updates_r_prefixed_requirement(tmp_path: Path) -> None:
@@ -86,7 +86,7 @@ Scope: demo.
 
     assert result.exit_code == 0
     text = (domain / "demo.md").read_text(encoding="utf-8")
-    assert "- **Status:** ✅ Done" in text
+    assert "- **Status:** ✅ Verified" in text
 
 
 def test_REQMD_automation_003_repeatable_set_bulk_updates(repo_with_domain_docs: Path) -> None:
@@ -113,13 +113,13 @@ Scope: extra.
             "--set",
             "AC-HELLO-001=implemented",
             "--set",
-            "AC-HELLO-002=desktop-verified",
+            "AC-HELLO-002=verified",
             "--no-summary-table",
         ],
     )
     assert result.exit_code == 0
     assert "🔧 Implemented" in (domain / "demo.md").read_text(encoding="utf-8")
-    assert "💻 Desktop-Verified" in (domain / "extra.md").read_text(encoding="utf-8")
+    assert "✅ Verified" in (domain / "extra.md").read_text(encoding="utf-8")
 
 
 def test_REQMD_automation_004_and_005_set_file_jsonl_with_alias_keys(repo_with_domain_docs: Path, tmp_path: Path) -> None:
@@ -209,8 +209,8 @@ def test_REQMD_automation_007_file_scope_disambiguation(two_file_repo: Path) -> 
     assert scoped.exit_code == 0
     first_text = (two_file_repo / "docs" / "requirements" / "first.md").read_text(encoding="utf-8")
     second_text = (two_file_repo / "docs" / "requirements" / "second.md").read_text(encoding="utf-8")
-    assert "✅ Done" in first_text
-    assert "✅ Done" not in second_text
+    assert "✅ Verified" in first_text
+    assert "✅ Verified" not in second_text
 
 
 def test_REQMD_automation_008_filtered_tree_output(repo_with_domain_docs: Path) -> None:

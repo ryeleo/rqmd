@@ -27,9 +27,7 @@ Interactive workflow highlights:
 Status model:
 - 💡 Proposed
 - 🔧 Implemented
-- 💻 Desktop-Verified
-- 🎮 VR-Verified
-- ✅ Done
+- ✅ Verified
 - ⛔ Blocked
 - 🗑️ Deprecated
 
@@ -50,7 +48,7 @@ Examples:
 - Non-interactive bulk update:
     reqmd \
             --set R-STEELTARGET-AUDIO-004=implemented \
-            --set R-STEELTARGET-AUDIO-005=desktop-verified
+            --set R-STEELTARGET-AUDIO-005=verified
 - Non-interactive batch update from file:
     reqmd \
             --set-file tmp/ac-updates.jsonl
@@ -95,21 +93,17 @@ DEFAULT_ID_PREFIXES = ("AC", "R")
 STATUS_ORDER = [
     ("💡 Proposed", "proposed"),
     ("🔧 Implemented", "implemented"),
-    ("💻 Desktop-Verified", "desktop-verified"),
-    ("🎮 VR-Verified", "vr-verified"),
-    ("✅ Done", "done"),
+    ("✅ Verified", "verified"),
     ("⛔ Blocked", "blocked"),
     ("🗑️ Deprecated", "deprecated"),
 ]
-STATUS_TERSE_HEADERS_ASCII = ["P", "I", "DT", "VR", "Done", "Blk", "Dep", "WaitVR"]
+STATUS_TERSE_HEADERS_ASCII = ["P", "I", "Ver", "Blk", "Dep"]
 STATUS_ALIASES = {
-    "✅ Verified": "✅ Done",
+    "✅ Done": "✅ Verified",
 }
 STATUS_PARSE_ALIASES = {
     "proposal": "💡 Proposed",
     "propose": "💡 Proposed",
-    "desktop verified": "💻 Desktop-Verified",
-    "vr verified": "🎮 VR-Verified",
 }
 MENU_BACK = "r"
 MENU_QUIT = "q"
@@ -166,45 +160,38 @@ def normalize_id_prefixes(raw_prefixes: tuple[str, ...] | list[str] | None) -> t
 
 def style_status_count(status_label: str, value: object) -> str:
     text = str(value)
-    if status_label in ("✅ Done", "🎮 VR-Verified"):
+    if status_label == "✅ Verified":
         return click.style(text, fg="green")
     if status_label == "💡 Proposed":
         return f"{PROPOSED_FG}{text}{ANSI_RESET}"
     if status_label in ("⛔ Blocked", "🗑️ Deprecated"):
         return click.style(text, dim=True)
-    # Implemented/Desktop-Verified stay normal for baseline readability.
     return text
 
 
 def style_status_label(status_label: str) -> str:
-    if status_label in ("✅ Done", "🎮 VR-Verified"):
+    if status_label == "✅ Verified":
         return click.style(status_label, fg="green")
     if status_label == "💡 Proposed":
         return f"{PROPOSED_FG}{status_label}{ANSI_RESET}"
     if status_label in ("⛔ Blocked", "🗑️ Deprecated"):
         return click.style(status_label, dim=True)
-    # Implemented/Desktop-Verified stay normal for baseline readability.
     return status_label
 
 
 def style_status_line(status_label: str, text: str) -> str:
-    if status_label in ("✅ Done", "🎮 VR-Verified"):
+    if status_label == "✅ Verified":
         return click.style(text, fg="green")
     if status_label == "💡 Proposed":
         return f"{PROPOSED_FG}{text}{ANSI_RESET}"
     if status_label in ("⛔ Blocked", "🗑️ Deprecated"):
         return click.style(text, dim=True)
-    # Implemented/Desktop-Verified stay normal for baseline readability.
     return text
 
 
 def status_emoji(status_label: str) -> str:
     parts = status_label.split(" ", 1)
     return parts[0] if parts else status_label
-
-
-def waiting_vr_count(counts: dict[str, int]) -> int:
-    return counts["🔧 Implemented"] + counts["💻 Desktop-Verified"]
 
 
 def status_lookup() -> dict[str, str]:
@@ -278,8 +265,8 @@ def normalize_status_input(value: str) -> str:
 
 def build_color_rollup_text(counts: dict[str, int]) -> str:
     blue = counts["💡 Proposed"]
-    normal = counts["🔧 Implemented"] + counts["💻 Desktop-Verified"]
-    green = counts["🎮 VR-Verified"] + counts["✅ Done"]
+    normal = counts["🔧 Implemented"]
+    green = counts["✅ Verified"]
     dimmed = counts["⛔ Blocked"] + counts["🗑️ Deprecated"]
 
     blue_text = click.style(f"{blue:>3}", fg="bright_blue")
@@ -1513,7 +1500,7 @@ def collect_summary_rows(
 
 def print_summary_table(table_rows: list[list[object]], emoji_columns: bool) -> None:
     if emoji_columns:
-        headers = ["File"] + [label.split()[0] for label, _ in STATUS_ORDER] + ["⏳ VR"]
+        headers = ["File"] + [label.split()[0] for label, _ in STATUS_ORDER]
     else:
         headers = ["File"] + STATUS_TERSE_HEADERS_ASCII
 
@@ -1524,9 +1511,7 @@ def print_summary_table(table_rows: list[list[object]], emoji_columns: bool) -> 
             style_status_count(label, row[index + 1])
             for index, (label, _) in enumerate(STATUS_ORDER)
         ]
-        wait_vr = str((row[2] if isinstance(row[2], int) else int(row[2])) + (row[3] if isinstance(row[3], int) else int(row[3])))
-        styled_wait_vr = click.style(wait_vr, fg="cyan")
-        styled_rows.append([row[0], *styled_counts, styled_wait_vr])
+        styled_rows.append([row[0], *styled_counts])
 
     click.echo(tabulate(styled_rows, headers=headers, tablefmt="simple"))
 
@@ -1694,8 +1679,6 @@ def main(
                 f"{style_status_count(label, row[index + 1])} {label}"
                 for index, (label, _) in enumerate(STATUS_ORDER)
             ]
-            wait_vr = (row[2] if isinstance(row[2], int) else int(row[2])) + (row[3] if isinstance(row[3], int) else int(row[3]))
-            parts.append(f"{click.style(str(wait_vr), fg='cyan')} waiting-VR")
             summary = ", ".join(parts)
             click.echo(f"[{marker}] {path.relative_to(repo_root)} :: {summary}")
     elif summary_table:

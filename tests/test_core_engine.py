@@ -60,11 +60,11 @@ Scope: demo.
 
 def test_REQMD_core_003_normalize_status_aliases() -> None:
     original = """### AC-DEMO-001: First
-- **Status:** ✅ Verified
+- **Status:** ✅ Done
 """
     normalized, changed = cli.normalize_status_lines(original)
     assert changed is True
-    assert "- **Status:** ✅ Done" in normalized
+    assert "- **Status:** ✅ Verified" in normalized
 
 
 def test_REQMD_core_004_and_005_insert_or_replace_summary_block() -> None:
@@ -92,9 +92,7 @@ def test_REQMD_core_006_count_statuses_model() -> None:
         [
             "- **Status:** 💡 Proposed",
             "- **Status:** 🔧 Implemented",
-            "- **Status:** 💻 Desktop-Verified",
-            "- **Status:** 🎮 VR-Verified",
-            "- **Status:** ✅ Done",
+            "- **Status:** ✅ Verified",
             "- **Status:** ⛔ Blocked",
             "- **Status:** 🗑️ Deprecated",
         ]
@@ -102,9 +100,7 @@ def test_REQMD_core_006_count_statuses_model() -> None:
     counts = cli.count_statuses(text)
     assert counts["💡 Proposed"] == 1
     assert counts["🔧 Implemented"] == 1
-    assert counts["💻 Desktop-Verified"] == 1
-    assert counts["🎮 VR-Verified"] == 1
-    assert counts["✅ Done"] == 1
+    assert counts["✅ Verified"] == 1
     assert counts["⛔ Blocked"] == 1
     assert counts["🗑️ Deprecated"] == 1
 

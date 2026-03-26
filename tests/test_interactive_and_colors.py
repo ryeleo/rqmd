@@ -50,7 +50,7 @@ def test_REQMD_interactive_006_status_highlight_preserves_background() -> None:
 
 def test_REQMD_interactive_006a_color_semantics() -> None:
     proposed = cli.style_status_label("💡 Proposed")
-    done = cli.style_status_label("✅ Done")
+    done = cli.style_status_label("✅ Verified")
     blocked = cli.style_status_label("⛔ Blocked")
     implemented = cli.style_status_label("🔧 Implemented")
 
@@ -64,8 +64,7 @@ def test_REQMD_interactive_006b_color_rollup_contains_bucket_styling() -> None:
     counts = {label: 0 for label, _ in cli.STATUS_ORDER}
     counts["💡 Proposed"] = 1
     counts["🔧 Implemented"] = 2
-    counts["💻 Desktop-Verified"] = 3
-    counts["✅ Done"] = 4
+    counts["✅ Verified"] = 4
     counts["⛔ Blocked"] = 1
     rollup = cli.build_color_rollup_text(counts)
 

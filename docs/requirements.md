@@ -11,7 +11,7 @@ This document is the source-of-truth index for reqmd requirements.
 - Keep domain docs under docs/requirements/.
 
 Status workflow:
-- 💡 Proposed -> 🔧 Implemented -> 💻 Desktop-Verified -> 🎮 VR-Verified -> ✅ Done
+- 💡 Proposed -> 🔧 Implemented -> ✅ Verified
 - Use ⛔ Blocked or 🗑️ Deprecated when needed.
 
 ## Domain Documents

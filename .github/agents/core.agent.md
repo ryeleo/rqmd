@@ -40,3 +40,7 @@ Your job is to carry substantial repository work from analysis through implement
 - Return a concise implementation summary.
 - Call out tests or smoke checks that were run, and state clearly when validation was not run.
 - Highlight compatibility risks, documentation follow-ups, or acceptance criteria updates that still need user input.
+
+## Reduce Excess Interactions Required from Developers
+
+- Use ./tmp or a similar scratch space for any intermediate files or notes rather than /tmp to avoid requiring the user to allow AI to access /tmp.

@@ -13,7 +13,7 @@ This package extracts the markdown status-tracking workflow used in this reposit
 
 ```md
 <!-- acceptance-status-summary:start -->
-Summary: 10💡 2🔧 1💻 0🎮 3✅ 0⛔ 1🗑️
+Summary: 10💡 2🔧 3✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 ```
 
@@ -26,9 +26,7 @@ Requirement bodies can be as short as a title plus status line, or include riche
 
 - `💡 Proposed`
 - `🔧 Implemented`
-- `💻 Desktop-Verified`
-- `🎮 VR-Verified`
-- `✅ Done`
+- `✅ Verified`
 - `⛔ Blocked`
 - `🗑️ Deprecated`
 
@@ -87,7 +85,7 @@ uv run reqmd --id-prefix R --set-criterion-id R-EXAMPLE-001 --set-status impleme
 Bulk set by repeated flags:
 
 ```bash
-uv run reqmd --set AC-EXAMPLE-001=implemented --set AC-EXAMPLE-002=desktop-verified
+uv run reqmd --set AC-EXAMPLE-001=implemented --set AC-EXAMPLE-002=verified
 ```
 
 Batch set from file:
