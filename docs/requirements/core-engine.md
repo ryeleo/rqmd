@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 10🔧 5✅ 0⛔ 0🗑️
+Summary: 1💡 10🔧 5✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -115,7 +115,7 @@ Summary: 0💡 10🔧 5✅ 0⛔ 0🗑️
 - And generated starter requirement IDs use the selected prefix.
 
 ### RQMD-CORE-016: Initial scaffolding content/copy
-- **Status:** Proposed
+- **Status:** 💡 Proposed
 - Given users run `rqmd --init`
 - When scaffold initialization runs
 - Then generated `docs/requirements/README.md` includes a welcome message and instructions for getting started that is copied from:
@@ -123,4 +123,3 @@ Summary: 0💡 10🔧 5✅ 0⛔ 0🗑️
     - ./init-docs/domain-example.md for the starter domain doc (requirements/domain-example.md)
 - And those instructions are included in the python package README somewhere, so they are published on pypi.org as a simple web page.
 - And those documents are maintained in the "./init-docs" directory in this repo for easy editing and management.
-
