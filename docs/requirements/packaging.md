@@ -3,7 +3,7 @@
 Scope: package layout, installability, module entrypoints, and publication readiness.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 5🔧 0✅ 0⛔ 0🗑️
+Summary: 3💡 6🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### REQMD-PACKAGING-001: src-layout package structure
@@ -61,3 +61,10 @@ Summary: 3💡 5🔧 0✅ 0⛔ 0🗑️
 - When the release workflow runs
 - Then the tagged package version is published to pypi.org automatically
 - And publication uses repository automation rather than a manual local upload.
+
+### REQMD-PACKAGING-009: Keep a Changelog maintained
+- **Status:** 🔧 Implemented
+- Given contributors ship notable changes
+- When release and pre-release updates are prepared
+- Then repository contains a root-level `CHANGELOG.md` following Keep a Changelog structure
+- And updates are recorded under an `Unreleased` section before version cut.

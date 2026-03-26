@@ -6,7 +6,9 @@ This package extracts the markdown status-tracking workflow used in this reposit
 
 ## What this tool does
 
-- Scans requirement markdown files in a criteria directory (default: `docs/requirements`).
+- Scans requirement markdown files in a criteria directory.
+- Uses `README.md` inside that directory as the requirements index.
+- When `--criteria-dir` is omitted, auto-detects the nearest viable requirement index from the current working path.
 - Normalizes `- **Status:** ...` lines to canonical statuses.
 - Parses requirement headers such as `### AC-FOO-001: Title` or `### R-FOO-001: Title`.
 - Regenerates per-file summary blocks:
@@ -120,6 +122,20 @@ Filter tree only:
 uv run reqmd --filter-status proposed --tree
 ```
 
+Filter as JSON for automation/AI parsing:
+
+```bash
+uv run reqmd --filter-status proposed --json
+```
+
+Summary/check/set JSON examples:
+
+```bash
+uv run reqmd --json --no-interactive
+uv run reqmd --check --json --no-interactive
+uv run reqmd --set-criterion-id AC-EXAMPLE-001 --set-status verified --json
+```
+
 ## Tests
 
 Run full pytest suite from this folder:
@@ -148,6 +164,10 @@ The test suite is organized to validate implemented acceptance-criteria behavior
 
 Detailed coverage mapping is documented in `docs/testing.md`.
 
+## Changelog
+
+Notable project changes are tracked in `CHANGELOG.md` using the Keep a Changelog format.
+
 ## CI
 
 This package includes a GitHub Actions workflow at `.github/workflows/pytest.yml`.
@@ -158,9 +178,12 @@ This package includes a GitHub Actions workflow at `.github/workflows/pytest.yml
 
 ## Project portability
 
-By default, the tool targets the current directory as repo root and reads from:
+By default, the tool targets the current directory as repo root and auto-detects requirement docs by scanning from the current working path.
 
-- `docs/requirements/*.md`
+Auto-detect preference is deterministic:
+
+1. `docs/requirements/README.md`
+2. `requirements/README.md`
 
 You can override both:
 
@@ -169,15 +192,16 @@ uv run reqmd --repo-root /path/to/project --criteria-dir docs/requirements
 ```
 
 `--criteria-dir` can be absolute or relative to `--repo-root`.
+When auto-detection is used, reqmd reports which index path it selected.
 
 Requirement header prefixes are configurable with `--id-prefix`.
-When omitted, reqmd auto-detects prefixes by reading `docs/requirements.md` and linked domain docs.
+When omitted, reqmd auto-detects prefixes by reading the selected `README.md` requirements index and linked domain docs when available.
 If no prefixes are discovered, it falls back to `AC-`, `R-`, and `REQMD-`.
 
 ## Recommended docs recipe for projects
 
-1. Keep a top-level index doc (example: `docs/requirements.md`).
-2. Keep domain files in `docs/requirements/`.
+1. Keep an index doc at `docs/requirements/README.md` or `requirements/README.md`.
+2. Keep domain files in that same directory.
 3. Ensure each requirement has exactly one status line directly under the `### <PREFIX>-...` header.
 4. Run `uv run reqmd --check` in CI to prevent stale summary blocks.
 5. Use non-interactive `--set`/`--set-file` in automation.
