@@ -1,0 +1,26 @@
+name: pytest
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install package and test dependencies
+        run: uv sync --extra dev
+
+      - name: Run local smoke script
+        run: bash scripts/local-smoke.sh --skip-install
