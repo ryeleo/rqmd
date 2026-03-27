@@ -5,11 +5,13 @@ RQMD-CORE-013 (domain/index sync maintenance) since it would reduce manual doc d
 This works great with AI agents!
 
 ```
-Continue! Try to do all 28 this time if you can! Make sure to reset your priority after every 5 or so. Do the easier ones first so we see how far you get before running into something you cannot do.
+Continue! Try to implement all 41 proposed RQMDs this time if you can! Make sure to check your priorities after every 3-5 or so depending on how complicated the work is and how interdependent they might be.
 
-I've set `chat.agent.maxRequests=500` so you can go for a while! 
+Do the easier ones first so we see how far you get before running into something you cannot do.
 
-make sure to check that `rqmd` runs for you, and there aren't regressions in our test suite as you go! And update the test suite as you go!
+I've set `chat.agent.maxRequests=1500` so you can go for a while!
+
+Make sure to check that `rqmd` runs for you, and there aren't regressions in our test suite as you go! And update the test suite as you go! And update requirements as you go using `rqmd --set...`! And update requirements directly if they change as you go!
 ```
 
 ## Screen Write vs Scroll?

@@ -111,8 +111,6 @@ uv run rqmd --sort-strategy status-focus
 uv run rqmd --sort-strategy alpha-asc
 ```
 
-`--unsorted` is retained as a deprecated compatibility alias; a separate filesystem-only sort mode no longer exists.
-
 Initialize docs scaffold (index + starter domain file):
 
 ```bash
@@ -258,13 +256,13 @@ uv run rqmd --rollup --rollup-map "C1=I+V" --rollup-map "C2=P" --no-interactive
 Custom roll-up columns from config (`.json`, `.yml`, `.yaml`):
 
 ```bash
-uv run rqmd --rollup --rollup-config .rqmd-rollup.yaml --json --no-interactive
+uv run rqmd --rollup --config .rqmd.yml --json --no-interactive
 ```
 
 Example project config for a repo that defines a custom status catalog and wants RQMD-ROLLUP-007 roll-up buckets:
 
 ```yaml
-# .rqmd-rollup.yaml
+# .rqmd.yml
 statuses:
 	- name: Proposed
 		shortcode: P
@@ -304,7 +302,7 @@ That example yields these roll-up families:
 When no CLI map/config is passed, rqmd resolves roll-up mappings with this precedence:
 
 1. `--rollup-map` CLI equations
-2. project config (`.rqmd-rollup.json|yaml|yml` in `--repo-root`)
+2. project config (`.rqmd.yml|.rqmd.yaml` in `--repo-root`)
 3. user config (`~/.config/rqmd/rollup.json|yaml|yml`)
 4. built-in canonical status totals
 
@@ -355,7 +353,9 @@ This package includes GitHub Actions workflows:
 
 ## Project portability
 
-By default, the tool targets the current directory as repo root and auto-detects requirement docs by scanning from the current working path.
+By default, rqmd uses the current working directory as `--repo-root`.
+Repo root is not auto-detected upward.
+When `--requirements-dir` is omitted, rqmd auto-detects requirement docs by scanning from the current working path.
 
 Auto-detect preference is deterministic:
 
@@ -383,14 +383,17 @@ If no prefixes are discovered, it falls back to `AC-`, `R-`, and `RQMD-`.
 
 ### Project configuration file
 
-To avoid repeating CLI flags across team members, you can create a `.rqmd.json` file at the project root:
+To avoid repeating CLI flags across team members, use a single project config file at the project root: `.rqmd.yml` (preferred).
+Accepted extensions are `.rqmd.yml`, `.rqmd.yaml`, or `.rqmd.json`.
 
-```json
+Example:
+
+```yaml
 {
-  "requirements_dir": "docs/requirements",
-  "id_prefix": "PROJ",
-  "sort_strategy": "status-focus",
-  "state_dir": "project-local"
+	requirements_dir: docs/requirements
+	id_prefix: PROJ
+	sort_strategy: status-focus
+	state_dir: project-local
 }
 ```
 
@@ -401,7 +404,12 @@ Supported keys:
 - `sort_strategy`: Default sort strategy for interactive mode (standard, status-focus, alpha-asc)
 - `state_dir`: Default state directory for filtered walk resume (system-temp, project-local, or custom path)
 
-CLI flags always override config file values. When `.rqmd.json` is present, rqmd loads it automatically; no additional flag is needed.
+CLI flags always override config file values. When `.rqmd.yml` (or `.rqmd.yaml` / `.rqmd.json`) is present, rqmd loads it automatically; no additional flag is needed.
+
+Note on repo-root discovery:
+
+- Current behavior: `--repo-root` defaults to current working directory and is not auto-discovered upward.
+- Planned requirement: support git-like upward discovery of project root by searching current and parent directories for any of `.rqmd.yml/.rqmd.yaml/.rqmd.json`, `requirements/`, or `docs/requirements/`.
 
 ## Recommended docs recipe for projects
 

@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 8💡 0🔧 10✅ 0⛔ 0🗑️
+Summary: 12💡 0🔧 10✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -124,3 +124,28 @@ Summary: 8💡 0🔧 10✅ 0⛔ 0🗑️
 - As a migration operator
 - I want `--init --yes` and `--init-priorities` to be idempotent, deterministic, and JSON-reportable
 - So that migration steps are reliable in CI/CD workflows.
+
+### RQMD-AUTOMATION-019: Unique-prefix argument/value abbreviations
+- **Status:** 💡 Proposed
+- As a CLI user
+- I want unique minimal prefixes for long option names and enumerated values to be accepted (for example, `--filt V` -> `--filter-status Verified`)
+- So that fast terminal usage is supported without sacrificing determinism.
+- So that ambiguous prefixes fail with a clear disambiguation error listing valid matches.
+
+### RQMD-AUTOMATION-020: Ambiguous option-prefix error contract
+- **Status:** 💡 Proposed
+- As a CLI user
+- I want ambiguous long-option prefixes to fail deterministically
+- So that the error output lists candidate option names and recommended full invocations.
+
+### RQMD-AUTOMATION-021: Ambiguous value-prefix error contract
+- **Status:** 💡 Proposed
+- As a CLI user
+- I want ambiguous enumerated value prefixes (for example status values) to fail deterministically
+- So that the error output lists candidate canonical values and recommended full values.
+
+### RQMD-AUTOMATION-022: JSON-formatted ambiguity errors
+- **Status:** 💡 Proposed
+- As an automation user
+- I want ambiguity failures in `--json` mode to return a stable machine-readable error payload
+- So that tools can branch on error type, inspect candidates, and auto-remediate input expansion.

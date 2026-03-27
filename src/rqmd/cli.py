@@ -406,7 +406,8 @@ def lookup_criterion_interactive(
     help="Custom rollup column equation, repeatable (for example --rollup-map 'C1=I+V').",
 )
 @click.option(
-    "--rollup-config",
+    "--config",
+    "rollup_config",
     type=str,
     default=None,
     help="Optional path to rollup config (.json/.yml/.yaml) containing rollup_map or rollup_equations.",

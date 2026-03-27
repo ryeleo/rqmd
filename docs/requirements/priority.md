@@ -1,6 +1,6 @@
 # Priority Requirement
 
-Scope: add a first-class `Priority` field to requirement requirements, integrate priority into interactive and non-interactive flows, and allow priority-aware sorting and summaries.
+Scope: add a first-class `Priority` field to requirement entries, integrate priority into interactive and non-interactive flows, and allow priority-aware sorting and summaries.
 
 <!-- acceptance-status-summary:start -->
 Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
@@ -8,68 +8,68 @@ Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 
 ### RQMD-PRIORITY-001: First-class priority field
 - **Status:** ✅ Verified
-- Given a requirement requirement block
-- When parsed by rqmd
-- Then the parser recognizes an optional `- **Priority:** <label>` line adjacent to the status line
-- And the priority is stored as part of the requirement metadata alongside `status`, `id`, and `title`.
+- As a rqmd user when a requirement block is present
+- I want rqmd to parse it
+- So that the parser recognizes an optional `- **Priority:** <label>` line adjacent to the status line
+- So that the priority is stored as part of the requirement metadata alongside `status`, `id`, and `title`.
 
 ### RQMD-PRIORITY-002: Priority normalization and allowed values
 - **Status:** ✅ Verified
-- Given different teams may use different priority vocabularies
-- When the tool reads or writes priorities
-- Then a canonical default set is available (e.g., `P0`,`P1`,`P2`,`P3` or `High`,`Med`,`Low`) and project-level overrides are supported via `.reqmd/status-catalog.yaml` or a new `.reqmd/priority-catalog.yaml`
-- And normalization maps common aliases and case variants to canonical labels.
+- As a rqmd user when different teams may use different priority vocabularies
+- I want the tool to read and write priorities
+- So that a canonical default set is available (e.g., `P0`,`P1`,`P2`,`P3` or `High`,`Med`,`Low`) and project-level overrides are supported via `.reqmd/status-catalog.yaml` or a new `.reqmd/priority-catalog.yaml`
+- So that normalization maps common aliases and case variants to canonical labels.
 
 ### RQMD-PRIORITY-003: Set status/priority combined UI
 - **Status:** ✅ Verified
-- Given interactive status menus exist
-- When a user opens the status menu for a requirement
-- Then the menu is extended to allow setting both `Status` and `Priority` without leaving the panel
-- And a single toggle key (e.g., `t`) switches the panel focus between `Status` and `Priority` entry modes
-- And the footer legend reflects the current target (`setting: status` or `setting: priority`).
+- As a rqmd user when interactive status menus exist
+- I want to open the status menu for a requirement
+- So that the menu is extended to allow setting both `Status` and `Priority` without leaving the panel
+- So that a single toggle key (e.g., `t`) switches the panel focus between `Status` and `Priority` entry modes
+- So that the footer legend reflects the current target (`setting: status` or `setting: priority`).
 
 ### RQMD-PRIORITY-004: `--priority-mode` startup flag
 - **Status:** ✅ Verified
-- Given users prefer to edit priorities more often than statuses in some workflows
-- When `--priority-mode` is supplied at startup
-- Then interactive entry panels default to `Priority` focus instead of `Status` focus
-- And the CLI supports `--set-priority ID=PRIORITY` analogously to `--set` for statuses.
+- As a rqmd user when users prefer to edit priorities more often than statuses in some workflows
+- I want to provide `--priority-mode` at startup
+- So that interactive entry panels default to `Priority` focus instead of `Status` focus
+- So that the CLI supports `--set-priority ID=PRIORITY` analogously to `--set` for statuses.
 
 ### RQMD-PRIORITY-005: Persistence and summary integration
 - **Status:** ✅ Verified
-- Given files may include the Priority line
-- When summary/roll-up blocks are generated
-- Then priority-aware aggregates can be optionally included (e.g., counts by priority per file)
-- And the inline summary block format supports optional display of priority buckets when `--show-priority-summary` is requested.
+- As a rqmd user when files may include the Priority line
+- I want to generate summary/roll-up blocks
+- So that priority-aware aggregates can be optionally included (e.g., counts by priority per file)
+- So that the inline summary block format supports optional display of priority buckets when `--show-priority-summary` is requested.
 
 ### RQMD-PRIORITY-006: Sorting and filters using priority
 - **Status:** ✅ Verified
-- Given priority is now a first-class field
-- When sorting or filtering in interactive or non-interactive flows
-- Then `priority` is available as a sortable/filterable column and integrates with `s` cycling and `d` direction toggles
-- And default column-cycle order prefers filesystem/name, then priority, then status, then roll-up counts.
+- As a rqmd user when priority is now a first-class field
+- I want sorting or filtering in interactive or non-interactive flows
+- So that `priority` is available as a sortable/filterable column and integrates with `s` cycling and `d` direction toggles
+- So that default column-cycle order prefers filesystem/name, then priority, then status, then roll-up counts.
 
 ### RQMD-PRIORITY-007: Validation and migration
 - **Status:** ✅ Verified
-- Given existing repositories may not include priority lines
-- When the new parser encounters missing priorities
-- Then it treats them as `unset` and does not break parsing
-- And a migration mode (for example `rqmd --init-priorities`) can populate default priorities (e.g., unset or `P3`) and update files idempotently.
+- As a rqmd user when existing repositories may not include priority lines
+- I want the parser to encounter missing priorities
+- So that it treats them as `unset` and does not break parsing
+- So that a migration mode (for example `rqmd --init-priorities`) can populate default priorities (e.g., unset or `P3`) and update files idempotently.
 
 ### RQMD-PRIORITY-008: Undo and history semantics
 - **Status:** 💡 Proposed
-- Given priority edits are recorded
-- When changes to priority are made or undone
-- Then the undo/history subsystem treats priority changes as first-class operations (atomic with status changes when performed together) and records them in history entries.
+- As a rqmd user when priority edits are recorded
+- I want to make or undo priority changes
+- So that the undo/history subsystem treats priority changes as first-class operations (atomic with status changes when performed together) and records them in history entries.
 
 ### RQMD-PRIORITY-009: Automation and batch updates
 - **Status:** ✅ Verified
-- Given automation workflows
-- When bulk priority updates are applied (via `--set-priority` or a file)
-- Then the tool applies updates deterministically and emits machine-readable summaries showing changed files and counts.
+- As a rqmd user when automation workflows
+- I want to apply bulk priority updates (via `--set-priority` or a file)
+- So that the tool applies updates deterministically and emits machine-readable summaries showing changed files and counts.
 
 ### RQMD-PRIORITY-010: Tests and documentation
 - **Status:** ✅ Verified
-- Given the increased surface area
-- When implementing priority features
-- Then unit tests cover parsing, normalization, UI toggle behavior, sorting integration, and migration; documentation and examples are added to README and examples in `.reqmd/`.
+- As a rqmd user when the increased surface area
+- I want to implement priority features
+- So that unit tests cover parsing, normalization, UI toggle behavior, sorting integration, and migration; documentation and examples are added to README and examples in `.reqmd/`.

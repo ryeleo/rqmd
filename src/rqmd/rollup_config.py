@@ -207,13 +207,18 @@ def resolve_rollup_columns(
         return load_rollup_columns_from_file(path), str(path)
 
     project_candidates = [
-        repo_root / ".rqmd-rollup.json",
-        repo_root / ".rqmd-rollup.yaml",
-        repo_root / ".rqmd-rollup.yml",
+        repo_root / ".rqmd.yml",
+        repo_root / ".rqmd.yaml",
     ]
     for candidate in project_candidates:
         if candidate.exists() and candidate.is_file():
-            return load_rollup_columns_from_file(candidate), str(candidate)
+            try:
+                return load_rollup_columns_from_file(candidate), str(candidate)
+            except click.ClickException as exc:
+                # In unified config mode, .rqmd.* may define only non-rollup keys.
+                if "expected rollup_map or rollup_equations at top level" in str(exc):
+                    continue
+                raise
 
     user_candidates = [
         Path.home() / ".config" / "rqmd" / "rollup.json",
