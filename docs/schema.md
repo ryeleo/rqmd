@@ -185,32 +185,58 @@ if blocked_match and current and current["status_line"] is not None:
 
 ## JSON Export Contracts
 
-### Filtered Status Query Response
+### Stable Top-Level Keys By Mode
+
+When `--json` is used, top-level keys are stable by mode:
+
+- `summary`: `mode`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
+- `check`: `mode`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
+- `set` / `set-priority` / `set-flagged`: `mode`, `criteria_dir`, `changed_files`, `totals`, `files`, `updates`
+- `filter-status`: `mode`, `status`, `criteria_dir`, `total`, `files`
+- `filter-priority`: `mode`, `priority`, `criteria_dir`, `total`, `files`
+- `filter-flagged`: `mode`, `flagged`, `criteria_dir`, `total`, `files`
+- `filter-sub-domain`: `mode`, `sub_domain`, `criteria_dir`, `total`, `files`
+- `filter-targets`: `mode`, `targets`, `criteria_dir`, `total`, `files`
+- `rollup`: `mode`, `criteria_dir`, `file_count`, `totals`, optional `rollup_source`, optional `rollup_columns`
+- `init`: `mode`, `criteria_dir`, `starter_prefix`, `created_files`, `created_count`
+- `init-priorities`: `mode`, `criteria_dir`, `default_priority`, `changed_files`, `changed_count`
+
+### Filter Payload Example (Current)
 
 ```json
 {
-  "filtering": {
-    "status": "Verified",
-    "criteria_dir": "docs/requirements",
-    "criteria_dir_abs": "/absolute/path/docs/requirements",
-    "total": 45,
-    "match_count": 12
-  },
+  "mode": "filter-sub-domain",
+  "sub_domain": "query",
+  "criteria_dir": "docs/requirements",
+  "total": 2,
   "files": [
     {
-      "path": "core-engine.md",
-      "path_display": "core-engine.md",
-      "path_abs": "/absolute/path/docs/requirements/core-engine.md",
-      "criteria": [
+      "path": "docs/requirements/demo.md",
+      "requirements": [
         {
-          "id": "RQMD-CORE-001",
-          "title": "Domain file discovery",
-          "status": "✅ Verified",
-          "priority": null,
-          "sub_domain": null,
+          "id": "AC-DEMO-001",
+          "title": "Get record",
+          "sub_domain": "Query API",
           "flagged": false,
-          "blocked_reason": null,
-          "deprecated_reason": null
+          "body": {
+            "markdown": "### AC-DEMO-001: Get record\\n- **Status:** ✅ Verified",
+            "lines": {
+              "header": 9,
+              "status": 10,
+              "body_start": 9,
+              "body_end": 10
+            }
+          }
+        }
+      ],
+      "sub_sections": [
+        {
+          "name": "Query API",
+          "count": 2
+        },
+        {
+          "name": "Mutation API",
+          "count": 1
         }
       ]
     }
@@ -218,16 +244,16 @@ if blocked_match and current and current["status_line"] is not None:
 }
 ```
 
-### Key Contract Points
+### Contract Notes
 
-- `path_display` is relative to repo root (human-readable)
-- `path_abs` is absolute (machine-safe for cross-machine workflows)
-- `criteria_dir_abs` included to allow relative-path reconstruction
-- `total` = all requirements in domain directory
-- `match_count` = requirements matching filter
-- Each criterion includes all metadata fields (null if absent)
-- Array order is deterministic (sorted by file, then by header_line within file)
-- `sub_domain` field present for all entries (null if requirement has no subsection)
+- `criteria_dir` is repo-relative and machine-stable for the current workspace.
+- Filter payloads use `total` for match counts.
+- `files` entries are deterministic by path order.
+- `requirements` entries are deterministic by requirement ID order in JSON filter modes.
+- `sub_domain` is present on every requirement entry in filter-targeted payloads and is `null` when no subsection applies.
+- `sub_sections` is present on file entries for summary/filter payloads and includes subsection `name` plus aggregated `count`.
+- `--no-body` omits `body` from filter payload requirements.
+- Text modes `--tree` and `--list` are display-only and intentionally not part of JSON contracts.
 
 ---
 
@@ -260,8 +286,11 @@ Override with `--id-prefix AC,R` (comma-separated list).
 ### Deterministic Ordering
 
 - **Files**: Sorted by filename (ASCII/lexicographic)
-- **Requirements within file**: Sorted by `header_line` (appearance order in file)
-- **Deterministic tie-breaking**: No ties possible (each requirement has unique line number)
+- **Requirements within file**:
+  - Parser indexing: `header_line` (appearance order)
+  - JSON filter payloads: sorted by requirement ID
+  - Explicit target payloads: preserve resolved target order with de-duplication
+- **Deterministic tie-breaking**: no unstable ordering is expected for equal keys
 
 ---
 

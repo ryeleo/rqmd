@@ -17,8 +17,10 @@ except ImportError:
 from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
                         MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT,
                         PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN)
-from .criteria_parser import (extract_criterion_block_with_lines,
-                              find_criterion_by_id, parse_criteria)
+from .criteria_parser import (collect_sub_sections,
+                              extract_criterion_block_with_lines,
+                              find_criterion_by_id,
+                              normalize_sub_domain_name, parse_criteria)
 from .markdown_io import (display_name_from_h1, format_path_display,
                           iter_domain_files)
 from .menus import (right_align_menu_suffix, select_from_menu, truncate_text,
@@ -484,6 +486,30 @@ def print_criteria_tree(
     click.echo()
 
 
+def print_criteria_list(
+    repo_root: Path,
+    criteria_by_file: dict[Path, list[dict[str, object]]],
+    target_value: str,
+    filter_label: str = "status",
+) -> None:
+    if not criteria_by_file:
+        click.echo(f"No requirements found with {filter_label}: {target_value}")
+        return
+
+    click.echo(click.style(f"\n{target_value}", bold=True))
+    click.echo()
+
+    for path in sorted(criteria_by_file.keys()):
+        relative_path = path.relative_to(repo_root).as_posix()
+        requirements = sorted(criteria_by_file[path], key=lambda req: str(req.get("id") or "").lower())
+        for requirement in requirements:
+            crit_id = requirement["id"]
+            crit_title = requirement["title"]
+            click.echo(f"{relative_path}::{crit_id}: {crit_title}")
+
+    click.echo()
+
+
 def build_filtered_criteria_payload(
     repo_root: Path,
     criteria_dir: Path,
@@ -499,7 +525,8 @@ def build_filtered_criteria_payload(
 
     for path in sorted(criteria_by_file.keys()):
         relative_path = format_path_display(path, repo_root)
-        criteria_payload: list[dict[str, str]] = []
+        criteria_payload: list[dict[str, object]] = []
+        sub_sections = collect_sub_sections(path, id_prefixes=id_prefixes)
         sorted_requirements = sorted(
             criteria_by_file[path],
             key=lambda req: str(req.get("id") or "").lower(),
@@ -508,6 +535,7 @@ def build_filtered_criteria_payload(
             entry: dict[str, object] = {
                 "id": str(requirement["id"]),
                 "title": str(requirement["title"]),
+                "sub_domain": requirement.get("sub_domain"),
             }
             flagged_value = requirement.get("flagged")
             if isinstance(flagged_value, bool):
@@ -539,7 +567,13 @@ def build_filtered_criteria_payload(
                 }
 
             criteria_payload.append(entry)
-        files_payload.append({"path": relative_path, "requirements": criteria_payload})
+        files_payload.append(
+            {
+                "path": relative_path,
+                "requirements": criteria_payload,
+                "sub_sections": sub_sections,
+            }
+        )
         total += len(criteria_payload)
 
     return {
@@ -566,12 +600,14 @@ def build_summary_payload(
         for label, _slug in STATUS_ORDER:
             totals[label] += counts[label]
 
+        sub_sections = collect_sub_sections(path)
         files_payload.append(
             {
                 "path": format_path_display(path, repo_root),
                 "display_name": display_name_from_h1(path),
                 "changed": path.resolve() in changed_set,
                 "counts": {label: counts[label] for label, _slug in STATUS_ORDER},
+                "sub_sections": sub_sections,
             }
         )
 
@@ -582,6 +618,262 @@ def build_summary_payload(
         "totals": totals,
         "files": files_payload,
     }
+
+
+def build_targeted_criteria_payload(
+    repo_root: Path,
+    criteria_dir: Path,
+    selected_items: list[tuple[Path, dict[str, object]]],
+    target_tokens: list[str],
+    include_body: bool = True,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+) -> dict[str, object]:
+    file_order: list[Path] = []
+    file_map: dict[Path, list[dict[str, object]]] = {}
+
+    for path, requirement in selected_items:
+        if path not in file_map:
+            file_order.append(path)
+            file_map[path] = []
+        file_map[path].append(requirement)
+
+    files_payload: list[dict[str, object]] = []
+    for path in file_order:
+        criteria_payload: list[dict[str, object]] = []
+        for requirement in file_map[path]:
+            entry: dict[str, object] = {
+                "id": str(requirement["id"]),
+                "title": str(requirement["title"]),
+                "sub_domain": requirement.get("sub_domain"),
+            }
+            flagged_value = requirement.get("flagged")
+            if isinstance(flagged_value, bool):
+                entry["flagged"] = flagged_value
+
+            if include_body:
+                body_markdown, block_start, block_end = extract_criterion_block_with_lines(
+                    path,
+                    str(requirement["id"]),
+                    id_prefixes=id_prefixes,
+                )
+                lines_payload = {
+                    "header": int(requirement.get("header_line") or 0) + 1,
+                    "status": int(requirement.get("status_line") or 0) + 1,
+                }
+                if block_start is not None and block_end is not None:
+                    lines_payload["body_start"] = block_start + 1
+                    lines_payload["body_end"] = block_end + 1
+                blocked_line = requirement.get("blocked_reason_line")
+                if isinstance(blocked_line, int):
+                    lines_payload["blocked_reason"] = blocked_line + 1
+                deprecated_line = requirement.get("deprecated_reason_line")
+                if isinstance(deprecated_line, int):
+                    lines_payload["deprecated_reason"] = deprecated_line + 1
+                entry["body"] = {
+                    "markdown": body_markdown,
+                    "lines": lines_payload,
+                }
+
+            criteria_payload.append(entry)
+
+        files_payload.append(
+            {
+                "path": format_path_display(path, repo_root),
+                "requirements": criteria_payload,
+                "sub_sections": collect_sub_sections(path, id_prefixes=id_prefixes),
+            }
+        )
+
+    return {
+        "mode": "filter-targets",
+        "targets": target_tokens,
+        "criteria_dir": format_path_display(criteria_dir, repo_root),
+        "total": len(selected_items),
+        "files": files_payload,
+    }
+
+
+def focused_target_interactive_loop(
+    repo_root: Path,
+    domain_files: list[Path],
+    selected_items: list[tuple[Path, dict[str, object]]],
+    target_tokens: list[str],
+    emoji_columns: bool,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    select_from_menu_fn=select_from_menu,
+    resume_filter: bool = True,
+    state_dir: str = "system-temp",
+    include_status_emojis: bool | None = None,
+    priority_mode: bool = False,
+    include_priority_summary: bool = False,
+) -> int:
+    if include_status_emojis is None:
+        include_status_emojis = infer_include_status_emojis(domain_files)
+    repo_hash = hashlib.sha256(str(repo_root.resolve()).encode("utf-8")).hexdigest()[:12]
+    token_hash = hashlib.sha256(json.dumps(target_tokens, ensure_ascii=False).encode("utf-8")).hexdigest()[:12]
+    resume_root = resolve_resume_state_dir(repo_root, state_dir)
+    resume_path = resume_root / f"filter-targets-resume-{repo_hash}-{token_hash}.json"
+    membership = [(path, str(requirement["id"])) for path, requirement in selected_items]
+
+    def load_resume_state() -> dict[str, str]:
+        if not resume_path.exists() or not resume_path.is_file():
+            return {}
+        try:
+            loaded = json.loads(resume_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return {}
+        if not isinstance(loaded, dict):
+            return {}
+        return {
+            "id": str(loaded.get("id") or ""),
+            "path": str(loaded.get("path") or ""),
+        }
+
+    def save_current(flat_items: list[tuple[Path, dict[str, object]]], current_index: int) -> None:
+        if not resume_filter or not flat_items:
+            return
+        idx = min(max(current_index, 0), len(flat_items) - 1)
+        cur_path, cur_req = flat_items[idx]
+        payload = {
+            "path": format_path_display(cur_path, repo_root),
+            "id": str(cur_req["id"]),
+        }
+        try:
+            resume_path.parent.mkdir(parents=True, exist_ok=True)
+            resume_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        except OSError:
+            return
+
+    def resolve_resume_index(flat_items: list[tuple[Path, dict[str, object]]]) -> int:
+        if not resume_filter or not flat_items:
+            return 0
+        saved = load_resume_state()
+        saved_id = saved.get("id")
+        saved_path = saved.get("path")
+        for index, (path, req) in enumerate(flat_items):
+            if str(req["id"]) == saved_id and format_path_display(path, repo_root) == saved_path:
+                click.echo(click.style(f"Resuming focused walk at {saved_id}.", dim=True))
+                return index
+        return 0
+
+    def build_flat_list() -> list[tuple[Path, dict[str, object]]]:
+        result: list[tuple[Path, dict[str, object]]] = []
+        for path, req_id in membership:
+            refreshed = find_criterion_by_id(path, req_id, id_prefixes=id_prefixes)
+            if refreshed:
+                result.append((path, refreshed))
+        return result
+
+    flat_list = build_flat_list()
+    if not flat_list:
+        click.echo("No requirements found for the selected target list.")
+        return 0
+
+    click.echo(click.style(
+        f"\nFocused walk: {len(flat_list)} requirements from {len(target_tokens)} target token(s)",
+        bold=True,
+    ))
+
+    index = resolve_resume_index(flat_list)
+    current_entry_field = "priority" if priority_mode else "status"
+    while True:
+        flat_list = build_flat_list()
+        if not flat_list:
+            click.echo("No more requirements in the selected target list.")
+            return 0
+        index = min(index, len(flat_list) - 1)
+        save_current(flat_list, index)
+
+        path, requirement = flat_list[index]
+        click.echo(click.style(f"\n[{index + 1}/{len(flat_list)}]", dim=True))
+        print_criterion_panel(path, requirement, repo_root, id_prefixes=id_prefixes)
+
+        action, selected_value = _prompt_for_requirement_action(
+            requirement,
+            current_entry_field,
+            select_from_menu_fn,
+            title_suffix=f" [{index + 1}/{len(flat_list)}]",
+        )
+
+        if action == "quit":
+            save_current(flat_list, index)
+            return 0
+        if action == "up":
+            save_current(flat_list, index)
+            return 0
+        if action == "toggle-field":
+            current_entry_field = "priority" if current_entry_field == "status" else "status"
+            save_current(flat_list, index)
+            continue
+        if action == "nav-prev":
+            if index > 0:
+                index -= 1
+            else:
+                click.echo("Already at first selected AC.")
+            save_current(flat_list, index)
+            continue
+        if action == "nav-first":
+            index = 0
+            save_current(flat_list, index)
+            continue
+        if action == "nav-last":
+            index = len(flat_list) - 1
+            save_current(flat_list, index)
+            continue
+        if action == "nav-next":
+            if index < len(flat_list) - 1:
+                index += 1
+            else:
+                click.echo("End of selected list, wrapping to first.")
+                index = 0
+            save_current(flat_list, index)
+            continue
+
+        if current_entry_field == "priority":
+            changed = update_criterion_status(
+                path,
+                requirement,
+                str(requirement.get("status") or ""),
+                new_priority=selected_value,
+            )
+        else:
+            new_status = selected_value or str(requirement.get("status") or "")
+            blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
+            deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+            changed = update_criterion_status(
+                path,
+                requirement,
+                new_status,
+                blocked_reason=blocked_reason,
+                deprecated_reason=deprecated_reason,
+            )
+
+        process_file(
+            path,
+            check_only=False,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
+        )
+
+        if changed:
+            click.echo(f"Updated {requirement['id']} -> {selected_value}")
+        else:
+            click.echo(f"No change for {requirement['id']} ({selected_value})")
+
+        _, table_rows = collect_summary_rows(
+            domain_files,
+            check_only=True,
+            display_name_fn=display_name_from_h1,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
+        )
+        print_summary_table(table_rows, emoji_columns=emoji_columns)
+
+        if index < len(flat_list) - 1:
+            index += 1
+        else:
+            index = 0
+        save_current(flat_list, index)
 
 
 def interactive_update_loop(
@@ -736,6 +1028,10 @@ def interactive_update_loop(
                         "S": "cycle-sort-backward",
                         MENU_TOGGLE_DIRECTION: "toggle-direction",
                         MENU_REFRESH: "refresh",
+                        "g": "jump-subsection",
+                    },
+                    extra_keys_help={
+                        "g": "jump-sub",
                     },
                     footer_legend=_build_sort_footer(current_criterion_sort_ascending),
                 )
@@ -768,6 +1064,33 @@ def interactive_update_loop(
                     continue
                 if criterion_choice == "refresh":
                     click.echo("Requirement list refreshed.")
+                    continue
+                if criterion_choice == "jump-subsection":
+                    query = click.prompt(
+                        "Subsection prefix to jump to",
+                        default="",
+                        show_default=False,
+                    ).strip()
+                    normalized_query = normalize_sub_domain_name(query)
+                    if not normalized_query:
+                        click.echo("Jump cancelled (empty subsection prefix).")
+                        continue
+                    jump_index = next(
+                        (
+                            idx
+                            for idx, requirement in enumerate(requirements)
+                            if normalize_sub_domain_name(requirement.get("sub_domain")).startswith(normalized_query)
+                        ),
+                        None,
+                    )
+                    if jump_index is None:
+                        click.echo(f"No subsection match for: {query}")
+                        continue
+
+                    criterion_index = jump_index
+                    del history[history_pos + 1:]
+                    history.append(criterion_index)
+                    history_pos = len(history) - 1
                     continue
 
                 criterion_index = int(criterion_choice)

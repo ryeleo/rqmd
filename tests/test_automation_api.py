@@ -1060,6 +1060,271 @@ def test_RQMD_automation_024_filter_flagged_json_empty(two_file_repo: Path) -> N
     assert payload["files"] == []
 
 
+def test_RQMD_automation_029_filter_sub_domain_json_includes_metadata(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+## Query API
+Read-only routes.
+
+### AC-DEMO-001: Get record
+- **Status:** ✅ Verified
+
+### AC-DEMO-002: Search records
+- **Status:** 💡 Proposed
+
+## Mutation API
+
+### AC-DEMO-003: Create record
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--filter-sub-domain",
+            "que",
+            "--json",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-sub-domain"
+    assert payload["sub_domain"] == "que"
+    assert payload["total"] == 2
+    assert [item["id"] for item in payload["files"][0]["requirements"]] == ["AC-DEMO-001", "AC-DEMO-002"]
+    assert all(item["sub_domain"] == "Query API" for item in payload["files"][0]["requirements"])
+    assert payload["files"][0]["sub_sections"] == [
+        {"name": "Query API", "count": 2},
+        {"name": "Mutation API", "count": 1},
+    ]
+
+
+def test_RQMD_automation_029b_filter_sub_domain_json_empty_result_has_zero_total(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+## Query API
+
+### AC-DEMO-001: Get record
+- **Status:** ✅ Verified
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--filter-sub-domain",
+            "mutation",
+            "--json",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-sub-domain"
+    assert payload["sub_domain"] == "mutation"
+    assert payload["total"] == 0
+    assert payload["files"] == []
+
+
+def test_RQMD_automation_029c_filter_sub_domain_list_output(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+## Query API
+
+### AC-DEMO-001: Get item
+- **Status:** ✅ Verified
+
+### AC-DEMO-002: Search item
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--filter-sub-domain",
+            "query",
+            "--list",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "docs/requirements/demo.md::AC-DEMO-001: Get item" in result.output
+    assert "docs/requirements/demo.md::AC-DEMO-002: Search item" in result.output
+
+
+def test_RQMD_automation_027c_explicit_targets_list_output(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: First
+- **Status:** ✅ Verified
+
+### AC-DEMO-002: Second
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "AC-DEMO-002",
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--list",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "docs/requirements/demo.md::AC-DEMO-002: Second" in result.output
+    assert "AC-DEMO-001" not in result.output
+
+
+def test_RQMD_automation_027_filter_ids_file_json_expands_domain_and_subsection_tokens(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+## Query API
+
+### AC-DEMO-001: Get item
+- **Status:** ✅ Verified
+
+### AC-DEMO-002: Search item
+- **Status:** 💡 Proposed
+
+## Mutation API
+
+### AC-DEMO-003: Create item
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+    (domain / "other.md").write_text(
+        """# Other Requirements
+
+Scope: other.
+
+### AC-OTHER-001: Other item
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+    target_file = tmp_path / "focus.txt"
+    target_file.write_text(
+        "demo  # whole domain\nQuery  AC-OTHER-001\n",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--filter-ids-file",
+            str(target_file),
+            "--json",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-targets"
+    assert payload["targets"] == ["demo", "Query", "AC-OTHER-001"]
+    assert payload["total"] == 4
+    assert [file_entry["path"] for file_entry in payload["files"]] == [
+        "docs/requirements/demo.md",
+        "docs/requirements/other.md",
+    ]
+    demo_ids = [item["id"] for item in payload["files"][0]["requirements"]]
+    assert demo_ids == ["AC-DEMO-001", "AC-DEMO-002", "AC-DEMO-003"]
+    assert payload["files"][1]["requirements"][0]["id"] == "AC-OTHER-001"
+
+
+def test_RQMD_automation_027b_positional_target_tree_rejects_invalid_token(repo_with_domain_docs: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "no-such-target",
+            "--repo-root",
+            str(repo_with_domain_docs),
+            "--requirements-dir",
+            "docs/requirements",
+            "--tree",
+            "--no-interactive",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Unrecognized target tokens" in result.output
+
+
 def test_RQMD_automation_025_set_flagged_and_json_mode(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(

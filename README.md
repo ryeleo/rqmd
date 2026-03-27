@@ -161,6 +161,22 @@ uv run rqmd --filter-priority critical --tree
 uv run rqmd --filter-priority p1 --json --no-interactive
 ```
 
+Filter by subsection name with case-insensitive prefix matching:
+
+```bash
+uv run rqmd --filter-sub-domain query --tree
+uv run rqmd --filter-sub-domain api --json --no-interactive
+```
+
+Target an explicit worklist from CLI tokens or a reusable file:
+
+```bash
+uv run rqmd demo "Query API"
+uv run rqmd --filter-ids-file tmp/focus.txt --json --no-interactive
+```
+
+`--filter-ids-file` accepts `.txt`, `.conf`, or `.md` files with one-per-line or whitespace/comma-separated tokens, and supports `#` comments.
+
 Interactive file and requirement menus also expose `priority` as a sortable column via `s` / `d`.
 
 Use a different ID prefix:
@@ -251,12 +267,15 @@ When `--json` is used, top-level keys are stable by mode:
 - `filter-status`: `mode`, `status`, `criteria_dir`, `total`, `files`
 - `filter-priority`: `mode`, `priority`, `criteria_dir`, `total`, `files`
 - `filter-flagged`: `mode`, `flagged`, `criteria_dir`, `total`, `files`
+- `filter-sub-domain`: `mode`, `sub_domain`, `criteria_dir`, `total`, `files`
+- `filter-targets`: `mode`, `targets`, `criteria_dir`, `total`, `files`
 - `rollup`: `mode`, `criteria_dir`, `file_count`, `totals`, optional `rollup_source`, optional `rollup_columns`
 - `init`: `mode`, `criteria_dir`, `starter_prefix`, `created_files`, `created_count`
 - `init-priorities`: `mode`, `criteria_dir`, `default_priority`, `changed_files`, `changed_count`
 
 Filter payloads return `files` ordered by path and requirement entries ordered by requirement ID.
 By default, filter JSON includes `body.markdown` and line metadata; pass `--no-body` to omit bodies.
+Each requirement entry includes `sub_domain` (string or `null`), and each file entry includes `sub_sections` with subsection names and requirement counts.
 
 ### Exit codes
 

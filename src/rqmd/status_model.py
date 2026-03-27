@@ -195,9 +195,3 @@ def build_color_rollup_text(counts: dict[str, int]) -> str:
     dimmed_text = click.style(f"{dimmed:>3}", dim=True)
 
     return f"{blue_text} | {normal_text} | {green_text} | {dimmed_text}"
-    blue_text = click.style(f"{blue:>3}", fg="bright_blue")
-    normal_text = f"{normal:>3}"
-    green_text = click.style(f"{green:>3}", fg="green")
-    dimmed_text = click.style(f"{dimmed:>3}", dim=True)
-
-    return f"{blue_text} | {normal_text} | {green_text} | {dimmed_text}"

@@ -5,6 +5,7 @@ import re
 import shutil
 from pathlib import Path
 
+import click
 from click.testing import CliRunner
 from rqmd import cli, menus
 
@@ -601,6 +602,54 @@ def test_RQMD_interactive_009_positional_lookup_mode(monkeypatch, repo_with_doma
     assert called["value"] is True
 
 
+def test_RQMD_interactive_019_multiple_targets_launch_focused_walk(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+## Query API
+
+### AC-DEMO-001: Get item
+- **Status:** ✅ Verified
+
+### AC-DEMO-002: Search item
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    called = {"value": False}
+
+    def fake_focused(repo_root, domain_files, selected_items, target_tokens, emoji_columns, id_prefixes, resume_filter, state_dir, include_status_emojis, priority_mode, include_priority_summary):
+        called["value"] = True
+        assert target_tokens == ["demo", "Query"]
+        assert [str(item[1]["id"]) for item in selected_items] == ["AC-DEMO-001", "AC-DEMO-002"]
+        return 0
+
+    monkeypatch.setattr(cli, "focused_target_interactive_loop", fake_focused)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "demo",
+            "Query",
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert called["value"] is True
+
+
 def test_RQMD_interactive_009a_lookup_mode_up_exits(monkeypatch, repo_with_domain_docs: Path) -> None:
     domain_file = repo_with_domain_docs / "docs" / "requirements" / "demo.md"
     monkeypatch.setattr(cli, "select_from_menu", lambda *args, **kwargs: "up")
@@ -629,6 +678,103 @@ def test_RQMD_interactive_009b_filtered_walk_up_exits(monkeypatch, repo_with_dom
     )
 
     assert result == 0
+
+
+def test_RQMD_interactive_021_jump_to_subsection_from_requirement_menu(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+## Query API
+
+### AC-DEMO-001: Query path
+- **Status:** 💡 Proposed
+
+## Mutation API
+
+### AC-DEMO-002: Mutation path
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    captured_ids: list[str] = []
+    state = {"req_calls": 0}
+
+    def fake_panel(path, requirement, repo_root, id_prefixes):
+        del path, repo_root, id_prefixes
+        captured_ids.append(str(requirement["id"]))
+
+    def fake_select(title, options, **kwargs):
+        del options, kwargs
+        if title.startswith("Select file"):
+            return 0
+        if title.startswith("Select requirement in"):
+            state["req_calls"] += 1
+            if state["req_calls"] == 1:
+                return "jump-subsection"
+            return None
+        if title.startswith("Set status for"):
+            return "up"
+        return None
+
+    monkeypatch.setattr(cli, "select_from_menu", fake_select)
+    monkeypatch.setattr(cli.workflows_mod, "print_criterion_panel", fake_panel)
+    monkeypatch.setattr(cli.click, "prompt", lambda *args, **kwargs: "mutation")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured_ids[0] == "AC-DEMO-002"
+
+
+def test_RQMD_interactive_020_shell_completion_suggests_subsection_domain_and_id(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+## Query API
+
+### AC-DEMO-001: First
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    ctx = click.Context(cli.main)
+    ctx.params = {
+        "repo_root": repo,
+        "criteria_dir": "docs/requirements",
+        "id_prefixes": (),
+    }
+
+    items = cli.shell_complete_target_tokens(ctx, param=None, incomplete="q")
+    values = [item.value if hasattr(item, "value") else str(item) for item in items]
+
+    assert "Query API" in values
+    assert "AC-DEMO-001" not in values
+
+    items_id = cli.shell_complete_target_tokens(ctx, param=None, incomplete="ac-demo")
+    values_id = [item.value if hasattr(item, "value") else str(item) for item in items_id]
+    assert "AC-DEMO-001" in values_id
 
 
 def test_RQMD_interactive_filtered_walk_resumes_position_across_runs(tmp_path: Path) -> None:
@@ -1064,7 +1210,6 @@ def test_RQMD_interactive_010_deep_paging_and_status_updates_with_scratch(monkey
 
 
 def test_RQMD_interactive_011_unwritable_file_blocks_interactive_mode(tmp_path: Path) -> None:
-    import os
     import stat
 
     repo = tmp_path / "repo"

@@ -74,6 +74,7 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
+from . import menus as menus_mod
 from . import workflows as workflows_mod
 from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
                            parse_batch_update_jsonl, parse_set_entry,
@@ -84,9 +85,10 @@ from .constants import (DEFAULT_CRITERIA_DIR, DEFAULT_ID_PREFIXES,
                         SUMMARY_END, SUMMARY_START)
 from .criteria_parser import (collect_criteria_by_flagged,
                               collect_criteria_by_priority,
-                              collect_criteria_by_status, find_criterion_by_id,
-                              normalize_id_prefixes, parse_criteria,
-                              resolve_id_prefixes)
+                              collect_criteria_by_status,
+                              collect_criteria_by_sub_domain,
+                              find_criterion_by_id, normalize_id_prefixes,
+                              parse_criteria, resolve_id_prefixes)
 from .markdown_io import (auto_detect_criteria_dir, check_files_writable,
                           check_index_sync, discover_project_root,
                           display_name_from_h1, format_path_display,
@@ -94,8 +96,7 @@ from .markdown_io import (auto_detect_criteria_dir, check_files_writable,
                           iter_criteria_search_roots, iter_domain_files,
                           parse_index_links, resolve_criteria_dir,
                           validate_files_readable)
-from .menus import (apply_background_preserving_styles,
-                    file_sort_key_by_priority, select_from_menu)
+from .menus import select_from_menu
 from .priority_model import normalize_priority_input
 from .rollup_config import compute_rollup_column_values, resolve_rollup_columns
 from .status_model import (build_color_rollup_text, configure_status_catalog,
@@ -111,8 +112,12 @@ from .summary import (build_summary_block, build_summary_line,
                       normalize_status_lines, print_custom_rollup_table,
                       print_global_rollup_table, print_summary_table,
                       process_file)
+from .target_selection import (complete_target_tokens,
+                                                             parse_target_token_file, resolve_target_tokens)
 from .workflows import (build_filtered_criteria_payload, build_summary_payload,
-                        print_criteria_tree)
+                                                build_targeted_criteria_payload,
+                                                focused_target_interactive_loop as focused_target_interactive_loop_impl,
+                        print_criteria_list, print_criteria_tree)
 
 __all__ = [
     "SUMMARY_START",
@@ -140,6 +145,8 @@ __all__ = [
     "parse_index_links",
     "check_index_sync",
     "display_name_from_h1",
+    "apply_background_preserving_styles",
+    "file_sort_key_by_priority",
     "print_criterion_panel",
     "update_criterion_status",
     "prompt_for_blocked_reason",
@@ -148,6 +155,9 @@ __all__ = [
     "build_color_rollup_text",
     "main",
 ]
+
+apply_background_preserving_styles = menus_mod.apply_background_preserving_styles
+file_sort_key_by_priority = menus_mod.file_sort_key_by_priority
 
 
 def prompt_for_init_prefix(default_prefix: str = "REQ") -> str:
@@ -280,15 +290,70 @@ def lookup_criterion_interactive(
     )
 
 
+def focused_target_interactive_loop(
+    repo_root: Path,
+    domain_files: list[Path],
+    selected_items: list[tuple[Path, dict[str, object]]],
+    target_tokens: list[str],
+    emoji_columns: bool,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    resume_filter: bool = True,
+    state_dir: str = "system-temp",
+    include_status_emojis: bool | None = None,
+    priority_mode: bool = False,
+    include_priority_summary: bool = False,
+) -> int:
+    return focused_target_interactive_loop_impl(
+        repo_root=repo_root,
+        domain_files=domain_files,
+        selected_items=selected_items,
+        target_tokens=target_tokens,
+        emoji_columns=emoji_columns,
+        id_prefixes=id_prefixes,
+        select_from_menu_fn=select_from_menu,
+        resume_filter=resume_filter,
+        state_dir=state_dir,
+        include_status_emojis=include_status_emojis,
+        priority_mode=priority_mode,
+        include_priority_summary=include_priority_summary,
+    )
+
+
+def shell_complete_target_tokens(
+    ctx: click.Context,
+    param: click.Parameter,
+    incomplete: str,
+) -> list[object]:
+    del param
+    try:
+        raw_repo_root = ctx.params.get("repo_root")
+        repo_root = Path(raw_repo_root).resolve() if raw_repo_root else discover_project_root(Path.cwd())[0]
+        raw_criteria_dir = ctx.params.get("criteria_dir")
+        resolved_criteria_dir, _message = resolve_criteria_dir(repo_root, raw_criteria_dir)
+        raw_prefixes = tuple(ctx.params.get("id_prefixes") or ())
+        resolved_prefixes = resolve_id_prefixes(repo_root, str(resolved_criteria_dir), raw_prefixes)
+        domain_files = iter_domain_files(repo_root, str(resolved_criteria_dir))
+        items = complete_target_tokens(repo_root, domain_files, resolved_prefixes, incomplete)
+    except Exception:
+        return []
+
+    completion_module = getattr(click, "shell_completion", None)
+    completion_item = getattr(completion_module, "CompletionItem", None) if completion_module is not None else None
+    if completion_item is None:
+        return items
+    return [completion_item(item) for item in items]
+
+
 @click.command(
     context_settings={"help_option_names": ["-h", "--help"]},
     help=__doc__,
 )
 @click.argument(
-    "criterion_id",
+    "targets",
     required=False,
-    default=None,
-    metavar="[ID]",
+    nargs=-1,
+    metavar="[TARGET]...",
+    shell_complete=shell_complete_target_tokens,
 )
 @click.option("--check", is_flag=True, help="Check whether summaries are up to date without writing changes.")
 @click.option("-v", "--verbose", is_flag=True, help="Show verbose output with full words.")
@@ -395,9 +460,27 @@ def lookup_criterion_interactive(
     help="Filter flagged requirements and print matches as tree/JSON in non-interactive workflows.",
 )
 @click.option(
+    "--filter-sub-domain",
+    "filter_sub_domain",
+    type=str,
+    help="Filter by subsection name using case-insensitive prefix matching.",
+)
+@click.option(
+    "--filter-ids-file",
+    "filter_ids_file",
+    type=str,
+    help="Path to a .txt/.conf/.md target list containing requirement IDs, domain tokens, and subsection tokens.",
+)
+@click.option(
     "--tree",
     is_flag=True,
     help="With --filter-status: print a tree view only and exit instead of opening the interactive walk.",
+)
+@click.option(
+    "--list",
+    "list_output",
+    is_flag=True,
+    help="With filters or explicit target tokens: print a flat list and exit.",
 )
 @click.option(
     "--summary-table/--no-summary-table",
@@ -541,7 +624,10 @@ def main(
     filter_status: str | None,
     filter_priority: str | None,
     filter_flagged: bool,
+    filter_sub_domain: str | None,
+    filter_ids_file: str | None,
     tree: bool,
+    list_output: bool,
     summary_table: bool,
     sort_strategy: str,
     rollup_mode: bool,
@@ -561,7 +647,7 @@ def main(
     check_index: bool,
     init_scaffold: bool,
     confirm_yes: bool,
-    criterion_id: str | None,
+    targets: tuple[str, ...],
 ) -> None:
     repo_root_source = ctx.get_parameter_source("repo_root")
     repo_root_explicit = repo_root_source != click.core.ParameterSource.DEFAULT
@@ -587,6 +673,7 @@ def main(
         configure_status_catalog(config.get("statuses"))
     except ValueError as exc:
         raise click.ClickException(f"Config error: {exc}") from exc
+    ctx.call_on_close(lambda: configure_status_catalog(None))
 
     # Apply config defaults (CLI flags override config file)
     if not criteria_dir and "requirements_dir" in config:
@@ -615,9 +702,9 @@ def main(
         click.echo(root_discovery_message)
 
     if init_scaffold:
-        if check or filter_status or filter_priority or filter_flagged or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or criterion_id:
+        if check or filter_status or filter_priority or filter_flagged or filter_sub_domain or filter_ids_file or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or targets:
             raise click.ClickException(
-                "--init cannot be combined with --check, --rollup, positional ID, --filter-status/--tree, or --set-* options."
+                "--init cannot be combined with --check, --rollup, positional ID, --filter-* / --tree, or --set-* options."
             )
 
         try:
@@ -731,6 +818,8 @@ def main(
             or filter_status
             or filter_priority
             or filter_flagged
+            or filter_sub_domain
+            or filter_ids_file
             or set_criterion_id
             or set_status
             or set_updates
@@ -740,7 +829,7 @@ def main(
             or set_file
             or tree
             or rollup_mode
-            or criterion_id
+            or targets
             or strip_status_emojis
             or restore_status_emojis
         ):
@@ -811,9 +900,9 @@ def main(
         raise SystemExit(0)
 
     if strip_status_emojis or restore_status_emojis:
-        if check or filter_status or filter_priority or filter_flagged or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or criterion_id:
+        if check or filter_status or filter_priority or filter_flagged or filter_sub_domain or filter_ids_file or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or targets:
             raise click.ClickException(
-                "Emoji strip/restore modes cannot be combined with --check, --rollup, positional ID, --filter-status/--tree, or --set-* options."
+                "Emoji strip/restore modes cannot be combined with --check, --rollup, positional ID, --filter-* / --tree, or --set-* options."
             )
 
         include_status_emojis = not strip_status_emojis
@@ -863,19 +952,78 @@ def main(
         click.echo(f"Index is in sync: {format_path_display(index_path, repo_root)}")
         raise SystemExit(0)
 
-    # Positional ID lookup: find the requirement, show panel + status menu, done.
-    if criterion_id:
-        if check or filter_status or filter_priority or filter_flagged or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode:
-            raise click.ClickException(
-                "Positional ID cannot be combined with --check, --rollup, --filter-status, --tree, or --set-* options."
+    explicit_target_tokens = list(targets)
+    if filter_ids_file:
+        explicit_target_tokens.extend(parse_target_token_file(repo_root, filter_ids_file))
+
+    # Preserve legacy single-ID lookup mode when only one positional token is provided.
+    if len(targets) == 1 and not filter_ids_file:
+        single_target = targets[0]
+        exact_id_matches = []
+        for path in domain_files:
+            requirement = find_criterion_by_id(path, single_target, id_prefixes=id_prefixes)
+            if requirement:
+                exact_id_matches.append((path, requirement))
+        if len(exact_id_matches) == 1 and not (check or filter_status or filter_priority or filter_flagged or filter_sub_domain or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or json_output or not interactive):
+            raise SystemExit(
+                lookup_criterion_interactive(
+                    repo_root,
+                    domain_files,
+                    criterion_id=single_target,
+                    emoji_columns=emoji_columns,
+                    id_prefixes=id_prefixes,
+                    include_status_emojis=include_status_emojis,
+                    priority_mode=priority_mode,
+                    include_priority_summary=show_priority_summary,
+                )
             )
+
+    if explicit_target_tokens:
+        if check or filter_status or filter_priority or filter_flagged or filter_sub_domain or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or rollup_mode:
+            raise click.ClickException(
+                "Explicit target selection cannot be combined with --check, --rollup, --filter-*, or --set-* options."
+            )
+        selected_items = resolve_target_tokens(
+            repo_root,
+            domain_files,
+            explicit_target_tokens,
+            id_prefixes=id_prefixes,
+        )
+
+        if json_output:
+            payload = build_targeted_criteria_payload(
+                repo_root,
+                resolved_criteria_dir,
+                selected_items,
+                explicit_target_tokens,
+                include_body=include_body,
+                id_prefixes=id_prefixes,
+            )
+            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            raise SystemExit(0)
+
+        targeted_by_file: dict[Path, list[dict[str, object]]] = {}
+        for path, requirement in selected_items:
+            targeted_by_file.setdefault(path, []).append(requirement)
+
+        if list_output:
+            print_criteria_list(repo_root, targeted_by_file, ", ".join(explicit_target_tokens), filter_label="targets")
+            raise SystemExit(0)
+
+        if tree or not interactive:
+            print_criteria_tree(repo_root, targeted_by_file, ", ".join(explicit_target_tokens), filter_label="targets")
+            raise SystemExit(0)
+
         raise SystemExit(
-            lookup_criterion_interactive(
+            focused_target_interactive_loop(
                 repo_root,
                 domain_files,
-                criterion_id=criterion_id,
+                selected_items=selected_items,
+                target_tokens=explicit_target_tokens,
                 emoji_columns=emoji_columns,
                 id_prefixes=id_prefixes,
+                resume_filter=resume_filter,
+                state_dir=state_dir,
                 include_status_emojis=include_status_emojis,
                 priority_mode=priority_mode,
                 include_priority_summary=show_priority_summary,
@@ -977,13 +1125,13 @@ def main(
             print(msg, file=sys.stderr)
         raise SystemExit(1)
 
-    # --tree without an active filter mode is a no-op guard
-    if tree and not (filter_status or filter_priority or filter_flagged):
-        raise click.ClickException("--tree requires --filter-status, --filter-priority, or --filter-flagged.")
+    # --tree/--list without an active filter mode is a no-op guard
+    if (tree or list_output) and not (filter_status or filter_priority or filter_flagged or filter_sub_domain or explicit_target_tokens):
+        raise click.ClickException("--tree/--list requires --filter-status, --filter-priority, --filter-flagged, --filter-sub-domain, or explicit target tokens.")
 
-    active_filter_count = int(bool(filter_status)) + int(bool(filter_priority)) + int(bool(filter_flagged))
+    active_filter_count = int(bool(filter_status)) + int(bool(filter_priority)) + int(bool(filter_flagged)) + int(bool(filter_sub_domain))
     if active_filter_count > 1:
-        raise click.ClickException("Use only one filter mode at a time: --filter-status, --filter-priority, or --filter-flagged.")
+        raise click.ClickException("Use only one filter mode at a time: --filter-status, --filter-priority, --filter-flagged, or --filter-sub-domain.")
 
     # Handle --filter-status mode
     if filter_status:
@@ -1009,6 +1157,9 @@ def main(
                 id_prefixes=id_prefixes,
             )
             click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            raise SystemExit(0)
+        if list_output:
+            print_criteria_list(repo_root, criteria_by_file, normalized_status, filter_label="status")
             raise SystemExit(0)
         if tree or not interactive:
             # Non-interactive: just print the tree and exit.
@@ -1053,6 +1204,9 @@ def main(
             )
             click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
             raise SystemExit(0)
+        if list_output:
+            print_criteria_list(repo_root, criteria_by_file, normalized_priority, filter_label="priority")
+            raise SystemExit(0)
         if tree or not interactive:
             print_criteria_tree(repo_root, criteria_by_file, normalized_priority, filter_label="priority")
             raise SystemExit(0)
@@ -1096,8 +1250,44 @@ def main(
             click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
             raise SystemExit(0)
 
+        if list_output:
+            print_criteria_list(repo_root, criteria_by_file, "flagged=true", filter_label="flagged")
+            raise SystemExit(0)
+
         # Non-interactive by design for automation workflows.
         print_criteria_tree(repo_root, criteria_by_file, "flagged=true", filter_label="flagged")
+        raise SystemExit(0)
+
+    if filter_sub_domain:
+        if check or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
+            raise click.ClickException("--filter-sub-domain cannot be combined with --check or mutation options.")
+
+        criteria_by_file = collect_criteria_by_sub_domain(
+            repo_root,
+            domain_files,
+            filter_sub_domain,
+            id_prefixes=id_prefixes,
+        )
+
+        if json_output:
+            payload = build_filtered_criteria_payload(
+                repo_root,
+                resolved_criteria_dir,
+                criteria_by_file,
+                filter_sub_domain,
+                include_body=include_body,
+                id_prefixes=id_prefixes,
+                filter_mode="filter-sub-domain",
+                filter_label="sub_domain",
+            )
+            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            raise SystemExit(0)
+
+        if list_output:
+            print_criteria_list(repo_root, criteria_by_file, filter_sub_domain, filter_label="sub_domain")
+            raise SystemExit(0)
+
+        print_criteria_tree(repo_root, criteria_by_file, filter_sub_domain, filter_label="sub_domain")
         raise SystemExit(0)
 
     non_interactive_requested = bool(
@@ -1253,47 +1443,6 @@ def main(
         if json_output:
             payload = build_summary_payload(repo_root, resolved_criteria_dir, domain_files, sorted(changed_files))
             payload["dry_run"] = dry_run
-            if set_priority_updates and not set_updates and not set_flagged_updates:
-                payload["mode"] = "set-priority"
-            elif set_flagged_updates and not set_updates and not set_priority_updates:
-                payload["mode"] = "set-flagged"
-            else:
-                payload["mode"] = "set"
-            payload["updates"] = update_results
-            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
-            raise SystemExit(0)
-
-        if summary_table:
-            print_summary_table(table_rows, emoji_columns=emoji_columns)
-        raise SystemExit(0)
-
-    if json_output:
-        payload = dict(summary_payload)
-        payload["ok"] = True
-        click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
-        raise SystemExit(0)
-
-    if interactive and not check:
-        # RQMD-INTERACTIVE-011: preflight write-permission gate
-        check_files_writable(domain_files, repo_root)
-        raise SystemExit(
-            interactive_update_loop(
-                repo_root,
-                resolved_criteria_dir_input,
-                domain_files,
-                emoji_columns=emoji_columns,
-                sort_files=False,
-                sort_strategy=sort_strategy,
-                id_prefixes=id_prefixes,
-                include_status_emojis=include_status_emojis,
-                priority_mode=priority_mode,
-                include_priority_summary=show_priority_summary,
-            )
-        )
-
-
-if __name__ == "__main__":
-    main()            payload["dry_run"] = dry_run
             if set_priority_updates and not set_updates and not set_flagged_updates:
                 payload["mode"] = "set-priority"
             elif set_flagged_updates and not set_updates and not set_priority_updates:

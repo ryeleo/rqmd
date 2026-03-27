@@ -385,7 +385,7 @@ def test_RQMD_packaging_008_release_publish_workflow_present() -> None:
 
 def test_RQMD_portability_008_scratch_corpus_runs_from_requirements_dir_without_docs_prefix() -> None:
     project_root = Path(__file__).resolve().parents[1]
-    scratch_root = project_root / "scratch"
+    scratch_root = project_root / "test-corpus" / "scratch"
 
     runner = CliRunner()
     result = runner.invoke(

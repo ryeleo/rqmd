@@ -60,6 +60,38 @@ Scope: demo.
         assert cli.find_criterion_by_id(path, "r-demo-001", id_prefixes=("R",))["title"] == "First"
 
 
+def test_RQMD_core_020_parse_h2_subsections_into_sub_domain_metadata() -> None:
+    text = """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-000: No subsection
+- **Status:** 💡 Proposed
+
+##   Query   API   
+Notes about query behavior.
+
+### AC-DEMO-001: Read model
+- **Status:** ✅ Verified
+
+## Mutation API
+
+### AC-DEMO-002: Write model
+- **Status:** 🔧 Implemented
+"""
+
+    from tempfile import TemporaryDirectory
+
+    with TemporaryDirectory() as td:
+        path = Path(td) / "demo.md"
+        path.write_text(text, encoding="utf-8")
+        requirements = cli.parse_criteria(path)
+
+    assert requirements[0]["sub_domain"] is None
+    assert requirements[1]["sub_domain"] == "Query API"
+    assert requirements[2]["sub_domain"] == "Mutation API"
+
+
 def test_RQMD_core_003_normalize_status_aliases() -> None:
     original = """### AC-DEMO-001: First
 - **Status:** ✅ Done
@@ -354,6 +386,9 @@ def test_RQMD_core_016_init_scaffold_copies_template_content(tmp_path: Path) -> 
     starter_text = (repo / "docs" / "requirements" / "starter.md").read_text(encoding="utf-8")
 
     assert "Generated from init-docs/README.md." in index_text
+    assert "## Schema Reference" in index_text
+    assert "This section is intentionally included in the generated requirements index" in index_text
+    assert "filter-sub-domain" in index_text
     assert "And this file content is sourced from init-docs/domain-example.md." in starter_text
 
 

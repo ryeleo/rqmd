@@ -124,6 +124,37 @@ def resolve_id_prefixes(
     return DEFAULT_ID_PREFIXES
 
 
+def normalize_sub_domain_name(value: object | None) -> str:
+    if value is None:
+        return ""
+    return " ".join(str(value).split()).casefold()
+
+
+def display_sub_domain_name(value: object | None) -> str | None:
+    normalized = " ".join(str(value).split()) if value is not None else ""
+    return normalized or None
+
+
+def collect_sub_sections(
+    path: Path,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+) -> list[dict[str, object]]:
+    ordered: list[str] = []
+    counts: dict[str, dict[str, object]] = {}
+
+    for requirement in parse_criteria(path, id_prefixes=id_prefixes):
+        sub_domain = display_sub_domain_name(requirement.get("sub_domain"))
+        if sub_domain is None:
+            continue
+        key = normalize_sub_domain_name(sub_domain)
+        if key not in counts:
+            ordered.append(key)
+            counts[key] = {"name": sub_domain, "count": 0}
+        counts[key]["count"] = int(counts[key]["count"]) + 1
+
+    return [counts[key] for key in ordered]
+
+
 def parse_criteria(
     path: Path,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
@@ -138,7 +169,7 @@ def parse_criteria(
         # Track H2 subsection headers (optional organizational structure)
         subsection_match = H2_SUBSECTION_PATTERN.match(line)
         if subsection_match:
-            current_subsection = subsection_match.group("section_title")
+            current_subsection = display_sub_domain_name(subsection_match.group("section_title"))
             continue
 
         header_match = header_pattern.match(line)
@@ -316,10 +347,28 @@ def collect_criteria_by_flagged(
         if matching:
             result[path] = matching
     return result
+
+
+def collect_criteria_by_sub_domain(
+    repo_root: Path,
+    domain_files: list[Path],
+    target_sub_domain: str,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+) -> dict[Path, list[dict[str, object]]]:
+    del repo_root
+    normalized_target = normalize_sub_domain_name(target_sub_domain)
+    if not normalized_target:
+        return {}
+
     result: dict[Path, list[dict[str, object]]] = {}
     for path in domain_files:
         requirements = parse_criteria(path, id_prefixes=id_prefixes)
-        matching = [c for c in requirements if c.get("flagged") is flagged]
+        matching = [
+            c
+            for c in requirements
+            if (sub_domain := normalize_sub_domain_name(c.get("sub_domain")))
+            and sub_domain.startswith(normalized_target)
+        ]
         if matching:
             result[path] = matching
     return result
