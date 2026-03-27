@@ -29,10 +29,15 @@ except ImportError:
     print("Install with: pip3 install tabulate", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN,
-                        STATUS_TERSE_HEADERS_ASCII, SUMMARY_END, SUMMARY_START)
-from .status_model import (coerce_status_label, style_status_count,
-                           suggest_status_labels)
+from .constants import (
+    PRIORITY_ORDER,
+    STATUS_ORDER,
+    STATUS_PATTERN,
+    STATUS_TERSE_HEADERS_ASCII,
+    SUMMARY_END,
+    SUMMARY_START,
+)
+from .status_model import coerce_status_label, style_status_count, suggest_status_labels
 
 
 class UnknownStatusValueError(ValueError):

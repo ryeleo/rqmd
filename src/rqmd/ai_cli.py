@@ -27,19 +27,12 @@ except ImportError:
 
 from .batch_inputs import parse_set_entry
 from .constants import JSON_SCHEMA_VERSION
-from .markdown_io import (
-    discover_project_root,
-    format_path_display,
-    iter_domain_files,
-    resolve_requirements_dir,
-    validate_files_readable,
-)
-from .req_parser import (
-    extract_requirement_block_with_lines,
-    normalize_id_prefixes,
-    parse_requirements,
-    resolve_id_prefixes,
-)
+from .markdown_io import (discover_project_root, format_path_display,
+                          iter_domain_files, resolve_requirements_dir,
+                          validate_files_readable)
+from .req_parser import (extract_requirement_block_with_lines,
+                         normalize_id_prefixes, parse_requirements,
+                         resolve_id_prefixes)
 from .status_model import normalize_status_input
 from .status_update import apply_status_change_by_id
 
