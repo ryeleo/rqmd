@@ -3,7 +3,7 @@
 Scope: audio resource organization, random sampling for variety, dB level standards for audio mixing, and procedural fallback behavior across all gameplay SFX.
 
 <!-- acceptance-status-summary:start -->
-Summary: 9💡 0🔧 0✅ 0⛔ 0🗑️
+Summary: 9💡 0🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ---

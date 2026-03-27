@@ -8,21 +8,31 @@ import click
 
 from .constants import STATUS_ORDER
 
-STATUS_SHORTCODE_TO_LABEL = {
-    "P": "💡 Proposed",
-    "I": "🔧 Implemented",
-    "V": "✅ Verified",
-    "B": "⛔ Blocked",
-    "D": "🗑️ Deprecated",
-}
 
-STATUS_NAME_TO_LABEL = {
-    "proposed": "💡 Proposed",
-    "implemented": "🔧 Implemented",
-    "verified": "✅ Verified",
-    "blocked": "⛔ Blocked",
-    "deprecated": "🗑️ Deprecated",
-}
+def _build_status_name_map() -> dict[str, str]:
+    mapping: dict[str, str] = {}
+    for label, slug in STATUS_ORDER:
+        lowered = label.lower()
+        mapping[lowered] = label
+        if slug:
+            mapping[slug.lower()] = label
+        parts = label.split(" ", 1)
+        if len(parts) == 2 and parts[1].strip():
+            mapping[parts[1].strip().lower()] = label
+
+    # Backward compatible shortcodes for default catalog.
+    if "💡 Proposed" in mapping.values():
+        mapping.setdefault("p", "💡 Proposed")
+    if "🔧 Implemented" in mapping.values():
+        mapping.setdefault("i", "🔧 Implemented")
+    if "✅ Verified" in mapping.values():
+        mapping.setdefault("v", "✅ Verified")
+    if "⛔ Blocked" in mapping.values():
+        mapping.setdefault("b", "⛔ Blocked")
+    if "🗑️ Deprecated" in mapping.values():
+        mapping.setdefault("d", "🗑️ Deprecated")
+
+    return mapping
 
 
 def _canonical_status_label(token: str, source: str, key: str) -> str:
@@ -30,20 +40,13 @@ def _canonical_status_label(token: str, source: str, key: str) -> str:
     if not normalized:
         raise click.ClickException(f"Invalid rollup mapping in {source}: empty status token for '{key}'.")
 
-    upper = normalized.upper()
-    if upper in STATUS_SHORTCODE_TO_LABEL:
-        return STATUS_SHORTCODE_TO_LABEL[upper]
-
-    if normalized in STATUS_NAME_TO_LABEL:
-        return STATUS_NAME_TO_LABEL[normalized]
-
-    for label, _slug in STATUS_ORDER:
-        if normalized == label.lower():
-            return label
+    status_name_map = _build_status_name_map()
+    if normalized in status_name_map:
+        return status_name_map[normalized]
 
     raise click.ClickException(
         f"Invalid rollup mapping in {source}: unknown status token '{token}' for '{key}'. "
-        "Supported values: proposed, implemented, verified, blocked, deprecated, or shortcodes P/I/V/B/D."
+        "Supported values are the active status labels/names from your status catalog."
     )
 
 

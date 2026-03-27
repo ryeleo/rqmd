@@ -3,7 +3,7 @@
 Scope: teleport locomotion, snap-turn, locomotion suppression during strings and pause menus, desktop debug camera, and XR rig stability.
 
 <!-- acceptance-status-summary:start -->
-Summary: 14💡 0🔧 0✅ 0⛔ 0🗑️
+Summary: 14💡 0🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 

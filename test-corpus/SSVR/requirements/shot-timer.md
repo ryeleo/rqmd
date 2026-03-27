@@ -3,7 +3,7 @@
 Scope: string timing contract, timer start/stop triggers, display behavior, per-string precision, and multi-string handling within a stage.
 
 <!-- acceptance-status-summary:start -->
-Summary: 12💡 0🔧 0💻 0🎮 2✅ 0⛔ 0🗑️
+Summary: 10💡 2🔧 0💻 0🎮 2✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 

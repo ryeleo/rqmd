@@ -3,7 +3,7 @@
 Scope: multi-button grid/array layout, dynamic population, refresh behavior, and array-level performance.
 
 <!-- acceptance-status-summary:start -->
-Summary: 5💡 10🔧 0✅ 0⛔ 4🗑️
+Summary: 5💡 10🔧 0💻 0🎮 0✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ## Array Layout and Organization

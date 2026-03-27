@@ -3,7 +3,7 @@
 Scope: per-stage leaderboard data model, pause-menu leaderboard panel behavior, and leaderboard-to-scorecard drilldown flow.
 
 <!-- acceptance-status-summary:start -->
-Summary: 5💡 4🔧 0✅ 0⛔ 0🗑️
+Summary: 5💡 4🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ## Stage-Scoped Leaderboard Model

@@ -3,13 +3,13 @@
 Scope: editor tooling, debugging utilities, logging infrastructure, and development-only features.
 
 <!-- acceptance-status-summary:start -->
-Summary: 8💡 0🔧 4✅ 0⛔ 1🗑️
+Summary: 8💡 0🔧 0💻 0🎮 4✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ## Editor Tools
 
 ### AC-DEVTOOLS-EDITOR-001: Scene creation from menu
-- **Status:** ✅ Verified
+- **Status:** ✅ Done
 - Given the Unity editor is open
 - When Tools > Create Scene: Start Menu is invoked
 - Then a fresh start menu scene is generated with correct setup and all dependencies
@@ -24,7 +24,7 @@ Summary: 8💡 0🔧 4✅ 0⛔ 1🗑️
 - And the StageBuilder can be re-run to iterate on procedural generation without scene save.
 
 ### AC-DEVTOOLS-EDITOR-003: Build and deploy scripting
-- **Status:** ✅ Verified
+- **Status:** ✅ Done
 - Given source code and Unity project are up to date
 - When `./scripts/build-and-run.sh` is executed
 - Then project is built (if needed), packaged as APK, and deployed to connected Quest device
@@ -79,7 +79,7 @@ Summary: 8💡 0🔧 4✅ 0⛔ 1🗑️
 ## Telemetry Developer Access
 
 ### AC-DEVTOOLS-TELEMETRY-001: Local replay inspection
-- **Status:** ✅ Verified
+- **Status:** ✅ Done
 - Given a replay file exists locally
 - When a developer tool is run to inspect it
 - Then replay events, waypoints, and metadata are readable in a human-friendly format
@@ -96,7 +96,7 @@ Summary: 8💡 0🔧 4✅ 0⛔ 1🗑️
 ## Validation and Linting
 
 ### AC-DEVTOOLS-VALIDATE-001: Stage file schema validation
-- **Status:** ✅ Verified
+- **Status:** ✅ Done
 - Given a `.stage` file is created or modified
 - When a validation tool is run
 - Then the file is checked against the schema in `docs/stage-format.md`

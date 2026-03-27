@@ -227,7 +227,10 @@ def print_summary_table(table_rows: list[list[object]], emoji_columns: bool) -> 
     if emoji_columns:
         headers = ["File"] + [label.split()[0] for label, _ in STATUS_ORDER]
     else:
-        headers = ["File"] + STATUS_TERSE_HEADERS_ASCII
+        if len(STATUS_TERSE_HEADERS_ASCII) == len(STATUS_ORDER):
+            headers = ["File"] + STATUS_TERSE_HEADERS_ASCII
+        else:
+            headers = ["File"] + [label.split(" ", 1)[-1] for label, _ in STATUS_ORDER]
 
     styled_rows: list[list[object]] = []
     for row in table_rows:

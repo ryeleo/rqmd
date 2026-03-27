@@ -3,7 +3,7 @@
 Scope: reload-state machine, magazine/chamber behavior, user input handling, audiovisual feedback, and failure/recovery flows.
 
 <!-- acceptance-status-summary:start -->
-Summary: 14💡 0🔧 0✅ 0⛔ 0🗑️
+Summary: 14💡 0🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ## Reload State Machine

@@ -3,21 +3,21 @@
 Scope: firing contract, bullet behavior, visual trace behavior, calibration, and sight trust.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 2🔧 7✅ 0⛔ 2🗑️
+Summary: 2💡 2🔧 0💻 0🎮 7✅ 0⛔ 2🗑️
 <!-- acceptance-status-summary:end -->
 
 
 ## Shot And Trigger Contract
 
 ### AC-FIREARM-SHOT-001: Trigger reset threshold before next shot
-- **Status:** ✅ Verified
+- **Status:** ✅ Done
 - Given the player has fired one shot
 - When the trigger is not yet released past the reset threshold
 - Then another shot cannot fire
 - And once the trigger is released past threshold, firing is re-armed.
 
 ### AC-FIREARM-SHOT-002: Ready Spot safety during active stage
-- **Status:** ✅ Verified
+- **Status:** ✅ Done
 - Given a stage is already armed, running, or has partial scorecard progress
 - When the player shoots the Ready Spot
 - Then the shot is treated as a no-op for stage reset and teleport behavior.
@@ -25,7 +25,7 @@ Summary: 2💡 2🔧 7✅ 0⛔ 2🗑️
 ### AC-FIREARM-SHOT-003: Ready Spot shot retries stage after scorecard is complete
 - **Status:** 💡 Proposed
 - Given the stage scorecard is fully complete (all strings finished)
-- **Status:** ✅ Verified
+- **Status:** ✅ Done
 - Then the effect is identical to shooting the Retry gong button for the stage
 - And a new scorecard is started
 - And if the player is already dwelling on the ready spot at the moment of the shot, the shot timer arms and starts immediately on ready-spot departure.
@@ -35,7 +35,7 @@ Summary: 2💡 2🔧 7✅ 0⛔ 2🗑️
 ## Bullet And Bullet Trace
 
 ### AC-FIREARM-BULLET-001: Gameplay shot resolution uses bullet hit logic
-- **Status:** ✅ Verified
+- **Status:** ✅ Done
 - Given the player fires
 - When bullet hit resolution occurs
 - Then the gameplay hit result is resolved deterministically for scoring and interactions
@@ -66,7 +66,7 @@ Summary: 2💡 2🔧 7✅ 0⛔ 2🗑️
 - And weapon model muzzle differences do not silently break replay or ghost alignment.
 
 ### AC-FIREARM-ORIGIN-002: Red-dot trust requirement
-- **Status:** ✅ Verified
+- **Status:** ✅ Done
 - Given the red dot appears to be on target
 - When a shot is fired under normal gameplay conditions
 - Then the bullet result aligns with the red-dot sight picture expectation.
@@ -74,7 +74,7 @@ Summary: 2💡 2🔧 7✅ 0⛔ 2🗑️
 > **See also:** [Aim-Adjust Stage – AC-AIMADJUST-CAL-001](aim-adjust-stage.md#ac-aimadjust-cal-001-firearm-adjustment-during-session) — calibration adjustments that affect red-dot alignment.
 
 ### AC-FIREARM-ORIGIN-003: Cosmetic muzzle effects separation
-- **Status:** ✅ Verified
+- **Status:** ✅ Done
 - Given a firearm has visual muzzle effects
 - When muzzle effect transforms differ from gameplay origin
 - Then cosmetic visuals may use the weapon-specific muzzle transform
@@ -83,7 +83,7 @@ Summary: 2💡 2🔧 7✅ 0⛔ 2🗑️
 ## Reflex Sight
 
 ### AC-FIREARM-SIGHT-001: Reflex lens remains transparent
-- **Status:** ✅ Verified
+- **Status:** ✅ Done
 - Given desktop or VR rendering mode
 - When the reflex sight lens is presented
 - Then the lens remains fully transparent for aiming visibility.

@@ -3,7 +3,7 @@
 Scope: boss shooter placement, concurrent duel participation, configurable AI behavior, duel win conditions, feedback displays, and replay-backed boss behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 17💡 0🔧 0✅ 0⛔ 0🗑️
+Summary: 17💡 0🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 

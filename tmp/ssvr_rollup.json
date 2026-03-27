@@ -1,0 +1,48 @@
+{
+  "mode": "rollup",
+  "criteria_dir": "requirements",
+  "file_count": 27,
+  "totals": {
+    "💡 Proposed": 233,
+    "🔧 Implemented": 99,
+    "💻 Desktop-Verified": 5,
+    "🎮 VR-Verified": 0,
+    "✅ Done": 40,
+    "⛔ Blocked": 4,
+    "🗑️ Deprecated": 9
+  },
+  "rollup_source": "/Users/rleonar7/git-repos/ac-cli/test-corpus/SSVR/.rqmd.yml",
+  "rollup_columns": [
+    {
+      "label": "Proposed",
+      "statuses": [
+        "💡 Proposed"
+      ],
+      "count": 233
+    },
+    {
+      "label": "Build-Ready",
+      "statuses": [
+        "🔧 Implemented",
+        "💻 Desktop-Verified"
+      ],
+      "count": 104
+    },
+    {
+      "label": "Complete",
+      "statuses": [
+        "🎮 VR-Verified",
+        "✅ Done"
+      ],
+      "count": 40
+    },
+    {
+      "label": "Parked",
+      "statuses": [
+        "⛔ Blocked",
+        "🗑️ Deprecated"
+      ],
+      "count": 13
+    }
+  ]
+}
