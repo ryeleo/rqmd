@@ -1,11 +1,18 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from click.testing import CliRunner
 
 from rqmd.ai_cli import main
+from rqmd.constants import JSON_SCHEMA_VERSION
+
+
+def _assert_schema_version(payload: dict[str, object]) -> None:
+    assert payload["schema_version"] == JSON_SCHEMA_VERSION
+    assert re.fullmatch(r"\d+\.\d+\.\d+", str(payload["schema_version"]))
 
 
 def _write_demo_domain(path: Path) -> None:
@@ -72,6 +79,7 @@ def test_RQMD_AI_001_and_002_default_guide_is_read_only_json(tmp_path: Path) -> 
     payload = json.loads(result.output)
     assert payload["mode"] == "guide"
     assert payload["read_only"] is True
+    _assert_schema_version(payload)
 
 
 def test_RQMD_AI_004_export_context_filtered_by_status(tmp_path: Path) -> None:
@@ -98,6 +106,7 @@ def test_RQMD_AI_004_export_context_filtered_by_status(tmp_path: Path) -> None:
     payload = json.loads(result.output)
     assert payload["mode"] == "export-context"
     assert payload["total"] == 1
+    _assert_schema_version(payload)
     req = payload["files"][0]["requirements"][0]
     assert req["id"] == "RQMD-DEMO-001"
 
@@ -129,6 +138,7 @@ def test_RQMD_AI_005_plan_preview_no_apply_does_not_write(tmp_path: Path) -> Non
     payload = json.loads(result.output)
     assert payload["mode"] == "plan"
     assert payload["read_only"] is True
+    _assert_schema_version(payload)
     assert domain.read_text(encoding="utf-8") == before
 
 
@@ -171,6 +181,7 @@ def test_RQMD_AI_006_apply_requires_set_and_applies_update(tmp_path: Path) -> No
     assert payload["mode"] == "apply"
     assert payload["read_only"] is False
     assert payload["changed_count"] == 1
+    _assert_schema_version(payload)
 
     text = domain.read_text(encoding="utf-8")
     assert "- **Status:** ✅ Verified" in text
@@ -202,6 +213,7 @@ def test_RQMD_AI_011_export_can_include_bounded_domain_body(tmp_path: Path) -> N
 
     assert result.exit_code == 0
     payload = json.loads(result.output)
+    _assert_schema_version(payload)
     file_payload = payload["files"][0]
     assert "domain_body" in file_payload
     domain_body = file_payload["domain_body"]
@@ -237,6 +249,7 @@ def test_RQMD_AI_010_apply_emits_structured_audit_record(tmp_path: Path) -> None
     payload = json.loads(result.output)
     assert payload["mode"] == "apply"
     assert payload["audit"] is not None
+    _assert_schema_version(payload)
     assert payload["audit"]["backend"] == "rqmd-history"
 
     audit_log = repo / ".rqmd" / "history" / "rqmd-history" / "audit.jsonl"

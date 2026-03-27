@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
 
 from rqmd import cli
+from rqmd.constants import JSON_SCHEMA_VERSION
+
+
+def _assert_schema_version(payload: dict[str, object]) -> None:
+    assert payload["schema_version"] == JSON_SCHEMA_VERSION
+    assert re.fullmatch(r"\d+\.\d+\.\d+", str(payload["schema_version"]))
 
 
 def test_RQMD_automation_001_check_only_mode_detects_needed_changes(repo_with_domain_docs: Path) -> None:
@@ -1782,6 +1789,104 @@ Scope: demo.
     assert "sub_domain" in by_id["AC-DEMO-001"]
     assert by_id["AC-DEMO-001"]["sub_domain"] is None
     assert by_id["AC-DEMO-002"]["sub_domain"] == "Query API"
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["--as-json", "--no-walk", "--no-table"],
+        ["--status", "proposed", "--as-json", "--no-walk", "--no-table"],
+        ["--totals", "--as-json", "--no-walk", "--no-table"],
+        [
+            "--update-id",
+            "AC-HELLO-001",
+            "--update-status",
+            "implemented",
+            "--as-json",
+            "--no-table",
+        ],
+    ],
+)
+def test_RQMD_automation_033_json_payloads_include_schema_version(
+    repo_with_domain_docs: Path,
+    args: list[str],
+) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo_with_domain_docs),
+            "--docs-dir",
+            "docs/requirements",
+            *args,
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    _assert_schema_version(payload)
+
+
+def test_RQMD_automation_033_init_json_payload_includes_schema_version(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--bootstrap",
+            "--force-yes",
+            "--as-json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "init"
+    _assert_schema_version(payload)
+
+
+def test_RQMD_automation_033_init_priorities_json_payload_includes_schema_version(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: First
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--seed-priorities",
+            "--seed-priority",
+            "p1",
+            "--as-json",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "init-priorities"
+    _assert_schema_version(payload)
 
 
 def test_RQMD_automation_029c_filter_sub_domain_list_output(tmp_path: Path) -> None:

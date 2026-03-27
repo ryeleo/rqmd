@@ -26,6 +26,7 @@ except ImportError:
     sys.exit(1)
 
 from .batch_inputs import parse_set_entry
+from .constants import JSON_SCHEMA_VERSION
 from .markdown_io import (discover_project_root, format_path_display,
                           iter_domain_files, resolve_requirements_dir,
                           validate_files_readable)
@@ -117,6 +118,8 @@ def _extract_domain_body(path: Path, id_prefixes: tuple[str, ...], max_chars: in
 
 def _emit(payload: dict[str, object], json_output: bool) -> None:
     if json_output:
+        if "schema_version" not in payload:
+            payload["schema_version"] = JSON_SCHEMA_VERSION
         click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
         return
 

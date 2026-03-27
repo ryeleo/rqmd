@@ -7,6 +7,7 @@ SUMMARY_END = "<!-- acceptance-status-summary:end -->"
 DEFAULT_ID_PREFIXES = ("AC", "R", "RQMD")
 DEFAULT_REQUIREMENTS_DIR = "docs/requirements"
 REQUIREMENTS_INDEX_NAME = "README.md"
+JSON_SCHEMA_VERSION = "1.0.0"
 
 STATUS_ORDER = [
     ("💡 Proposed", "proposed"),

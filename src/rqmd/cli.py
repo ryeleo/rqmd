@@ -83,7 +83,7 @@ from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
 from .config import load_config, load_statuses_file, validate_config
 from .constants import (DEFAULT_ID_PREFIXES, DEFAULT_REQUIREMENTS_DIR,
                         ID_PREFIX_PATTERN, STATUS_ORDER, STATUS_PATTERN,
-                        SUMMARY_END, SUMMARY_START)
+                        JSON_SCHEMA_VERSION, SUMMARY_END, SUMMARY_START)
 from .markdown_io import (auto_detect_requirements_dir, check_files_writable,
                           check_index_sync, discover_project_root,
                           display_name_from_h1, format_path_display,
@@ -188,11 +188,21 @@ def _build_json_ambiguity_payload(mode: str, message: str) -> dict[str, object] 
     }
 
 
+def _with_schema_version(payload: dict[str, object]) -> dict[str, object]:
+    if "schema_version" not in payload:
+        payload["schema_version"] = JSON_SCHEMA_VERSION
+    return payload
+
+
+def _emit_json_payload(payload: dict[str, object]) -> None:
+    click.echo(json.dumps(_with_schema_version(payload), ensure_ascii=False, indent=2))
+
+
 def _emit_json_ambiguity_error(mode: str, exc: click.ClickException) -> bool:
     payload = _build_json_ambiguity_payload(mode, str(exc))
     if payload is None:
         return False
-    click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+    _emit_json_payload(payload)
     raise SystemExit(1)
 
 
@@ -857,7 +867,7 @@ def main(
                 "created_files": [format_path_display(path, repo_root) for path in created],
                 "created_count": len(created),
             }
-            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            _emit_json_payload(payload)
             raise SystemExit(0)
 
         if created:
@@ -1020,7 +1030,7 @@ def main(
                 "changed_files": [format_path_display(path, repo_root) for path in changed_paths],
                 "changed_count": len(changed_paths),
             }
-            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            _emit_json_payload(payload)
             raise SystemExit(0)
 
         if summary_table:
@@ -1054,7 +1064,7 @@ def main(
                 "changed_files": [format_path_display(path, repo_root) for path in changed_paths],
                 "changed_count": len(changed_paths),
             }
-            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            _emit_json_payload(payload)
             raise SystemExit(0)
 
         click.echo(f"Updated {len(changed_paths)} file(s) in {mode_name} mode.")
@@ -1205,7 +1215,7 @@ def main(
                 include_body=include_body,
                 id_prefixes=id_prefixes,
             )
-            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            _emit_json_payload(payload)
             raise SystemExit(0)
 
         targeted_by_file: dict[Path, list[dict[str, object]]] = {}
@@ -1302,7 +1312,7 @@ def main(
                     }
                     for label, value, statuses in rollup_column_values
                 ]
-            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            _emit_json_payload(payload)
             raise SystemExit(0)
 
         if rollup_column_values:
@@ -1319,7 +1329,7 @@ def main(
             payload = dict(summary_payload)
             payload["mode"] = "check"
             payload["ok"] = False
-            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            _emit_json_payload(payload)
             raise SystemExit(1)
         if verbose:
             print(
@@ -1449,7 +1459,7 @@ def main(
                     include_body=include_body,
                     id_prefixes=id_prefixes,
                 )
-                click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+                _emit_json_payload(payload)
                 raise SystemExit(0)
             if list_output:
                 print_criteria_list(repo_root, criteria_by_file, normalized_status, filter_label="status")
@@ -1491,7 +1501,7 @@ def main(
                     filter_mode="filter-priority",
                     filter_label="priority",
                 )
-                click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+                _emit_json_payload(payload)
                 raise SystemExit(0)
             if list_output:
                 print_criteria_list(repo_root, criteria_by_file, normalized_priority, filter_label="priority")
@@ -1533,7 +1543,7 @@ def main(
                     filter_mode="filter-flagged",
                     filter_label="flagged",
                 )
-                click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+                _emit_json_payload(payload)
                 raise SystemExit(0)
 
             if list_output:
@@ -1562,7 +1572,7 @@ def main(
                     filter_mode="filter-flagged",
                     filter_label="flagged",
                 )
-                click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+                _emit_json_payload(payload)
                 raise SystemExit(0)
 
             if list_output:
@@ -1591,7 +1601,7 @@ def main(
                     filter_mode="filter-links",
                     filter_label="links",
                 )
-                click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+                _emit_json_payload(payload)
                 raise SystemExit(0)
 
             if list_output:
@@ -1620,7 +1630,7 @@ def main(
                     filter_mode="filter-links",
                     filter_label="links",
                 )
-                click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+                _emit_json_payload(payload)
                 raise SystemExit(0)
 
             if list_output:
@@ -1650,7 +1660,7 @@ def main(
                     filter_mode="filter-sub-domain",
                     filter_label="sub_domain",
                 )
-                click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+                _emit_json_payload(payload)
                 raise SystemExit(0)
 
             if list_output:
@@ -1714,7 +1724,7 @@ def main(
                 filter_mode="filter-combined",
                 filter_label="filters",
             )
-            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            _emit_json_payload(payload)
             raise SystemExit(0)
 
         if list_output:
@@ -1958,7 +1968,7 @@ def main(
                     "succeeded": len(update_results) - failed_count,
                     "failed": failed_count,
                 }
-            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            _emit_json_payload(payload)
             raise SystemExit(1 if had_row_failures else 0)
 
         if allow_partial_failures:
@@ -1980,7 +1990,7 @@ def main(
     if json_output:
         payload = dict(summary_payload)
         payload["ok"] = True
-        click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+        _emit_json_payload(payload)
         raise SystemExit(0)
 
     if interactive and not check:

@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 21🔧 10✅ 0⛔ 0🗑️
+Summary: 2💡 22🔧 10✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -273,7 +273,7 @@ Summary: 3💡 21🔧 10✅ 0⛔ 0🗑️
 - So that filtering on link presence works in both interactive and non-interactive modes (tree, JSON, list).
 
 ### RQMD-AUTOMATION-033: Schema versioning in JSON contract
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As an API consumer when integrating with rqmd JSON output
 - I want the JSON contract to include a schema version field

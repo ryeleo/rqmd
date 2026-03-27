@@ -311,20 +311,21 @@ uv run rqmd --totals --as-json --no-walk
 
 ### JSON contract (stable keys)
 
-When `--as-json` is used, top-level keys are stable by mode:
+When `--as-json` is used, top-level keys are stable by mode.
+All JSON payloads include `schema_version` (current value: `1.0.0`) and follow semantic versioning (`major.minor.patch`).
 
-- `summary`: `mode`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
-- `check`: `mode`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
-- `set` / `set-priority` / `set-flagged`: `mode`, `criteria_dir`, `changed_files`, `totals`, `files`, `updates`
-- `filter-status`: `mode`, `status`, `criteria_dir`, `total`, `files`
-- `filter-priority`: `mode`, `priority`, `criteria_dir`, `total`, `files`
-- `filter-flagged`: `mode`, `flagged`, `criteria_dir`, `total`, `files`
-- `filter-sub-domain`: `mode`, `sub_domain`, `criteria_dir`, `total`, `files`
-- `filter-combined`: `mode`, `filters`, `criteria_dir`, `total`, `files`
-- `filter-targets`: `mode`, `targets`, `criteria_dir`, `total`, `files`
-- `rollup`: `mode`, `criteria_dir`, `file_count`, `totals`, optional `rollup_source`, optional `rollup_columns`
-- `init`: `mode`, `criteria_dir`, `starter_prefix`, `created_files`, `created_count`
-- `init-priorities`: `mode`, `criteria_dir`, `default_priority`, `changed_files`, `changed_count`
+- `summary`: `mode`, `schema_version`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
+- `check`: `mode`, `schema_version`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
+- `set` / `set-priority` / `set-flagged`: `mode`, `schema_version`, `criteria_dir`, `changed_files`, `totals`, `files`, `updates`
+- `filter-status`: `mode`, `schema_version`, `status`, `criteria_dir`, `total`, `files`
+- `filter-priority`: `mode`, `schema_version`, `priority`, `criteria_dir`, `total`, `files`
+- `filter-flagged`: `mode`, `schema_version`, `flagged`, `criteria_dir`, `total`, `files`
+- `filter-sub-domain`: `mode`, `schema_version`, `sub_domain`, `criteria_dir`, `total`, `files`
+- `filter-combined`: `mode`, `schema_version`, `filters`, `criteria_dir`, `total`, `files`
+- `filter-targets`: `mode`, `schema_version`, `targets`, `criteria_dir`, `total`, `files`
+- `rollup`: `mode`, `schema_version`, `criteria_dir`, `file_count`, `totals`, optional `rollup_source`, optional `rollup_columns`
+- `init`: `mode`, `schema_version`, `criteria_dir`, `starter_prefix`, `created_files`, `created_count`
+- `init-priorities`: `mode`, `schema_version`, `criteria_dir`, `default_priority`, `changed_files`, `changed_count`
 
 Filter payloads return `files` ordered by path and requirement entries ordered by requirement ID.
 By default, filter JSON includes `body.markdown` and line metadata; pass `--no-requirement-body` to omit bodies.
