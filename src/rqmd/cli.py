@@ -80,7 +80,7 @@ from . import workflows as workflows_mod
 from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
                            parse_batch_update_jsonl, parse_set_entry,
                            parse_set_flagged_entry, parse_set_priority_entry)
-from .config import load_config, validate_config
+from .config import load_config, load_statuses_file, validate_config
 from .constants import (DEFAULT_ID_PREFIXES, DEFAULT_REQUIREMENTS_DIR,
                         ID_PREFIX_PATTERN, STATUS_ORDER, STATUS_PATTERN,
                         SUMMARY_END, SUMMARY_START)
@@ -643,6 +643,13 @@ def shell_complete_target_tokens(
     help="Project root containing requirement documentation.",
 )
 @click.option(
+    "--status-config",
+    "status_config",
+    type=str,
+    default=None,
+    help="Path to a status catalog file (.yml, .yaml, or .json). Overrides .rqmd/statuses.yml auto-detection.",
+)
+@click.option(
     "--docs-dir",
     "requirements_dir",
     type=str,
@@ -722,6 +729,7 @@ def main(
     init_scaffold: bool,
     confirm_yes: bool,
     targets: tuple[str, ...],
+    status_config: str | None,
 ) -> None:
     repo_root_source = ctx.get_parameter_source("repo_root")
     repo_root_explicit = repo_root_source != click.core.ParameterSource.DEFAULT
@@ -744,7 +752,9 @@ def main(
         raise click.ClickException(f"Config error: {exc}") from exc
 
     try:
-        configure_status_catalog(config.get("statuses"))
+        standalone_statuses = load_statuses_file(repo_root, status_config)
+        effective_statuses = standalone_statuses if standalone_statuses is not None else config.get("statuses")
+        configure_status_catalog(effective_statuses)
     except ValueError as exc:
         raise click.ClickException(f"Config error: {exc}") from exc
     ctx.call_on_close(lambda: configure_status_catalog(None))

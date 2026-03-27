@@ -3,7 +3,7 @@
 Scope: cross-project operation, path configuration, and repo-agnostic behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 1🔧 10✅ 0⛔ 1🗑️
+Summary: 2💡 3🔧 10✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PORTABILITY-001: Configurable repo root
@@ -55,7 +55,7 @@ Summary: 4💡 1🔧 10✅ 0⛔ 1🗑️
 - So that command-line flags still override config values.
 
 ### RQMD-PORTABILITY-007: Status customization config location and precedence
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when teams want customizable status catalog metadata and colors
 - I want to enable status customization
@@ -98,7 +98,7 @@ Summary: 4💡 1🔧 10✅ 0⛔ 1🗑️
 - So that both operations are idempotent and produce no diff if already in the target mode.
 
 ### RQMD-PORTABILITY-011: Custom status schema in config file
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when teams need project-specific status taxonomies and display semantics
 - I want rqmd to load status configuration from file
