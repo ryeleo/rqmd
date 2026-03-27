@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 19🔧 10✅ 0⛔ 0🗑️
+Summary: 4💡 20🔧 10✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -260,3 +260,35 @@ Summary: 2💡 19🔧 10✅ 0⛔ 0🗑️
 - So that inputs like `--priority H` resolve to the canonical configured priority label (for example `P1 - High`)
 - So that inputs like `--status Ver` resolve to the canonical configured status label (for example `✅ Verified`)
 - So that resolution is deterministic: unique prefixes are accepted, ambiguous prefixes fail with candidate lists, and unknown tokens return clear validation errors.
+
+### RQMD-AUTOMATION-032: Link-based filtering with `--has-link` and `--no-link`
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when managing requirements with external links (GitHub, Jira, etc.)
+- I want to filter requirements by link presence
+- So that `--has-link` returns only requirements with one or more links configured
+- So that `--no-link` returns only requirements without any links
+- So that these filters combine with other filter modes using the same OR-across-flags, AND-within-flag semantics
+- So that JSON output includes a `links` summary field indicating whether links are present
+- So that filtering on link presence works in both interactive and non-interactive modes (tree, JSON, list).
+
+### RQMD-AUTOMATION-033: Schema versioning in JSON contract
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As an API consumer when integrating with rqmd JSON output
+- I want the JSON contract to include a schema version field
+- So that breaking changes to the JSON structure are explicitly versioned
+- So that all JSON payloads (summary, filter, mutation, etc.) include a top-level or metadata-section `schema_version` field
+- So that version numbering follows semver (major.minor.patch) with major bumps for breaking changes
+- So that version is documented alongside the stable JSON key contract in README and test fixtures
+- So that automated tools can detect and adapt to schema versions across tools and environments.
+
+### RQMD-AUTOMATION-034: Inverse flagged filter with `--no-flag`
+- **Status:** 🔧 Implemented
+- **Priority:** 🟡 P2 - Medium
+- As a rqmd user when triaging requirements that are not currently flagged
+- I want an inverse flagged filter mode
+- So that `--no-flag` returns only requirements with `Flagged: false` or no flagged metadata
+- So that `--flagged` and `--no-flag` are mutually exclusive in a single invocation with clear validation errors
+- So that `--no-flag` works with `--as-tree`, `--as-list`, `--as-json`, and interactive focused walk modes
+- So that `--no-flag` composes with other filters using the same OR-across-flags, AND-within-flag semantics.

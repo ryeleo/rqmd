@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 4🔧 16✅ 0⛔ 0🗑️
+Summary: 4💡 4🔧 16✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -192,3 +192,38 @@ Summary: 1💡 4🔧 16✅ 0⛔ 0🗑️
 - So that plain URLs without markdown formatting are stored with a null/empty label and round-trip back as plain URLs
 - So that write-back preserves the original link formatting verbatim unless the user explicitly edits or reformats it
 - So that summary block generation and status counting are not affected by the presence or absence of links.
+
+### RQMD-CORE-022: Enhanced blocking with linked requirements
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- As a rqmd user when marking a requirement as blocked
+- I want to optionally link it to another requirement that is blocking it
+- So that the block reason field supports both free-form text and markdown hyperlinks to other requirement IDs
+- So that users can quickly navigate between blocking and blocked requirements
+- So that interactive mode offers a search/select UI for finding and linking blocking requirements by ID or title prefix
+- So that round-trip editing preserves manually entered hyperlinks verbatim
+- So that JSON export includes an optional `blocking_id` field capturing the linked requirement ID when present.
+
+### RQMD-CORE-023: Global requirement ID prefix renaming tool
+- **Status:** 💡 Proposed
+- **Priority:** 🟢 P3 - Low
+- As a rqmd user when a project outgrows its initial ID prefix (e.g., REQ- becomes too generic)
+- I want a one-time bulk rename command
+- So that all requirement headers, links, and citations are updated consistently across all domain files
+- So that the tool validates that the new prefix is unique and does not conflict with existing IDs in other domains
+- So that the operation is reversible via undo (once RQMD-UNDO is implemented)
+- So that a summary report shows all changed files and rename counts.
+
+### RQMD-CORE-024: Generated top-level README from requirement domains
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- As a rqmd user when project README guidance drifts from requirement docs
+- I want rqmd to generate the project-level README requirement index sections from domain files automatically and on demand
+- So that top-level README sections describing requirement domains and status rollups are regenerated deterministically from `docs/requirements/*.md`
+- So that generated sections are clearly bounded by markers and preserve hand-authored content outside those markers
+- So that repeated generation is idempotent and produces no diff when inputs are unchanged
+- So that teams can treat README generation as a routine maintenance step in local workflows and CI.
+- So that during normal usage, the README is automatically kept up to date 
+- So that every time the summary renders or anything changes, make sure the README is up to date (if that isn't too slow..? -- test performance when we add this)
+- So that when app opens, when app closes, when user makes any change in any requirement file, the top level README is kept up to date.
+- So that README can be regenerated with separate CLI flag.

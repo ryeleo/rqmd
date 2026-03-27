@@ -571,7 +571,11 @@ def collect_requirements_by_flagged(
     result: dict[Path, list[dict[str, object]]] = {}
     for path in domain_files:
         requirements = parse_requirements(path, id_prefixes=id_prefixes)
-        matching = [c for c in requirements if c.get("flagged") is flagged]
+        if flagged:
+            matching = [c for c in requirements if c.get("flagged") is True]
+        else:
+            # Treat missing flagged metadata as unflagged for inverse filtering.
+            matching = [c for c in requirements if c.get("flagged") is not True]
         if matching:
             result[path] = matching
     return result
@@ -661,7 +665,13 @@ def collect_requirements_by_filters(
             matches_flagged = False
             if has_flagged:
                 req_flagged = requirement.get("flagged")
-                matches_flagged = all(req_flagged is value for value in flagged_filters)
+                def _flagged_match(value: bool) -> bool:
+                    if value:
+                        return req_flagged is True
+                    # `False` filter includes explicit false and missing flag.
+                    return req_flagged is not True
+
+                matches_flagged = all(_flagged_match(value) for value in flagged_filters)
 
             matches_sub_domain = False
             if has_sub_domain:

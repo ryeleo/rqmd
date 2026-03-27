@@ -3,7 +3,7 @@
 Scope: add a first-class `Priority` field to requirement entries, integrate priority into interactive and non-interactive flows, and allow priority-aware sorting and summaries.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 0🔧 9✅ 0⛔ 0🗑️
+Summary: 3💡 0🔧 9✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PRIORITY-001: First-class priority field
@@ -92,3 +92,13 @@ Summary: 2💡 0🔧 9✅ 0⛔ 0🗑️
 - So that each priority entry supports a custom display name, shortcode, and emoji (for example `{"name": "Critical", "shortcode": "C", "emoji": "🔥"}`)
 - So that parsing, normalization, rendering, sorting labels, and JSON outputs all use the configured priority catalog consistently
 - So that defaults remain available when no project override is present.
+
+### RQMD-PRIORITY-012: Domain and sub-domain priority metadata
+- **Status:** 💡 Proposed
+- **Priority:** 🟢 P3 - Low
+- As a rqmd user when planning work at architecture or stream level
+- I want optional priority metadata at domain and sub-domain scope
+- So that a domain file can declare an overall domain priority and optional per-H2 sub-domain priorities
+- So that requirement-level priority remains authoritative for per-item workflows while domain/sub-domain priorities support planning and roll-up views
+- So that missing domain/sub-domain priorities are treated as unset and never block existing parsing or mutation behavior
+- So that JSON outputs include these fields when present, with stable null/absent behavior when not set.

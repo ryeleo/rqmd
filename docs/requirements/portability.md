@@ -3,7 +3,7 @@
 Scope: cross-project operation, path configuration, and repo-agnostic behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 5🔧 10✅ 0⛔ 1🗑️
+Summary: 1💡 5🔧 10✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PORTABILITY-001: Configurable repo root
@@ -153,3 +153,13 @@ Summary: 0💡 5🔧 10✅ 0⛔ 1🗑️
 - So that test suite includes datasets of varying size (e.g., 100, 1000, 10000+ requirements) and complexity
 - So that performance regressions trigger clear failures in CI before merging changes
 - So that documented performance SLAs and benchmarks are available to users and operators.
+
+### RQMD-PORTABILITY-017: Unknown status compatibility and recovery guidance
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when imported requirement docs include unconfigured statuses (for example `💻 Desktop-Verified`)
+- I want rqmd to fail with actionable compatibility guidance instead of opaque value errors
+- So that errors identify the unknown status value, source file, and nearest configured matches
+- So that output recommends concrete remediation paths (status catalog config update, alias mapping, or one-time migration command)
+- So that check/filter/list modes can optionally continue in a read-only degraded mode while still surfacing unknown values deterministically
+- So that automation JSON errors include a machine-readable error type for unknown status values.

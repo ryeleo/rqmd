@@ -1363,6 +1363,107 @@ def test_RQMD_automation_024_filter_flagged_json_empty(two_file_repo: Path) -> N
     assert payload["files"] == []
 
 
+def test_RQMD_automation_034_filter_no_flag_json_includes_unset(two_file_repo: Path) -> None:
+    first = two_file_repo / "docs" / "requirements" / "first.md"
+    first.write_text(
+        first.read_text(encoding="utf-8") + "\n- **Flagged:** true\n",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(two_file_repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--no-flag",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-flagged"
+    assert payload["flagged"] is False
+    assert payload["total"] == 1
+    assert payload["files"][0]["path"].endswith("second.md")
+    requirement = payload["files"][0]["requirements"][0]
+    assert requirement["id"] == "AC-OVERLAP-001"
+    assert requirement.get("flagged") is not True
+
+
+def test_RQMD_automation_034_no_flag_and_flagged_are_mutually_exclusive(two_file_repo: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(two_file_repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--flagged",
+            "--no-flag",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "mutually exclusive" in result.output.lower()
+
+
+def test_RQMD_automation_034_combined_filter_with_no_flag(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: Proposed and unflagged (unset)
+- **Status:** 💡 Proposed
+
+### AC-DEMO-002: Implemented and flagged
+- **Status:** 🔧 Implemented
+- **Flagged:** true
+
+### AC-DEMO-003: Proposed and explicitly unflagged
+- **Status:** 💡 Proposed
+- **Flagged:** false
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--status",
+            "implemented",
+            "--no-flag",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-combined"
+    assert payload["filters"]["flagged"] is False
+    # OR-across-flags: implemented item OR unflagged items
+    ids = [entry["id"] for entry in payload["files"][0]["requirements"]]
+    assert ids == ["AC-DEMO-001", "AC-DEMO-002", "AC-DEMO-003"]
+
+
 def test_RQMD_automation_029_filter_sub_domain_json_includes_metadata(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
