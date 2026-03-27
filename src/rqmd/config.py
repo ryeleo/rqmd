@@ -104,6 +104,46 @@ def load_config(repo_root: Path) -> dict[str, Any]:
     raise ValueError(f"Unsupported config extension for {config_path}. Use .json, .yml, or .yaml")
 
 
+def load_user_config() -> dict[str, Any]:
+    """
+    Load user-level configuration from ~/.rqmd.config.
+
+    User config supports .json, .yml, and .yaml suffixes by detection.
+
+    Returns:
+        Dictionary of config values; empty dict if no user config file exists
+    """
+    user_home = Path.home()
+    candidate_paths = [
+        user_home / ".rqmd.config.yml",
+        user_home / ".rqmd.config.yaml",
+        user_home / ".rqmd.config.json",
+        user_home / ".rqmd.config",  # Try both with and without suffix
+    ]
+
+    config_path = next((p for p in candidate_paths if p.exists()), None)
+    if config_path is None:
+        return {}
+
+    if not config_path.is_file():
+        return {}
+
+    try:
+        suffix = config_path.suffix.lower()
+        if suffix == ".json":
+            return _load_json(config_path)
+        if suffix in {".yml", ".yaml"}:
+            return _load_yaml(config_path)
+        # No suffix or unknown: sniff format
+        try:
+            return _load_yaml(config_path)
+        except ValueError:
+            return _load_json(config_path)
+    except (OSError, ValueError):
+        return {}
+
+
+
 def _parse_statuses_from_path(path: Path) -> List[Any]:
     """Load and extract a statuses list from a catalog file.
 

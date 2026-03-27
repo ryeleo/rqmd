@@ -24,7 +24,7 @@ bash scripts/local-smoke.sh
 ## Coverage Map
 
 - tests/test_core_engine.py:
-  - RQMD-CORE-001..012, RQMD-CORE-014, RQMD-CORE-015
+  - RQMD-CORE-001..012, RQMD-CORE-014, RQMD-CORE-015, RQMD-CORE-019, RQMD-CORE-020
   - Includes RQMD-CORE-006 (five-status summary order), RQMD-CORE-009 missing-docs init flow (`--force-yes`), RQMD-CORE-011/012 init scaffold behavior, and init key prompt/default handling
 - tests/test_automation_api.py:
   - RQMD-AUTOMATION-001..009 fully verified
@@ -41,6 +41,9 @@ bash scripts/local-smoke.sh
   - RQMD-PORTABILITY-001..005, RQMD-PORTABILITY-008..010, RQMD-PORTABILITY-014
   - RQMD-PACKAGING-001..009
   - RQMD-CORE-013
+- tests/test_performance.py:
+  - RQMD-PORTABILITY-016
+  - Includes deterministic scaling checks over 100/1000/10000 synthetic requirements and UI-009-aligned menu-render latency guardrail checks for <=80 rows.
 
 ## Notes
 

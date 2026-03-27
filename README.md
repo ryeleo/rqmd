@@ -180,6 +180,17 @@ uv run rqmd --sub-domain query --as-tree
 uv run rqmd --sub-domain api --as-json --no-walk
 ```
 
+Combine filters for slicing/dicing requirements:
+
+- OR across different filter flags (`--status`, `--priority`, `--flagged`, `--sub-domain`)
+- AND within the same flag when repeated
+
+```bash
+uv run rqmd --status proposed --priority p0 --as-tree
+uv run rqmd --status proposed --status implemented --as-json --no-walk
+uv run rqmd --sub-domain query --sub-domain api --as-json --no-walk
+```
+
 Target an explicit worklist from CLI tokens or a reusable file:
 
 ```bash
@@ -307,6 +318,7 @@ When `--as-json` is used, top-level keys are stable by mode:
 - `filter-priority`: `mode`, `priority`, `criteria_dir`, `total`, `files`
 - `filter-flagged`: `mode`, `flagged`, `criteria_dir`, `total`, `files`
 - `filter-sub-domain`: `mode`, `sub_domain`, `criteria_dir`, `total`, `files`
+- `filter-combined`: `mode`, `filters`, `criteria_dir`, `total`, `files`
 - `filter-targets`: `mode`, `targets`, `criteria_dir`, `total`, `files`
 - `rollup`: `mode`, `criteria_dir`, `file_count`, `totals`, optional `rollup_source`, optional `rollup_columns`
 - `init`: `mode`, `criteria_dir`, `starter_prefix`, `created_files`, `created_count`

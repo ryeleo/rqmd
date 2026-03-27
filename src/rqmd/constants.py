@@ -60,6 +60,8 @@ PRIORITY_PATTERN = re.compile(r"^- \*\*Priority:\*\* (?P<priority>.+?)\s*$", re.
 BLOCKED_REASON_PATTERN = re.compile(r"^\*\*Blocked:\*\*\s*(.+?)\s*$", re.MULTILINE)
 DEPRECATED_REASON_PATTERN = re.compile(r"^\*\*Deprecated:\*\*\s*(.+?)\s*$", re.MULTILINE)
 FLAGGED_PATTERN = re.compile(r"^- \*\*Flagged:\*\* (?P<flagged>true|false)\s*$", re.MULTILINE)
+LINKS_HEADER_PATTERN = re.compile(r"^- \*\*Links:\*\*\s*$", re.MULTILINE)
+LINK_ITEM_PATTERN = re.compile(r"^  - (?P<link_text>.+)$", re.MULTILINE)
 ID_PREFIX_PATTERN = re.compile(r"^[A-Z][A-Z0-9]*$")
 GENERIC_REQUIREMENT_HEADER_PATTERN = re.compile(
     r"^###\s+(?P<id>(?P<prefix>[A-Z][A-Z0-9]*)-[A-Z0-9-]+):\s*(?P<title>.+?)\s*$"

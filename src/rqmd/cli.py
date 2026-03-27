@@ -93,6 +93,7 @@ from .markdown_io import (auto_detect_requirements_dir, check_files_writable,
 from .menus import select_from_menu
 from .priority_model import normalize_priority_input
 from .req_parser import (collect_requirements_by_flagged,
+                         collect_requirements_by_filters,
                          collect_requirements_by_priority,
                          collect_requirements_by_status,
                          collect_requirements_by_sub_domain,
@@ -192,6 +193,23 @@ def _emit_json_ambiguity_error(mode: str, exc: click.ClickException) -> bool:
         return False
     click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
     raise SystemExit(1)
+
+
+def _expand_filter_values(raw_values: tuple[str, ...]) -> tuple[str, ...]:
+    """Expand repeatable/comma-separated filter values into a normalized tuple."""
+    values: list[str] = []
+    seen: set[str] = set()
+    for raw in raw_values:
+        for part in str(raw).split(","):
+            value = part.strip()
+            if not value:
+                continue
+            key = value.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            values.append(value)
+    return tuple(values)
 
 
 def prompt_for_init_prefix(default_prefix: str = "REQ") -> str:
@@ -509,14 +527,16 @@ def shell_complete_target_tokens(
 @click.option(
     "--status",
     "filter_status",
+    multiple=True,
     type=str,
-    help="Filter by status: walks matching requirements interactively (default) or shows tree with --as-tree.",
+    help="Filter by status (repeatable/comma-separated).",
 )
 @click.option(
     "--priority",
     "filter_priority",
+    multiple=True,
     type=str,
-    help="Filter by priority: walks matching requirements interactively (default) or shows tree with --as-tree.",
+    help="Filter by priority (repeatable/comma-separated).",
 )
 @click.option(
     "--flagged",
@@ -527,8 +547,9 @@ def shell_complete_target_tokens(
 @click.option(
     "--sub-domain",
     "filter_sub_domain",
+    multiple=True,
     type=str,
-    help="Filter by subsection name using case-insensitive prefix matching.",
+    help="Filter by subsection name using case-insensitive prefix matching (repeatable/comma-separated).",
 )
 @click.option(
     "--targets-file",
@@ -702,10 +723,10 @@ def main(
     set_flagged_updates: tuple[str, ...],
     priority_mode: bool,
     show_priority_summary: bool,
-    filter_status: str | None,
-    filter_priority: str | None,
+    filter_status: tuple[str, ...],
+    filter_priority: tuple[str, ...],
     filter_flagged: bool,
-    filter_sub_domain: str | None,
+    filter_sub_domain: tuple[str, ...],
     filter_ids_file: str | None,
     tree: bool,
     list_output: bool,
@@ -1282,103 +1303,285 @@ def main(
             print(msg, file=sys.stderr)
         raise SystemExit(1)
 
+    status_filters_raw = _expand_filter_values(filter_status)
+    priority_filters_raw = _expand_filter_values(filter_priority)
+    sub_domain_filters_raw = _expand_filter_values(filter_sub_domain)
+
+    has_filter_mode = bool(
+        status_filters_raw or priority_filters_raw or filter_flagged or sub_domain_filters_raw
+    )
+
     # --as-tree/--as-list without an active filter mode is a no-op guard
-    if (tree or list_output) and not (filter_status or filter_priority or filter_flagged or filter_sub_domain or explicit_target_tokens):
+    if (tree or list_output) and not (has_filter_mode or explicit_target_tokens):
         raise click.ClickException("--as-tree/--as-list requires --status, --priority, --flagged, --sub-domain, or explicit target tokens.")
 
-    active_filter_count = int(bool(filter_status)) + int(bool(filter_priority)) + int(bool(filter_flagged)) + int(bool(filter_sub_domain))
-    if active_filter_count > 1:
-        raise click.ClickException("Use only one filter mode at a time: --status, --priority, --flagged, or --sub-domain.")
-
-    # Handle --status mode
-    if filter_status:
+    if has_filter_mode:
         if check or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
-            raise click.ClickException("--status cannot be combined with --verify-summaries / --update-id / --update-status / --scope-file.")
-        try:
-            normalized_status = normalize_status_input(filter_status)
-        except click.ClickException as exc:
-            if json_output and _emit_json_ambiguity_error("filter-status", exc):
-                raise SystemExit(1)
-            raise
-        criteria_by_file = collect_requirements_by_status(
-            repo_root,
-            domain_files,
-            normalized_status,
-            id_prefixes=id_prefixes,
+            raise click.ClickException("Filters cannot be combined with --verify-summaries or mutation options.")
+
+        normalized_status_filters: list[str] = []
+        for raw_status in status_filters_raw:
+            try:
+                normalized_status_filters.append(normalize_status_input(raw_status))
+            except click.ClickException as exc:
+                mode_name = "filter-status" if len(status_filters_raw) == 1 else "filter-combined"
+                if json_output and _emit_json_ambiguity_error(mode_name, exc):
+                    raise SystemExit(1)
+                raise
+
+        normalized_priority_filters: list[str] = []
+        for raw_priority in priority_filters_raw:
+            try:
+                normalized_priority_filters.append(normalize_priority_input(raw_priority))
+            except click.ClickException as exc:
+                mode_name = "filter-priority" if len(priority_filters_raw) == 1 else "filter-combined"
+                if json_output and _emit_json_ambiguity_error(mode_name, exc):
+                    raise SystemExit(1)
+                raise
+
+        is_status_only_single = (
+            len(normalized_status_filters) == 1
+            and not normalized_priority_filters
+            and not filter_flagged
+            and not sub_domain_filters_raw
         )
-        if json_output:
-            payload = build_filtered_criteria_payload(
+        is_priority_only_single = (
+            len(normalized_priority_filters) == 1
+            and not normalized_status_filters
+            and not filter_flagged
+            and not sub_domain_filters_raw
+        )
+        is_flagged_only = (
+            filter_flagged
+            and not normalized_status_filters
+            and not normalized_priority_filters
+            and not sub_domain_filters_raw
+        )
+        is_sub_domain_only_single = (
+            len(sub_domain_filters_raw) == 1
+            and not normalized_status_filters
+            and not normalized_priority_filters
+            and not filter_flagged
+        )
+
+        # Legacy single-filter behavior: keep existing modes, payload keys, and
+        # interactive walk behavior for status/priority.
+        if is_status_only_single:
+            normalized_status = normalized_status_filters[0]
+            criteria_by_file = collect_requirements_by_status(
                 repo_root,
-                resolved_criteria_dir,
-                criteria_by_file,
+                domain_files,
                 normalized_status,
-                include_body=include_body,
                 id_prefixes=id_prefixes,
             )
-            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
-            raise SystemExit(0)
-        if list_output:
-            print_criteria_list(repo_root, criteria_by_file, normalized_status, filter_label="status")
-            raise SystemExit(0)
-        if tree or not interactive:
-            # Non-interactive: just print the tree and exit.
-            print_criteria_tree(repo_root, criteria_by_file, normalized_status, filter_label="status")
-            raise SystemExit(0)
-        # Interactive: walk through matching requirements one by one.
-        raise SystemExit(
-            filtered_interactive_loop(
+            if json_output:
+                payload = build_filtered_criteria_payload(
+                    repo_root,
+                    resolved_criteria_dir,
+                    criteria_by_file,
+                    normalized_status,
+                    include_body=include_body,
+                    id_prefixes=id_prefixes,
+                )
+                click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+                raise SystemExit(0)
+            if list_output:
+                print_criteria_list(repo_root, criteria_by_file, normalized_status, filter_label="status")
+                raise SystemExit(0)
+            if tree or not interactive:
+                print_criteria_tree(repo_root, criteria_by_file, normalized_status, filter_label="status")
+                raise SystemExit(0)
+            raise SystemExit(
+                filtered_interactive_loop(
+                    repo_root,
+                    domain_files,
+                    target_status=normalized_status,
+                    emoji_columns=emoji_columns,
+                    id_prefixes=id_prefixes,
+                    resume_filter=resume_filter,
+                    state_dir=state_dir,
+                    include_status_emojis=include_status_emojis,
+                    priority_mode=priority_mode,
+                    include_priority_summary=show_priority_summary,
+                )
+            )
+
+        if is_priority_only_single:
+            normalized_priority = normalized_priority_filters[0]
+            criteria_by_file = collect_requirements_by_priority(
                 repo_root,
                 domain_files,
-                target_status=normalized_status,
-                emoji_columns=emoji_columns,
-                id_prefixes=id_prefixes,
-                resume_filter=resume_filter,
-                state_dir=state_dir,
-                include_status_emojis=include_status_emojis,
-                priority_mode=priority_mode,
-                include_priority_summary=show_priority_summary,
-            )
-        )
-
-    if filter_priority:
-        if check or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
-            raise click.ClickException("--priority cannot be combined with --verify-summaries / --update-id / --update-status / --update-priority / --scope-file.")
-        try:
-            normalized_priority = normalize_priority_input(filter_priority)
-        except click.ClickException as exc:
-            if json_output and _emit_json_ambiguity_error("filter-priority", exc):
-                raise SystemExit(1)
-            raise
-        criteria_by_file = collect_requirements_by_priority(
-            repo_root,
-            domain_files,
-            normalized_priority,
-            id_prefixes=id_prefixes,
-        )
-        if json_output:
-            payload = build_filtered_criteria_payload(
-                repo_root,
-                resolved_criteria_dir,
-                criteria_by_file,
                 normalized_priority,
+                id_prefixes=id_prefixes,
+            )
+            if json_output:
+                payload = build_filtered_criteria_payload(
+                    repo_root,
+                    resolved_criteria_dir,
+                    criteria_by_file,
+                    normalized_priority,
+                    include_body=include_body,
+                    id_prefixes=id_prefixes,
+                    filter_mode="filter-priority",
+                    filter_label="priority",
+                )
+                click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+                raise SystemExit(0)
+            if list_output:
+                print_criteria_list(repo_root, criteria_by_file, normalized_priority, filter_label="priority")
+                raise SystemExit(0)
+            if tree or not interactive:
+                print_criteria_tree(repo_root, criteria_by_file, normalized_priority, filter_label="priority")
+                raise SystemExit(0)
+            raise SystemExit(
+                filtered_priority_interactive_loop(
+                    repo_root,
+                    domain_files,
+                    target_priority=normalized_priority,
+                    emoji_columns=emoji_columns,
+                    id_prefixes=id_prefixes,
+                    resume_filter=resume_filter,
+                    state_dir=state_dir,
+                    include_status_emojis=include_status_emojis,
+                    priority_mode=priority_mode,
+                    include_priority_summary=show_priority_summary,
+                )
+            )
+
+        if is_flagged_only:
+            criteria_by_file = collect_requirements_by_flagged(
+                repo_root,
+                domain_files,
+                True,
+                id_prefixes=id_prefixes,
+            )
+
+            if json_output:
+                payload = build_filtered_criteria_payload(
+                    repo_root,
+                    resolved_criteria_dir,
+                    criteria_by_file,
+                    True,
+                    include_body=include_body,
+                    id_prefixes=id_prefixes,
+                    filter_mode="filter-flagged",
+                    filter_label="flagged",
+                )
+                click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+                raise SystemExit(0)
+
+            if list_output:
+                print_criteria_list(repo_root, criteria_by_file, "flagged=true", filter_label="flagged")
+                raise SystemExit(0)
+
+            print_criteria_tree(repo_root, criteria_by_file, "flagged=true", filter_label="flagged")
+            raise SystemExit(0)
+
+        if is_sub_domain_only_single:
+            sub_domain_value = sub_domain_filters_raw[0]
+            criteria_by_file = collect_requirements_by_sub_domain(
+                repo_root,
+                domain_files,
+                sub_domain_value,
+                id_prefixes=id_prefixes,
+            )
+
+            if json_output:
+                payload = build_filtered_criteria_payload(
+                    repo_root,
+                    resolved_criteria_dir,
+                    criteria_by_file,
+                    sub_domain_value,
+                    include_body=include_body,
+                    id_prefixes=id_prefixes,
+                    filter_mode="filter-sub-domain",
+                    filter_label="sub_domain",
+                )
+                click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+                raise SystemExit(0)
+
+            if list_output:
+                print_criteria_list(repo_root, criteria_by_file, sub_domain_value, filter_label="sub_domain")
+                raise SystemExit(0)
+
+            print_criteria_tree(repo_root, criteria_by_file, sub_domain_value, filter_label="sub_domain")
+            raise SystemExit(0)
+
+        # Combined filter mode:
+        # - OR across different filter families
+        # - AND within each family
+        criteria_by_file = collect_requirements_by_filters(
+            repo_root,
+            domain_files,
+            status_filters=tuple(normalized_status_filters),
+            priority_filters=tuple(normalized_priority_filters),
+            flagged_filters=(True,) if filter_flagged else (),
+            sub_domain_filters=tuple(sub_domain_filters_raw),
+            id_prefixes=id_prefixes,
+        )
+
+        filter_summary: dict[str, object] = {
+            "status": normalized_status_filters,
+            "priority": normalized_priority_filters,
+            "flagged": bool(filter_flagged),
+            "sub_domain": list(sub_domain_filters_raw),
+            "logic": {
+                "across_flags": "or",
+                "within_flag": "and",
+            },
+        }
+
+        label_parts: list[str] = []
+        if normalized_status_filters:
+            label_parts.append(f"status={'+'.join(normalized_status_filters)}")
+        if normalized_priority_filters:
+            label_parts.append(f"priority={'+'.join(normalized_priority_filters)}")
+        if filter_flagged:
+            label_parts.append("flagged=true")
+        if sub_domain_filters_raw:
+            label_parts.append(f"sub-domain={'+'.join(sub_domain_filters_raw)}")
+        combined_label = " | ".join(label_parts) if label_parts else "combined filters"
+
+        if json_output:
+            payload = build_filtered_criteria_payload(
+                repo_root,
+                resolved_criteria_dir,
+                criteria_by_file,
+                filter_summary,
                 include_body=include_body,
                 id_prefixes=id_prefixes,
-                filter_mode="filter-priority",
-                filter_label="priority",
+                filter_mode="filter-combined",
+                filter_label="filters",
             )
             click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
             raise SystemExit(0)
+
         if list_output:
-            print_criteria_list(repo_root, criteria_by_file, normalized_priority, filter_label="priority")
+            print_criteria_list(repo_root, criteria_by_file, combined_label, filter_label="combined")
             raise SystemExit(0)
+
         if tree or not interactive:
-            print_criteria_tree(repo_root, criteria_by_file, normalized_priority, filter_label="priority")
+            print_criteria_tree(repo_root, criteria_by_file, combined_label, filter_label="combined")
             raise SystemExit(0)
+
+        selected_items: list[tuple[Path, dict[str, object]]] = []
+        for path in domain_files:
+            for requirement in criteria_by_file.get(path, []):
+                selected_items.append((path, requirement))
+
+        target_tokens: list[str] = []
+        target_tokens.extend(f"status:{value}" for value in normalized_status_filters)
+        target_tokens.extend(f"priority:{value}" for value in normalized_priority_filters)
+        if filter_flagged:
+            target_tokens.append("flagged:true")
+        target_tokens.extend(f"sub-domain:{value}" for value in sub_domain_filters_raw)
+
         raise SystemExit(
-            filtered_priority_interactive_loop(
+            focused_target_interactive_loop(
                 repo_root,
                 domain_files,
-                target_priority=normalized_priority,
+                selected_items=selected_items,
+                target_tokens=target_tokens,
                 emoji_columns=emoji_columns,
                 id_prefixes=id_prefixes,
                 resume_filter=resume_filter,
@@ -1388,71 +1591,6 @@ def main(
                 include_priority_summary=show_priority_summary,
             )
         )
-
-    if filter_flagged:
-        if check or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
-            raise click.ClickException("--flagged cannot be combined with --verify-summaries or mutation options.")
-
-        criteria_by_file = collect_requirements_by_flagged(
-            repo_root,
-            domain_files,
-            True,
-            id_prefixes=id_prefixes,
-        )
-
-        if json_output:
-            payload = build_filtered_criteria_payload(
-                repo_root,
-                resolved_criteria_dir,
-                criteria_by_file,
-                True,
-                include_body=include_body,
-                id_prefixes=id_prefixes,
-                filter_mode="filter-flagged",
-                filter_label="flagged",
-            )
-            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
-            raise SystemExit(0)
-
-        if list_output:
-            print_criteria_list(repo_root, criteria_by_file, "flagged=true", filter_label="flagged")
-            raise SystemExit(0)
-
-        # Non-interactive by design for automation workflows.
-        print_criteria_tree(repo_root, criteria_by_file, "flagged=true", filter_label="flagged")
-        raise SystemExit(0)
-
-    if filter_sub_domain:
-        if check or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
-            raise click.ClickException("--sub-domain cannot be combined with --verify-summaries or mutation options.")
-
-        criteria_by_file = collect_requirements_by_sub_domain(
-            repo_root,
-            domain_files,
-            filter_sub_domain,
-            id_prefixes=id_prefixes,
-        )
-
-        if json_output:
-            payload = build_filtered_criteria_payload(
-                repo_root,
-                resolved_criteria_dir,
-                criteria_by_file,
-                filter_sub_domain,
-                include_body=include_body,
-                id_prefixes=id_prefixes,
-                filter_mode="filter-sub-domain",
-                filter_label="sub_domain",
-            )
-            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
-            raise SystemExit(0)
-
-        if list_output:
-            print_criteria_list(repo_root, criteria_by_file, filter_sub_domain, filter_label="sub_domain")
-            raise SystemExit(0)
-
-        print_criteria_tree(repo_root, criteria_by_file, filter_sub_domain, filter_label="sub_domain")
-        raise SystemExit(0)
 
     non_interactive_requested = bool(
         set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file

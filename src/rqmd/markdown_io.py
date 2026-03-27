@@ -371,19 +371,30 @@ def scope_and_body_from_file(
     lines = text.splitlines()
     scope: str | None = None
     first_req_index: int | None = None
+    first_subsection_index: int | None = None
 
     for i, line in enumerate(lines):
         stripped = line.strip()
         if scope is None and stripped.startswith("Scope:"):
             scope = stripped[len("Scope:"):].strip().rstrip(".")
+        if first_subsection_index is None and line.startswith("## "):
+            first_subsection_index = i
         if header_pattern.match(line):
             first_req_index = i
             break
 
-    if first_req_index is None or first_req_index == 0:
+    boundary_index = first_req_index
+    if first_subsection_index is not None:
+        boundary_index = (
+            first_subsection_index
+            if boundary_index is None
+            else min(boundary_index, first_subsection_index)
+        )
+
+    if boundary_index is None or boundary_index == 0:
         return scope, None
 
-    prelude = lines[:first_req_index]
+    prelude = lines[:boundary_index]
     in_summary = False
     kept: list[str] = []
     for line in prelude:

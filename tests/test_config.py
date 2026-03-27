@@ -548,6 +548,83 @@ def test_RQMD_portability_011_color_field_stored_in_status_colors() -> None:
     assert "✅ Done" not in _STATUS_COLORS
   finally:
     configure_status_catalog(None)  # reset to defaults
+
+
+def test_RQMD_portability_012_load_user_config_returns_empty_when_missing() -> None:
+  """load_user_config returns empty dict when ~/.rqmd.config does not exist."""
+  from rqmd.config import load_user_config
+  user_config = load_user_config()
+  assert isinstance(user_config, dict)
+
+
+def test_RQMD_portability_012_load_user_config_json(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+  """load_user_config loads .rqmd.config.json from home directory."""
+  from rqmd.config import load_user_config
+  
+  fake_home = tmp_path / "home"
+  fake_home.mkdir()
+  config_file = fake_home / ".rqmd.config.json"
+  config_file.write_text('{"statuses": [{"name": "Custom", "emoji": "⭐", "shortcode": "C"}]}', encoding="utf-8")
+  
+  monkeypatch.setattr("pathlib.Path.home", lambda: fake_home)
+  
+  user_config = load_user_config()
+  assert "statuses" in user_config
+  assert len(user_config["statuses"]) == 1
+  assert user_config["statuses"][0]["name"] == "Custom"
+
+
+def test_RQMD_portability_012_load_user_config_yaml(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+  """load_user_config loads .rqmd.config.yml from home directory."""
+  from rqmd.config import load_user_config
+  
+  fake_home = tmp_path / "home"
+  fake_home.mkdir()
+  config_file = fake_home / ".rqmd.config.yml"
+  config_file.write_text("statuses:\n  - name: Custom\n    emoji: ⭐\n    shortcode: C\n", encoding="utf-8")
+  
+  monkeypatch.setattr("pathlib.Path.home", lambda: fake_home)
+  
+  user_config = load_user_config()
+  assert "statuses" in user_config
+  assert len(user_config["statuses"]) == 1
+  assert user_config["statuses"][0]["name"] == "Custom"
+
+
+def test_RQMD_portability_012_user_config_precedence_cli_over_user(tmp_path: Path) -> None:
+  """User config colors are overridden by project config when both exist."""
+  repo = tmp_path / "repo"
+  domain = repo / "docs" / "requirements"
+  domain.mkdir(parents=True)
+  (domain / "demo.md").write_text(
+    "# Demo\n\nScope: demo.\n\n### AC-001: Item\n- **Status:** 💡 Proposed\n",
+    encoding="utf-8",
+  )
+  
+  # Create project-level config override
+  project_config = repo / ".rqmd.json"
+  project_config.write_text(
+    '{"statuses": [{"name": "Proposed", "emoji": "💡", "shortcode": "P", "color": "yellow"}]}',
+    encoding="utf-8"
+  )
+  
+  runner = CliRunner()
+  result = runner.invoke(
+    cli.main,
+    [
+      "--project-root", str(repo),
+      "--docs-dir", "docs/requirements",
+      "--status", "proposed",
+      "--as-json",
+      "--no-walk",
+      "--no-table",
+    ],
+  )
+  
+  assert result.exit_code == 0
+  payload = json.loads(result.output)
+  # Color from project config is applied
+  assert payload["files"][0]["requirements"][0]["id"] == "AC-001"
     # Done has no color -> not in _STATUS_COLORS
     assert "✅ Done" not in _STATUS_COLORS
   finally:

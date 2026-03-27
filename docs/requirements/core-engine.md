@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 1🔧 16✅ 0⛔ 0🗑️
+Summary: 1💡 4🔧 16✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -160,14 +160,14 @@ Summary: 4💡 1🔧 16✅ 0⛔ 0🗑️
 - So that flagged state can later participate in interactive focus workflows, filtering, and automation.
 
 ### RQMD-CORE-019: Domain-level body parsing and preservation
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
 - As a rqmd maintainer when requirement domains include long-form narrative notes
 - I want each domain markdown file to support an explicit optional domain-level body section (separate from per-requirement bodies)
 - So that implementation rationale, migration guidance, and AI-generated domain notes can live at domain scope without polluting requirement entries.
 
 ### RQMD-CORE-020: H2 subsection parsing and metadata capture
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
 - As a rqmd maintainer when a domain markdown file includes H2 section headings
 - I want rqmd to recognize H2 headers as subsection boundaries
@@ -180,7 +180,7 @@ Summary: 4💡 1🔧 16✅ 0⛔ 0🗑️
 - So that future interactive and automation surfaces can consume this domain-body model through a single canonical core contract.
 
 ### RQMD-CORE-021: Per-requirement external links field
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when I want to link a requirement to external systems (GitHub issues, Jira, TDX, etc.)
 - I want each requirement to support an optional top-level `**Links:**` field

@@ -1,5 +1,9 @@
 RQMD-CORE-013 (domain/index sync maintenance) since it would reduce manual doc drift over time.
 
+## Priority for domain and sub-domain
+
+Unsure if it makes sense, but might be nice to add priority to domains and subdomains... right?
+
 ## Option to add Agent and Skill instructions for AI Agents
 
 Rqmd should offer to install a core set of agent and skill instructions for AI agents to use when working with the tool. This would include instructions for how to interpret the JSON contract, how to use the `rqmd` CLI in various modes, and how to update requirements and documentation as part of implementation work. This would help ensure that AI agents can effectively contribute to the project without needing extensive manual guidance on how to interact with the tool and maintain alignment between code, tests, requirements, and documentation.

@@ -3,7 +3,7 @@
 Scope: cross-project operation, path configuration, and repo-agnostic behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 3🔧 10✅ 0⛔ 1🗑️
+Summary: 0💡 5🔧 10✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PORTABILITY-001: Configurable repo root
@@ -107,7 +107,7 @@ Summary: 2💡 3🔧 10✅ 0⛔ 1🗑️
 - So that validation errors clearly identify missing or invalid status fields with actionable file/line context.
 
 ### RQMD-PORTABILITY-012: User-level config file for accessibility color overrides
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when users need terminal-friendly or accessibility-tuned colors across multiple projects
 - I want rqmd to load configuration
@@ -144,7 +144,7 @@ Summary: 2💡 3🔧 10✅ 0⛔ 1🗑️
 - So that discovery checks for any of `.rqmd.yml/.rqmd.yaml/.rqmd.json`, `requirements/`, or `docs/requirements/`.
 
 ### RQMD-PORTABILITY-016: Automated performance testing for large requirement datasets
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
 - As a rqmd team member ensuring tool responsiveness
 - I want automated performance tests against large fuzzy requirement datasets

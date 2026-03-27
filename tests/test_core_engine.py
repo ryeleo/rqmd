@@ -5,6 +5,8 @@ from pathlib import Path
 
 from click.testing import CliRunner
 from rqmd import cli
+from rqmd.markdown_io import scope_and_body_from_file
+from rqmd.req_parser import collect_sub_sections
 
 
 def test_RQMD_core_001_iter_domain_files_sorted_and_markdown_only(tmp_path: Path) -> None:
@@ -90,6 +92,64 @@ Notes about query behavior.
     assert requirements[0]["sub_domain"] is None
     assert requirements[1]["sub_domain"] == "Query API"
     assert requirements[2]["sub_domain"] == "Mutation API"
+
+
+def test_RQMD_core_020_collect_sub_sections_includes_optional_subsection_body() -> None:
+    text = """# Demo Requirements
+
+Scope: demo.
+
+## Query API
+This subsection body explains the query flow.
+
+### AC-DEMO-001: Read model
+- **Status:** ✅ Verified
+
+## Mutation API
+
+### AC-DEMO-002: Write model
+- **Status:** 🔧 Implemented
+"""
+
+    from tempfile import TemporaryDirectory
+
+    with TemporaryDirectory() as td:
+        path = Path(td) / "demo.md"
+        path.write_text(text, encoding="utf-8")
+        sections = collect_sub_sections(path)
+
+    assert sections[0]["name"] == "Query API"
+    assert sections[0]["count"] == 1
+    assert sections[0]["body"] == "This subsection body explains the query flow."
+    assert sections[1] == {"name": "Mutation API", "count": 1}
+
+
+def test_RQMD_core_019_domain_body_excludes_h2_subsection_content() -> None:
+    text = """# Demo Requirements
+
+Scope: demo.
+
+Global domain note before subsections.
+
+## Query API
+Subsection narrative that should not be in domain_body.
+
+### AC-DEMO-001: Read model
+- **Status:** ✅ Verified
+"""
+
+    from tempfile import TemporaryDirectory
+
+    with TemporaryDirectory() as td:
+        path = Path(td) / "demo.md"
+        path.write_text(text, encoding="utf-8")
+        scope, body = scope_and_body_from_file(path)
+        sections = collect_sub_sections(path)
+
+    assert scope == "demo"
+    assert body == "Global domain note before subsections."
+    assert sections[0]["name"] == "Query API"
+    assert sections[0]["body"] == "Subsection narrative that should not be in domain_body."
 
 
 def test_RQMD_core_003_normalize_status_aliases() -> None:
@@ -488,6 +548,90 @@ def test_RQMD_core_005b_file_priority_sort_key_uses_current_statuses() -> None:
     key_impl = cli.file_sort_key_by_priority(implemented, "A")
     key_ver = cli.file_sort_key_by_priority(verified, "B")
     assert key_impl < key_ver
+
+
+def test_RQMD_core_021_parse_requirement_links_plain_and_markdown() -> None:
+    text = """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: With links
+- **Status:** 💡 Proposed
+- **Links:**
+  - https://github.com/issue/123
+  - [GitHub Issues](https://github.com/issues)
+  - [Jira](https://jira.example.com/browse/PROJ-456)
+
+### AC-DEMO-002: No links
+- **Status:** ✅ Verified
+"""
+    from tempfile import TemporaryDirectory
+
+    with TemporaryDirectory() as td:
+        path = Path(td) / "demo.md"
+        path.write_text(text, encoding="utf-8")
+        requirements = cli.parse_requirements(path)
+
+    assert len(requirements) == 2
+    
+    req_001 = requirements[0]
+    assert req_001["id"] == "AC-DEMO-001"
+    assert req_001["links"] is not None
+    assert len(req_001["links"]) == 3
+    assert req_001["links"][0] == {"url": "https://github.com/issue/123", "label": None}
+    assert req_001["links"][1] == {"url": "https://github.com/issues", "label": "GitHub Issues"}
+    assert req_001["links"][2] == {"url": "https://jira.example.com/browse/PROJ-456", "label": "Jira"}
+
+    req_002 = requirements[1]
+    assert req_002["id"] == "AC-DEMO-002"
+    assert req_002["links"] is None
+
+
+def test_RQMD_core_021_links_included_in_json_payload(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: With links
+- **Status:** 💡 Proposed
+- **Links:**
+  - https://github.com/issue/123
+  - [Docs](https://docs.example.com)
+
+### AC-DEMO-002: No links
+- **Status:** ✅ Verified
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--status",
+            "proposed",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["files"][0]["requirements"][0]["id"] == "AC-DEMO-001"
+    assert "links" in payload["files"][0]["requirements"][0]
+    links = payload["files"][0]["requirements"][0]["links"]
+    assert len(links) == 2
+    assert links[0] == {"url": "https://github.com/issue/123", "label": None}
+    assert links[1] == {"url": "https://docs.example.com", "label": "Docs"}
 
 
 def test_RQMD_core_005c_file_priority_sort_key_tie_breaks_by_label() -> None:

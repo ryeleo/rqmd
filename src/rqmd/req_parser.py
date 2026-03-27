@@ -19,12 +19,14 @@ from .constants import (BLOCKED_REASON_PATTERN, DEFAULT_ID_PREFIXES,
                         DEPRECATED_REASON_PATTERN, FLAGGED_PATTERN,
                         GENERIC_REQUIREMENT_HEADER_PATTERN,
                         H2_SUBSECTION_PATTERN, ID_PREFIX_PATTERN,
+                        LINK_ITEM_PATTERN, LINKS_HEADER_PATTERN,
                         MARKDOWN_LINK_PATTERN, PRIORITY_PATTERN,
                         REQUIREMENTS_INDEX_NAME, STATUS_PATTERN)
 from .priority_model import coerce_priority_label
 from .status_model import coerce_status_label
 
 
+@lru_cache(maxsize=None)
 @lru_cache(maxsize=None)
 def build_requirement_header_pattern(id_prefixes: tuple[str, ...]) -> re.Pattern[str]:
     """Build a compiled regex pattern for matching requirement headers.
@@ -77,6 +79,40 @@ def normalize_id_prefixes(raw_prefixes: tuple[str, ...] | list[str] | None) -> t
         raise ValueError("At least one non-empty id prefix is required.")
 
     return tuple(prefixes)
+
+
+def _parse_link_item(link_text: str) -> dict[str, str | None] | None:
+    """Parse a single link item from a markdown list.
+
+    Handles both:
+    - Plain URLs: 'https://github.com/issue/123'
+    - Markdown hyperlinks: '[GitHub Issue](https://github.com/issue/123)'
+
+    Args:
+        link_text: The text of a link list item (after "- ").
+
+    Returns:
+        A dict with keys 'url' (required) and 'label' (optional, None for plain URLs).
+        Returns None if parsing fails.
+    """
+    link_text = link_text.strip()
+    if not link_text:
+        return None
+
+    # Try markdown link format: [label](url)
+    md_match = re.match(r"^\[([^\]]+)\]\(([^)]+)\)$", link_text)
+    if md_match:
+        label = md_match.group(1).strip()
+        url = md_match.group(2).strip()
+        if url:
+            return {"url": url, "label": label if label else None}
+
+    # Otherwise treat as plain URL
+    if link_text.startswith(("http://", "https://", "ftp://", "/")):
+        return {"url": link_text, "label": None}
+
+    # Unknown format; skip
+    return None
 
 
 def detect_id_prefixes_from_requirements_index(repo_root: Path, requirements_dir_input: str) -> tuple[str, ...]:
@@ -198,20 +234,54 @@ def collect_sub_sections(
     path: Path,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
 ) -> list[dict[str, object]]:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    header_pattern = build_requirement_header_pattern(id_prefixes)
+
     ordered: list[str] = []
-    counts: dict[str, dict[str, object]] = {}
+    sections: dict[str, dict[str, object]] = {}
 
-    for requirement in parse_requirements(path, id_prefixes=id_prefixes):
-        sub_domain = display_sub_domain_name(requirement.get("sub_domain"))
-        if sub_domain is None:
+    # First pass: discover subsection boundaries in file order.
+    subsection_starts: list[tuple[int, str, str]] = []
+    for index, line in enumerate(lines):
+        match = H2_SUBSECTION_PATTERN.match(line)
+        if not match:
             continue
-        key = normalize_sub_domain_name(sub_domain)
-        if key not in counts:
+        name = display_sub_domain_name(match.group("section_title"))
+        if name is None:
+            continue
+        key = normalize_sub_domain_name(name)
+        subsection_starts.append((index, key, name))
+        if key not in sections:
             ordered.append(key)
-            counts[key] = {"name": sub_domain, "count": 0}
-        counts[key]["count"] = int(counts[key]["count"]) + 1
+            sections[key] = {"name": name, "count": 0}
 
-    return [counts[key] for key in ordered]
+    # Second pass: count requirements by active subsection.
+    current_key: str | None = None
+    for line in lines:
+        subsection_match = H2_SUBSECTION_PATTERN.match(line)
+        if subsection_match:
+            name = display_sub_domain_name(subsection_match.group("section_title"))
+            current_key = normalize_sub_domain_name(name) if name else None
+            continue
+        if current_key and header_pattern.match(line):
+            sections[current_key]["count"] = int(sections[current_key]["count"]) + 1
+
+    # Third pass: capture optional subsection body (text between H2 and first H3 in that section).
+    for idx, (_start, key, _name) in enumerate(subsection_starts):
+        start_line = subsection_starts[idx][0]
+        next_start = subsection_starts[idx + 1][0] if idx + 1 < len(subsection_starts) else len(lines)
+
+        body_lines: list[str] = []
+        for line in lines[start_line + 1:next_start]:
+            if header_pattern.match(line):
+                break
+            body_lines.append(line)
+
+        body = "\n".join(body_lines).strip()
+        if body:
+            sections[key]["body"] = body
+
+    return [sections[key] for key in ordered]
 
 
 def parse_requirements(
@@ -262,6 +332,8 @@ def parse_requirements(
                 "deprecated_reason_line": None,
                 "flagged": None,
                 "flagged_line": None,
+                "links": None,
+                "links_line": None,
                 "sub_domain": current_subsection,  # Assign current subsection if present
             }
             requirements.append(current)
@@ -303,6 +375,24 @@ def parse_requirements(
         if flagged_match and current and current["status_line"] is not None:
             current["flagged"] = flagged_match.group("flagged") == "true"
             current["flagged_line"] = index
+
+        links_match = LINKS_HEADER_PATTERN.match(line)
+        if links_match and current and current["status_line"] is not None:
+            if current["links"] is None:
+                current["links_line"] = index
+                links_list: list[dict[str, str | None]] = []
+                # Collect all following link items (indented with 2 spaces)
+                for next_index in range(index + 1, len(lines)):
+                    item_match = LINK_ITEM_PATTERN.match(lines[next_index])
+                    if not item_match:
+                        # Stop at first non-link line
+                        break
+                    link_text = item_match.group("link_text").strip()
+                    parsed = _parse_link_item(link_text)
+                    if parsed:
+                        links_list.append(parsed)
+                if links_list:
+                    current["links"] = links_list
 
     return [requirement for requirement in requirements if requirement["status_line"] is not None]
 
@@ -521,4 +611,69 @@ def collect_requirements_by_sub_domain(
         ]
         if matching:
             result[path] = matching
+    return result
+
+
+def collect_requirements_by_filters(
+    repo_root: Path,
+    domain_files: list[Path],
+    status_filters: tuple[str, ...] = (),
+    priority_filters: tuple[str, ...] = (),
+    flagged_filters: tuple[bool, ...] = (),
+    sub_domain_filters: tuple[str, ...] = (),
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+) -> dict[Path, list[dict[str, object]]]:
+    """Collect requirements using combined filter semantics.
+
+    Semantics:
+    - OR across different filter families (status/priority/flagged/sub-domain)
+    - AND within each family (all configured values in a family must match)
+    """
+    normalized_sub_domains = tuple(
+        normalize_sub_domain_name(value) for value in sub_domain_filters if normalize_sub_domain_name(value)
+    )
+
+    has_status = bool(status_filters)
+    has_priority = bool(priority_filters)
+    has_flagged = bool(flagged_filters)
+    has_sub_domain = bool(normalized_sub_domains)
+
+    if not (has_status or has_priority or has_flagged or has_sub_domain):
+        return {}
+
+    result: dict[Path, list[dict[str, object]]] = {}
+
+    for path in domain_files:
+        requirements = parse_requirements(path, id_prefixes=id_prefixes)
+        matching: list[dict[str, object]] = []
+
+        for requirement in requirements:
+            matches_status = False
+            if has_status:
+                req_status = str(requirement.get("status") or "")
+                matches_status = all(req_status == value for value in status_filters)
+
+            matches_priority = False
+            if has_priority:
+                req_priority = str(requirement.get("priority") or "")
+                matches_priority = all(req_priority == value for value in priority_filters)
+
+            matches_flagged = False
+            if has_flagged:
+                req_flagged = requirement.get("flagged")
+                matches_flagged = all(req_flagged is value for value in flagged_filters)
+
+            matches_sub_domain = False
+            if has_sub_domain:
+                req_sub_domain = normalize_sub_domain_name(requirement.get("sub_domain"))
+                matches_sub_domain = bool(req_sub_domain) and all(
+                    req_sub_domain.startswith(value) for value in normalized_sub_domains
+                )
+
+            if matches_status or matches_priority or matches_flagged or matches_sub_domain:
+                matching.append(requirement)
+
+        if matching:
+            result[path] = matching
+
     return result

@@ -1043,6 +1043,155 @@ def test_RQMD_automation_011_filter_status_json_empty_result_has_zero_total(two_
     assert payload["files"] == []
 
 
+def test_RQMD_automation_combined_filters_or_across_flags(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: Proposed item
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+
+### AC-DEMO-002: Critical item
+- **Status:** 🔧 Implemented
+- **Priority:** 🔴 P0 - Critical
+
+### AC-DEMO-003: Other item
+- **Status:** ✅ Verified
+- **Priority:** 🟢 P3 - Low
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--status",
+            "proposed",
+            "--priority",
+            "p0",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-combined"
+    assert payload["filters"]["logic"] == {"across_flags": "or", "within_flag": "and"}
+    ids = [entry["id"] for entry in payload["files"][0]["requirements"]]
+    assert ids == ["AC-DEMO-001", "AC-DEMO-002"]
+
+
+def test_RQMD_automation_combined_filters_default_to_interactive_walk(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: Proposed item
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+
+### AC-DEMO-002: Critical item
+- **Status:** 🔧 Implemented
+- **Priority:** 🔴 P0 - Critical
+""",
+        encoding="utf-8",
+    )
+
+    captured: dict[str, object] = {}
+
+    def fake_loop(*_args, **kwargs):
+        selected_items = kwargs["selected_items"]
+        captured["ids"] = [str(requirement["id"]) for _path, requirement in selected_items]
+        captured["tokens"] = list(kwargs["target_tokens"])
+        return 0
+
+    monkeypatch.setattr(cli, "focused_target_interactive_loop", fake_loop)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--status",
+            "proposed",
+            "--priority",
+            "p0",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["ids"] == ["AC-DEMO-001", "AC-DEMO-002"]
+    assert "status:💡 Proposed" in captured["tokens"]
+    assert "priority:🔴 P0 - Critical" in captured["tokens"]
+
+
+def test_RQMD_automation_combined_filters_and_within_same_flag(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: Proposed item
+- **Status:** 💡 Proposed
+
+### AC-DEMO-002: Implemented item
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--status",
+            "proposed",
+            "--status",
+            "implemented",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-combined"
+    assert payload["filters"]["status"] == ["💡 Proposed", "🔧 Implemented"]
+    assert payload["total"] == 0
+    assert payload["files"] == []
+
+
 def test_RQMD_automation_013_filter_status_json_is_sorted_by_requirement_id(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
@@ -1265,7 +1414,7 @@ Read-only routes.
     assert [item["id"] for item in payload["files"][0]["requirements"]] == ["AC-DEMO-001", "AC-DEMO-002"]
     assert all(item["sub_domain"] == "Query API" for item in payload["files"][0]["requirements"])
     assert payload["files"][0]["sub_sections"] == [
-        {"name": "Query API", "count": 2},
+        {"name": "Query API", "count": 2, "body": "Read-only routes."},
         {"name": "Mutation API", "count": 1},
     ]
 

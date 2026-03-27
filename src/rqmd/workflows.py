@@ -584,7 +584,7 @@ def build_filtered_criteria_payload(
     repo_root: Path,
     criteria_dir: Path,
     criteria_by_file: dict[Path, list[dict[str, object]]],
-    target_value: str,
+    target_value: object,
     include_body: bool = True,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
     filter_mode: str = "filter-status",
@@ -610,6 +610,10 @@ def build_filtered_criteria_payload(
             flagged_value = requirement.get("flagged")
             if isinstance(flagged_value, bool):
                 entry["flagged"] = flagged_value
+
+            links_value = requirement.get("links")
+            if links_value is not None and isinstance(links_value, list):
+                entry["links"] = links_value
 
             if include_body:
                 body_markdown, block_start, block_end = extract_requirement_block_with_lines(
@@ -727,6 +731,10 @@ def build_targeted_criteria_payload(
             flagged_value = requirement.get("flagged")
             if isinstance(flagged_value, bool):
                 entry["flagged"] = flagged_value
+
+            links_value = requirement.get("links")
+            if links_value is not None and isinstance(links_value, list):
+                entry["links"] = links_value
 
             if include_body:
                 body_markdown, block_start, block_end = extract_requirement_block_with_lines(
