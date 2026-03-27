@@ -15,8 +15,8 @@ except ImportError:
     sys.exit(1)
 
 from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
-                        MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT, PRIORITY_ORDER,
-                        STATUS_ORDER, STATUS_PATTERN)
+                        MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT,
+                        PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN)
 from .criteria_parser import (extract_criterion_block_with_lines,
                               find_criterion_by_id, parse_criteria)
 from .markdown_io import (display_name_from_h1, format_path_display,
@@ -1315,6 +1315,30 @@ def lookup_criterion_interactive(
             changed = update_criterion_status(
                 path,
                 requirement,
+                new_status,
+                blocked_reason=blocked_reason,
+                deprecated_reason=deprecated_reason,
+            )
+        process_file(
+            path,
+            check_only=False,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
+        )
+
+        if changed:
+            click.echo(f"Updated {requirement['id']} -> {selected_value}")
+        else:
+            click.echo(f"No change for {requirement['id']} ({selected_value})")
+
+        _, table_rows = collect_summary_rows(
+            domain_files,
+            check_only=True,
+            display_name_fn=display_name_from_h1,
+            include_status_emojis=include_status_emojis,
+        )
+        print_summary_table(table_rows, emoji_columns=emoji_columns)
+        return 0
                 new_status,
                 blocked_reason=blocked_reason,
                 deprecated_reason=deprecated_reason,

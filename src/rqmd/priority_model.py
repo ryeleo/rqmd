@@ -4,7 +4,7 @@ import click
 
 from .constants import (ANSI_ESCAPE_PATTERN, ANSI_RESET, NON_ALNUM_PATTERN,
                         NON_ALNUM_PREFIX_PATTERN, PRIORITY_ALIASES,
-                        PRIORITY_PARSE_ALIASES, PRIORITY_ORDER)
+                        PRIORITY_ORDER, PRIORITY_PARSE_ALIASES)
 
 
 def style_priority_label(priority_label: str) -> str:
@@ -82,6 +82,12 @@ def coerce_priority_label(value: str) -> str:
     # If coercion fails, return None to indicate unset priority
     return "unset"
 
+
+def normalize_priority_input(value: str) -> str:
+    normalized = coerce_priority_label(value)
+    if normalized == "unset":
+        raise click.ClickException(f"Unrecognized priority input: {value}")
+    return normalized
 
 def normalize_priority_input(value: str) -> str:
     normalized = coerce_priority_label(value)

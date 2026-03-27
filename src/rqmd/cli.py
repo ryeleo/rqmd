@@ -83,8 +83,8 @@ from .constants import (DEFAULT_CRITERIA_DIR, DEFAULT_ID_PREFIXES,
                         ID_PREFIX_PATTERN, MENU_REFRESH, MENU_TOGGLE_DIRECTION,
                         MENU_TOGGLE_SORT, STATUS_ORDER, STATUS_PATTERN,
                         SUMMARY_END, SUMMARY_START)
-from .criteria_parser import (collect_criteria_by_status, find_criterion_by_id,
-                              collect_criteria_by_priority,
+from .criteria_parser import (collect_criteria_by_priority,
+                              collect_criteria_by_status, find_criterion_by_id,
                               normalize_id_prefixes, parse_criteria,
                               resolve_id_prefixes)
 from .markdown_io import (auto_detect_criteria_dir, check_files_writable,
@@ -976,6 +976,47 @@ def main(
             domain_files,
             check_only=True,
             display_name_fn=display_name_from_h1,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=show_priority_summary,
+        )
+        if json_output:
+            payload = build_summary_payload(repo_root, resolved_criteria_dir, domain_files, sorted(changed_files))
+            payload["mode"] = "set-priority" if set_priority_updates and not set_updates else "set"
+            payload["updates"] = update_results
+            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            raise SystemExit(0)
+
+        if summary_table:
+            print_summary_table(table_rows, emoji_columns=emoji_columns)
+        raise SystemExit(0)
+
+    if json_output:
+        payload = dict(summary_payload)
+        payload["ok"] = True
+        click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+        raise SystemExit(0)
+
+    if interactive and not check:
+        # RQMD-INTERACTIVE-011: preflight write-permission gate
+        check_files_writable(domain_files, repo_root)
+        raise SystemExit(
+            interactive_update_loop(
+                repo_root,
+                resolved_criteria_dir_input,
+                domain_files,
+                emoji_columns=emoji_columns,
+                sort_files=False,
+                sort_strategy=sort_strategy,
+                id_prefixes=id_prefixes,
+                include_status_emojis=include_status_emojis,
+                priority_mode=priority_mode,
+                include_priority_summary=show_priority_summary,
+            )
+        )
+
+
+if __name__ == "__main__":
+    main()            display_name_fn=display_name_from_h1,
             include_status_emojis=include_status_emojis,
             include_priority_summary=show_priority_summary,
         )
