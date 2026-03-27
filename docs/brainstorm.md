@@ -19,7 +19,7 @@ The schema for rqmd **is** version of this rqmd pakcckag. The rqdmmdersion shoul
 
 ## TODO
 
-follow-on requirement for --set-flagged ID=true|false so automation can mutate flagged state directly too.
+follow-on requirement for --update-flagged ID=true|false so automation can mutate flagged state directly too.
 
 ## codify the "implement all proposed items" approach in the README and contribution guidelines
 
@@ -32,7 +32,7 @@ Do the easier ones first so we see how far you get before running into something
 
 I've set `chat.agent.maxRequests=1500` so you can go for a while!
 
-Make sure to check that `rqmd` runs for you, and there aren't regressions in our test suite as you go! And update the test suite as you go! And update requirements as you go using `rqmd --set...`! And update requirements directly if they change as you go!
+Make sure to check that `rqmd` runs for you, and there aren't regressions in our test suite as you go! And update the test suite as you go! And update requirements as you go using `rqmd --update...`! And update requirements directly if they change as you go!
 ```
 
 
@@ -81,7 +81,7 @@ Finally, Probably should also have a feature for easily changing the key for all
 ## Prioritized proposal implementation queue (from current proposed set):
 Compacted conversation
 
-Ran terminal command:  uv run rqmd --filter-status proposed --json --no-interactive --no-summary-table 2>&1
+Ran terminal command:  uv run rqmd --status proposed --as-json --no-walk --no-table 2>&1
 
 Good — 18 proposed items, including several new ones not in the previous queue. Let me read the new requirement details before prioritizing. 
 
@@ -101,7 +101,7 @@ The two roll-up color knob requirements are nearly identical. Here's the updated
 
 ## Updated Prioritized Implementation Queue
 
-**19 proposed items** as of `rqmd --filter-status proposed --json` on 2026-03-26, after Wave 1 was completed, duplicate proposals were reconciled, and `RQMD-SORTING-006` was implemented.
+**19 proposed items** as of `rqmd --status proposed --as-json` on 2026-03-26, after Wave 1 was completed, duplicate proposals were reconciled, and `RQMD-SORTING-006` was implemented.
 
 Important cleanup before implementation:
 

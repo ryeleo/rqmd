@@ -36,9 +36,9 @@ Scope: demo.
     with TemporaryDirectory() as td:
         path = Path(td) / "demo.md"
         path.write_text(text, encoding="utf-8")
-        requirements = cli.parse_criteria(path)
+        requirements = cli.parse_requirements(path)
         assert [c["id"] for c in requirements] == ["AC-DEMO-001", "AC-DEMO-002"]
-        assert cli.find_criterion_by_id(path, "ac-demo-002")["title"] == "Second"
+        assert cli.find_requirement_by_id(path, "ac-demo-002")["title"] == "Second"
 
 
 def test_RQMD_core_002b_parse_requirement_ids_with_configured_prefix() -> None:
@@ -55,9 +55,9 @@ Scope: demo.
     with TemporaryDirectory() as td:
         path = Path(td) / "demo.md"
         path.write_text(text, encoding="utf-8")
-        requirements = cli.parse_criteria(path, id_prefixes=("R",))
+        requirements = cli.parse_requirements(path, id_prefixes=("R",))
         assert [c["id"] for c in requirements] == ["R-DEMO-001"]
-        assert cli.find_criterion_by_id(path, "r-demo-001", id_prefixes=("R",))["title"] == "First"
+        assert cli.find_requirement_by_id(path, "r-demo-001", id_prefixes=("R",))["title"] == "First"
 
 
 def test_RQMD_core_020_parse_h2_subsections_into_sub_domain_metadata() -> None:
@@ -85,7 +85,7 @@ Notes about query behavior.
     with TemporaryDirectory() as td:
         path = Path(td) / "demo.md"
         path.write_text(text, encoding="utf-8")
-        requirements = cli.parse_criteria(path)
+        requirements = cli.parse_requirements(path)
 
     assert requirements[0]["sub_domain"] is None
     assert requirements[1]["sub_domain"] == "Query API"
@@ -178,19 +178,19 @@ def test_RQMD_core_009_missing_domain_docs_handling(tmp_path: Path) -> None:
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--check",
-            "--no-interactive",
-            "--no-summary-table",
+            "--verify-summaries",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
     assert result.exit_code == 1
     assert "No requirement markdown files found under" in result.output
-    assert "rqmd --init --yes" in result.output
+    assert "rqmd --bootstrap --force-yes" in result.output
 
 
 def test_RQMD_core_009_missing_domain_docs_yes_initializes_scaffold(tmp_path: Path) -> None:
@@ -201,11 +201,11 @@ def test_RQMD_core_009_missing_domain_docs_yes_initializes_scaffold(tmp_path: Pa
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--yes",
+            "--force-yes",
         ],
     )
 
@@ -223,12 +223,12 @@ def test_RQMD_core_009_init_yes_skips_prompt_and_uses_default_prefix(tmp_path: P
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--init",
-            "--yes",
+            "--bootstrap",
+            "--force-yes",
         ],
     )
 
@@ -245,13 +245,13 @@ def test_RQMD_core_011e_init_yes_json_payload_is_idempotent(tmp_path: Path) -> N
     first = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--init",
-            "--yes",
-            "--json",
+            "--bootstrap",
+            "--force-yes",
+            "--as-json",
         ],
     )
     assert first.exit_code == 0
@@ -267,13 +267,13 @@ def test_RQMD_core_011e_init_yes_json_payload_is_idempotent(tmp_path: Path) -> N
     second = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--init",
-            "--yes",
-            "--json",
+            "--bootstrap",
+            "--force-yes",
+            "--as-json",
         ],
     )
     assert second.exit_code == 0
@@ -295,7 +295,7 @@ Scope: demo.
 """,
         encoding="utf-8",
     )
-    requirement = cli.find_criterion_by_id(path, "AC-DEMO-001")
+    requirement = cli.find_requirement_by_id(path, "AC-DEMO-001")
 
     changed = cli.update_criterion_status(path, requirement, "⛔ Blocked", blocked_reason="Need API")
     assert changed is True
@@ -303,7 +303,7 @@ Scope: demo.
     assert "- **Status:** ⛔ Blocked" in blocked_text
     assert "**Blocked:** Need API" in blocked_text
 
-    requirement = cli.find_criterion_by_id(path, "AC-DEMO-001")
+    requirement = cli.find_requirement_by_id(path, "AC-DEMO-001")
     changed = cli.update_criterion_status(path, requirement, "🗑️ Deprecated", deprecated_reason="Replaced")
     assert changed is True
     deprecated_text = path.read_text(encoding="utf-8")
@@ -320,11 +320,11 @@ def test_RQMD_core_011_and_012_init_scaffold_creates_index_and_starter(tmp_path:
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--init",
+            "--bootstrap",
         ],
         input="\n",
     )
@@ -349,11 +349,11 @@ def test_RQMD_core_012b_init_scaffold_allows_custom_starter_key(tmp_path: Path) 
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--init",
+            "--bootstrap",
         ],
         input="TEAM\n",
     )
@@ -371,11 +371,11 @@ def test_RQMD_core_016_init_scaffold_copies_template_content(tmp_path: Path) -> 
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--init",
+            "--bootstrap",
         ],
         input="\n",
     )
@@ -400,11 +400,11 @@ def test_RQMD_core_011b_init_scaffold_is_idempotent(tmp_path: Path) -> None:
     first = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--init",
+            "--bootstrap",
         ],
         input="\n",
     )
@@ -413,11 +413,11 @@ def test_RQMD_core_011b_init_scaffold_is_idempotent(tmp_path: Path) -> None:
     second = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--init",
+            "--bootstrap",
         ],
         input="\n",
     )
@@ -433,11 +433,11 @@ def test_RQMD_core_011c_init_scaffold_supports_custom_criteria_dir(tmp_path: Pat
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "custom/ac",
-            "--init",
+            "--bootstrap",
         ],
         input="\n",
     )
@@ -455,18 +455,18 @@ def test_RQMD_core_011d_init_cannot_be_combined_with_check(tmp_path: Path) -> No
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--init",
-            "--check",
+            "--bootstrap",
+            "--verify-summaries",
         ],
         input="\n",
     )
 
     assert result.exit_code != 0
-    assert "--init cannot be combined" in result.output
+    assert "--bootstrap cannot be combined" in result.output
 
 
 def test_RQMD_core_005b_file_priority_sort_key_uses_current_statuses() -> None:
@@ -506,7 +506,7 @@ def test_RQMD_core_005c_file_priority_sort_key_tie_breaks_by_label() -> None:
 
 # Priority parsing and normalization tests (RQMD-PRIORITY-001 & 002)
 def test_RQMD_priority_001_parse_priority_field() -> None:
-    from rqmd.req_parser import parse_criteria
+    from rqmd.req_parser import parse_requirements
 
     text = """# Demo Requirements
 
@@ -523,7 +523,7 @@ def test_RQMD_priority_001_parse_priority_field() -> None:
     with TemporaryDirectory() as td:
         path = Path(td) / "demo.md"
         path.write_text(text, encoding="utf-8")
-        requirements = parse_criteria(path)
+        requirements = parse_requirements(path)
 
         assert len(requirements) == 2
         assert requirements[0]["priority"] == "🔴 P0 - Critical"
@@ -533,7 +533,7 @@ def test_RQMD_priority_001_parse_priority_field() -> None:
 
 
 def test_RQMD_priority_001_priority_is_optional() -> None:
-    from rqmd.req_parser import parse_criteria
+    from rqmd.req_parser import parse_requirements
 
     text = """# Demo Requirements
 
@@ -549,7 +549,7 @@ def test_RQMD_priority_001_priority_is_optional() -> None:
     with TemporaryDirectory() as td:
         path = Path(td) / "demo.md"
         path.write_text(text, encoding="utf-8")
-        requirements = parse_criteria(path)
+        requirements = parse_requirements(path)
 
         assert requirements[0]["priority"] == "🔴 P0 - Critical"
         assert requirements[1]["priority"] is None  # Priority is optional

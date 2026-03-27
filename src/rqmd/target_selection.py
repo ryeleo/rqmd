@@ -14,8 +14,8 @@ from pathlib import Path
 
 import click
 
-from .req_parser import (collect_sub_sections, find_criterion_by_id,
-                              normalize_sub_domain_name, parse_criteria)
+from .req_parser import (collect_sub_sections, find_requirement_by_id,
+                              normalize_sub_domain_name, parse_requirements)
 from .markdown_io import display_name_from_h1, format_path_display
 
 
@@ -37,19 +37,19 @@ def parse_target_token_file(repo_root: Path, file_path_input: str) -> list[str]:
         path = (repo_root / file_path_input).resolve()
 
     if not path.exists() or not path.is_file():
-        raise click.ClickException(f"--filter-ids-file path not found: {file_path_input}")
+        raise click.ClickException(f"--targets-file path not found: {file_path_input}")
 
     if path.suffix.lower() not in {".txt", ".conf", ".md"}:
-        raise click.ClickException("--filter-ids-file must end with .txt, .conf, or .md")
+        raise click.ClickException("--targets-file must end with .txt, .conf, or .md")
 
     try:
         text = path.read_text(encoding="utf-8")
     except OSError as exc:
-        raise click.ClickException(f"Unable to read --filter-ids-file {path}: {exc}") from exc
+        raise click.ClickException(f"Unable to read --targets-file {path}: {exc}") from exc
 
     tokens = tokenize_target_text(text)
     if not tokens:
-        raise click.ClickException(f"--filter-ids-file contains no target tokens: {path}")
+        raise click.ClickException(f"--targets-file contains no target tokens: {path}")
     return tokens
 
 
@@ -109,7 +109,7 @@ def collect_target_completion_tokens(
         add(path.name)
         add(path.stem)
         add(display_name_from_h1(path))
-        for requirement in parse_criteria(path, id_prefixes=id_prefixes):
+        for requirement in parse_requirements(path, id_prefixes=id_prefixes):
             add(str(requirement["id"]))
         for subsection in collect_sub_sections(path, id_prefixes=id_prefixes):
             name = str(subsection.get("name") or "").strip()
@@ -184,7 +184,7 @@ def resolve_target_tokens(
         add_domain_token(path.stem, path)
         add_domain_token(display_name_from_h1(path), path)
 
-        for requirement in parse_criteria(path, id_prefixes=id_prefixes):
+        for requirement in parse_requirements(path, id_prefixes=id_prefixes):
             normalized_sub_domain = normalize_sub_domain_name(str(requirement.get("sub_domain") or ""))
             if normalized_sub_domain:
                 subsection_requirements.append((normalized_sub_domain, path, requirement))
@@ -207,7 +207,7 @@ def resolve_target_tokens(
 
         id_matches: list[tuple[Path, dict[str, object]]] = []
         for path in domain_files:
-            requirement = find_criterion_by_id(path, token, id_prefixes=id_prefixes)
+            requirement = find_requirement_by_id(path, token, id_prefixes=id_prefixes)
             if requirement:
                 id_matches.append((path, requirement))
 
@@ -220,7 +220,7 @@ def resolve_target_tokens(
 
         domain_matches = domain_token_map.get(normalized_token, [])
         if len(domain_matches) == 1:
-            for requirement in parse_criteria(domain_matches[0], id_prefixes=id_prefixes):
+            for requirement in parse_requirements(domain_matches[0], id_prefixes=id_prefixes):
                 append_requirement(domain_matches[0], requirement)
             continue
         if len(domain_matches) > 1:

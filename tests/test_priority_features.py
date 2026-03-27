@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 from rqmd import cli
-from rqmd.req_parser import parse_criteria
+from rqmd.req_parser import parse_requirements
 from rqmd.summary import (build_summary_block, collect_summary_rows,
                           count_priorities, process_file)
 
@@ -111,10 +111,10 @@ class TestRQMDPriority004ModeFlag:
         result = runner.invoke(cli.main, ["--help"])
 
         assert result.exit_code == 0
-        assert "--set-priority" in result.output
-        assert "--priority-mode" in result.output
-        assert "--show-priority-summary" in result.output
-        assert "--init-priorities" in result.output
+        assert "--update-priority" in result.output
+        assert "--focus-priority" in result.output
+        assert "--priority-rollup" in result.output
+        assert "--seed-priorities" in result.output
 
     def test_cli_set_priority_updates_existing_and_missing_priority(self, tmp_path: Path):
         repo = tmp_path / "repo"
@@ -137,15 +137,15 @@ class TestRQMDPriority004ModeFlag:
         result = runner.invoke(
             cli.main,
             [
-                "--repo-root",
+                "--project-root",
                 str(repo),
-                "--requirements-dir",
+                "--docs-dir",
                 "docs/requirements",
-                "--set-priority",
+                "--update-priority",
                 "AC-001=p0",
-                "--set-priority",
+                "--update-priority",
                 "AC-002=medium",
-                "--no-summary-table",
+                "--no-table",
             ],
         )
 
@@ -171,14 +171,14 @@ class TestRQMDPriority004ModeFlag:
         result = runner.invoke(
             cli.main,
             [
-                "--repo-root",
+                "--project-root",
                 str(repo),
-                "--requirements-dir",
+                "--docs-dir",
                 "docs/requirements",
-                "--set-priority",
+                "--update-priority",
                 "AC-001=high",
-                "--json",
-                "--no-summary-table",
+                "--as-json",
+                "--no-table",
             ],
         )
 
@@ -190,7 +190,7 @@ class TestRQMDPriority004ModeFlag:
         assert payload["updates"][0]["changed"] is True
 
     def test_priority_field_extraction_in_criteria(self, sample_file_with_priorities: Path):
-        requirements = parse_criteria(sample_file_with_priorities, id_prefixes=("AC",))
+        requirements = parse_requirements(sample_file_with_priorities, id_prefixes=("AC",))
 
         assert len(requirements) == 3
         assert requirements[0]["id"] == "AC-001"
@@ -210,7 +210,7 @@ class TestRQMDPriority004ModeFlag:
         result = cli.lookup_criterion_interactive(
             repo_root=sample_file_with_priorities.parent,
             domain_files=[sample_file_with_priorities],
-            criterion_id="AC-001",
+            requirement_id="AC-001",
             emoji_columns=False,
             id_prefixes=("AC",),
             priority_mode=True,
@@ -246,13 +246,13 @@ class TestRQMDPriority004ModeFlag:
         result = runner.invoke(
             cli.main,
             [
-                "--repo-root",
+                "--project-root",
                 str(repo),
-                "--requirements-dir",
+                "--docs-dir",
                 "docs/requirements",
-                "--priority-mode",
-                "--show-priority-summary",
-                "--no-summary-table",
+                "--focus-priority",
+                "--priority-rollup",
+                "--no-table",
             ],
         )
 
@@ -282,15 +282,15 @@ class TestRQMDPriority004ModeFlag:
         result = runner.invoke(
             cli.main,
             [
-                "--repo-root",
+                "--project-root",
                 str(repo),
-                "--requirements-dir",
+                "--docs-dir",
                 "docs/requirements",
-                "--filter-priority",
+                "--priority",
                 "critical",
-                "--json",
-                "--no-interactive",
-                "--no-summary-table",
+                "--as-json",
+                "--no-walk",
+                "--no-table",
             ],
         )
 
@@ -321,16 +321,16 @@ Scope: demo.
         result = runner.invoke(
             cli.main,
             [
-                "--repo-root",
+                "--project-root",
                 str(repo),
-                "--requirements-dir",
+                "--docs-dir",
                 "docs/requirements",
-                "--init-priorities",
-                "--default-priority",
+                "--seed-priorities",
+                "--seed-priority",
                 "p2",
                 "--dry-run",
-                "--json",
-                "--no-summary-table",
+                "--as-json",
+                "--no-table",
             ],
         )
 
@@ -363,14 +363,14 @@ Scope: demo.
         first = runner.invoke(
             cli.main,
             [
-                "--repo-root",
+                "--project-root",
                 str(repo),
-                "--requirements-dir",
+                "--docs-dir",
                 "docs/requirements",
-                "--init-priorities",
-                "--default-priority",
+                "--seed-priorities",
+                "--seed-priority",
                 "medium",
-                "--no-summary-table",
+                "--no-table",
             ],
         )
         assert first.exit_code == 0
@@ -383,15 +383,15 @@ Scope: demo.
         second = runner.invoke(
             cli.main,
             [
-                "--repo-root",
+                "--project-root",
                 str(repo),
-                "--requirements-dir",
+                "--docs-dir",
                 "docs/requirements",
-                "--init-priorities",
-                "--default-priority",
+                "--seed-priorities",
+                "--seed-priority",
                 "medium",
-                "--json",
-                "--no-summary-table",
+                "--as-json",
+                "--no-table",
             ],
         )
         assert second.exit_code == 0
@@ -416,18 +416,18 @@ Scope: demo.
         result = runner.invoke(
             cli.main,
             [
-                "--repo-root",
+                "--project-root",
                 str(repo),
-                "--requirements-dir",
+                "--docs-dir",
                 "docs/requirements",
-                "--init-priorities",
-                "--check",
-                "--no-summary-table",
+                "--seed-priorities",
+                "--verify-summaries",
+                "--no-table",
             ],
         )
 
         assert result.exit_code != 0
-        assert "--init-priorities cannot be combined" in result.output
+        assert "--seed-priorities cannot be combined" in result.output
 
     def test_requirement_menu_cycles_to_priority_sort(self, monkeypatch, tmp_path: Path):
         repo = tmp_path / "repo"
@@ -469,11 +469,11 @@ Scope: demo.
         result = runner.invoke(
             cli.main,
             [
-                "--repo-root",
+                "--project-root",
                 str(repo),
-                "--requirements-dir",
+                "--docs-dir",
                 "docs/requirements",
-                "--no-summary-table",
+                "--no-table",
             ],
         )
 
@@ -496,7 +496,7 @@ Description.
         path = tmp_path / "test.md"
         path.write_text(content)
 
-        requirements = parse_criteria(path, id_prefixes=("AC",))
+        requirements = parse_requirements(path, id_prefixes=("AC",))
         assert len(requirements) == 1
         assert requirements[0]["priority"] is None
 
@@ -513,7 +513,7 @@ Text.
         path = tmp_path / "test.md"
         path.write_text(content)
 
-        requirements = parse_criteria(path, id_prefixes=("AC",))
+        requirements = parse_requirements(path, id_prefixes=("AC",))
         assert requirements[0]["priority_line"] is not None
         assert isinstance(requirements[0]["priority_line"], int)
         assert requirements[0]["priority_line"] > 0

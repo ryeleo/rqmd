@@ -241,7 +241,7 @@ def parse_rollup_cli_entries(entries: tuple[str, ...]) -> list[tuple[str, list[s
 
     columns: list[tuple[str, list[str]]] = []
     for entry in entries:
-        columns.append(_parse_equation_line(entry, "--rollup-map"))
+        columns.append(_parse_equation_line(entry, "--totals-map"))
     return columns
 
 

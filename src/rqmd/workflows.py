@@ -18,9 +18,9 @@ from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
                         MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT,
                         PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN)
 from .req_parser import (collect_sub_sections,
-                              extract_criterion_block_with_lines,
-                              find_criterion_by_id, normalize_sub_domain_name,
-                              parse_criteria)
+                              extract_requirement_block_with_lines,
+                              find_requirement_by_id, normalize_sub_domain_name,
+                              parse_requirements)
 from .markdown_io import (display_name_from_h1, format_path_display,
                           iter_domain_files)
 from .menus import (right_align_menu_suffix, select_from_menu, truncate_text,
@@ -612,7 +612,7 @@ def build_filtered_criteria_payload(
                 entry["flagged"] = flagged_value
 
             if include_body:
-                body_markdown, block_start, block_end = extract_criterion_block_with_lines(
+                body_markdown, block_start, block_end = extract_requirement_block_with_lines(
                     path,
                     str(requirement["id"]),
                     id_prefixes=id_prefixes,
@@ -721,7 +721,7 @@ def build_targeted_criteria_payload(
                 entry["flagged"] = flagged_value
 
             if include_body:
-                body_markdown, block_start, block_end = extract_criterion_block_with_lines(
+                body_markdown, block_start, block_end = extract_requirement_block_with_lines(
                     path,
                     str(requirement["id"]),
                     id_prefixes=id_prefixes,
@@ -829,7 +829,7 @@ def focused_target_interactive_loop(
     def build_flat_list() -> list[tuple[Path, dict[str, object]]]:
         result: list[tuple[Path, dict[str, object]]] = []
         for path, req_id in membership:
-            refreshed = find_criterion_by_id(path, req_id, id_prefixes=id_prefixes)
+            refreshed = find_requirement_by_id(path, req_id, id_prefixes=id_prefixes)
             if refreshed:
                 result.append((path, refreshed))
         return result
@@ -1109,7 +1109,7 @@ def interactive_update_loop(
         current_entry_field = "priority" if priority_mode else "status"
 
         while True:
-            raw_criteria = parse_criteria(selected_path, id_prefixes=id_prefixes)
+            raw_criteria = parse_requirements(selected_path, id_prefixes=id_prefixes)
             requirements = _sort_criteria(
                 raw_criteria,
                 current_criterion_sort_key,
@@ -1311,7 +1311,7 @@ def interactive_update_loop(
             )
             print_summary_table(table_rows, emoji_columns=emoji_columns)
 
-            raw_criteria_after = parse_criteria(selected_path, id_prefixes=id_prefixes)
+            raw_criteria_after = parse_requirements(selected_path, id_prefixes=id_prefixes)
             criteria_after = _sort_criteria(
                 raw_criteria_after,
                 current_criterion_sort_key,
@@ -1412,7 +1412,7 @@ def filtered_interactive_loop(
     def build_flat_list() -> list[tuple[Path, dict[str, object]]]:
         result: list[tuple[Path, dict[str, object]]] = []
         for path in domain_files:
-            for crit in parse_criteria(path, id_prefixes=id_prefixes):
+            for crit in parse_requirements(path, id_prefixes=id_prefixes):
                 if crit["status"] == target_status:
                     result.append((path, crit))
         return result
@@ -1438,7 +1438,7 @@ def filtered_interactive_loop(
         save_current(flat_list, index)
 
         path, requirement = flat_list[index]
-        refreshed = find_criterion_by_id(path, str(requirement["id"]), id_prefixes=id_prefixes)
+        refreshed = find_requirement_by_id(path, str(requirement["id"]), id_prefixes=id_prefixes)
         if refreshed:
             requirement = refreshed
 
@@ -1618,7 +1618,7 @@ def filtered_priority_interactive_loop(
     def build_flat_list() -> list[tuple[Path, dict[str, object]]]:
         result: list[tuple[Path, dict[str, object]]] = []
         for path in domain_files:
-            for crit in parse_criteria(path, id_prefixes=id_prefixes):
+            for crit in parse_requirements(path, id_prefixes=id_prefixes):
                 if crit.get("priority") == target_priority:
                     result.append((path, crit))
         return result
@@ -1644,7 +1644,7 @@ def filtered_priority_interactive_loop(
         save_current(flat_list, index)
 
         path, requirement = flat_list[index]
-        refreshed = find_criterion_by_id(path, str(requirement["id"]), id_prefixes=id_prefixes)
+        refreshed = find_requirement_by_id(path, str(requirement["id"]), id_prefixes=id_prefixes)
         if refreshed:
             requirement = refreshed
 
@@ -1763,7 +1763,7 @@ def filtered_priority_interactive_loop(
 def lookup_criterion_interactive(
     repo_root: Path,
     domain_files: list[Path],
-    criterion_id: str,
+    requirement_id: str,
     emoji_columns: bool,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
     select_from_menu_fn=select_from_menu,
@@ -1773,20 +1773,20 @@ def lookup_criterion_interactive(
 ) -> int:
     if include_status_emojis is None:
         include_status_emojis = infer_include_status_emojis(domain_files)
-    criterion_id = criterion_id.strip().upper()
+    requirement_id = requirement_id.strip().upper()
     matches: list[tuple[Path, dict[str, object]]] = []
     for path in domain_files:
-        crit = find_criterion_by_id(path, criterion_id, id_prefixes=id_prefixes)
+        crit = find_requirement_by_id(path, requirement_id, id_prefixes=id_prefixes)
         if crit:
             matches.append((path, crit))
 
     if not matches:
-        raise click.ClickException(f"Requirement '{criterion_id}' not found in the configured docs.")
+        raise click.ClickException(f"Requirement '{requirement_id}' not found in the configured docs.")
 
     if len(matches) > 1:
         locs = ", ".join(p.relative_to(repo_root).as_posix() for p, _ in matches)
         raise click.ClickException(
-            f"Requirement '{criterion_id}' found in multiple files: {locs}. Use --file to disambiguate."
+            f"Requirement '{requirement_id}' found in multiple files: {locs}. Use --scope-file to disambiguate."
         )
 
     path, requirement = matches[0]
@@ -1794,7 +1794,7 @@ def lookup_criterion_interactive(
     current_entry_field = "priority" if priority_mode else "status"
 
     while True:
-        refreshed = find_criterion_by_id(path, criterion_id, id_prefixes=id_prefixes)
+        refreshed = find_requirement_by_id(path, requirement_id, id_prefixes=id_prefixes)
         if refreshed:
             requirement = refreshed
 

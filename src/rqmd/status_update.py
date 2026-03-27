@@ -21,7 +21,7 @@ except ImportError:
     sys.exit(1)
 
 from .constants import DEFAULT_ID_PREFIXES
-from .req_parser import extract_criterion_block, find_criterion_by_id
+from .req_parser import extract_requirement_block, find_requirement_by_id
 from .priority_model import coerce_priority_label
 from .status_model import normalize_status_input
 from .summary import process_file
@@ -61,17 +61,17 @@ def print_criterion_panel(
         repo_root: Root path of the project (for display formatting).
         id_prefixes: Allowed ID prefixes (used for criterion extraction).
     """
-    criterion_id = str(requirement["id"])
+    requirement_id = str(requirement["id"])
     title = str(requirement["title"])
     status = str(requirement.get("status") or "")
-    criterion_text = extract_criterion_block(path, criterion_id, id_prefixes=id_prefixes)
+    criterion_text = extract_requirement_block(path, requirement_id, id_prefixes=id_prefixes)
     term_width = shutil.get_terminal_size(fallback=(120, 24)).columns
     rule = "=" * max(24, min(term_width, 100))
     rule_kwargs = _rule_style_kwargs(status)
 
     click.echo("")
     click.echo(click.style(rule, **rule_kwargs))
-    click.echo(click.style(f"{criterion_id}: {title}", bold=True))
+    click.echo(click.style(f"{requirement_id}: {title}", bold=True))
     click.echo(click.style(f"Source: {path.relative_to(repo_root).as_posix()}", dim=True))
     click.echo(click.style(rule, **rule_kwargs))
     if criterion_text:
@@ -238,7 +238,7 @@ def prompt_for_priority() -> str:
 def apply_status_change_by_id(
     repo_root: Path,
     domain_files: list[Path],
-    criterion_id: str,
+    requirement_id: str,
     new_status_input: str | None,
     file_filter: str | None,
     blocked_reason: str | None = None,
@@ -255,28 +255,28 @@ def apply_status_change_by_id(
     if file_filter:
         candidate = (repo_root / file_filter).resolve()
         if not candidate.exists() or not candidate.is_file():
-            raise click.ClickException(f"--file path not found: {file_filter}")
+            raise click.ClickException(f"--scope-file path not found: {file_filter}")
         target_paths = [candidate]
     else:
         target_paths = domain_files
 
     matches: list[tuple[Path, dict[str, object]]] = []
     for path in target_paths:
-        requirement = find_criterion_by_id(path, criterion_id, id_prefixes=id_prefixes)
+        requirement = find_requirement_by_id(path, requirement_id, id_prefixes=id_prefixes)
         if requirement:
             matches.append((path, requirement))
 
     if not matches:
         if file_filter:
             raise click.ClickException(
-                f"Requirement '{criterion_id}' not found in {file_filter}."
+                f"Requirement '{requirement_id}' not found in {file_filter}."
             )
-        raise click.ClickException(f"Requirement '{criterion_id}' not found in the configured docs.")
+        raise click.ClickException(f"Requirement '{requirement_id}' not found in the configured docs.")
 
     if len(matches) > 1 and not file_filter:
         locations = ", ".join(path.relative_to(repo_root).as_posix() for path, _ in matches)
         raise click.ClickException(
-            f"Requirement '{criterion_id}' matched multiple files: {locations}. Use --file to disambiguate."
+            f"Requirement '{requirement_id}' matched multiple files: {locations}. Use --scope-file to disambiguate."
         )
 
     path, requirement = matches[0]

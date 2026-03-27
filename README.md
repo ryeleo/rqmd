@@ -8,7 +8,7 @@ This package extracts the markdown status-tracking workflow used in this reposit
 
 - Scans requirement markdown files in a requirements directory.
 - Uses `README.md` inside that directory as the requirements index.
-- When `--requirements-dir` is omitted, auto-detects the nearest viable requirement index from the current working path.
+- When `--docs-dir` is omitted, auto-detects the nearest viable requirement index from the current working path.
 - Normalizes `- **Status:** ...` lines to canonical statuses.
 - Parses requirement headers such as `### AC-FOO-001: Title` or `### R-FOO-001: Title`.
 - Regenerates per-file summary blocks:
@@ -86,7 +86,7 @@ uv run python -m rqmd --help
 Check summaries only:
 
 ```bash
-uv run rqmd --check
+uv run rqmd --verify-summaries
 ```
 
 Interactive mode:
@@ -104,7 +104,7 @@ uv run rqmd docs/requirements/interactive-ux.md
 In non-interactive modes, a positional domain file path scopes operations to that file:
 
 ```bash
-uv run rqmd docs/requirements/interactive-ux.md --set AC-EXAMPLE-001=verified
+uv run rqmd docs/requirements/interactive-ux.md --update AC-EXAMPLE-001=verified
 ```
 
 Interactive file and requirement menus now support:
@@ -118,31 +118,31 @@ File lists now default to the `name` sort in descending order.
 You can select a named sort strategy catalog for interactive mode:
 
 ```bash
-uv run rqmd --sort-strategy standard
-uv run rqmd --sort-strategy status-focus
-uv run rqmd --sort-strategy alpha-asc
+uv run rqmd --sort-profile standard
+uv run rqmd --sort-profile status-focus
+uv run rqmd --sort-profile alpha-asc
 ```
 
 Initialize docs scaffold (index + starter domain file):
 
 ```bash
-uv run rqmd --init
+uv run rqmd --bootstrap
 ```
 
-`--init` prompts for a starter requirement key prefix (default: `REQ`; recommended to customize).
+`--bootstrap` prompts for a starter requirement key prefix (default: `REQ`; recommended to customize).
 Scaffold content is sourced from repository-managed templates in `init-docs/README.md` and `init-docs/domain-example.md`.
 
 Set one requirement non-interactively:
 
 ```bash
-uv run rqmd --set-requirement-id AC-EXAMPLE-001 --set-status implemented
+uv run rqmd --update-id AC-EXAMPLE-001 --update-status implemented
 ```
 
 Update priorities non-interactively:
 
 ```bash
-uv run rqmd --set-priority AC-EXAMPLE-001=p0
-uv run rqmd --set-priority AC-EXAMPLE-001=critical --set-priority AC-EXAMPLE-002=medium
+uv run rqmd --update-priority AC-EXAMPLE-001=p0
+uv run rqmd --update-priority AC-EXAMPLE-001=critical --update-priority AC-EXAMPLE-002=medium
 ```
 
 Batch updates can include `priority` fields, or combine `status` and `priority` in one row:
@@ -155,7 +155,7 @@ Batch updates can include `priority` fields, or combine `status` and `priority` 
 Interactive entry panels can start in priority mode:
 
 ```bash
-uv run rqmd --priority-mode
+uv run rqmd --focus-priority
 ```
 
 Within an entry panel, press `t` to cycle status, priority, and flagged editing.
@@ -163,44 +163,44 @@ Within an entry panel, press `t` to cycle status, priority, and flagged editing.
 Regenerate summary blocks with priority aggregates included:
 
 ```bash
-uv run rqmd --show-priority-summary --no-interactive
+uv run rqmd --priority-rollup --no-walk
 ```
 
 Filter by priority in tree, JSON, or interactive walk modes:
 
 ```bash
-uv run rqmd --filter-priority critical --tree
-uv run rqmd --filter-priority p1 --json --no-interactive
+uv run rqmd --priority critical --as-tree
+uv run rqmd --priority p1 --as-json --no-walk
 ```
 
 Filter by subsection name with case-insensitive prefix matching:
 
 ```bash
-uv run rqmd --filter-sub-domain query --tree
-uv run rqmd --filter-sub-domain api --json --no-interactive
+uv run rqmd --sub-domain query --as-tree
+uv run rqmd --sub-domain api --as-json --no-walk
 ```
 
 Target an explicit worklist from CLI tokens or a reusable file:
 
 ```bash
 uv run rqmd demo "Query API"
-uv run rqmd --filter-ids-file tmp/focus.txt --json --no-interactive
+uv run rqmd --targets-file tmp/focus.txt --as-json --no-walk
 ```
 
-`--filter-ids-file` accepts `.txt`, `.conf`, or `.md` files with one-per-line or whitespace/comma-separated tokens, and supports `#` comments.
+`--targets-file` accepts `.txt`, `.conf`, or `.md` files with one-per-line or whitespace/comma-separated tokens, and supports `#` comments.
 
 Interactive file and requirement menus also expose `priority` as a sortable column via `s` / `d`.
 
 Use a different ID prefix:
 
 ```bash
-uv run rqmd --id-prefix R --set-requirement-id R-EXAMPLE-001 --set-status implemented
+uv run rqmd --id-namespace R --update-id R-EXAMPLE-001 --update-status implemented
 ```
 
 Bulk set by repeated flags:
 
 ```bash
-uv run rqmd --set AC-EXAMPLE-001=implemented --set AC-EXAMPLE-002=verified
+uv run rqmd --update AC-EXAMPLE-001=implemented --update AC-EXAMPLE-002=verified
 ```
 
 ## AI CLI (rqmd-ai)
@@ -210,22 +210,22 @@ uv run rqmd --set AC-EXAMPLE-001=implemented --set AC-EXAMPLE-002=verified
 Guidance mode:
 
 ```bash
-uv run rqmd-ai --json
+uv run rqmd-ai --as-json
 ```
 
 Export context for prompts:
 
 ```bash
-uv run rqmd-ai --json --export-status proposed
-uv run rqmd-ai --json --export-id RQMD-CORE-001 --include-body
-uv run rqmd-ai --json --export-file ai-cli.md --include-domain-body --max-domain-body-chars 2000
+uv run rqmd-ai --as-json --dump-status proposed
+uv run rqmd-ai --as-json --dump-id RQMD-CORE-001 --include-requirement-body
+uv run rqmd-ai --as-json --dump-file ai-cli.md --include-domain-markdown --max-domain-markdown-chars 2000
 ```
 
 Plan first, then apply explicitly:
 
 ```bash
-uv run rqmd-ai --json --set RQMD-CORE-001=implemented
-uv run rqmd-ai --json --apply --set RQMD-CORE-001=implemented
+uv run rqmd-ai --as-json --update RQMD-CORE-001=implemented
+uv run rqmd-ai --as-json --write --update RQMD-CORE-001=implemented
 ```
 
 When apply mode runs, rqmd-ai appends a structured audit event to the local shared history backend at `.rqmd/history/rqmd-history/audit.jsonl`.
@@ -233,72 +233,72 @@ When apply mode runs, rqmd-ai appends a structured audit event to the local shar
 Batch set from file:
 
 ```bash
-uv run rqmd --set-file tmp/ac-updates.jsonl
+uv run rqmd --update-file tmp/ac-updates.jsonl
 ```
 
 Allow custom prefixes such as `REQ-` in a repo:
 
 ```bash
-uv run rqmd --id-prefix REQ --filter-status proposed --tree
+uv run rqmd --id-namespace REQ --status proposed --as-tree
 ```
 
 Filter walk:
 
 ```bash
-uv run rqmd --filter-status proposed
+uv run rqmd --status proposed
 ```
 
 Filtered walk resume behavior (enabled by default):
 
 - Uses persisted state so reruns continue at the last visited requirement.
-- Disable with `--no-resume-filter`.
-- Control storage location with `--state-dir`.
+- Disable with `--no-resume-walk`.
+- Control storage location with `--session-state-dir`.
 
 Examples:
 
 ```bash
-uv run rqmd --filter-status implemented --state-dir system-temp
-uv run rqmd --filter-status implemented --state-dir project-local
-uv run rqmd --filter-status implemented --state-dir .rqmd/state
-uv run rqmd --filter-status implemented --no-resume-filter
+uv run rqmd --status implemented --session-state-dir system-temp
+uv run rqmd --status implemented --session-state-dir project-local
+uv run rqmd --status implemented --session-state-dir .rqmd/state
+uv run rqmd --status implemented --no-resume-walk
 ```
 
 Filter tree only:
 
 ```bash
-uv run rqmd --filter-status proposed --tree
+uv run rqmd --status proposed --as-tree
 ```
 
 Filter as JSON for automation/AI parsing:
 
 ```bash
-uv run rqmd --filter-status proposed --json
+uv run rqmd --status proposed --as-json
 ```
 
 Filter JSON includes requirement body content and line metadata by default:
 
 ```bash
-uv run rqmd --filter-status proposed --json
+uv run rqmd --status proposed --as-json
 ```
 
 Use compact output without bodies:
 
 ```bash
-uv run rqmd --filter-status proposed --json --no-body
+uv run rqmd --status proposed --as-json --no-requirement-body
 ```
 
 Summary/check/set JSON examples:
 
 ```bash
-uv run rqmd --json --no-interactive
-uv run rqmd --check --json --no-interactive
-uv run rqmd --set-requirement-id AC-EXAMPLE-001 --set-status verified --json
-uv run rqmd --rollup --json --no-interactive
+uv run rqmd --as-json --no-walk
+uv run rqmd --verify-summaries --as-json --no-walk
+uv run rqmd --update-id AC-EXAMPLE-001 --update-status verified --as-json
+uv run rqmd --totals --as-json --no-walk
 ```
 
 ### JSON contract (stable keys)
 
-When `--json` is used, top-level keys are stable by mode:
+When `--as-json` is used, top-level keys are stable by mode:
 
 - `summary`: `mode`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
 - `check`: `mode`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
@@ -313,7 +313,7 @@ When `--json` is used, top-level keys are stable by mode:
 - `init-priorities`: `mode`, `criteria_dir`, `default_priority`, `changed_files`, `changed_count`
 
 Filter payloads return `files` ordered by path and requirement entries ordered by requirement ID.
-By default, filter JSON includes `body.markdown` and line metadata; pass `--no-body` to omit bodies.
+By default, filter JSON includes `body.markdown` and line metadata; pass `--no-requirement-body` to omit bodies.
 Each requirement entry includes `sub_domain` (string or `null`), and each file entry includes `sub_sections` with subsection names and requirement counts.
 
 ### Exit codes
@@ -321,25 +321,25 @@ Each requirement entry includes `sub_domain` (string or `null`), and each file e
 RQMD uses this exit-code matrix for automation:
 
 - `0`: Success (including successful no-op runs)
-- `1`: Validation or contract failure (for example `--check` found out-of-sync summaries, invalid input, missing docs, ambiguity, or other `ClickException` errors)
+- `1`: Validation or contract failure (for example `--verify-summaries` found out-of-sync summaries, invalid input, missing docs, ambiguity, or other `ClickException` errors)
 - `130`: Interrupted by user (`Ctrl+C`)
 
 Explicit global roll-up totals:
 
 ```bash
-uv run rqmd --rollup --no-interactive
+uv run rqmd --totals --no-walk
 ```
 
 Custom roll-up columns from CLI equations:
 
 ```bash
-uv run rqmd --rollup --rollup-map "C1=I+V" --rollup-map "C2=P" --no-interactive
+uv run rqmd --totals --totals-map "C1=I+V" --totals-map "C2=P" --no-walk
 ```
 
 Custom roll-up columns from config (`.json`, `.yml`, `.yaml`):
 
 ```bash
-uv run rqmd --rollup --config .rqmd.yml --json --no-interactive
+uv run rqmd --totals --totals-config .rqmd.yml --as-json --no-walk
 ```
 
 Example project config for a repo that defines a custom status catalog and wants RQMD-ROLLUP-007 roll-up buckets:
@@ -384,8 +384,8 @@ That example yields these roll-up families:
 
 When no CLI map/config is passed, rqmd resolves roll-up mappings with this precedence:
 
-1. `--rollup-map` CLI equations
-2. project config (`.rqmd.yml|.rqmd.yaml` in `--repo-root`)
+1. `--totals-map` CLI equations
+2. project config (`.rqmd.yml|.rqmd.yaml` in `--project-root`)
 3. user config (`~/.config/rqmd/rollup.json|yaml|yml`)
 4. built-in canonical status totals
 
@@ -436,7 +436,7 @@ This package includes GitHub Actions workflows:
 
 ## Project portability
 
-By default, rqmd auto-discovers `--repo-root` by searching from the current working directory upward.
+By default, rqmd auto-discovers `--project-root` by searching from the current working directory upward.
 The nearest ancestor with a supported marker wins.
 
 Marker priority within each directory is deterministic:
@@ -448,9 +448,9 @@ Marker priority within each directory is deterministic:
 If no marker is found, rqmd falls back to current working directory.
 When auto-discovery is used, rqmd reports the discovered root and source marker.
 
-Passing explicit `--repo-root` bypasses auto-discovery.
+Passing explicit `--project-root` bypasses auto-discovery.
 
-When `--requirements-dir` is omitted, rqmd auto-detects requirement docs by scanning from the current working path.
+When `--docs-dir` is omitted, rqmd auto-detects requirement docs by scanning from the current working path.
 
 Auto-detect preference is deterministic:
 
@@ -460,19 +460,19 @@ Auto-detect preference is deterministic:
 You can override both:
 
 ```bash
-uv run rqmd --repo-root /path/to/project --requirements-dir docs/requirements
+uv run rqmd --project-root /path/to/project --docs-dir docs/requirements
 ```
 
-`--requirements-dir` can be absolute or relative to `--repo-root`.
+`--docs-dir` can be absolute or relative to `--project-root`.
 When auto-detection is used, rqmd reports which index path it selected.
 
-Filtered walkthrough resume state is configurable with `--state-dir`:
+Filtered walkthrough resume state is configurable with `--session-state-dir`:
 
 - `system-temp` (default): OS temp directory.
 - `project-local`: `<repo-root>/tmp/rqmd`.
-- custom path: absolute or relative to `--repo-root`.
+- custom path: absolute or relative to `--project-root`.
 
-Requirement header prefixes are configurable with `--id-prefix`.
+Requirement header prefixes are configurable with `--id-namespace`.
 When omitted, rqmd auto-detects prefixes by reading the selected `README.md` requirements index and linked domain docs when available.
 If no prefixes are discovered, it falls back to `AC-`, `R-`, and `RQMD-`.
 
@@ -506,8 +506,8 @@ CLI flags always override config file values. When `.rqmd.yml` (or `.rqmd.yaml` 
 1. Keep an index doc at `docs/requirements/README.md` or `requirements/README.md`.
 2. Keep domain files in that same directory.
 3. Ensure each requirement has exactly one status line directly under the `### <PREFIX>-...` header.
-4. Run `uv run rqmd --check` in CI to prevent stale summary blocks.
-5. Use non-interactive `--set`/`--set-file` in automation.
+4. Run `uv run rqmd --verify-summaries` in CI to prevent stale summary blocks.
+5. Use non-interactive `--update`/`--update-file` in automation.
 
 ## Packaging notes
 

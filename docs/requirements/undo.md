@@ -56,7 +56,7 @@ Summary: 11💡 0🔧 0✅ 0⛔ 0🗑️
 - I want to record history entries
 - So that each entry includes timestamp, actor (user or automated), command context, affected file paths, file diffs or delta payloads, and optional human-supplied reason text
 - So that each entry includes a stable `rqmd-history` commit identifier (and branch/ref context when applicable) to allow deterministic cross-referencing between undo, history, and audit views.
-- So that the UI and `--check` mode can render a human-readable history timeline showing provenance and diffs.
+- So that the UI and `--verify-summaries` mode can render a human-readable history timeline showing provenance and diffs.
 
 ### RQMD-UNDO-007: UI affordances and commands
 - **Status:** 💡 Proposed

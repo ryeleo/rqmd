@@ -50,6 +50,6 @@ Status workflow:
 
 ## Tracking Rule
 
-- Run rqmd --check to validate summaries.
+- Run rqmd --verify-summaries to validate summaries.
 - Run rqmd to update summaries and optionally edit requirement statuses interactively.
-- Use --id-prefix to limit or expand which header prefixes are recognized.
+- Use --id-namespace to limit or expand which header prefixes are recognized.

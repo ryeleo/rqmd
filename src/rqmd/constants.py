@@ -61,7 +61,7 @@ BLOCKED_REASON_PATTERN = re.compile(r"^\*\*Blocked:\*\*\s*(.+?)\s*$", re.MULTILI
 DEPRECATED_REASON_PATTERN = re.compile(r"^\*\*Deprecated:\*\*\s*(.+?)\s*$", re.MULTILINE)
 FLAGGED_PATTERN = re.compile(r"^- \*\*Flagged:\*\* (?P<flagged>true|false)\s*$", re.MULTILINE)
 ID_PREFIX_PATTERN = re.compile(r"^[A-Z][A-Z0-9]*$")
-GENERIC_CRITERION_HEADER_PATTERN = re.compile(
+GENERIC_REQUIREMENT_HEADER_PATTERN = re.compile(
     r"^###\s+(?P<id>(?P<prefix>[A-Z][A-Z0-9]*)-[A-Z0-9-]+):\s*(?P<title>.+?)\s*$"
 )
 MARKDOWN_LINK_PATTERN = re.compile(r"\[[^\]]+\]\((?P<target>[^)#?]+\.md)(?:#[^)]+)?\)")

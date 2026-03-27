@@ -10,7 +10,7 @@ Summary: 4💡 1🔧 10✅ 0⛔ 1🗑️
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when the target project is not the current directory
-- I want to pass `--repo-root`
+- I want to pass `--project-root`
 - So that all file discovery and updates are scoped to that root
 - So that relative paths are resolved against it.
 
@@ -18,7 +18,7 @@ Summary: 4💡 1🔧 10✅ 0⛔ 1🗑️
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when requirements docs live outside default location
-- I want to set `--requirements-dir`
+- I want to set `--docs-dir`
 - So that markdown discovery uses that directory
 - So that it supports absolute or repo-root-relative input.
 
@@ -67,7 +67,7 @@ Summary: 4💡 1🔧 10✅ 0⛔ 1🗑️
 ### RQMD-PORTABILITY-008: Automatic requirements-dir search from current path
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
-- As a rqmd user when users run rqmd without an explicit `--requirements-dir`
+- As a rqmd user when users run rqmd without an explicit `--docs-dir`
 - I want rqmd to scan from the current working path
 - So that rqmd searches for viable requirements index locations including `docs/requirements/README.md` and `requirements/README.md`
 - So that the `docs/` prefix is optional rather than required
@@ -87,12 +87,12 @@ Summary: 4💡 1🔧 10✅ 0⛔ 1🗑️
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a team prefers plain-text status labels for platform compatibility or readability
-- I want to run `--strip-status-emojis` once against the docs
+- I want to run `--strip-status-icons` once against the docs
 - So that all emoji prefixes are removed from every status line across all requirements files
 - So that subsequent runs infer emoji-free mode from the absence of emojis in existing statuses and do not reintroduce them
 - So that summary blocks are regenerated without emoji characters.
 - As a rqmd user when a team wants to restore emoji-prefixed statuses
-- I want to run `--restore-status-emojis` once against the docs
+- I want to run `--restore-status-icons` once against the docs
 - So that the canonical emoji is prepended to every status line across all requirements files
 - So that subsequent runs resume normal emoji-inclusive behavior.
 - So that both operations are idempotent and produce no diff if already in the target mode.
@@ -121,8 +121,8 @@ Summary: 4💡 1🔧 10✅ 0⛔ 1🗑️
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when teams may have different conventions for temporary/runtime files
 - I want to run filtered interactive workflows with resume enabled
-- So that rqmd supports `--state-dir` with explicit modes `system-temp` and `project-local`
-- So that `--state-dir` also accepts a custom absolute or repo-root-relative path
+- So that rqmd supports `--session-state-dir` with explicit modes `system-temp` and `project-local`
+- So that `--session-state-dir` also accepts a custom absolute or repo-root-relative path
 - So that resume state persists under the selected directory without assuming any single repo layout.
 
 ### RQMD-PORTABILITY-013: Project-configurable roll-up color knobs

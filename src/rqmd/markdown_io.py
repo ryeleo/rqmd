@@ -44,7 +44,7 @@ def format_path_display(path: Path, repo_root: Path) -> str:
         return path.as_posix()
 
 
-def iter_criteria_search_roots(repo_root: Path, search_start: Path | None = None) -> list[Path]:
+def iter_requirements_search_roots(repo_root: Path, search_start: Path | None = None) -> list[Path]:
     """Iterate from a starting point up to repo root, returning all ancestors.
 
     Args:
@@ -119,7 +119,7 @@ def discover_project_root(search_start: Path | None = None) -> tuple[Path, str]:
     return start, "fallback:cwd"
 
 
-def auto_detect_criteria_dir(repo_root: Path, search_start: Path | None = None) -> tuple[Path | None, str | None]:
+def auto_detect_requirements_dir(repo_root: Path, search_start: Path | None = None) -> tuple[Path | None, str | None]:
     """Auto-detect the requirements directory via search heuristics.
 
     Searches for docs/requirements/README.md or requirements/README.md, starting
@@ -132,7 +132,7 @@ def auto_detect_criteria_dir(repo_root: Path, search_start: Path | None = None) 
     Returns:
         A tuple of (detected_path, display_hint) or (None, None) if not found.
     """
-    search_roots = iter_criteria_search_roots(repo_root, search_start)
+    search_roots = iter_requirements_search_roots(repo_root, search_start)
     candidate_specs = (
         ("docs/requirements/README.md", "docs/requirements"),
         ("requirements/README.md", "requirements"),
@@ -148,15 +148,15 @@ def auto_detect_criteria_dir(repo_root: Path, search_start: Path | None = None) 
     return None, None
 
 
-def resolve_criteria_dir(repo_root: Path, criteria_dir_input: str | None) -> tuple[Path, str | None]:
+def resolve_requirements_dir(repo_root: Path, requirements_dir_input: str | None) -> tuple[Path, str | None]:
     """Resolve the requirements directory with auto-detection fallback.
 
-    If criteria_dir_input is provided, use it (after resolving relative paths).
+    If requirements_dir_input is provided, use it (after resolving relative paths).
     Otherwise, auto-detect it. Raises an error if neither is available.
 
     Args:
         repo_root: Root path of the project.
-        criteria_dir_input: Explicitly provided requirements directory (optional).
+        requirements_dir_input: Explicitly provided requirements directory (optional).
 
     Returns:
         A tuple of (resolved_path, info_message) where info_message describes
@@ -165,27 +165,27 @@ def resolve_criteria_dir(repo_root: Path, criteria_dir_input: str | None) -> tup
     Raises:
         click.ClickException: If no requirements directory found.
     """
-    if criteria_dir_input:
-        criteria_dir = Path(criteria_dir_input)
+    if requirements_dir_input:
+        criteria_dir = Path(requirements_dir_input)
         if not criteria_dir.is_absolute():
             criteria_dir = (repo_root / criteria_dir).resolve()
         return criteria_dir, None
 
-    detected, detected_display = auto_detect_criteria_dir(repo_root)
+    detected, detected_display = auto_detect_requirements_dir(repo_root)
     if detected is None:
         raise click.ClickException(
             "No requirement docs found. Tried auto-detecting docs/requirements/README.md and requirements/README.md from the current working path. "
-            "Pass --requirements-dir to select a different location."
+            "Pass --docs-dir to select a different location."
         )
     return detected, f"Auto-selected requirement docs: {detected_display}"
 
 
-def iter_domain_files(repo_root: Path, criteria_dir_input: str) -> list[Path]:
+def iter_domain_files(repo_root: Path, requirements_dir_input: str) -> list[Path]:
     """Enumerate all domain markdown files (excluding the requirements index).
 
     Args:
         repo_root: Root path of the project.
-        criteria_dir_input: Path to the requirements directory (absolute or repo-relative).
+        requirements_dir_input: Path to the requirements directory (absolute or repo-relative).
 
     Returns:
         Sorted list of Path objects for all domain files.
@@ -193,14 +193,14 @@ def iter_domain_files(repo_root: Path, criteria_dir_input: str) -> list[Path]:
     Raises:
         click.ClickException: If directory not found or not readable.
     """
-    criteria_dir = Path(criteria_dir_input)
+    criteria_dir = Path(requirements_dir_input)
     if not criteria_dir.is_absolute():
         criteria_dir = (repo_root / criteria_dir).resolve()
 
     if not criteria_dir.exists():
         raise click.ClickException(
             f"Requirement docs directory not found: {format_path_display(criteria_dir, repo_root)}\n"
-            f"  Hint: run 'rqmd --init' to create a starter scaffold, or pass --requirements-dir to select a different location."
+            f"  Hint: run 'rqmd --bootstrap' to create a starter scaffold, or pass --docs-dir to select a different location."
         )
 
     try:
@@ -247,7 +247,7 @@ def check_files_writable(domain_files: list[Path], repo_root: Path) -> None:
         click.echo("The following files are not writable:", err=True)
         for f in not_writable:
             click.echo(f"  {format_path_display(f, repo_root)}", err=True)
-        click.echo("  Hint: check file permissions (chmod u+w <file>) or run in non-interactive mode (--no-interactive).", err=True)
+        click.echo("  Hint: check file permissions (chmod u+w <file>) or run in non-interactive mode (--no-walk).", err=True)
         raise SystemExit(1)
 
 
@@ -379,7 +379,7 @@ def _render_init_template(template_name: str, values: dict[str, str]) -> str:
     return rendered
 
 
-def initialize_requirements_scaffold(repo_root: Path, criteria_dir_input: str, starter_prefix: str) -> list[Path]:
+def initialize_requirements_scaffold(repo_root: Path, requirements_dir_input: str, starter_prefix: str) -> list[Path]:
     """Initialize a starter requirements scaffold in a project.
 
     Creates the requirement directory structure and generates starter files
@@ -387,13 +387,13 @@ def initialize_requirements_scaffold(repo_root: Path, criteria_dir_input: str, s
 
     Args:
         repo_root: Root path of the project.
-        criteria_dir_input: Path to the requirements directory (absolute or repo-relative).
+        requirements_dir_input: Path to the requirements directory (absolute or repo-relative).
         starter_prefix: ID prefix to use in the starter domain example (e.g., 'AC').
 
     Returns:
         List of newly created file paths.
     """
-    criteria_dir = Path(criteria_dir_input)
+    criteria_dir = Path(requirements_dir_input)
     if not criteria_dir.is_absolute():
         criteria_dir = (repo_root / criteria_dir).resolve()
 

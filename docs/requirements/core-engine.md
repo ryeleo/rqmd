@@ -61,7 +61,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 - I want parsing to run
 - So that each matching requirement is discoverable by ID
 - So that title text is preserved for menu and reporting output
-- So that prefix handling follows configured or auto-detected `--id-prefix` behavior.
+- So that prefix handling follows configured or auto-detected `--id-namespace` behavior.
 
 ### RQMD-CORE-008: Idempotent processing
 - **Status:** ✅ Verified
@@ -77,9 +77,9 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 - As a rqmd user when no domain markdown files are found
 - I want to run the command
 - So that reqmd prints a clear, actionable error message
-- So that it offers to initialize a starter requirements project in the current working directory (the same behavior as `--init`)
-- So that the tool never creates files without explicit user confirmation: the initialization flow must prompt the user to confirm creation and allow a `--yes`/`--confirm` override for automation
-- So that in non-interactive or CI contexts the tool exits non-zero and prints the guidance to run `rqmd --init` or `rqmd --init --yes` to create starter files.
+- So that it offers to initialize a starter requirements project in the current working directory (the same behavior as `--bootstrap`)
+- So that the tool never creates files without explicit user confirmation: the initialization flow must prompt the user to confirm creation and allow a `--force-yes`/`--force-confirm` override for automation
+- So that in non-interactive or CI contexts the tool exits non-zero and prints the guidance to run `rqmd --bootstrap` or `rqmd --bootstrap --force-yes` to create starter files.
 
 ### RQMD-CORE-010: Blocked/deprecated reason extraction
 - **Status:** ✅ Verified
@@ -118,7 +118,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 ### RQMD-CORE-014: Automatic ID prefix detection from requirements index
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
-- As a rqmd user when users do not pass `--id-prefix`
+- As a rqmd user when users do not pass `--id-namespace`
 - I want rqmd to read `docs/requirements/README.md` and linked domain docs
 - So that requirement ID prefixes are auto-detected from discovered requirement headers
 - So that filter/lookup/update flows use those detected prefixes without extra CLI flags.
@@ -126,7 +126,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 ### RQMD-CORE-015: Init key prompt with customizable default
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
-- As a rqmd user when users run `rqmd --init`
+- As a rqmd user when users run `rqmd --bootstrap`
 - I want scaffold initialization to start
 - So that rqmd prompts for a starter requirement key prefix
 - So that Enter accepts default `REQ`
@@ -135,7 +135,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 ### RQMD-CORE-016: Initial scaffolding content/copy
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
-- As a rqmd user when users run `rqmd --init`
+- As a rqmd user when users run `rqmd --bootstrap`
 - I want scaffold initialization to execute
 - So that generated `docs/requirements/README.md` includes a welcome message and instructions for getting started that is copied from:
     - ./init-docs/README.md for the domain index (requirements/README.md)
@@ -146,7 +146,7 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 ### RQMD-CORE-017: Branded init and README messaging
 - **Status:** 💡 Proposed
 - **Priority:** 🟠 P1 - High
-- As a rqmd user when I first encounter rqmd through README or `rqmd --init`
+- As a rqmd user when I first encounter rqmd through README or `rqmd --bootstrap`
 - I want branded, persuasive copy and direct project links
 - So that the tool clearly positions itself as human-readable, AI-readable, and ready for Requirements Driven Development (RDD).
 - So that generated scaffold copy and README messaging include a concise tagline plus direct links to the project GitHub homepage and/or PyPI page.

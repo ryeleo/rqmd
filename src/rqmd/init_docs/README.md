@@ -21,7 +21,7 @@ Domain files can use **H2 headers** (`##`) to organize requirements into logical
 - Are optional — requirements without a containing H2 have no subsection assignment.
 - Help organize large requirement sets (e.g., "Query API", "Mutation API", "Authentication").
 - Can have optional body content between the H2 header and the first H3 requirement below it.
-- Are discoverable via `--filter-sub-domain <NAME>`, tab completion, and JSON metadata.
+- Are discoverable via `--sub-domain <NAME>`, tab completion, and JSON metadata.
 - Example structure:
   ```markdown
   ## Query API
@@ -48,7 +48,7 @@ Domain files can use **H2 headers** (`##`) to organize requirements into logical
 - Keep this index at {{INDEX_DISPLAY}}.
 - Keep domain docs under {{CRITERIA_DIR_DISPLAY}}/.
 - Each markdown file represents a domain (e.g., `auth.md`, `payment.md`, `audit.md`).
-- Domain ID prefixes are auto-detected from requirement IDs; can override with `--id-prefix`.
+- Domain ID prefixes are auto-detected from requirement IDs; can override with `--id-namespace`.
 
 ### Status Workflow
 
@@ -95,7 +95,7 @@ Notes:
 
 - H2 subsections are optional.
 - H3 requirement headings and a status line are required for indexing.
-- Subsection matching for `--filter-sub-domain` is case-insensitive prefix matching.
+- Subsection matching for `--sub-domain` is case-insensitive prefix matching.
 
 ### JSON Output Contract (Stable Keys)
 

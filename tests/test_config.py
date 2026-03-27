@@ -95,7 +95,7 @@ def test_RQMD_portability_006_cli_flag_overrides_config(tmp_path: Path) -> None:
 
     config = load_config(repo)
     assert config["requirements_dir"] == "config-dir"
-    # In actual CLI use, passing --requirements-dir other-dir would override
+    # In actual CLI use, passing --docs-dir other-dir would override
     # this loaded config value, which is handled by Click's parameter precedence
 
 
@@ -170,14 +170,14 @@ Scope: demo.
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--rollup",
-            "--json",
-            "--no-summary-table",
-            "--no-interactive",
+            "--totals",
+            "--as-json",
+            "--no-table",
+            "--no-walk",
         ],
     )
 
@@ -236,15 +236,15 @@ Scope: demo.
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-requirement-id",
+            "--update-id",
             "AC-001",
-            "--set-status",
+            "--update-status",
             "desktop-verified",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -303,13 +303,13 @@ Scope: demo.
     custom_result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(custom_repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--check",
-            "--no-interactive",
-            "--no-summary-table",
+            "--verify-summaries",
+            "--no-walk",
+            "--no-table",
         ],
     )
     assert custom_result.exit_code in (0, 1)
@@ -318,15 +318,15 @@ Scope: demo.
     default_result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(default_repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-requirement-id",
+            "--update-id",
             "AC-001",
-            "--set-status",
+            "--update-status",
             "desktop-verified",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
     assert default_result.exit_code != 0
@@ -341,14 +341,14 @@ def test_RQMD_portability_011_ssvr_corpus_rollup_uses_custom_status_catalog() ->
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(corpus_root),
-            "--requirements-dir",
+            "--docs-dir",
             "requirements",
-            "--rollup",
-            "--json",
-            "--no-summary-table",
-            "--no-interactive",
+            "--totals",
+            "--as-json",
+            "--no-table",
+            "--no-walk",
         ],
     )
 
@@ -378,15 +378,15 @@ def test_RQMD_portability_011_ssvr_corpus_copy_accepts_desktop_verified_set_stat
     result = runner.invoke(
       cli.main,
       [
-        "--repo-root",
+        "--project-root",
         str(repo),
-        "--requirements-dir",
+        "--docs-dir",
         "requirements",
-        "--set-requirement-id",
+        "--update-id",
         "AC-MM-PRACTICE-002",
-        "--set-status",
+        "--update-status",
         "desktop-verified",
-        "--no-summary-table",
+        "--no-table",
       ],
     )
 

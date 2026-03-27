@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from click.testing import CliRunner
+
 from rqmd.ai_cli import main
 
 
@@ -59,11 +60,11 @@ def test_RQMD_AI_001_and_002_default_guide_is_read_only_json(tmp_path: Path) -> 
     result = runner.invoke(
         main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--json",
+            "--as-json",
         ],
     )
 
@@ -83,12 +84,12 @@ def test_RQMD_AI_004_export_context_filtered_by_status(tmp_path: Path) -> None:
     result = runner.invoke(
         main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--json",
-            "--export-status",
+            "--as-json",
+            "--dump-status",
             "proposed",
         ],
     )
@@ -114,12 +115,12 @@ def test_RQMD_AI_005_plan_preview_no_apply_does_not_write(tmp_path: Path) -> Non
     result = runner.invoke(
         main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--json",
-            "--set",
+            "--as-json",
+            "--update",
             "RQMD-DEMO-001=verified",
         ],
     )
@@ -142,26 +143,26 @@ def test_RQMD_AI_006_apply_requires_set_and_applies_update(tmp_path: Path) -> No
     missing = runner.invoke(
         main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--apply",
+            "--write",
         ],
     )
     assert missing.exit_code != 0
-    assert "requires at least one --set" in missing.output
+    assert "requires at least one --update" in missing.output
 
     applied = runner.invoke(
         main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--json",
-            "--apply",
-            "--set",
+            "--as-json",
+            "--write",
+            "--update",
             "RQMD-DEMO-001=verified",
         ],
     )
@@ -186,15 +187,15 @@ def test_RQMD_AI_011_export_can_include_bounded_domain_body(tmp_path: Path) -> N
     result = runner.invoke(
         main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--json",
-            "--export-id",
+            "--as-json",
+            "--dump-id",
             "RQMD-DEMO-001",
-            "--include-domain-body",
-            "--max-domain-body-chars",
+            "--include-domain-markdown",
+            "--max-domain-markdown-chars",
             "24",
         ],
     )
@@ -221,13 +222,13 @@ def test_RQMD_AI_010_apply_emits_structured_audit_record(tmp_path: Path) -> None
     result = runner.invoke(
         main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--json",
-            "--apply",
-            "--set",
+            "--as-json",
+            "--write",
+            "--update",
             "RQMD-DEMO-001=verified",
         ],
     )

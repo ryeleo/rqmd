@@ -7,7 +7,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from rqmd.req_parser import parse_criteria
+from rqmd.req_parser import parse_requirements
 
 # Test parsing a requirements file
 test_file = Path(__file__).parent.parent / "docs" / "requirements" / "core-engine.md"
@@ -19,7 +19,7 @@ if not test_file.exists():
     print(f"❌ File not found: {test_file}")
     sys.exit(1)
 
-requirements = parse_criteria(test_file)
+requirements = parse_requirements(test_file)
 print(f"✅ Parsed {len(requirements)} requirements")
 print()
 

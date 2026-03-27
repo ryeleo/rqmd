@@ -31,13 +31,13 @@ Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 - So that a single toggle key (e.g., `t`) switches the panel focus between `Status` and `Priority` entry modes
 - So that the footer legend reflects the current target (`setting: status` or `setting: priority`).
 
-### RQMD-PRIORITY-004: `--priority-mode` startup flag
+### RQMD-PRIORITY-004: `--focus-priority` startup flag
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when users prefer to edit priorities more often than statuses in some workflows
-- I want to provide `--priority-mode` at startup
+- I want to provide `--focus-priority` at startup
 - So that interactive entry panels default to `Priority` focus instead of `Status` focus
-- So that the CLI supports `--set-priority ID=PRIORITY` analogously to `--set` for statuses.
+- So that the CLI supports `--update-priority ID=PRIORITY` analogously to `--update` for statuses.
 
 ### RQMD-PRIORITY-005: Persistence and summary integration
 - **Status:** ✅ Verified
@@ -45,7 +45,7 @@ Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 - As a rqmd user when files may include the Priority line
 - I want to generate summary/roll-up blocks
 - So that priority-aware aggregates can be optionally included (e.g., counts by priority per file)
-- So that the inline summary block format supports optional display of priority buckets when `--show-priority-summary` is requested.
+- So that the inline summary block format supports optional display of priority buckets when `--priority-rollup` is requested.
 
 ### RQMD-PRIORITY-006: Sorting and filters using priority
 - **Status:** ✅ Verified
@@ -61,7 +61,7 @@ Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 - As a rqmd user when existing repositories may not include priority lines
 - I want the parser to encounter missing priorities
 - So that it treats them as `unset` and does not break parsing
-- So that a migration mode (for example `rqmd --init-priorities`) can populate default priorities (e.g., unset or `P3`) and update files idempotently.
+- So that a migration mode (for example `rqmd --seed-priorities`) can populate default priorities (e.g., unset or `P3`) and update files idempotently.
 
 ### RQMD-PRIORITY-008: Undo and history semantics
 - **Status:** 💡 Proposed
@@ -74,7 +74,7 @@ Summary: 1💡 0🔧 9✅ 0⛔ 0🗑️
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when automation workflows
-- I want to apply bulk priority updates (via `--set-priority` or a file)
+- I want to apply bulk priority updates (via `--update-priority` or a file)
 - So that the tool applies updates deterministically and emits machine-readable summaries showing changed files and counts.
 
 ### RQMD-PRIORITY-010: Tests and documentation

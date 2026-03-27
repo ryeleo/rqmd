@@ -33,30 +33,30 @@ Status model:
 
 Non-interactive usage:
 - Update a single requirement by id/status (optionally scoped by file).
-- Update multiple requirements in one command via repeated --set ID=STATUS.
+- Update multiple requirements in one command via repeated --update ID=STATUS.
 - Useful for automation and agent-driven workflows.
 
 Examples:
 - Check only (no writes):
-    rqmd --check
+    rqmd --verify-summaries
 - Interactive mode with emoji headers:
-    rqmd --emoji-columns
+    rqmd --emoji-headers
 - Non-interactive single update:
     rqmd \
-            --set-requirement-id R-TELEMETRY-LOG-001 \
-            --set-status implemented
+            --update-id R-TELEMETRY-LOG-001 \
+            --update-status implemented
 - Non-interactive bulk update:
     rqmd \
-            --set R-STEELTARGET-AUDIO-004=implemented \
-            --set R-STEELTARGET-AUDIO-005=verified
+            --update R-STEELTARGET-AUDIO-004=implemented \
+            --update R-STEELTARGET-AUDIO-005=verified
 - Non-interactive batch update from file:
     rqmd \
-            --set-file tmp/ac-updates.jsonl
+            --update-file tmp/ac-updates.jsonl
 
 Notes:
 - This script expects markdown requirement sections to use "### <PREFIX>-..."
     headers and "- **Status:** ..." lines.
-- Header prefixes are configurable with --id-prefix and default to AC and R.
+- Header prefixes are configurable with --id-namespace and default to AC and R.
 - If click/tabulate are missing, install them with pip3.
 """
 
@@ -76,93 +76,48 @@ except ImportError:
 
 from . import menus as menus_mod
 from . import workflows as workflows_mod
-from .batch_inputs import (
-    parse_batch_update_csv,
-    parse_batch_update_file,
-    parse_batch_update_jsonl,
-    parse_set_entry,
-    parse_set_flagged_entry,
-    parse_set_priority_entry,
-)
+from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
+                           parse_batch_update_jsonl, parse_set_entry,
+                           parse_set_flagged_entry, parse_set_priority_entry)
 from .config import load_config, validate_config
-from .constants import (
-    DEFAULT_ID_PREFIXES,
-    DEFAULT_REQUIREMENTS_DIR,
-    ID_PREFIX_PATTERN,
-    STATUS_ORDER,
-    STATUS_PATTERN,
-    SUMMARY_END,
-    SUMMARY_START,
-)
-from .markdown_io import (
-    auto_detect_criteria_dir,
-    check_files_writable,
-    check_index_sync,
-    discover_project_root,
-    display_name_from_h1,
-    format_path_display,
-    initialize_requirements_scaffold,
-    iter_criteria_search_roots,
-    iter_domain_files,
-    parse_index_links,
-    resolve_criteria_dir,
-    validate_files_readable,
-)
+from .constants import (DEFAULT_ID_PREFIXES, DEFAULT_REQUIREMENTS_DIR,
+                        ID_PREFIX_PATTERN, STATUS_ORDER, STATUS_PATTERN,
+                        SUMMARY_END, SUMMARY_START)
+from .markdown_io import (auto_detect_requirements_dir, check_files_writable,
+                          check_index_sync, discover_project_root,
+                          display_name_from_h1, format_path_display,
+                          initialize_requirements_scaffold, iter_domain_files,
+                          iter_requirements_search_roots, parse_index_links,
+                          resolve_requirements_dir, validate_files_readable)
 from .menus import select_from_menu
 from .priority_model import normalize_priority_input
-from .req_parser import (
-    collect_criteria_by_flagged,
-    collect_criteria_by_priority,
-    collect_criteria_by_status,
-    collect_criteria_by_sub_domain,
-    find_criterion_by_id,
-    normalize_id_prefixes,
-    parse_criteria,
-    resolve_id_prefixes,
-)
+from .req_parser import (collect_requirements_by_flagged,
+                         collect_requirements_by_priority,
+                         collect_requirements_by_status,
+                         collect_requirements_by_sub_domain,
+                         find_requirement_by_id, normalize_id_prefixes,
+                         parse_requirements, resolve_id_prefixes)
 from .rollup_config import compute_rollup_column_values, resolve_rollup_columns
-from .status_model import (
-    build_color_rollup_text,
-    configure_status_catalog,
-    normalize_status_input,
-    style_status_count,
-    style_status_label,
-)
-from .status_update import (
-    apply_status_change_by_id,
-    print_criterion_panel,
-    prompt_for_blocked_reason,
-    prompt_for_deprecated_reason,
-    update_criterion_status,
-)
-from .summary import (
-    build_summary_block,
-    build_summary_line,
-    build_summary_table,
-    collect_summary_rows,
-    count_statuses,
-    insert_or_replace_summary,
-    normalize_status_lines,
-    print_custom_rollup_table,
-    print_global_rollup_table,
-    print_summary_table,
-    process_file,
-)
-from .target_selection import (
-    complete_target_tokens,
-    parse_target_token_file,
-    resolve_target_tokens,
-)
-from .workflows import (
-    build_filtered_criteria_payload,
-    build_summary_payload,
-    build_targeted_criteria_payload,
-    print_criteria_list,
-    print_criteria_tree,
-)
-from .workflows import (
-    focused_target_interactive_loop as focused_target_interactive_loop_impl,
-)
+from .status_model import (build_color_rollup_text, configure_status_catalog,
+                           normalize_status_input, style_status_count,
+                           style_status_label)
+from .status_update import (apply_status_change_by_id, print_criterion_panel,
+                            prompt_for_blocked_reason,
+                            prompt_for_deprecated_reason,
+                            update_criterion_status)
+from .summary import (build_summary_block, build_summary_line,
+                      build_summary_table, collect_summary_rows,
+                      count_statuses, insert_or_replace_summary,
+                      normalize_status_lines, print_custom_rollup_table,
+                      print_global_rollup_table, print_summary_table,
+                      process_file)
+from .target_selection import (complete_target_tokens, parse_target_token_file,
+                               resolve_target_tokens)
+from .workflows import (build_filtered_criteria_payload, build_summary_payload,
+                        build_targeted_criteria_payload)
+from .workflows import \
+    focused_target_interactive_loop as focused_target_interactive_loop_impl
+from .workflows import print_criteria_list, print_criteria_tree
 
 __all__ = [
     "SUMMARY_START",
@@ -181,9 +136,9 @@ __all__ = [
     "parse_batch_update_jsonl",
     "parse_batch_update_csv",
     "format_path_display",
-    "iter_criteria_search_roots",
-    "auto_detect_criteria_dir",
-    "resolve_criteria_dir",
+    "iter_requirements_search_roots",
+    "auto_detect_requirements_dir",
+    "resolve_requirements_dir",
     "iter_domain_files",
     "validate_files_readable",
     "check_files_writable",
@@ -337,7 +292,7 @@ def filtered_priority_interactive_loop(
 def lookup_criterion_interactive(
     repo_root: Path,
     domain_files: list[Path],
-    criterion_id: str,
+    requirement_id: str,
     emoji_columns: bool,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
     include_status_emojis: bool | None = None,
@@ -347,7 +302,7 @@ def lookup_criterion_interactive(
     return workflows_mod.lookup_criterion_interactive(
         repo_root=repo_root,
         domain_files=domain_files,
-        criterion_id=criterion_id,
+        requirement_id=requirement_id,
         emoji_columns=emoji_columns,
         id_prefixes=id_prefixes,
         select_from_menu_fn=select_from_menu,
@@ -396,7 +351,7 @@ def shell_complete_target_tokens(
         raw_repo_root = ctx.params.get("repo_root")
         repo_root = Path(raw_repo_root).resolve() if raw_repo_root else discover_project_root(Path.cwd())[0]
         raw_criteria_dir = ctx.params.get("requirements_dir")
-        resolved_criteria_dir, _message = resolve_criteria_dir(repo_root, raw_criteria_dir)
+        resolved_criteria_dir, _message = resolve_requirements_dir(repo_root, raw_criteria_dir)
         raw_prefixes = tuple(ctx.params.get("id_prefixes") or ())
         resolved_prefixes = resolve_id_prefixes(repo_root, str(resolved_criteria_dir), raw_prefixes)
         domain_files = iter_domain_files(repo_root, str(resolved_criteria_dir))
@@ -422,247 +377,266 @@ def shell_complete_target_tokens(
     metavar="[TARGET]...",
     shell_complete=shell_complete_target_tokens,
 )
-@click.option("--check", is_flag=True, help="Check whether summaries are up to date without writing changes.")
-@click.option("-v", "--verbose", is_flag=True, help="Show verbose output with full words.")
+@click.option("--verify-summaries", "check", is_flag=True, help="Check whether summaries are up to date without writing changes.")
+@click.option("-v", "--detailed", "verbose", is_flag=True, help="Show verbose output with full words.")
 @click.option(
-    "--emoji-columns",
+    "--emoji-headers",
+    "emoji_columns",
     is_flag=True,
     help="Use emoji column headers in terse table output (may misalign in some terminals).",
 )
 @click.option(
-    "--interactive/--no-interactive",
+    "--walk/--no-walk",
+    "interactive",
     default=True,
     help="Open interactive file/requirement/status flow after summary table.",
 )
 @click.option(
     "-u",
-    "--unsorted",
+    "--filesystem-order",
+    "unsorted",
     is_flag=True,
     help="Deprecated compatibility alias; filesystem ordering is already the default for Select file.",
 )
 @click.option(
-    "--set-status",
+    "--update-status",
     "set_status",
     type=str,
     help="Non-interactive mode: target status (label, plain text, or slug, e.g. 'Implemented' or 'verified').",
 )
 @click.option(
-    "--set-requirement-id",
-    "--set-criterion-id",
-    "set_criterion_id",
+    "--update-id",
+    "set_requirement_id",
     type=str,
     help="Non-interactive mode: requirement id to update, for example R-TELEMETRY-LOG-001.",
 )
 @click.option(
-    "--set",
+    "--update",
     "set_updates",
     multiple=True,
     type=str,
-    help="Non-interactive bulk mode: repeat ID=STATUS (for example --set R-FOO-001=implemented).",
+    help="Non-interactive bulk mode: repeat ID=STATUS (for example --update R-FOO-001=implemented).",
 )
 @click.option(
     "--dry-run",
     is_flag=True,
-    help="Preview mutation changes without writing files (applies to --set/--set-file/--set-priority/--set-flagged/--init-priorities).",
+    help="Preview mutation changes without writing files (applies to --update/--update-file/--update-priority/--update-flagged/--seed-priorities).",
 )
 @click.option(
-    "--set-file",
+    "--update-file",
     "set_file_input",
     type=str,
-    help="Non-interactive batch mode: path to .jsonl/.csv/.tsv with rows containing criterion_id/requirement_id/id/req_id/r_id and status.",
+    help="Non-interactive batch mode: path to .jsonl/.csv/.tsv with rows containing requirement_id/requirement_id/id/req_id/r_id and status.",
 )
 @click.option(
-    "--file",
+    "--scope-file",
     "set_file",
     type=str,
     help="Optional file scope for non-interactive updates, repo-relative path such as docs/requirements/telemetry.md.",
 )
 @click.option(
-    "--set-blocked-reason",
+    "--blocked-note",
+    "set_blocked_reason",
     type=str,
     help="Optional reason text when setting status to Blocked in non-interactive mode.",
 )
 @click.option(
-    "--set-deprecated-reason",
+    "--deprecated-note",
+    "set_deprecated_reason",
     type=str,
     help="Optional reason text when setting status to Deprecated in non-interactive mode.",
 )
 @click.option(
-    "--set-priority",
+    "--update-priority",
     "set_priority_updates",
     multiple=True,
     type=str,
-    help="Non-interactive priority mode: repeat ID=PRIORITY (for example --set-priority R-FOO-001=p0).",
+    help="Non-interactive priority mode: repeat ID=PRIORITY (for example --update-priority R-FOO-001=p0).",
 )
 @click.option(
-    "--set-flagged",
+    "--update-flagged",
     "set_flagged_updates",
     multiple=True,
     type=str,
-    help="Non-interactive flagged mode: repeat ID=true|false (for example --set-flagged R-FOO-001=true).",
+    help="Non-interactive flagged mode: repeat ID=true|false (for example --update-flagged R-FOO-001=true).",
 )
 @click.option(
-    "--priority-mode",
+    "--focus-priority",
+    "priority_mode",
     is_flag=True,
     help="Interactive mode: default to Priority focus instead of Status focus in entry panels.",
 )
 @click.option(
-    "--show-priority-summary",
+    "--priority-rollup",
+    "show_priority_summary",
     is_flag=True,
     help="Include priority-aware aggregates (counts by priority level) in summary blocks.",
 )
 @click.option(
-    "--filter-status",
+    "--status",
+    "filter_status",
     type=str,
-    help="Filter by status: walks matching requirements interactively (default) or shows tree with --tree.",
+    help="Filter by status: walks matching requirements interactively (default) or shows tree with --as-tree.",
 )
 @click.option(
-    "--filter-priority",
+    "--priority",
+    "filter_priority",
     type=str,
-    help="Filter by priority: walks matching requirements interactively (default) or shows tree with --tree.",
+    help="Filter by priority: walks matching requirements interactively (default) or shows tree with --as-tree.",
 )
 @click.option(
-    "--filter-flagged",
+    "--flagged",
+    "filter_flagged",
     is_flag=True,
     help="Filter flagged requirements and print matches as tree/JSON in non-interactive workflows.",
 )
 @click.option(
-    "--filter-sub-domain",
+    "--sub-domain",
     "filter_sub_domain",
     type=str,
     help="Filter by subsection name using case-insensitive prefix matching.",
 )
 @click.option(
-    "--filter-ids-file",
+    "--targets-file",
     "filter_ids_file",
     type=str,
     help="Path to a .txt/.conf/.md target list containing requirement IDs, domain tokens, and subsection tokens.",
 )
 @click.option(
-    "--tree",
+    "--as-tree",
+    "tree",
     is_flag=True,
-    help="With --filter-status: print a tree view only and exit instead of opening the interactive walk.",
+    help="With --status: print a tree view only and exit instead of opening the interactive walk.",
 )
 @click.option(
-    "--list",
+    "--as-list",
     "list_output",
     is_flag=True,
     help="With filters or explicit target tokens: print a flat list and exit.",
 )
 @click.option(
-    "--summary-table/--no-summary-table",
+    "--table/--no-table",
+    "summary_table",
     default=True,
-    help="Print the summary table output (disable in automation with --no-summary-table).",
+    help="Print the summary table output (disable in automation with --no-table).",
 )
 @click.option(
-    "--sort-strategy",
+    "--sort-profile",
+    "sort_strategy",
     type=click.Choice(workflows_mod.SORT_STRATEGY_NAMES, case_sensitive=False),
     default="standard",
     show_default=True,
     help="Select a named interactive sort strategy catalog.",
 )
 @click.option(
-    "--rollup",
+    "--totals",
     "rollup_mode",
     is_flag=True,
     help="Print aggregate status totals across all requirement files and exit.",
 )
 @click.option(
-    "--rollup-map",
+    "--totals-map",
     "rollup_map_entries",
     multiple=True,
     type=str,
-    help="Custom rollup column equation, repeatable (for example --rollup-map 'C1=I+V').",
+    help="Custom rollup column equation, repeatable (for example --totals-map 'C1=I+V').",
 )
 @click.option(
-    "--config",
+    "--totals-config",
     "rollup_config",
     type=str,
     default=None,
     help="Optional path to rollup config (.json/.yml/.yaml) containing rollup_map or rollup_equations.",
 )
 @click.option(
-    "--json",
+    "--as-json",
     "json_output",
     is_flag=True,
     help="Print machine-readable JSON output for non-interactive workflows.",
 )
 @click.option(
-    "--body/--no-body",
+    "--include-requirement-body/--no-requirement-body",
     "include_body",
     default=True,
-    help="With --json --filter-status: include full requirement body and line metadata (disable with --no-body).",
+    help="With --as-json --status: include full requirement body and line metadata (disable with --no-requirement-body).",
 )
 @click.option(
-    "--resume-filter/--no-resume-filter",
+    "--resume-walk/--no-resume-walk",
+    "resume_filter",
     default=True,
     help="Resume filtered interactive walkthrough position across runs.",
 )
 @click.option(
-    "--strip-status-emojis",
+    "--strip-status-icons",
+    "strip_status_emojis",
     is_flag=True,
     help="One-time conversion: remove emoji prefixes from all status lines and regenerate summaries.",
 )
 @click.option(
-    "--restore-status-emojis",
+    "--restore-status-icons",
+    "restore_status_emojis",
     is_flag=True,
     help="One-time conversion: restore canonical emoji-prefixed status lines and regenerate summaries.",
 )
 @click.option(
-    "--init-priorities",
+    "--seed-priorities",
+    "init_priorities",
     is_flag=True,
     help="One-time migration: add default priority lines to requirements missing them.",
 )
 @click.option(
-    "--default-priority",
+    "--seed-priority",
+    "default_priority",
     type=str,
     default="p3",
     show_default=True,
-    help="Default priority used by --init-priorities (for example p0, high, medium, low).",
+    help="Default priority used by --seed-priorities (for example p0, high, medium, low).",
 )
 @click.option(
-    "--state-dir",
+    "--session-state-dir",
+    "state_dir",
     type=str,
     default="system-temp",
     show_default=True,
     help="Directory for persisted workflow state: system-temp, project-local, or a custom path.",
 )
 @click.option(
-    "--repo-root",
+    "--project-root",
+    "repo_root",
     type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
     default=Path("."),
     show_default=True,
     help="Project root containing requirement documentation.",
 )
 @click.option(
-    "--requirements-dir",
+    "--docs-dir",
     "requirements_dir",
     type=str,
     default=None,
-    help="Directory (absolute or relative to --repo-root) containing requirement markdown files. When omitted, rqmd auto-detects from the current working path.",
+    help="Directory (absolute or relative to --project-root) containing requirement markdown files. When omitted, rqmd auto-detects from the current working path.",
 )
 @click.option(
-    "--id-prefix",
+    "--id-namespace",
     "id_prefixes",
     multiple=True,
     default=(),
-    help="Allowed header ID prefixes. Repeat or comma-separate values, for example --id-prefix R or --id-prefix AC,R.",
+    help="Allowed header ID prefixes. Repeat or comma-separate values, for example --id-namespace R or --id-namespace AC,R.",
 )
 @click.option(
-    "--check-index",
+    "--verify-index",
     "check_index",
     is_flag=True,
     help="Check that the requirements index (README.md) links match actual domain files; report stale links and orphan files.",
 )
 @click.option(
-    "--init",
+    "--bootstrap",
     "init_scaffold",
     is_flag=True,
     help="Initialize docs scaffold (index + starter domain file) and exit.",
 )
 @click.option(
-    "--yes",
-    "--confirm",
+    "--force-yes",
+    "--force-confirm",
     "confirm_yes",
     is_flag=True,
     help="Auto-confirm scaffold initialization (non-interactive friendly).",
@@ -675,7 +649,7 @@ def main(
     emoji_columns: bool,
     interactive: bool,
     unsorted: bool,
-    set_criterion_id: str | None,
+    set_requirement_id: str | None,
     set_status: str | None,
     set_updates: tuple[str, ...],
     dry_run: bool,
@@ -760,7 +734,7 @@ def main(
 
     if unsorted and not json_output:
         click.echo(
-            "Warning: --unsorted is deprecated and now acts as a compatibility alias because filesystem ordering is already the default.",
+            "Warning: --filesystem-order is deprecated and now acts as a compatibility alias because filesystem ordering is already the default.",
             err=True,
         )
 
@@ -768,9 +742,9 @@ def main(
         click.echo(root_discovery_message)
 
     if init_scaffold:
-        if check or filter_status or filter_priority or filter_flagged or filter_sub_domain or filter_ids_file or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or targets:
+        if check or filter_status or filter_priority or filter_flagged or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or targets:
             raise click.ClickException(
-                "--init cannot be combined with --check, --rollup, positional ID, --filter-* / --tree, or --set-* options."
+                "--bootstrap cannot be combined with --verify-summaries, --totals, positional ID, --filter-* / --as-tree, or --update-* options."
             )
 
         try:
@@ -807,26 +781,26 @@ def main(
             click.echo("Requirement scaffold already present; no files created.")
         raise SystemExit(0)
 
-    resolved_criteria_dir, criteria_dir_message = resolve_criteria_dir(repo_root, requirements_dir)
-    resolved_criteria_dir_input = str(resolved_criteria_dir)
+    resolved_criteria_dir, criteria_dir_message = resolve_requirements_dir(repo_root, requirements_dir)
+    resolved_requirements_dir_input = str(resolved_criteria_dir)
     if criteria_dir_message and not json_output:
         click.echo(criteria_dir_message)
 
     try:
-        id_prefixes = resolve_id_prefixes(repo_root, resolved_criteria_dir_input, id_prefixes)
+        id_prefixes = resolve_id_prefixes(repo_root, resolved_requirements_dir_input, id_prefixes)
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
 
-    domain_files = iter_domain_files(repo_root, resolved_criteria_dir_input)
+    domain_files = iter_domain_files(repo_root, resolved_requirements_dir_input)
     if not domain_files:
         missing_msg = f"No requirement markdown files found under: {format_path_display(resolved_criteria_dir, repo_root)}"
-        hint_msg = "Hint: run 'rqmd --init' (interactive) or 'rqmd --init --yes' (automation) to create starter docs."
+        hint_msg = "Hint: run 'rqmd --bootstrap' (interactive) or 'rqmd --bootstrap --force-yes' (automation) to create starter docs."
 
         if confirm_yes:
             starter_prefix = requested_init_prefix or "REQ"
             created = initialize_requirements_scaffold(
                 repo_root,
-                resolved_criteria_dir_input,
+                resolved_requirements_dir_input,
                 starter_prefix=starter_prefix,
             )
             if created:
@@ -859,7 +833,7 @@ def main(
 
         created = initialize_requirements_scaffold(
             repo_root,
-            resolved_criteria_dir_input,
+            resolved_requirements_dir_input,
             starter_prefix=starter_prefix,
         )
         if created:
@@ -876,7 +850,7 @@ def main(
     include_status_emojis = infer_include_status_emojis(domain_files)
 
     if strip_status_emojis and restore_status_emojis:
-        raise click.ClickException("Use either --strip-status-emojis or --restore-status-emojis, not both.")
+        raise click.ClickException("Use either --strip-status-icons or --restore-status-icons, not both.")
 
     if init_priorities:
         if (
@@ -886,7 +860,7 @@ def main(
             or filter_flagged
             or filter_sub_domain
             or filter_ids_file
-            or set_criterion_id
+            or set_requirement_id
             or set_status
             or set_updates
             or set_priority_updates
@@ -900,14 +874,14 @@ def main(
             or restore_status_emojis
         ):
             raise click.ClickException(
-                "--init-priorities cannot be combined with check/filter/set/tree/rollup/lookup or emoji strip/restore modes."
+                "--seed-priorities cannot be combined with check/filter/set/tree/rollup/lookup or emoji strip/restore modes."
             )
 
         canonical_default_priority = normalize_priority_input(default_priority)
 
         changed_paths: list[Path] = []
         for path in domain_files:
-            requirements = parse_criteria(path, id_prefixes=id_prefixes)
+            requirements = parse_requirements(path, id_prefixes=id_prefixes)
             missing = [r for r in requirements if r.get("priority_line") is None and isinstance(r.get("status_line"), int)]
             if not missing:
                 continue
@@ -966,9 +940,9 @@ def main(
         raise SystemExit(0)
 
     if strip_status_emojis or restore_status_emojis:
-        if check or filter_status or filter_priority or filter_flagged or filter_sub_domain or filter_ids_file or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or targets:
+        if check or filter_status or filter_priority or filter_flagged or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or targets:
             raise click.ClickException(
-                "Emoji strip/restore modes cannot be combined with --check, --rollup, positional ID, --filter-* / --tree, or --set-* options."
+                "Emoji strip/restore modes cannot be combined with --verify-summaries, --totals, positional ID, --filter-* / --as-tree, or --update-* options."
             )
 
         include_status_emojis = not strip_status_emojis
@@ -996,12 +970,12 @@ def main(
         click.echo(f"Updated {len(changed_paths)} file(s) in {mode_name} mode.")
         raise SystemExit(0)
 
-    # RQMD-CORE-013: --check-index mode — compare index links with actual domain files
+    # RQMD-CORE-013: --verify-index mode — compare index links with actual domain files
     if check_index:
         index_path = resolved_criteria_dir / "README.md"
         if not index_path.exists():
             click.echo(f"No requirements index found at: {format_path_display(index_path, repo_root)}", err=True)
-            click.echo("  Hint: run 'rqmd --init' to create a starter scaffold.", err=True)
+            click.echo("  Hint: run 'rqmd --bootstrap' to create a starter scaffold.", err=True)
             raise SystemExit(1)
         stale_links, orphan_files = check_index_sync(resolved_criteria_dir, index_path)
         issues: list[str] = []
@@ -1049,7 +1023,7 @@ def main(
         or filter_priority
         or filter_flagged
         or filter_sub_domain
-        or set_criterion_id
+        or set_requirement_id
         or set_status
         or set_updates
         or set_priority_updates
@@ -1067,7 +1041,7 @@ def main(
         for token in targets:
             exact_id_matches = []
             for path in domain_files:
-                requirement = find_criterion_by_id(path, token, id_prefixes=id_prefixes)
+                requirement = find_requirement_by_id(path, token, id_prefixes=id_prefixes)
                 if requirement:
                     exact_id_matches.append((path, requirement))
             if len(exact_id_matches) == 1:
@@ -1075,7 +1049,7 @@ def main(
                     lookup_criterion_interactive(
                         repo_root,
                         domain_files,
-                        criterion_id=token,
+                        requirement_id=token,
                         emoji_columns=emoji_columns,
                         id_prefixes=id_prefixes,
                         include_status_emojis=include_status_emojis,
@@ -1101,7 +1075,7 @@ def main(
         raise SystemExit(
             interactive_update_loop(
                 repo_root,
-                resolved_criteria_dir_input,
+                resolved_requirements_dir_input,
                 domain_files,
                 emoji_columns=emoji_columns,
                 sort_files=False,
@@ -1118,9 +1092,9 @@ def main(
         domain_files = [positional_domain_file]
 
     if explicit_target_tokens:
-        if check or filter_status or filter_priority or filter_flagged or filter_sub_domain or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or rollup_mode:
+        if check or filter_status or filter_priority or filter_flagged or filter_sub_domain or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or rollup_mode:
             raise click.ClickException(
-                "Explicit target selection cannot be combined with --check, --rollup, --filter-*, or --set-* options."
+                "Explicit target selection cannot be combined with --verify-summaries, --totals, --filter-*, or --update-* options."
             )
         selected_items = resolve_target_tokens(
             repo_root,
@@ -1209,8 +1183,8 @@ def main(
         print_summary_table(table_rows, emoji_columns=emoji_columns)
 
     if rollup_mode:
-        if check or filter_status or filter_priority or filter_flagged or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree:
-            raise click.ClickException("--rollup cannot be combined with --check, --filter-status, --tree, or --set-* options.")
+        if check or filter_status or filter_priority or filter_flagged or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree:
+            raise click.ClickException("--totals cannot be combined with --verify-summaries, --status, --as-tree, or --update-* options.")
         rollup_columns, rollup_source = resolve_rollup_columns(
             repo_root,
             cli_rollup_map=rollup_map_entries,
@@ -1264,23 +1238,23 @@ def main(
             print(msg, file=sys.stderr)
         raise SystemExit(1)
 
-    # --tree/--list without an active filter mode is a no-op guard
+    # --as-tree/--as-list without an active filter mode is a no-op guard
     if (tree or list_output) and not (filter_status or filter_priority or filter_flagged or filter_sub_domain or explicit_target_tokens):
-        raise click.ClickException("--tree/--list requires --filter-status, --filter-priority, --filter-flagged, --filter-sub-domain, or explicit target tokens.")
+        raise click.ClickException("--as-tree/--as-list requires --status, --priority, --flagged, --sub-domain, or explicit target tokens.")
 
     active_filter_count = int(bool(filter_status)) + int(bool(filter_priority)) + int(bool(filter_flagged)) + int(bool(filter_sub_domain))
     if active_filter_count > 1:
-        raise click.ClickException("Use only one filter mode at a time: --filter-status, --filter-priority, --filter-flagged, or --filter-sub-domain.")
+        raise click.ClickException("Use only one filter mode at a time: --status, --priority, --flagged, or --sub-domain.")
 
-    # Handle --filter-status mode
+    # Handle --status mode
     if filter_status:
-        if check or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
-            raise click.ClickException("--filter-status cannot be combined with --check / --set-requirement-id / --set-status / --file.")
+        if check or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
+            raise click.ClickException("--status cannot be combined with --verify-summaries / --update-id / --update-status / --scope-file.")
         try:
             normalized_status = normalize_status_input(filter_status)
         except click.ClickException:
             raise
-        criteria_by_file = collect_criteria_by_status(
+        criteria_by_file = collect_requirements_by_status(
             repo_root,
             domain_files,
             normalized_status,
@@ -1321,10 +1295,10 @@ def main(
         )
 
     if filter_priority:
-        if check or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
-            raise click.ClickException("--filter-priority cannot be combined with --check / --set-requirement-id / --set-status / --set-priority / --file.")
+        if check or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
+            raise click.ClickException("--priority cannot be combined with --verify-summaries / --update-id / --update-status / --update-priority / --scope-file.")
         normalized_priority = normalize_priority_input(filter_priority)
-        criteria_by_file = collect_criteria_by_priority(
+        criteria_by_file = collect_requirements_by_priority(
             repo_root,
             domain_files,
             normalized_priority,
@@ -1365,10 +1339,10 @@ def main(
         )
 
     if filter_flagged:
-        if check or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
-            raise click.ClickException("--filter-flagged cannot be combined with --check or mutation options.")
+        if check or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
+            raise click.ClickException("--flagged cannot be combined with --verify-summaries or mutation options.")
 
-        criteria_by_file = collect_criteria_by_flagged(
+        criteria_by_file = collect_requirements_by_flagged(
             repo_root,
             domain_files,
             True,
@@ -1398,10 +1372,10 @@ def main(
         raise SystemExit(0)
 
     if filter_sub_domain:
-        if check or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
-            raise click.ClickException("--filter-sub-domain cannot be combined with --check or mutation options.")
+        if check or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
+            raise click.ClickException("--sub-domain cannot be combined with --verify-summaries or mutation options.")
 
-        criteria_by_file = collect_criteria_by_sub_domain(
+        criteria_by_file = collect_requirements_by_sub_domain(
             repo_root,
             domain_files,
             filter_sub_domain,
@@ -1430,31 +1404,31 @@ def main(
         raise SystemExit(0)
 
     non_interactive_requested = bool(
-        set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file
+        set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file
     )
     if non_interactive_requested and positional_domain_file and not set_file and not set_file_input:
         set_file = format_path_display(positional_domain_file, repo_root)
 
     if non_interactive_requested:
         if check:
-            raise click.ClickException("--check cannot be combined with --set-requirement-id/--set-status.")
+            raise click.ClickException("--verify-summaries cannot be combined with --update-id/--update-status.")
         mode_count = (
             int(bool(set_updates))
             + int(bool(set_priority_updates))
             + int(bool(set_flagged_updates))
             + int(bool(set_file_input))
-            + int(bool(set_criterion_id or set_status))
+            + int(bool(set_requirement_id or set_status))
         )
         if mode_count > 1:
             raise click.ClickException(
-                "Use exactly one non-interactive update mode: --set-file, --set ID=STATUS (repeatable), --set-priority ID=PRIORITY (repeatable), --set-flagged ID=true|false (repeatable), or --set-requirement-id with --set-status."
+                "Use exactly one non-interactive update mode: --update-file, --update ID=STATUS (repeatable), --update-priority ID=PRIORITY (repeatable), --update-flagged ID=true|false (repeatable), or --update-id with --update-status."
             )
 
         update_requests: list[dict[str, object]] = []
         if set_updates:
             update_requests = [
                 {
-                    "criterion_id": cid,
+                    "requirement_id": cid,
                     "status": status,
                     "priority": None,
                     "flagged": None,
@@ -1466,10 +1440,10 @@ def main(
             ]
         elif set_priority_updates:
             if set_file_input:
-                raise click.ClickException("--set-priority cannot be combined with --set-file.")
+                raise click.ClickException("--update-priority cannot be combined with --update-file.")
             update_requests = [
                 {
-                    "criterion_id": cid,
+                    "requirement_id": cid,
                     "status": None,
                     "priority": priority,
                     "flagged": None,
@@ -1481,10 +1455,10 @@ def main(
             ]
         elif set_flagged_updates:
             if set_file_input:
-                raise click.ClickException("--set-flagged cannot be combined with --set-file.")
+                raise click.ClickException("--update-flagged cannot be combined with --update-file.")
             update_requests = [
                 {
-                    "criterion_id": cid,
+                    "requirement_id": cid,
                     "status": None,
                     "priority": None,
                     "flagged": flagged,
@@ -1496,16 +1470,16 @@ def main(
             ]
         elif set_file_input:
             if set_file:
-                raise click.ClickException("--file cannot be combined with --set-file because each row may include its own file scope.")
+                raise click.ClickException("--scope-file cannot be combined with --update-file because each row may include its own file scope.")
             if set_blocked_reason or set_deprecated_reason:
-                raise click.ClickException("--set-blocked-reason/--set-deprecated-reason cannot be combined with --set-file; provide per-row values in the file.")
+                raise click.ClickException("--blocked-note/--deprecated-note cannot be combined with --update-file; provide per-row values in the file.")
             update_requests = parse_batch_update_file(repo_root, set_file_input)
         else:
-            if set_criterion_id is None or set_status is None:
-                raise click.ClickException("Both --set-requirement-id and --set-status are required for non-interactive update mode.")
+            if set_requirement_id is None or set_status is None:
+                raise click.ClickException("Both --update-id and --update-status are required for non-interactive update mode.")
             update_requests = [
                 {
-                    "criterion_id": set_criterion_id,
+                    "requirement_id": set_requirement_id,
                     "status": set_status,
                     "priority": None,
                     "flagged": None,
@@ -1516,12 +1490,12 @@ def main(
             ]
 
         if (set_blocked_reason or set_deprecated_reason) and len(update_requests) != 1:
-            raise click.ClickException("--set-blocked-reason/--set-deprecated-reason currently support single-target updates only.")
+            raise click.ClickException("--blocked-note/--deprecated-note currently support single-target updates only.")
 
         update_results: list[dict[str, object]] = []
         changed_files: set[Path] = set()
         for request in update_requests:
-            criterion_id_value = str(request["criterion_id"])
+            requirement_id_value = str(request["requirement_id"])
             status_value = str(request["status"]) if request["status"] is not None else None
             priority_value = str(request["priority"]) if request.get("priority") is not None else None
             flagged_value = request.get("flagged") if isinstance(request.get("flagged"), bool) else None
@@ -1542,14 +1516,14 @@ def main(
                     changed_path = candidate
             else:
                 for path in domain_files:
-                    if find_criterion_by_id(path, criterion_id_value, id_prefixes=id_prefixes):
+                    if find_requirement_by_id(path, requirement_id_value, id_prefixes=id_prefixes):
                         changed_path = path
                         break
 
             changed = apply_status_change_by_id(
                 repo_root,
                 domain_files,
-                criterion_id=criterion_id_value,
+                requirement_id=requirement_id_value,
                 new_status_input=status_value,
                 file_filter=row_file_filter,
                 blocked_reason=blocked_reason,
@@ -1566,7 +1540,7 @@ def main(
                 changed_files.add(changed_path)
             update_results.append(
                 {
-                    "criterion_id": criterion_id_value,
+                    "requirement_id": requirement_id_value,
                     "status": normalized_status,
                     "priority": priority_value,
                     "flagged": flagged_value,
@@ -1611,7 +1585,7 @@ def main(
         raise SystemExit(
             interactive_update_loop(
                 repo_root,
-                resolved_criteria_dir_input,
+                resolved_requirements_dir_input,
                 domain_files,
                 emoji_columns=emoji_columns,
                 sort_files=False,

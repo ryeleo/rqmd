@@ -105,11 +105,11 @@ Scope: demo.
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -179,11 +179,11 @@ def test_RQMD_sorting_006_default_file_menu_uses_name_sort_desc(monkeypatch, tmp
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -224,12 +224,12 @@ def test_RQMD_sorting_006b_emoji_columns_affect_select_file_header(monkeypatch, 
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--emoji-columns",
-            "--no-summary-table",
+            "--emoji-headers",
+            "--no-table",
         ],
     )
 
@@ -274,11 +274,11 @@ def test_RQMD_sorting_007_and_011_file_menu_cycles_columns_and_shows_indicator(m
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -320,11 +320,11 @@ def test_RQMD_sorting_shift_s_cycles_file_sort_backward(monkeypatch, tmp_path: P
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -367,11 +367,11 @@ def test_RQMD_sorting_011_header_columns_stay_fixed_when_indicator_moves(monkeyp
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -417,11 +417,11 @@ def test_RQMD_sorting_008_direction_token_updates_in_legend(monkeypatch, tmp_pat
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -458,11 +458,11 @@ def test_RQMD_sorting_009_refresh_reopens_file_menu(monkeypatch, tmp_path: Path)
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -505,11 +505,11 @@ def test_RQMD_sorting_003_refresh_keeps_deterministic_file_order(monkeypatch, tm
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -555,11 +555,11 @@ def test_RQMD_sorting_004_refresh_preserves_selected_sort_mode(monkeypatch, tmp_
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -578,9 +578,9 @@ def test_RQMD_interactive_008_reason_prompt_helpers(monkeypatch) -> None:
 def test_RQMD_interactive_009_positional_lookup_mode(monkeypatch, repo_with_domain_docs: Path) -> None:
     called = {"value": False}
 
-    def fake_lookup(repo_root, domain_files, criterion_id, emoji_columns, id_prefixes, include_status_emojis, priority_mode, include_priority_summary):
+    def fake_lookup(repo_root, domain_files, requirement_id, emoji_columns, id_prefixes, include_status_emojis, priority_mode, include_priority_summary):
         called["value"] = True
-        assert criterion_id == "AC-HELLO-001"
+        assert requirement_id == "AC-HELLO-001"
         assert id_prefixes == ("AC", "R", "RQMD")
         return 0
 
@@ -590,11 +590,11 @@ def test_RQMD_interactive_009_positional_lookup_mode(monkeypatch, repo_with_doma
         cli.main,
         [
             "AC-HELLO-001",
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -642,11 +642,11 @@ Scope: two.
         cli.main,
         [
             "docs/requirements/two.md",
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -687,13 +687,13 @@ Scope: two.
         cli.main,
         [
             "docs/requirements/one.md",
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set",
+            "--update",
             "AC-SHARED-001=verified",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -729,9 +729,9 @@ Scope: two.
 
     called = {"lookup": False}
 
-    def fake_lookup(repo_root, domain_files, criterion_id, emoji_columns, id_prefixes, include_status_emojis, priority_mode, include_priority_summary):
+    def fake_lookup(repo_root, domain_files, requirement_id, emoji_columns, id_prefixes, include_status_emojis, priority_mode, include_priority_summary):
         called["lookup"] = True
-        assert criterion_id == "AC-TWO-001"
+        assert requirement_id == "AC-TWO-001"
         return 0
 
     monkeypatch.setattr(cli, "lookup_criterion_interactive", fake_lookup)
@@ -742,11 +742,11 @@ Scope: two.
         [
             "AC-TWO-001",
             "docs/requirements/one.md",
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -790,11 +790,11 @@ Scope: demo.
         [
             "demo",
             "Query",
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -809,7 +809,7 @@ def test_RQMD_interactive_009a_lookup_mode_up_exits(monkeypatch, repo_with_domai
     result = cli.lookup_criterion_interactive(
         repo_root=repo_with_domain_docs,
         domain_files=[domain_file],
-        criterion_id="AC-HELLO-001",
+        requirement_id="AC-HELLO-001",
         emoji_columns=False,
         id_prefixes=("AC",),
     )
@@ -839,7 +839,7 @@ Scope: demo.
     result = cli.lookup_criterion_interactive(
         repo_root=repo,
         domain_files=[domain_file],
-        criterion_id="AC-DEMO-001",
+        requirement_id="AC-DEMO-001",
         emoji_columns=False,
         id_prefixes=("AC",),
     )
@@ -914,11 +914,11 @@ Scope: demo.
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -1173,11 +1173,11 @@ def test_RQMD_interactive_001_default_invokes_interactive_loop(monkeypatch, repo
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -1217,13 +1217,13 @@ def test_RQMD_sorting_005_alpha_asc_strategy_changes_default_direction(monkeypat
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--sort-strategy",
+            "--sort-profile",
             "alpha-asc",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -1266,13 +1266,13 @@ def test_RQMD_sorting_005_status_focus_strategy_uses_implemented_default(monkeyp
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--sort-strategy",
+            "--sort-profile",
             "status-focus",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -1290,12 +1290,12 @@ def test_RQMD_sorting_unsorted_flag_warns_as_deprecated_alias(monkeypatch, repo_
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-summary-table",
-            "--unsorted",
+            "--no-table",
+            "--filesystem-order",
         ],
     )
 
@@ -1318,9 +1318,9 @@ def test_RQMD_interactive_001b_default_auto_detect_reaches_interactive(monkeypat
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -1362,11 +1362,11 @@ def test_RQMD_interactive_010_deep_paging_and_status_updates_with_scratch(monkey
         result = runner.invoke(
             cli.main,
             [
-                "--repo-root",
+                "--project-root",
                 str(repo_root),
-                "--requirements-dir",
+                "--docs-dir",
                 criteria_rel,
-                "--no-summary-table",
+                "--no-table",
             ],
         )
 
@@ -1411,10 +1411,10 @@ def test_RQMD_interactive_011_unwritable_file_blocks_interactive_mode(tmp_path: 
         result = runner.invoke(
             cli.main,
             [
-                "--repo-root", str(repo),
-                "--requirements-dir", "docs/requirements",
-                "--no-summary-table",
-                "--interactive",
+                "--project-root", str(repo),
+                "--docs-dir", "docs/requirements",
+                "--no-table",
+                "--walk",
             ],
         )
         assert result.exit_code != 0

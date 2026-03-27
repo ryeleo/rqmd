@@ -6,7 +6,7 @@ This document comprehensively specifies the data structures, parsing rules, and 
 1. [Requirement (Criterion) Object](#requirement-criterion-object)
 2. [Subsection (H2) Structure](#subsection-h2-structure)
 3. [Markdown Syntax](#markdown-syntax)
-4. [Status & Priority Models](#status--priority-models)
+4. [Status & Priority Models](#status--focus-priorityls)
 5. [JSON Export Contracts](#json-export-contracts)
 6. [Parsing Rules](#parsing-rules)
 
@@ -187,7 +187,7 @@ if blocked_match and current and current["status_line"] is not None:
 
 ### Stable Top-Level Keys By Mode
 
-When `--json` is used, top-level keys are stable by mode:
+When `--as-json` is used, top-level keys are stable by mode:
 
 - `summary`: `mode`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
 - `check`: `mode`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
@@ -252,8 +252,8 @@ When `--json` is used, top-level keys are stable by mode:
 - `requirements` entries are deterministic by requirement ID order in JSON filter modes.
 - `sub_domain` is present on every requirement entry in filter-targeted payloads and is `null` when no subsection applies.
 - `sub_sections` is present on file entries for summary/filter payloads and includes subsection `name` plus aggregated `count`.
-- `--no-body` omits `body` from filter payload requirements.
-- Text modes `--tree` and `--list` are display-only and intentionally not part of JSON contracts.
+- `--no-requirement-body` omits `body` from filter payload requirements.
+- Text modes `--as-tree` and `--as-list` are display-only and intentionally not part of JSON contracts.
 
 ---
 
@@ -261,7 +261,7 @@ When `--json` is used, top-level keys are stable by mode:
 
 ### File Discovery
 
-- **Pattern**: `*.md` files in `--requirements-dir` (default: `docs/requirements/`).
+- **Pattern**: `*.md` files in `--docs-dir` (default: `docs/requirements/`).
 - **Order**: Sorted lexicographically by filename.
 - **Exclusions**: Files starting with `.`, directories, non-markdown files.
 
@@ -281,7 +281,7 @@ rqmd auto-detects valid ID prefixes by:
 3. Collecting all observed ID prefixes (e.g., `AC`, `R`, `RQMD`)
 4. Fallback: If no detection possible, use `DEFAULT_ID_PREFIXES = ("AC", "R", "RQMD")`
 
-Override with `--id-prefix AC,R` (comma-separated list).
+Override with `--id-namespace AC,R` (comma-separated list).
 
 ### Deterministic Ordering
 

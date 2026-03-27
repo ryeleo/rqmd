@@ -10,7 +10,7 @@ Summary: 10💡 10🔧 10✅ 0⛔ 0🗑️
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
 - Given docs may be out of sync
-- When `--check` is used
+- When `--verify-summaries` is used
 - Then no files are written
 - And process exits non-zero if any summary changes would be required.
 
@@ -18,14 +18,14 @@ Summary: 10💡 10🔧 10✅ 0⛔ 0🗑️
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
 - Given requirement ID and status are provided
-- When `--set-requirement-id` and `--set-status` are used
+- When `--update-id` and `--update-status` are used
 - Then only that requirement is updated
 - And summary block for its file is refreshed.
 
 ### RQMD-AUTOMATION-003: Repeatable bulk set mode
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
-- Given multiple `--set REQUIREMENT-ID=STATUS` arguments
+- Given multiple `--update REQUIREMENT-ID=STATUS` arguments
 - When command runs
 - Then each update is applied in argument order
 - And command exits successfully when all updates succeed.
@@ -34,14 +34,14 @@ Summary: 10💡 10🔧 10✅ 0⛔ 0🗑️
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
 - Given a JSONL/CSV/TSV update file
-- When `--set-file` is used
+- When `--update-file` is used
 - Then each row is parsed and applied
 - And row-level validation errors include file and line context.
 
 ### RQMD-AUTOMATION-005: Batch row schema aliases
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
-- Given batch rows use `requirement_id`, `criterion_id`, `id`, `ac_id`, or `r_id`
+- Given batch rows use `requirement_id`, `requirement_id`, `id`, `ac_id`, or `r_id`
 - When parser reads rows
 - Then any supported key is accepted for requirement identifier
 - And status remains required.
@@ -58,14 +58,14 @@ Summary: 10💡 10🔧 10✅ 0⛔ 0🗑️
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
 - Given duplicate requirement IDs might exist across files
-- When user provides `--file` scope
+- When user provides `--scope-file` scope
 - Then update resolves only within that file
 - And ambiguity errors are avoided.
 
 ### RQMD-AUTOMATION-008: Filtered tree output
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
-- Given `--filter-status` with `--tree`
+- Given `--status` with `--as-tree`
 - When command runs in non-interactive mode
 - Then tool prints grouped requirements tree by file
 - And exits without opening interactive menus.
@@ -74,7 +74,7 @@ Summary: 10💡 10🔧 10✅ 0⛔ 0🗑️
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
 - Given automation may not want console tables
-- When `--no-summary-table` is used
+- When `--no-table` is used
 - Then summary table output is suppressed
 - And command behavior otherwise remains unchanged.
 
@@ -82,7 +82,7 @@ Summary: 10💡 10🔧 10✅ 0⛔ 0🗑️
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
 - Given machine consumers need parse-friendly output
-- When `--json` is used in non-interactive command flows
+- When `--as-json` is used in non-interactive command flows
 - Then rqmd prints valid JSON for summary/check/set/filter-status modes
 - And filter mode includes status, criteria_dir, total, and grouped requirements by file
 - And rqmd exits without interactive prompts or tree formatting noise.
@@ -91,7 +91,7 @@ Summary: 10💡 10🔧 10✅ 0⛔ 0🗑️
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a CI user
-- I want `--json` filter queries with no matches to return `total: 0` and `files: []`
+- I want `--as-json` filter queries with no matches to return `total: 0` and `files: []`
 - So that zero-match runs are handled as valid outcomes without brittle parsing.
 
 ### RQMD-AUTOMATION-012: Stable JSON schema contract
@@ -112,7 +112,7 @@ Summary: 10💡 10🔧 10✅ 0⛔ 0🗑️
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As an automation user
-- I want dry-run behavior for write commands (`--set`, `--set-file`, `--set-priority`, `--init-priorities`)
+- I want dry-run behavior for write commands (`--update`, `--update-file`, `--update-priority`, `--seed-priorities`)
 - So that I can preview exact changes before applying them.
 
 ### RQMD-AUTOMATION-015: Batch partial-failure report model
@@ -140,14 +140,14 @@ Summary: 10💡 10🔧 10✅ 0⛔ 0🗑️
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a migration operator
-- I want `--init --yes` and `--init-priorities` to be idempotent, deterministic, and JSON-reportable
+- I want `--bootstrap --force-yes` and `--seed-priorities` to be idempotent, deterministic, and JSON-reportable
 - So that migration steps are reliable in CI/CD workflows.
 
 ### RQMD-AUTOMATION-019: Unique-prefix argument/value abbreviations
 - **Status:** 💡 Proposed
 - **Priority:** 🟡 P2 - Medium
 - As a CLI user
-- I want unique minimal prefixes for long option names and enumerated values to be accepted (for example, `--filt V` -> `--filter-status Verified`)
+- I want unique minimal prefixes for long option names and enumerated values to be accepted (for example, `--filt V` -> `--status Verified`)
 - So that fast terminal usage is supported without sacrificing determinism.
 - So that ambiguous prefixes fail with a clear disambiguation error listing valid matches.
 
@@ -169,40 +169,40 @@ Summary: 10💡 10🔧 10✅ 0⛔ 0🗑️
 - **Status:** 💡 Proposed
 - **Priority:** 🟠 P1 - High
 - As an automation user
-- I want ambiguity failures in `--json` mode to return a stable machine-readable error payload
+- I want ambiguity failures in `--as-json` mode to return a stable machine-readable error payload
 - So that tools can branch on error type, inspect candidates, and auto-remediate input expansion.
 
 ### RQMD-AUTOMATION-023: Filter flagged requirements
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As an automation user
-- I want a `--filter-flagged` mode for non-interactive workflows
+- I want a `--flagged` mode for non-interactive workflows
 - So that flagged requirements can be listed, walked, or exported without relying on status changes.
 
 ### RQMD-AUTOMATION-024: JSON output for flagged items
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As an automation user
-- I want `--filter-flagged --json` to return flagged requirements in the same stable grouped structure used by other filter modes
+- I want `--flagged --as-json` to return flagged requirements in the same stable grouped structure used by other filter modes
 - So that bots and scripts can consume focus lists consistently.
 
 ### RQMD-AUTOMATION-025: Direct flagged-state mutation
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As an automation user
-- I want to set flagged state directly with `--set-flagged REQUIREMENT-ID=true|false`
+- I want to set flagged state directly with `--update-flagged REQUIREMENT-ID=true|false`
 - So that workflows can mutate flagged state deterministically without requiring interactive mode.
 - So that batch and CI jobs can manage flagged triage state using the same validation, ambiguity handling, and file-scope guardrails used by other mutation commands.
-- So that `--set-file` rows can also include flagged-state mutation values with the same canonical true/false normalization and row-level error reporting guarantees.
-- So that `--json` mutation runs return structured success/failure results for flagged updates consistent with the existing batch partial-failure model.
+- So that `--update-file` rows can also include flagged-state mutation values with the same canonical true/false normalization and row-level error reporting guarantees.
+- So that `--as-json` mutation runs return structured success/failure results for flagged updates consistent with the existing batch partial-failure model.
 
 ### RQMD-AUTOMATION-026: Full domain-document JSON contract
 - **Status:** 💡 Proposed
 - **Priority:** 🟠 P1 - High
-- As an automation user when consuming `--json` outputs for domain-level workflows
+- As an automation user when consuming `--as-json` outputs for domain-level workflows
 - I want each domain entry to include all domain-document sections needed to reconstruct context, including `scope` and domain-level `body` aligned to RQMD-CORE-019
 - So that machine consumers do not need to re-parse markdown to recover domain context beyond requirement rows.
-- So that `--json` responses expose deterministic keys/order for domain metadata and preserve domain `body` content verbatim when present.
+- So that `--as-json` responses expose deterministic keys/order for domain metadata and preserve domain `body` content verbatim when present.
 
 ### RQMD-AUTOMATION-027: ReqID list input mode
 - **Status:** 💡 Proposed
@@ -227,11 +227,11 @@ Summary: 10💡 10🔧 10✅ 0⛔ 0🗑️
 - **Status:** 💡 Proposed
 - **Priority:** 🟠 P1 - High
 - As an automation user when filtering requirements within subsections
-- I want a `--filter-sub-domain <NAME>` flag to filter results by subsection
-- So that similar to `--filter-status`, only requirements matching the subsection name are included
-- So that matching is case-insensitive prefix-based (e.g., `--filter-sub-domain api` matches "API", "api-v1", etc.)
-- So that subsection filtering works with `--tree`, `--json`, `--no-summary-table`, and `--list` output modes
-- So that in `--json` mode, filter context metadata includes the active `sub_domain` filter
+- I want a `--sub-domain <NAME>` flag to filter results by subsection
+- So that similar to `--status`, only requirements matching the subsection name are included
+- So that matching is case-insensitive prefix-based (e.g., `--sub-domain api` matches "API", "api-v1", etc.)
+- So that subsection filtering works with `--as-tree`, `--as-json`, `--no-table`, and `--as-list` output modes
+- So that in `--as-json` mode, filter context metadata includes the active `sub_domain` filter
 - So that empty results are handled consistently with other filter modes.
 
 ### RQMD-AUTOMATION-030: Sub-domain metadata in JSON output
@@ -241,5 +241,5 @@ Summary: 10💡 10🔧 10✅ 0⛔ 0🗑️
 - I want each requirement entry to include a `sub_domain` field (string or null)
 - So that metadata consumers can understand and reconstruct subsection structure
 - So that domain-level JSON includes an optional `sub_sections` array listing available H2 section names and their requirement counts
-- So that `--filter-sub-domain` metadata in JSON output includes the filter name and matching count
+- So that `--sub-domain` metadata in JSON output includes the filter name and matching count
 - So that schema documentation clearly specifies the null-vs-absent distinction for `sub_domain` and `sub_sections`.

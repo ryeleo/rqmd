@@ -25,7 +25,7 @@ bash scripts/local-smoke.sh
 
 - tests/test_core_engine.py:
   - RQMD-CORE-001..012, RQMD-CORE-014, RQMD-CORE-015
-  - Includes RQMD-CORE-006 (five-status summary order), RQMD-CORE-009 missing-docs init flow (`--yes`), RQMD-CORE-011/012 init scaffold behavior, and init key prompt/default handling
+  - Includes RQMD-CORE-006 (five-status summary order), RQMD-CORE-009 missing-docs init flow (`--force-yes`), RQMD-CORE-011/012 init scaffold behavior, and init key prompt/default handling
 - tests/test_automation_api.py:
   - RQMD-AUTOMATION-001..009 fully verified
   - RQMD-ROLLUP-001, RQMD-ROLLUP-005, RQMD-ROLLUP-007
@@ -36,7 +36,7 @@ bash scripts/local-smoke.sh
   - Includes default interactive entry, single-key navigation, paging, next/prev history, direct lookup, reason prompts, write-permission preflight, sort strategies, refresh preservation, active-column indicators, and legend direction updates
 - tests/test_priority_features.py:
   - RQMD-PRIORITY-004..007, RQMD-PRIORITY-009
-  - Includes `--set-priority`, `--priority-mode`, `--filter-priority`, `--init-priorities`, priority summary generation, and priority sorting entry points
+  - Includes `--update-priority`, `--focus-priority`, `--priority`, `--seed-priorities`, priority summary generation, and priority sorting entry points
 - tests/test_portability_packaging_docs.py:
   - RQMD-PORTABILITY-001..005, RQMD-PORTABILITY-008..010, RQMD-PORTABILITY-014
   - RQMD-PACKAGING-001..009
@@ -45,6 +45,6 @@ bash scripts/local-smoke.sh
 ## Notes
 
 - Proposed requirements are intentionally not treated as hard pass/fail requirements in this suite.
-- Header IDs can use AC/R/RQMD defaults, custom prefixes via `--id-prefix`, or auto-detection from requirements index + linked domain docs.
+- Header IDs can use AC/R/RQMD defaults, custom prefixes via `--id-namespace`, or auto-detection from requirements index + linked domain docs.
 - This suite is designed to be copied with the package to new repositories.
 - CI workflow: `.github/workflows/pytest.yml` runs this suite on push and pull_request.

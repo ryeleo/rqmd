@@ -17,7 +17,7 @@ from pathlib import Path
 
 from .constants import (BLOCKED_REASON_PATTERN, DEFAULT_ID_PREFIXES,
                         DEPRECATED_REASON_PATTERN, FLAGGED_PATTERN,
-                        GENERIC_CRITERION_HEADER_PATTERN,
+                        GENERIC_REQUIREMENT_HEADER_PATTERN,
                         H2_SUBSECTION_PATTERN, ID_PREFIX_PATTERN,
                         MARKDOWN_LINK_PATTERN, PRIORITY_PATTERN,
                         REQUIREMENTS_INDEX_NAME, STATUS_PATTERN)
@@ -26,7 +26,7 @@ from .status_model import coerce_status_label
 
 
 @lru_cache(maxsize=None)
-def build_criterion_header_pattern(id_prefixes: tuple[str, ...]) -> re.Pattern[str]:
+def build_requirement_header_pattern(id_prefixes: tuple[str, ...]) -> re.Pattern[str]:
     """Build a compiled regex pattern for matching requirement headers.
 
     Args:
@@ -79,7 +79,7 @@ def normalize_id_prefixes(raw_prefixes: tuple[str, ...] | list[str] | None) -> t
     return tuple(prefixes)
 
 
-def detect_id_prefixes_from_requirements_index(repo_root: Path, criteria_dir_input: str) -> tuple[str, ...]:
+def detect_id_prefixes_from_requirements_index(repo_root: Path, requirements_dir_input: str) -> tuple[str, ...]:
     """Auto-detect requirement ID prefixes by scanning the index and linked documents.
 
     Reads the requirements index (README.md) and scans referenced markdown files
@@ -87,12 +87,12 @@ def detect_id_prefixes_from_requirements_index(repo_root: Path, criteria_dir_inp
 
     Args:
         repo_root: Root path of the project.
-        criteria_dir_input: Path to the requirements directory.
+        requirements_dir_input: Path to the requirements directory.
 
     Returns:
         Tuple of detected ID prefixes, or empty tuple if none found.
     """
-    criteria_dir = Path(criteria_dir_input)
+    criteria_dir = Path(requirements_dir_input)
     if not criteria_dir.is_absolute():
         criteria_dir = (repo_root / criteria_dir).resolve()
 
@@ -116,7 +116,7 @@ def detect_id_prefixes_from_requirements_index(repo_root: Path, criteria_dir_inp
 
     def scan_markdown_for_prefixes(text: str) -> None:
         for line in text.splitlines():
-            match = GENERIC_CRITERION_HEADER_PATTERN.match(line)
+            match = GENERIC_REQUIREMENT_HEADER_PATTERN.match(line)
             if match:
                 add_prefix(match.group("prefix"))
 
@@ -155,7 +155,7 @@ def detect_id_prefixes_from_requirements_index(repo_root: Path, criteria_dir_inp
 
 def resolve_id_prefixes(
     repo_root: Path,
-    criteria_dir_input: str,
+    requirements_dir_input: str,
     raw_prefixes: tuple[str, ...] | list[str] | None,
 ) -> tuple[str, ...]:
     """Resolve requirement ID prefixes with fallback strategy.
@@ -167,7 +167,7 @@ def resolve_id_prefixes(
 
     Args:
         repo_root: Root path of the project.
-        criteria_dir_input: Path to the requirements directory.
+        requirements_dir_input: Path to the requirements directory.
         raw_prefixes: Explicitly provided prefixes (optional).
 
     Returns:
@@ -176,7 +176,7 @@ def resolve_id_prefixes(
     if raw_prefixes:
         return normalize_id_prefixes(raw_prefixes)
 
-    detected = detect_id_prefixes_from_requirements_index(repo_root, criteria_dir_input)
+    detected = detect_id_prefixes_from_requirements_index(repo_root, requirements_dir_input)
     if detected:
         return detected
 
@@ -201,7 +201,7 @@ def collect_sub_sections(
     ordered: list[str] = []
     counts: dict[str, dict[str, object]] = {}
 
-    for requirement in parse_criteria(path, id_prefixes=id_prefixes):
+    for requirement in parse_requirements(path, id_prefixes=id_prefixes):
         sub_domain = display_sub_domain_name(requirement.get("sub_domain"))
         if sub_domain is None:
             continue
@@ -214,7 +214,7 @@ def collect_sub_sections(
     return [counts[key] for key in ordered]
 
 
-def parse_criteria(
+def parse_requirements(
     path: Path,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
 ) -> list[dict[str, object]]:
@@ -237,7 +237,7 @@ def parse_criteria(
     requirements: list[dict[str, object]] = []
     current: dict[str, object] | None = None
     current_subsection: str | None = None  # Track active H2 subsection
-    header_pattern = build_criterion_header_pattern(id_prefixes)
+    header_pattern = build_requirement_header_pattern(id_prefixes)
 
     for index, line in enumerate(lines):
         # Track H2 subsection headers (optional organizational structure)
@@ -307,31 +307,31 @@ def parse_criteria(
     return [requirement for requirement in requirements if requirement["status_line"] is not None]
 
 
-def find_criterion_by_id(
+def find_requirement_by_id(
     path: Path,
-    criterion_id: str,
+    requirement_id: str,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
 ) -> dict[str, object] | None:
     """Find a single requirement by ID in a markdown file.
 
     Args:
         path: Path to the markdown file.
-        criterion_id: The requirement ID to search for (case-insensitive).
+        requirement_id: The requirement ID to search for (case-insensitive).
         id_prefixes: Allowed ID prefixes for matching headers.
 
     Returns:
         The requirement dictionary if found, None otherwise.
     """
-    target = criterion_id.strip().upper()
-    for requirement in parse_criteria(path, id_prefixes=id_prefixes):
+    target = requirement_id.strip().upper()
+    for requirement in parse_requirements(path, id_prefixes=id_prefixes):
         if str(requirement["id"]).upper() == target:
             return requirement
     return None
 
 
-def extract_criterion_block(
+def extract_requirement_block(
     path: Path,
-    criterion_id: str,
+    requirement_id: str,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
 ) -> str:
     """Extract the full text block of a single requirement.
@@ -341,7 +341,7 @@ def extract_criterion_block(
 
     Args:
         path: Path to the markdown file.
-        criterion_id: The requirement ID to extract.
+        requirement_id: The requirement ID to extract.
         id_prefixes: Allowed ID prefixes for matching headers.
 
     Returns:
@@ -349,8 +349,8 @@ def extract_criterion_block(
     """
     lines = path.read_text(encoding="utf-8").splitlines()
     start_index: int | None = None
-    target = criterion_id.strip().upper()
-    header_pattern = build_criterion_header_pattern(id_prefixes)
+    target = requirement_id.strip().upper()
+    header_pattern = build_requirement_header_pattern(id_prefixes)
 
     for index, line in enumerate(lines):
         match = header_pattern.match(line)
@@ -370,16 +370,16 @@ def extract_criterion_block(
     return "\n".join(lines[start_index:end_index]).strip()
 
 
-def extract_criterion_block_with_lines(
+def extract_requirement_block_with_lines(
     path: Path,
-    criterion_id: str,
+    requirement_id: str,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
 ) -> tuple[str, int | None, int | None]:
     """Extract a requirement block and its line range.
 
     Args:
         path: Path to the markdown file.
-        criterion_id: The requirement ID to extract.
+        requirement_id: The requirement ID to extract.
         id_prefixes: Allowed ID prefixes for matching headers.
 
     Returns:
@@ -388,8 +388,8 @@ def extract_criterion_block_with_lines(
     """
     lines = path.read_text(encoding="utf-8").splitlines()
     start_index: int | None = None
-    target = criterion_id.strip().upper()
-    header_pattern = build_criterion_header_pattern(id_prefixes)
+    target = requirement_id.strip().upper()
+    header_pattern = build_requirement_header_pattern(id_prefixes)
 
     for index, line in enumerate(lines):
         match = header_pattern.match(line)
@@ -409,7 +409,7 @@ def extract_criterion_block_with_lines(
     return "\n".join(lines[start_index:end_index]).strip(), start_index, end_index - 1
 
 
-def collect_criteria_by_status(
+def collect_requirements_by_status(
     repo_root: Path,
     domain_files: list[Path],
     target_status: str,
@@ -428,14 +428,14 @@ def collect_criteria_by_status(
     """
     result: dict[Path, list[dict[str, object]]] = {}
     for path in domain_files:
-        requirements = parse_criteria(path, id_prefixes=id_prefixes)
+        requirements = parse_requirements(path, id_prefixes=id_prefixes)
         matching = [c for c in requirements if c["status"] == target_status]
         if matching:
             result[path] = matching
     return result
 
 
-def collect_criteria_by_priority(
+def collect_requirements_by_priority(
     repo_root: Path,
     domain_files: list[Path],
     target_priority: str,
@@ -454,14 +454,14 @@ def collect_criteria_by_priority(
     """
     result: dict[Path, list[dict[str, object]]] = {}
     for path in domain_files:
-        requirements = parse_criteria(path, id_prefixes=id_prefixes)
+        requirements = parse_requirements(path, id_prefixes=id_prefixes)
         matching = [c for c in requirements if c.get("priority") == target_priority]
         if matching:
             result[path] = matching
     return result
 
 
-def collect_criteria_by_flagged(
+def collect_requirements_by_flagged(
     repo_root: Path,
     domain_files: list[Path],
     flagged: bool,
@@ -480,14 +480,14 @@ def collect_criteria_by_flagged(
     """
     result: dict[Path, list[dict[str, object]]] = {}
     for path in domain_files:
-        requirements = parse_criteria(path, id_prefixes=id_prefixes)
+        requirements = parse_requirements(path, id_prefixes=id_prefixes)
         matching = [c for c in requirements if c.get("flagged") is flagged]
         if matching:
             result[path] = matching
     return result
 
 
-def collect_criteria_by_sub_domain(
+def collect_requirements_by_sub_domain(
     repo_root: Path,
     domain_files: list[Path],
     target_sub_domain: str,
@@ -512,7 +512,7 @@ def collect_criteria_by_sub_domain(
 
     result: dict[Path, list[dict[str, object]]] = {}
     for path in domain_files:
-        requirements = parse_criteria(path, id_prefixes=id_prefixes)
+        requirements = parse_requirements(path, id_prefixes=id_prefixes)
         matching = [
             c
             for c in requirements

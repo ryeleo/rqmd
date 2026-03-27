@@ -16,13 +16,13 @@ def test_RQMD_automation_001_check_only_mode_detects_needed_changes(repo_with_do
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--check",
-            "--no-interactive",
-            "--no-summary-table",
+            "--verify-summaries",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -35,15 +35,15 @@ def test_RQMD_automation_002_single_set_updates_criterion(repo_with_domain_docs:
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-requirement-id",
+            "--update-id",
             "AC-HELLO-001",
-            "--set-status",
+            "--update-status",
             "done",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
     assert result.exit_code == 0
@@ -70,17 +70,17 @@ Scope: demo.
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--id-prefix",
+            "--id-namespace",
             "R",
-            "--set-requirement-id",
+            "--update-id",
             "R-HELLO-001",
-            "--set-status",
+            "--update-status",
             "done",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -118,15 +118,15 @@ Scope: core.
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-requirement-id",
+            "--update-id",
             "TEAM-CORE-001",
-            "--set-status",
+            "--update-status",
             "Implemented",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -152,15 +152,15 @@ Scope: extra.
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set",
+            "--update",
             "AC-HELLO-001=implemented",
-            "--set",
+            "--update",
             "AC-HELLO-002=verified",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
     assert result.exit_code == 0
@@ -173,13 +173,13 @@ def test_RQMD_automation_003b_repeatable_set_rejects_removed_legacy_status(repo_
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set",
+            "--update",
             "AC-HELLO-001=desktop-verified",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -198,13 +198,13 @@ def test_RQMD_automation_004_and_005_set_file_jsonl_with_alias_keys(repo_with_do
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-file",
+            "--update-file",
             str(update_file),
-            "--no-summary-table",
+            "--no-table",
         ],
     )
     assert result.exit_code == 0
@@ -213,7 +213,7 @@ def test_RQMD_automation_004_and_005_set_file_jsonl_with_alias_keys(repo_with_do
     assert "**Blocked:** Pending" in text
 
 
-@pytest.mark.parametrize("key_name", ["criterion_id", "id", "req_id", "requirement_id", "r_id"])
+@pytest.mark.parametrize("key_name", ["requirement_id", "id", "req_id", "requirement_id", "r_id"])
 def test_RQMD_automation_005b_set_file_accepts_all_id_alias_keys(
     repo_with_domain_docs: Path,
     tmp_path: Path,
@@ -227,13 +227,13 @@ def test_RQMD_automation_005b_set_file_accepts_all_id_alias_keys(
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-file",
+            "--update-file",
             str(update_file),
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -244,23 +244,23 @@ def test_RQMD_automation_005b_set_file_accepts_all_id_alias_keys(
 
 def test_RQMD_automation_004b_set_file_csv_and_tsv_apply_rows(repo_with_domain_docs: Path, tmp_path: Path) -> None:
     csv_file = tmp_path / "updates.csv"
-    csv_file.write_text("criterion_id,status\nAC-HELLO-001,blocked\n", encoding="utf-8")
+    csv_file.write_text("requirement_id,status\nAC-HELLO-001,blocked\n", encoding="utf-8")
 
     tsv_file = tmp_path / "updates.tsv"
-    tsv_file.write_text("criterion_id\tstatus\nAC-HELLO-001\tverified\n", encoding="utf-8")
+    tsv_file.write_text("requirement_id\tstatus\nAC-HELLO-001\tverified\n", encoding="utf-8")
 
     runner = CliRunner()
 
     csv_result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-file",
+            "--update-file",
             str(csv_file),
-            "--no-summary-table",
+            "--no-table",
         ],
     )
     assert csv_result.exit_code == 0
@@ -270,13 +270,13 @@ def test_RQMD_automation_004b_set_file_csv_and_tsv_apply_rows(repo_with_domain_d
     tsv_result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-file",
+            "--update-file",
             str(tsv_file),
-            "--no-summary-table",
+            "--no-table",
         ],
     )
     assert tsv_result.exit_code == 0
@@ -295,13 +295,13 @@ def test_RQMD_priority_009_set_file_jsonl_accepts_priority_only_rows(repo_with_d
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-file",
+            "--update-file",
             str(update_file),
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -321,13 +321,13 @@ def test_RQMD_priority_009_set_file_jsonl_applies_status_and_priority_together(r
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-file",
+            "--update-file",
             str(update_file),
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -359,13 +359,13 @@ Scope: demo.
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-file",
+            "--update-file",
             str(update_file),
-            "--no-summary-table",
+            "--no-table",
         ],
     )
 
@@ -376,19 +376,19 @@ Scope: demo.
 
 def test_RQMD_automation_006_conflicting_mode_guardrails(repo_with_domain_docs: Path, tmp_path: Path) -> None:
     update_file = tmp_path / "updates.jsonl"
-    update_file.write_text('{"criterion_id":"AC-HELLO-001","status":"done"}\n', encoding="utf-8")
+    update_file.write_text('{"requirement_id":"AC-HELLO-001","status":"done"}\n', encoding="utf-8")
 
     runner = CliRunner()
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set",
+            "--update",
             "AC-HELLO-001=done",
-            "--set-file",
+            "--update-file",
             str(update_file),
         ],
     )
@@ -402,15 +402,15 @@ def test_RQMD_automation_007_file_scope_disambiguation(two_file_repo: Path) -> N
     ambiguous = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(two_file_repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-requirement-id",
+            "--update-id",
             "AC-OVERLAP-001",
-            "--set-status",
+            "--update-status",
             "done",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
     assert ambiguous.exit_code != 0
@@ -419,17 +419,17 @@ def test_RQMD_automation_007_file_scope_disambiguation(two_file_repo: Path) -> N
     scoped = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(two_file_repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-requirement-id",
+            "--update-id",
             "AC-OVERLAP-001",
-            "--set-status",
+            "--update-status",
             "done",
-            "--file",
+            "--scope-file",
             "docs/requirements/first.md",
-            "--no-summary-table",
+            "--no-table",
         ],
     )
     assert scoped.exit_code == 0
@@ -444,15 +444,15 @@ def test_RQMD_automation_008_filtered_tree_output(repo_with_domain_docs: Path) -
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--filter-status",
+            "--status",
             "implemented",
-            "--tree",
-            "--no-interactive",
-            "--no-summary-table",
+            "--as-tree",
+            "--no-walk",
+            "--no-table",
         ],
     )
     assert result.exit_code == 0
@@ -478,15 +478,15 @@ Scope: core.
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--filter-status",
+            "--status",
             "Implemented",
-            "--tree",
-            "--no-interactive",
-            "--no-summary-table",
+            "--as-tree",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -523,15 +523,15 @@ Scope: custom.
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--filter-status",
+            "--status",
             "Implemented",
-            "--tree",
-            "--no-interactive",
-            "--no-summary-table",
+            "--as-tree",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -544,12 +544,12 @@ def test_RQMD_automation_009_no_summary_table_suppresses_table(repo_with_domain_
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-summary-table",
-            "--no-interactive",
+            "--no-table",
+            "--no-walk",
         ],
     )
     assert result.exit_code == 0
@@ -562,15 +562,15 @@ def test_RQMD_automation_008d_filtered_tree_accepts_plain_proposed_label(two_fil
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(two_file_repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--filter-status",
+            "--status",
             "proposed",
-            "--tree",
-            "--no-interactive",
-            "--no-summary-table",
+            "--as-tree",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -585,15 +585,15 @@ def test_RQMD_automation_008e_filtered_json_output_for_proposed(two_file_repo: P
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(two_file_repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--filter-status",
+            "--status",
             "proposed",
-            "--json",
-            "--no-interactive",
-            "--no-summary-table",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -615,16 +615,16 @@ def test_RQMD_automation_008e_filtered_json_output_supports_no_body(two_file_rep
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(two_file_repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--filter-status",
+            "--status",
             "proposed",
-            "--json",
-            "--no-body",
-            "--no-interactive",
-            "--no-summary-table",
+            "--as-json",
+            "--no-requirement-body",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -640,13 +640,13 @@ def test_RQMD_automation_008f_json_summary_output_without_filter_status(repo_wit
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--json",
-            "--no-interactive",
-            "--no-summary-table",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -663,14 +663,14 @@ def test_RQMD_automation_008g_json_check_mode_reports_failure(repo_with_domain_d
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--check",
-            "--json",
-            "--no-interactive",
-            "--no-summary-table",
+            "--verify-summaries",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -686,23 +686,23 @@ def test_RQMD_automation_008h_json_set_mode_reports_updates(repo_with_domain_doc
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-requirement-id",
+            "--update-id",
             "AC-HELLO-001",
-            "--set-status",
+            "--update-status",
             "verified",
-            "--json",
-            "--no-summary-table",
+            "--as-json",
+            "--no-table",
         ],
     )
 
     assert result.exit_code == 0
     payload = json.loads(result.output)
     assert payload["mode"] == "set"
-    assert payload["updates"][0]["criterion_id"] == "AC-HELLO-001"
+    assert payload["updates"][0]["requirement_id"] == "AC-HELLO-001"
     assert payload["updates"][0]["status"] == "✅ Verified"
 
 
@@ -723,13 +723,13 @@ Scope: extra.
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--rollup",
-            "--no-summary-table",
-            "--no-interactive",
+            "--totals",
+            "--no-table",
+            "--no-walk",
         ],
     )
 
@@ -745,14 +745,14 @@ def test_RQMD_rollup_005_json_mode_reports_global_totals(repo_with_domain_docs: 
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--rollup",
-            "--json",
-            "--no-summary-table",
-            "--no-interactive",
+            "--totals",
+            "--as-json",
+            "--no-table",
+            "--no-walk",
         ],
     )
 
@@ -769,14 +769,14 @@ def test_RQMD_rollup_001_json_totals_match_live_file_counts(repo_with_domain_doc
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--rollup",
-            "--json",
-            "--no-summary-table",
-            "--no-interactive",
+            "--totals",
+            "--as-json",
+            "--no-table",
+            "--no-walk",
         ],
     )
 
@@ -799,17 +799,17 @@ def test_RQMD_rollup_007_cli_rollup_map_equations_apply_in_text_mode(repo_with_d
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--rollup",
-            "--rollup-map",
+            "--totals",
+            "--totals-map",
             "C1=I+V",
-            "--rollup-map",
+            "--totals-map",
             "C2=P",
-            "--no-summary-table",
-            "--no-interactive",
+            "--no-table",
+            "--no-walk",
         ],
     )
 
@@ -838,16 +838,16 @@ def test_RQMD_rollup_007_json_mode_includes_custom_columns_from_config(repo_with
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--rollup",
-            "--config",
+            "--totals",
+            "--totals-config",
             str(config),
-            "--json",
-            "--no-summary-table",
-            "--no-interactive",
+            "--as-json",
+            "--no-table",
+            "--no-walk",
         ],
     )
 
@@ -871,18 +871,18 @@ def test_RQMD_rollup_007_cli_map_takes_precedence_over_rollup_config(repo_with_d
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--rollup",
-            "--config",
+            "--totals",
+            "--totals-config",
             str(config),
-            "--rollup-map",
+            "--totals-map",
             "FromCli=I+V",
-            "--json",
-            "--no-summary-table",
-            "--no-interactive",
+            "--as-json",
+            "--no-table",
+            "--no-walk",
         ],
     )
 
@@ -900,15 +900,15 @@ def test_RQMD_automation_010_filter_status_implemented_json_entries_match_live_r
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_root),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--filter-status",
+            "--status",
             "Implemented",
-            "--json",
-            "--no-summary-table",
-            "--no-interactive",
+            "--as-json",
+            "--no-table",
+            "--no-walk",
         ],
     )
 
@@ -932,7 +932,7 @@ def test_RQMD_automation_010_filter_status_implemented_json_entries_match_live_r
         file_path = repo_root / rel_path
         assert file_path.exists()
 
-        parsed = cli.parse_criteria(file_path, id_prefixes=id_prefixes)
+        parsed = cli.parse_requirements(file_path, id_prefixes=id_prefixes)
         matching = [item for item in parsed if str(item["id"]) == requirement_id]
         assert len(matching) == 1
         assert str(matching[0]["status"]) == "🔧 Implemented"
@@ -944,15 +944,15 @@ def test_RQMD_automation_011_filter_status_json_empty_result_has_zero_total(two_
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(two_file_repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--filter-status",
+            "--status",
             "blocked",
-            "--json",
-            "--no-interactive",
-            "--no-summary-table",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -986,15 +986,15 @@ Scope: demo.
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--filter-status",
+            "--status",
             "proposed",
-            "--json",
-            "--no-interactive",
-            "--no-summary-table",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -1015,14 +1015,14 @@ def test_RQMD_automation_023_and_024_filter_flagged_json(two_file_repo: Path) ->
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(two_file_repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--filter-flagged",
-            "--json",
-            "--no-interactive",
-            "--no-summary-table",
+            "--flagged",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -1041,14 +1041,14 @@ def test_RQMD_automation_024_filter_flagged_json_empty(two_file_repo: Path) -> N
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(two_file_repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--filter-flagged",
-            "--json",
-            "--no-interactive",
-            "--no-summary-table",
+            "--flagged",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -1090,15 +1090,15 @@ Read-only routes.
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--filter-sub-domain",
+            "--sub-domain",
             "que",
-            "--json",
-            "--no-interactive",
-            "--no-summary-table",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -1136,15 +1136,15 @@ Scope: demo.
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--filter-sub-domain",
+            "--sub-domain",
             "mutation",
-            "--json",
-            "--no-interactive",
-            "--no-summary-table",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -1180,15 +1180,15 @@ Scope: demo.
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--filter-sub-domain",
+            "--sub-domain",
             "query",
-            "--list",
-            "--no-interactive",
-            "--no-summary-table",
+            "--as-list",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -1220,13 +1220,13 @@ Scope: demo.
         cli.main,
         [
             "AC-DEMO-002",
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--list",
-            "--no-interactive",
-            "--no-summary-table",
+            "--as-list",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -1279,15 +1279,15 @@ Scope: other.
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--filter-ids-file",
+            "--targets-file",
             str(target_file),
-            "--json",
-            "--no-interactive",
-            "--no-summary-table",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -1311,13 +1311,13 @@ def test_RQMD_automation_027b_positional_target_tree_rejects_invalid_token(repo_
         cli.main,
         [
             "no-such-target",
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--tree",
-            "--no-interactive",
-            "--no-summary-table",
+            "--as-tree",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -1330,22 +1330,22 @@ def test_RQMD_automation_025_set_flagged_and_json_mode(repo_with_domain_docs: Pa
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-flagged",
+            "--update-flagged",
             "AC-HELLO-001=true",
-            "--json",
-            "--no-summary-table",
-            "--no-interactive",
+            "--as-json",
+            "--no-table",
+            "--no-walk",
         ],
     )
 
     assert result.exit_code == 0
     payload = json.loads(result.output)
     assert payload["mode"] == "set-flagged"
-    assert payload["updates"][0]["criterion_id"] == "AC-HELLO-001"
+    assert payload["updates"][0]["requirement_id"] == "AC-HELLO-001"
     assert payload["updates"][0]["flagged"] is True
 
     text = (repo_with_domain_docs / "docs" / "requirements" / "demo.md").read_text(encoding="utf-8")
@@ -1360,14 +1360,14 @@ def test_RQMD_automation_025_set_file_accepts_flagged_rows(repo_with_domain_docs
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-file",
+            "--update-file",
             str(update_file),
-            "--no-summary-table",
-            "--no-interactive",
+            "--no-table",
+            "--no-walk",
         ],
     )
 
@@ -1389,13 +1389,13 @@ def test_RQMD_automation_017_json_no_interactive_never_prompts(tmp_path: Path, m
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--json",
-            "--no-interactive",
-            "--no-summary-table",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
         ],
     )
 
@@ -1411,17 +1411,17 @@ def test_RQMD_automation_014_set_dry_run_does_not_write(repo_with_domain_docs: P
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-requirement-id",
+            "--update-id",
             "AC-HELLO-001",
-            "--set-status",
+            "--update-status",
             "verified",
             "--dry-run",
-            "--no-summary-table",
-            "--no-interactive",
+            "--no-table",
+            "--no-walk",
         ],
     )
 
@@ -1441,15 +1441,15 @@ def test_RQMD_automation_014_set_file_dry_run_does_not_write(repo_with_domain_do
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-file",
+            "--update-file",
             str(update_file),
             "--dry-run",
-            "--no-summary-table",
-            "--no-interactive",
+            "--no-table",
+            "--no-walk",
         ],
     )
 
@@ -1466,16 +1466,16 @@ def test_RQMD_automation_014_set_flagged_dry_run_json_reports_without_write(repo
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--set-flagged",
+            "--update-flagged",
             "AC-HELLO-001=true",
             "--dry-run",
-            "--json",
-            "--no-summary-table",
-            "--no-interactive",
+            "--as-json",
+            "--no-table",
+            "--no-walk",
         ],
     )
 
@@ -1492,11 +1492,11 @@ def test_RQMD_automation_009b_summary_table_uses_five_status_headers(repo_with_d
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo_with_domain_docs),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-interactive",
+            "--no-walk",
         ],
     )
 
@@ -1538,11 +1538,11 @@ Scope: bravo.
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--no-interactive",
+            "--no-walk",
         ],
     )
 
@@ -1579,13 +1579,13 @@ Scope: alpha.
     result = runner.invoke(
         cli.main,
         [
-            "--repo-root",
+            "--project-root",
             str(repo),
-            "--requirements-dir",
+            "--docs-dir",
             "docs/requirements",
-            "--sort-strategy",
+            "--sort-profile",
             "status-focus",
-            "--no-interactive",
+            "--no-walk",
         ],
     )
 

@@ -18,9 +18,9 @@ def test_RQMD_priority_003_update_priority_field(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    from rqmd.req_parser import find_criterion_by_id
+    from rqmd.req_parser import find_requirement_by_id
 
-    requirement = find_criterion_by_id(path, "AC-DEMO-001")
+    requirement = find_requirement_by_id(path, "AC-DEMO-001")
     assert requirement["priority"] is None
 
     # Add a priority
@@ -51,9 +51,9 @@ def test_RQMD_priority_003_update_existing_priority(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    from rqmd.req_parser import find_criterion_by_id
+    from rqmd.req_parser import find_requirement_by_id
 
-    requirement = find_criterion_by_id(path, "AC-DEMO-001")
+    requirement = find_requirement_by_id(path, "AC-DEMO-001")
     assert requirement["priority"] == "🟢 P3 - Low"
 
     # Change the priority
@@ -81,9 +81,9 @@ def test_RQMD_priority_003_priority_update_idempotent(tmp_path: Path) -> None:
 """
     path.write_text(original_text, encoding="utf-8")
 
-    from rqmd.req_parser import find_criterion_by_id
+    from rqmd.req_parser import find_requirement_by_id
 
-    requirement = find_criterion_by_id(path, "AC-DEMO-001")
+    requirement = find_requirement_by_id(path, "AC-DEMO-001")
 
     # Update to the same priority
     changed = update_criterion_status(
@@ -112,9 +112,9 @@ def test_RQMD_priority_003_priority_with_blocked_reason(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    from rqmd.req_parser import find_criterion_by_id
+    from rqmd.req_parser import find_requirement_by_id
 
-    requirement = find_criterion_by_id(path, "AC-DEMO-001")
+    requirement = find_requirement_by_id(path, "AC-DEMO-001")
 
     # Add priority and blocked reason when changing status
     changed = update_criterion_status(

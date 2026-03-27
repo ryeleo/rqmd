@@ -2,7 +2,7 @@
 
 This module handles parsing of various batch input formats (JSONL, CSV, TSV)
 for non-interactive bulk requirement updates. It provides functions to parse
-individual --set entries as well as batch files, with comprehensive validation
+individual --update entries as well as batch files, with comprehensive validation
 of input structure and allowed values.
 """
 
@@ -22,13 +22,13 @@ except ImportError:
 
 
 def parse_set_entry(entry: str) -> tuple[str, str]:
-    """Parse a single --set command-line entry into criterion ID and status.
+    """Parse a single --update command-line entry into criterion ID and status.
 
     Args:
         entry: A string in format 'ID=STATUS' (e.g., 'AC-001=verified').
 
     Returns:
-        A tuple of (criterion_id, status).
+        A tuple of (requirement_id, status).
 
     Raises:
         click.ClickException: If entry is malformed or missing required parts.
@@ -36,28 +36,28 @@ def parse_set_entry(entry: str) -> tuple[str, str]:
     raw = entry.strip()
     if "=" not in raw:
         raise click.ClickException(
-            f"Invalid --set value '{entry}'. Expected format ID=STATUS."
+            f"Invalid --update value '{entry}'. Expected format ID=STATUS."
         )
 
-    criterion_id, status = raw.split("=", 1)
-    criterion_id = criterion_id.strip()
+    requirement_id, status = raw.split("=", 1)
+    requirement_id = requirement_id.strip()
     status = status.strip()
-    if not criterion_id or not status:
+    if not requirement_id or not status:
         raise click.ClickException(
-            f"Invalid --set value '{entry}'. Expected format ID=STATUS."
+            f"Invalid --update value '{entry}'. Expected format ID=STATUS."
         )
 
-    return criterion_id, status
+    return requirement_id, status
 
 
 def parse_set_priority_entry(entry: str) -> tuple[str, str]:
-    """Parse a single --set-priority command-line entry into criterion ID and priority.
+    """Parse a single --update-priority command-line entry into criterion ID and priority.
 
     Args:
         entry: A string in format 'ID=PRIORITY' (e.g., 'AC-001=p0').
 
     Returns:
-        A tuple of (criterion_id, priority).
+        A tuple of (requirement_id, priority).
 
     Raises:
         click.ClickException: If entry is malformed or missing required parts.
@@ -65,28 +65,28 @@ def parse_set_priority_entry(entry: str) -> tuple[str, str]:
     raw = entry.strip()
     if "=" not in raw:
         raise click.ClickException(
-            f"Invalid --set-priority value '{entry}'. Expected format ID=PRIORITY."
+            f"Invalid --update-priority value '{entry}'. Expected format ID=PRIORITY."
         )
 
-    criterion_id, priority = raw.split("=", 1)
-    criterion_id = criterion_id.strip()
+    requirement_id, priority = raw.split("=", 1)
+    requirement_id = requirement_id.strip()
     priority = priority.strip()
-    if not criterion_id or not priority:
+    if not requirement_id or not priority:
         raise click.ClickException(
-            f"Invalid --set-priority value '{entry}'. Expected format ID=PRIORITY."
+            f"Invalid --update-priority value '{entry}'. Expected format ID=PRIORITY."
         )
 
-    return criterion_id, priority
+    return requirement_id, priority
 
 
 def parse_set_flagged_entry(entry: str) -> tuple[str, bool]:
-    """Parse a single --set-flagged command-line entry into criterion ID and boolean.
+    """Parse a single --update-flagged command-line entry into criterion ID and boolean.
 
     Args:
         entry: A string in format 'ID=true|false' (e.g., 'AC-001=true').
 
     Returns:
-        A tuple of (criterion_id, flagged_bool).
+        A tuple of (requirement_id, flagged_bool).
 
     Raises:
         click.ClickException: If entry is malformed or flagged value is not 'true'/'false'.
@@ -94,18 +94,18 @@ def parse_set_flagged_entry(entry: str) -> tuple[str, bool]:
     raw = entry.strip()
     if "=" not in raw:
         raise click.ClickException(
-            f"Invalid --set-flagged value '{entry}'. Expected format ID=true|false."
+            f"Invalid --update-flagged value '{entry}'. Expected format ID=true|false."
         )
 
-    criterion_id, flagged_raw = raw.split("=", 1)
-    criterion_id = criterion_id.strip()
+    requirement_id, flagged_raw = raw.split("=", 1)
+    requirement_id = requirement_id.strip()
     flagged_value = flagged_raw.strip().lower()
-    if not criterion_id or flagged_value not in {"true", "false"}:
+    if not requirement_id or flagged_value not in {"true", "false"}:
         raise click.ClickException(
-            f"Invalid --set-flagged value '{entry}'. Expected format ID=true|false."
+            f"Invalid --update-flagged value '{entry}'. Expected format ID=true|false."
         )
 
-    return criterion_id, flagged_value == "true"
+    return requirement_id, flagged_value == "true"
 
 
 def parse_batch_update_file(repo_root: Path, file_path_input: str) -> list[dict[str, str | None]]:
@@ -119,7 +119,7 @@ def parse_batch_update_file(repo_root: Path, file_path_input: str) -> list[dict[
         file_path_input: Path to the batch file (absolute or repo-relative).
 
     Returns:
-        A list of update dictionaries, each containing criterion_id and optional
+        A list of update dictionaries, each containing requirement_id and optional
         status, priority, flagged, file, blocked_reason, and deprecated_reason.
 
     Raises:
@@ -130,7 +130,7 @@ def parse_batch_update_file(repo_root: Path, file_path_input: str) -> list[dict[
         path = (repo_root / file_path_input).resolve()
 
     if not path.exists() or not path.is_file():
-        raise click.ClickException(f"--set-file path not found: {file_path_input}")
+        raise click.ClickException(f"--update-file path not found: {file_path_input}")
 
     suffix = path.suffix.lower()
     if suffix == ".jsonl":
@@ -139,14 +139,14 @@ def parse_batch_update_file(repo_root: Path, file_path_input: str) -> list[dict[
         delimiter = "\t" if suffix == ".tsv" else ","
         return parse_batch_update_csv(path, delimiter=delimiter)
 
-    raise click.ClickException("--set-file must end with .jsonl, .csv, or .tsv")
+    raise click.ClickException("--update-file must end with .jsonl, .csv, or .tsv")
 
 
 def parse_batch_update_jsonl(path: Path) -> list[dict[str, str | None]]:
     """Parse JSONL (JSON Lines) batch update file.
 
     Each line should be a JSON object with keys like:
-    - criterion_id/requirement_id/id/req_id/r_id: The requirement identifier (required)
+    - requirement_id/requirement_id/id/req_id/r_id: The requirement identifier (required)
     - status: New status value (optional)
     - priority: New priority value (optional)
     - flagged: Boolean flag value 'true' or 'false' (optional)
@@ -181,8 +181,8 @@ def parse_batch_update_jsonl(path: Path) -> list[dict[str, str | None]]:
                     f"Invalid JSONL object at {path}:{line_number}: expected object"
                 )
 
-            criterion_id = str(
-                record.get("criterion_id")
+            requirement_id = str(
+                record.get("requirement_id")
                 or record.get("requirement_id")
                 or record.get("id")
                 or record.get("req_id")
@@ -198,9 +198,9 @@ def parse_batch_update_jsonl(path: Path) -> list[dict[str, str | None]]:
                 )
             flagged = (flagged_value == "true") if flagged_value is not None else None
 
-            if not criterion_id or (status is None and priority is None and flagged is None):
+            if not requirement_id or (status is None and priority is None and flagged is None):
                 raise click.ClickException(
-                    f"Invalid JSONL row at {path}:{line_number}: requires criterion_id/requirement_id/id/req_id/r_id and at least one of status, priority, or flagged"
+                    f"Invalid JSONL row at {path}:{line_number}: requires requirement_id/requirement_id/id/req_id/r_id and at least one of status, priority, or flagged"
                 )
 
             file_filter = str(record.get("file") or "").strip() or None
@@ -209,7 +209,7 @@ def parse_batch_update_jsonl(path: Path) -> list[dict[str, str | None]]:
 
             updates.append(
                 {
-                    "criterion_id": criterion_id,
+                    "requirement_id": requirement_id,
                     "status": status,
                     "priority": priority,
                     "flagged": flagged,
@@ -220,7 +220,7 @@ def parse_batch_update_jsonl(path: Path) -> list[dict[str, str | None]]:
             )
 
     if not updates:
-        raise click.ClickException(f"--set-file contains no update rows: {path}")
+        raise click.ClickException(f"--update-file contains no update rows: {path}")
 
     return updates
 
@@ -229,7 +229,7 @@ def parse_batch_update_csv(path: Path, delimiter: str = ",") -> list[dict[str, s
     """Parse CSV or TSV batch update file using DictReader.
 
     Expected header columns (case-insensitive, flexible):
-    - criterion_id/requirement_id/id/req_id/r_id: The requirement identifier (required)
+    - requirement_id/requirement_id/id/req_id/r_id: The requirement identifier (required)
     - status: New status value (optional)
     - priority: New priority value (optional)
     - flagged: Boolean 'true' or 'false' (optional)
@@ -253,8 +253,8 @@ def parse_batch_update_csv(path: Path, delimiter: str = ",") -> list[dict[str, s
             raise click.ClickException(f"Invalid CSV/TSV at {path}: missing header row")
 
         for line_number, row in enumerate(reader, start=2):
-            criterion_id = str(
-                row.get("criterion_id")
+            requirement_id = str(
+                row.get("requirement_id")
                 or row.get("requirement_id")
                 or row.get("id")
                 or row.get("req_id")
@@ -270,9 +270,9 @@ def parse_batch_update_csv(path: Path, delimiter: str = ",") -> list[dict[str, s
                 )
             flagged = (flagged_value == "true") if flagged_value is not None else None
 
-            if not criterion_id or (status is None and priority is None and flagged is None):
+            if not requirement_id or (status is None and priority is None and flagged is None):
                 raise click.ClickException(
-                    f"Invalid CSV/TSV row at {path}:{line_number}: requires criterion_id/requirement_id/id/req_id/r_id and at least one of status, priority, or flagged columns"
+                    f"Invalid CSV/TSV row at {path}:{line_number}: requires requirement_id/requirement_id/id/req_id/r_id and at least one of status, priority, or flagged columns"
                 )
 
             file_filter = str(row.get("file") or "").strip() or None
@@ -281,7 +281,7 @@ def parse_batch_update_csv(path: Path, delimiter: str = ",") -> list[dict[str, s
 
             updates.append(
                 {
-                    "criterion_id": criterion_id,
+                    "requirement_id": requirement_id,
                     "status": status,
                     "priority": priority,
                     "flagged": flagged,
@@ -292,6 +292,6 @@ def parse_batch_update_csv(path: Path, delimiter: str = ",") -> list[dict[str, s
             )
 
     if not updates:
-        raise click.ClickException(f"--set-file contains no update rows: {path}")
+        raise click.ClickException(f"--update-file contains no update rows: {path}")
 
     return updates

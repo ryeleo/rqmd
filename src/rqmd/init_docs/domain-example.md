@@ -30,7 +30,7 @@ This section demonstrates basic requirement structure. You can delete this subse
 You can organize requirements under H2 headers (subsections). This subsection demonstrates:
 - Grouping related requirements
 - Adding optional subsection-level narrative and guidance
-- Enabling `--filter-sub-domain` filtering and tab-completion by subsection name
+- Enabling `--sub-domain` filtering and tab-completion by subsection name
 
 ### {{STARTER_PREFIX}}-HELLO-004: First requirement in subsection
 - **Status:** Proposed
@@ -39,4 +39,4 @@ You can organize requirements under H2 headers (subsections). This subsection de
 
 ### {{STARTER_PREFIX}}-HELLO-005: Second requirement in subsection
 - **Status:** Proposed
-- Also in "Optional Subsections" — see `--filter-sub-domain Optional` to list only these.
+- Also in "Optional Subsections" — see `--sub-domain Optional` to list only these.

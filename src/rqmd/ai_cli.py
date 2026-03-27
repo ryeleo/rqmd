@@ -26,19 +26,12 @@ except ImportError:
     sys.exit(1)
 
 from .batch_inputs import parse_set_entry
-from .markdown_io import (
-    discover_project_root,
-    format_path_display,
-    iter_domain_files,
-    resolve_criteria_dir,
-    validate_files_readable,
-)
-from .req_parser import (
-    extract_criterion_block_with_lines,
-    normalize_id_prefixes,
-    parse_criteria,
-    resolve_id_prefixes,
-)
+from .markdown_io import (discover_project_root, format_path_display,
+                          iter_domain_files, resolve_requirements_dir,
+                          validate_files_readable)
+from .req_parser import (extract_requirement_block_with_lines,
+                         normalize_id_prefixes, parse_requirements,
+                         resolve_id_prefixes)
 from .status_model import normalize_status_input
 from .status_update import apply_status_change_by_id
 
@@ -53,16 +46,16 @@ def _build_guide_payload(repo_root: Path, requirements_dir: Path, read_only: boo
         "repo_root": str(repo_root),
         "requirements_dir": format_path_display(requirements_dir, repo_root),
         "workflow": [
-            "Export context with --export-id/--export-status/--export-file.",
-            "Draft updates using --set ID=STATUS without --apply to preview.",
-            "Apply only after review by adding --apply.",
+            "Export context with --dump-id/--dump-status/--dump-file.",
+            "Draft updates using --update ID=STATUS without --write to preview.",
+            "Apply only after review by adding --write.",
         ],
         "examples": [
-            "rqmd-ai --json --export-status proposed",
-            "rqmd-ai --json --export-id RQMD-CORE-001 --include-body",
-            "rqmd-ai --json --export-file ai-cli.md --include-domain-body",
-            "rqmd-ai --set RQMD-CORE-001=implemented",
-            "rqmd-ai --set RQMD-CORE-001=implemented --apply",
+            "rqmd-ai --as-json --dump-status proposed",
+            "rqmd-ai --as-json --dump-id RQMD-CORE-001 --include-requirement-body",
+            "rqmd-ai --as-json --dump-file ai-cli.md --include-domain-markdown",
+            "rqmd-ai --update RQMD-CORE-001=implemented",
+            "rqmd-ai --update RQMD-CORE-001=implemented --write",
         ],
     }
 
@@ -235,7 +228,7 @@ def _export_context(
                 allowed_file_paths.update(basename_matches)
                 continue
 
-            raise click.ClickException(f"Unknown --export-file target: {token}")
+            raise click.ClickException(f"Unknown --dump-file target: {token}")
 
     files_payload: list[dict[str, object]] = []
     total = 0
@@ -243,7 +236,7 @@ def _export_context(
         if allowed_file_paths is not None and path not in allowed_file_paths:
             continue
 
-        requirements = parse_criteria(path, id_prefixes=id_prefixes)
+        requirements = parse_requirements(path, id_prefixes=id_prefixes)
         entries: list[dict[str, object]] = []
         for requirement in requirements:
             req_id = str(requirement["id"])
@@ -261,7 +254,7 @@ def _export_context(
                 "sub_domain": requirement.get("sub_domain"),
             }
             if include_body:
-                block, start_line, end_line = extract_criterion_block_with_lines(
+                block, start_line, end_line = extract_requirement_block_with_lines(
                     path,
                     req_id,
                     id_prefixes=id_prefixes,
@@ -323,7 +316,7 @@ def _plan_or_apply_updates(
             changed = apply_status_change_by_id(
                 repo_root=repo_root,
                 domain_files=domain_files,
-                criterion_id=req_id,
+                requirement_id=req_id,
                 new_status_input=status_input,
                 file_filter=file_scope,
                 id_prefixes=id_prefixes,
@@ -369,48 +362,51 @@ def _plan_or_apply_updates(
 
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
-@click.option("--json", "json_output", is_flag=True, help="Emit machine-readable JSON output.")
-@click.option("--guide", is_flag=True, help="Print onboarding guidance for rqmd-ai workflows.")
+@click.option("--as-json", "json_output", is_flag=True, help="Emit machine-readable JSON output.")
+@click.option("--show-guide", "guide", is_flag=True, help="Print onboarding guidance for rqmd-ai workflows.")
 @click.option(
-    "--repo-root",
+    "--project-root",
+    "repo_root",
     type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
     default=Path("."),
     show_default=True,
     help="Project root containing requirement documentation.",
 )
 @click.option(
-    "--requirements-dir",
+    "--docs-dir",
     "requirements_dir",
     type=str,
     default=None,
-    help="Directory (absolute or relative to --repo-root) containing requirement markdown files.",
+    help="Directory (absolute or relative to --project-root) containing requirement markdown files.",
 )
 @click.option(
-    "--id-prefix",
+    "--id-namespace",
     "id_prefixes",
     multiple=True,
     default=(),
     help="Allowed requirement ID prefixes. Repeat or comma-separate values.",
 )
-@click.option("--export-id", "export_ids", multiple=True, default=(), help="Export requirement context for one or more IDs.")
-@click.option("--export-file", "export_files", multiple=True, default=(), help="Export context only from one or more domain files.")
-@click.option("--export-status", type=str, default=None, help="Export context filtered by status label or slug.")
-@click.option("--include-body/--no-include-body", default=True, help="Include requirement body markdown in exports.")
+@click.option("--dump-id", "export_ids", multiple=True, default=(), help="Export requirement context for one or more IDs.")
+@click.option("--dump-file", "export_files", multiple=True, default=(), help="Export context only from one or more domain files.")
+@click.option("--dump-status", "export_status", type=str, default=None, help="Export context filtered by status label or slug.")
+@click.option("--include-requirement-body/--no-include-requirement-body", "include_body", default=True, help="Include requirement body markdown in exports.")
 @click.option(
-    "--include-domain-body/--no-include-domain-body",
+    "--include-domain-markdown/--no-include-domain-markdown",
+    "include_domain_body",
     default=False,
     help="Include optional domain-level body content in export payloads.",
 )
 @click.option(
-    "--max-domain-body-chars",
+    "--max-domain-markdown-chars",
+    "max_domain_body_chars",
     type=click.IntRange(min=1),
     default=4000,
     show_default=True,
     help="Maximum characters per exported domain-body markdown block.",
 )
-@click.option("--set", "set_entries", multiple=True, default=(), help="Planned status update in ID=STATUS format.")
-@click.option("--file", "file_scope", type=str, default=None, help="Optional file scope used with --set/--apply.")
-@click.option("--apply", is_flag=True, help="Apply planned updates. Without this flag rqmd-ai remains read-only.")
+@click.option("--update", "set_entries", multiple=True, default=(), help="Planned status update in ID=STATUS format.")
+@click.option("--scope-file", "file_scope", type=str, default=None, help="Optional file scope used with --update/--write.")
+@click.option("--write", "apply", is_flag=True, help="Apply planned updates. Without this flag rqmd-ai remains read-only.")
 def main(
     json_output: bool,
     guide: bool,
@@ -428,7 +424,7 @@ def main(
     apply: bool,
 ) -> None:
     repo_root = _resolve_repo_root(repo_root)
-    resolved_criteria_dir, _message = resolve_criteria_dir(repo_root, requirements_dir)
+    resolved_criteria_dir, _message = resolve_requirements_dir(repo_root, requirements_dir)
     try:
         resolved_prefixes_input = normalize_id_prefixes(id_prefixes) if id_prefixes else id_prefixes
         id_prefixes = resolve_id_prefixes(repo_root, str(resolved_criteria_dir), resolved_prefixes_input)
@@ -443,7 +439,7 @@ def main(
     validate_files_readable(domain_files, repo_root)
 
     if apply and not set_entries:
-        raise click.ClickException("rqmd-ai --apply requires at least one --set ID=STATUS update.")
+        raise click.ClickException("rqmd-ai --write requires at least one --update ID=STATUS update.")
 
     if guide:
         _emit(_build_guide_payload(repo_root, resolved_criteria_dir, read_only=(not apply)), json_output=json_output)
