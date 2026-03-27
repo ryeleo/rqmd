@@ -98,8 +98,9 @@ from .menus import (apply_background_preserving_styles,
                     file_sort_key_by_priority, select_from_menu)
 from .priority_model import normalize_priority_input
 from .rollup_config import compute_rollup_column_values, resolve_rollup_columns
-from .status_model import (build_color_rollup_text, normalize_status_input,
-                           style_status_count, style_status_label)
+from .status_model import (build_color_rollup_text, configure_status_catalog,
+                           normalize_status_input, style_status_count,
+                           style_status_label)
 from .status_update import (apply_status_change_by_id, print_criterion_panel,
                             prompt_for_blocked_reason,
                             prompt_for_deprecated_reason,
@@ -579,6 +580,11 @@ def main(
     try:
         config = load_config(repo_root)
         validate_config(config)
+    except ValueError as exc:
+        raise click.ClickException(f"Config error: {exc}") from exc
+
+    try:
+        configure_status_catalog(config.get("statuses"))
     except ValueError as exc:
         raise click.ClickException(f"Config error: {exc}") from exc
 
@@ -1247,6 +1253,47 @@ def main(
         if json_output:
             payload = build_summary_payload(repo_root, resolved_criteria_dir, domain_files, sorted(changed_files))
             payload["dry_run"] = dry_run
+            if set_priority_updates and not set_updates and not set_flagged_updates:
+                payload["mode"] = "set-priority"
+            elif set_flagged_updates and not set_updates and not set_priority_updates:
+                payload["mode"] = "set-flagged"
+            else:
+                payload["mode"] = "set"
+            payload["updates"] = update_results
+            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            raise SystemExit(0)
+
+        if summary_table:
+            print_summary_table(table_rows, emoji_columns=emoji_columns)
+        raise SystemExit(0)
+
+    if json_output:
+        payload = dict(summary_payload)
+        payload["ok"] = True
+        click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+        raise SystemExit(0)
+
+    if interactive and not check:
+        # RQMD-INTERACTIVE-011: preflight write-permission gate
+        check_files_writable(domain_files, repo_root)
+        raise SystemExit(
+            interactive_update_loop(
+                repo_root,
+                resolved_criteria_dir_input,
+                domain_files,
+                emoji_columns=emoji_columns,
+                sort_files=False,
+                sort_strategy=sort_strategy,
+                id_prefixes=id_prefixes,
+                include_status_emojis=include_status_emojis,
+                priority_mode=priority_mode,
+                include_priority_summary=show_priority_summary,
+            )
+        )
+
+
+if __name__ == "__main__":
+    main()            payload["dry_run"] = dry_run
             if set_priority_updates and not set_updates and not set_flagged_updates:
                 payload["mode"] = "set-priority"
             elif set_flagged_updates and not set_updates and not set_priority_updates:

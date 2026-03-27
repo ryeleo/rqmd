@@ -3,13 +3,13 @@
 Scope: individual gong-button rendering, interactivity, visual feedback, and audio-visual response behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 12💡 3🔧 1✅ 0⛔ 1🗑️
+Summary: 12💡 3🔧 0💻 0🎮 1✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ## Visual Representation
 
 ### AC-GONGBUTTON-VIS-001: Gong button visual vs. placeholder
-- **Status:** ✅ Verified
+- **Status:** ✅ Done
 - Given UI targets are created for menu or interactive contexts
 - When those targets are rendered
 - Then they are displayed using authentic gong-button visuals

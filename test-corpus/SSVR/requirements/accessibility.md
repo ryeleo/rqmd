@@ -3,7 +3,7 @@
 Scope: assistive features, input accommodations, sensory options, and inclusive gameplay modes.
 
 <!-- acceptance-status-summary:start -->
-Summary: 6💡 0🔧 0✅ 0⛔ 0🗑️
+Summary: 6💡 0🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ## Input Accessibility

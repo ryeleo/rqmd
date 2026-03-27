@@ -3,7 +3,7 @@
 Scope: ephemeral firearm calibration stages, playable/scorable aim-adjust modes, and easter-egg stage behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 11💡 0🔧 0✅ 0⛔ 0🗑️
+Summary: 11💡 0🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ## Stage Behavior

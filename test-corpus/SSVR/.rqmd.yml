@@ -3,7 +3,7 @@ statuses:
   - name: Proposed
     shortcode: P
     emoji: "💡"
-  - name: Implemented7
+  - name: Implemented
     shortcode: I
     emoji: "🔧"
   - name: Desktop-Verified

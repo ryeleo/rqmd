@@ -3,7 +3,7 @@
 Scope: bay layout, surface theming, target arrangement, and bay-level procedural variations.
 
 <!-- acceptance-status-summary:start -->
-Summary: 9💡 0🔧 0✅ 0⛔ 0🗑️
+Summary: 9💡 0🔧 0💻 0🎮 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ## Bay Structure
