@@ -15,13 +15,21 @@ import re
 from functools import lru_cache
 from pathlib import Path
 
-from .constants import (BLOCKED_REASON_PATTERN, DEFAULT_ID_PREFIXES,
-                        DEPRECATED_REASON_PATTERN, FLAGGED_PATTERN,
-                        GENERIC_REQUIREMENT_HEADER_PATTERN,
-                        H2_SUBSECTION_PATTERN, ID_PREFIX_PATTERN,
-                        LINK_ITEM_PATTERN, LINKS_HEADER_PATTERN,
-                        MARKDOWN_LINK_PATTERN, PRIORITY_PATTERN,
-                        REQUIREMENTS_INDEX_NAME, STATUS_PATTERN)
+from .constants import (
+    BLOCKED_REASON_PATTERN,
+    DEFAULT_ID_PREFIXES,
+    DEPRECATED_REASON_PATTERN,
+    FLAGGED_PATTERN,
+    GENERIC_REQUIREMENT_HEADER_PATTERN,
+    H2_SUBSECTION_PATTERN,
+    ID_PREFIX_PATTERN,
+    LINK_ITEM_PATTERN,
+    LINKS_HEADER_PATTERN,
+    MARKDOWN_LINK_PATTERN,
+    PRIORITY_PATTERN,
+    REQUIREMENTS_INDEX_NAME,
+    STATUS_PATTERN,
+)
 from .priority_model import coerce_priority_label
 from .status_model import coerce_status_label
 
@@ -618,12 +626,51 @@ def collect_requirements_by_sub_domain(
     return result
 
 
+def collect_requirements_by_links(
+    repo_root: Path,
+    domain_files: list[Path],
+    has_link: bool,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+) -> dict[Path, list[dict[str, object]]]:
+    """Collect requirements by link presence across files.
+
+    Args:
+        repo_root: Root path of the project.
+        domain_files: List of domain files to scan.
+        has_link: True to include requirements with links; False for no links.
+        id_prefixes: Allowed ID prefixes for matching headers.
+
+    Returns:
+        Dictionary mapping file paths to lists of matching requirements.
+    """
+    del repo_root
+    result: dict[Path, list[dict[str, object]]] = {}
+    for path in domain_files:
+        requirements = parse_requirements(path, id_prefixes=id_prefixes)
+        if has_link:
+            matching = [
+                c
+                for c in requirements
+                if isinstance(c.get("links"), list) and len(c.get("links") or []) > 0
+            ]
+        else:
+            matching = [
+                c
+                for c in requirements
+                if not (isinstance(c.get("links"), list) and len(c.get("links") or []) > 0)
+            ]
+        if matching:
+            result[path] = matching
+    return result
+
+
 def collect_requirements_by_filters(
     repo_root: Path,
     domain_files: list[Path],
     status_filters: tuple[str, ...] = (),
     priority_filters: tuple[str, ...] = (),
     flagged_filters: tuple[bool, ...] = (),
+    link_filters: tuple[bool, ...] = (),
     sub_domain_filters: tuple[str, ...] = (),
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
 ) -> dict[Path, list[dict[str, object]]]:
@@ -640,9 +687,10 @@ def collect_requirements_by_filters(
     has_status = bool(status_filters)
     has_priority = bool(priority_filters)
     has_flagged = bool(flagged_filters)
+    has_links = bool(link_filters)
     has_sub_domain = bool(normalized_sub_domains)
 
-    if not (has_status or has_priority or has_flagged or has_sub_domain):
+    if not (has_status or has_priority or has_flagged or has_links or has_sub_domain):
         return {}
 
     result: dict[Path, list[dict[str, object]]] = {}
@@ -673,6 +721,15 @@ def collect_requirements_by_filters(
 
                 matches_flagged = all(_flagged_match(value) for value in flagged_filters)
 
+            matches_links = False
+            if has_links:
+                req_has_links = isinstance(requirement.get("links"), list) and len(requirement.get("links") or []) > 0
+
+                def _link_match(value: bool) -> bool:
+                    return req_has_links is value
+
+                matches_links = all(_link_match(value) for value in link_filters)
+
             matches_sub_domain = False
             if has_sub_domain:
                 req_sub_domain = normalize_sub_domain_name(requirement.get("sub_domain"))
@@ -680,7 +737,7 @@ def collect_requirements_by_filters(
                     req_sub_domain.startswith(value) for value in normalized_sub_domains
                 )
 
-            if matches_status or matches_priority or matches_flagged or matches_sub_domain:
+            if matches_status or matches_priority or matches_flagged or matches_links or matches_sub_domain:
                 matching.append(requirement)
 
         if matching:

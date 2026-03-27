@@ -5,7 +5,6 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-
 from rqmd import cli
 
 
@@ -1460,6 +1459,179 @@ Scope: demo.
     assert payload["mode"] == "filter-combined"
     assert payload["filters"]["flagged"] is False
     # OR-across-flags: implemented item OR unflagged items
+    ids = [entry["id"] for entry in payload["files"][0]["requirements"]]
+    assert ids == ["AC-DEMO-001", "AC-DEMO-002", "AC-DEMO-003"]
+
+
+def test_RQMD_automation_032_filter_has_link_json(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: Linked item
+- **Status:** 💡 Proposed
+- **Links:**
+  - https://example.com/ticket/1
+
+### AC-DEMO-002: Unlinked item
+- **Status:** ✅ Verified
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--has-link",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-links"
+    assert payload["links"] == {"has_link": True, "no_link": False}
+    assert payload["total"] == 1
+    requirement = payload["files"][0]["requirements"][0]
+    assert requirement["id"] == "AC-DEMO-001"
+    assert requirement["links"][0]["url"] == "https://example.com/ticket/1"
+
+
+def test_RQMD_automation_032_filter_no_link_json_includes_missing_links(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: Linked item
+- **Status:** 💡 Proposed
+- **Links:**
+  - [Ticket](https://example.com/ticket/1)
+
+### AC-DEMO-002: Unlinked item
+- **Status:** ✅ Verified
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--no-link",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-links"
+    assert payload["links"] == {"has_link": False, "no_link": True}
+    assert payload["total"] == 1
+    requirement = payload["files"][0]["requirements"][0]
+    assert requirement["id"] == "AC-DEMO-002"
+    assert "links" not in requirement
+
+
+def test_RQMD_automation_032_has_link_and_no_link_are_mutually_exclusive(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: Item
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--has-link",
+            "--no-link",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "mutually exclusive" in result.output.lower()
+
+
+def test_RQMD_automation_032_combined_filter_with_has_link(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: Linked proposed
+- **Status:** 💡 Proposed
+- **Links:**
+  - https://example.com/1
+
+### AC-DEMO-002: Linked implemented
+- **Status:** 🔧 Implemented
+- **Links:**
+  - https://example.com/2
+
+### AC-DEMO-003: Unlinked verified
+- **Status:** ✅ Verified
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--status",
+            "verified",
+            "--has-link",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-combined"
+    assert payload["filters"]["links"] is True
     ids = [entry["id"] for entry in payload["files"][0]["requirements"]]
     assert ids == ["AC-DEMO-001", "AC-DEMO-002", "AC-DEMO-003"]
 
