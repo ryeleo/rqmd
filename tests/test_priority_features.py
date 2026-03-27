@@ -5,9 +5,14 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
+
 from rqmd import cli
-from rqmd.req_parser import parse_requirements
-from rqmd.summary import (build_summary_block, collect_summary_rows,
+from rqmd.summary import (
+    build_summary_block,
+    collect_summary_rows,
+    count_priorities,
+    process_file,
+)
                           count_priorities, process_file)
 
 

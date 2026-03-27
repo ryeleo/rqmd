@@ -200,13 +200,34 @@ STATUS_LOOKUP = status_lookup()
 def _status_prefix_matches(value: str) -> list[str]:
     """Return canonical status labels matching a prefix-like input.
 
-    Matching is performed against normalized lookup keys and de-duplicated
-    canonical labels.
+    Matching is performed against canonical status forms (label/plain/slug)
+    plus parse aliases (for configured shortcodes), but excludes legacy
+    compatibility aliases.
     """
     token = status_key(value)
     if not token:
         return []
-    matches = sorted({label for key, label in STATUS_LOOKUP.items() if key.startswith(token)})
+
+    def _keys_for_label(label: str, slug: str) -> set[str]:
+        plain = label.split(" ", 1)[1] if " " in label else label
+        keys = {
+            status_key(label),
+            status_key(plain),
+            status_key(slug),
+        }
+        # Include parse aliases/shortcodes that map to this label.
+        for alias, target in STATUS_PARSE_ALIASES.items():
+            if target == label:
+                keys.add(status_key(alias))
+        return {item for item in keys if item}
+
+    matches = sorted(
+        {
+            label
+            for label, slug in STATUS_ORDER
+            if any(key.startswith(token) for key in _keys_for_label(label, slug))
+        }
+    )
     return matches
 
 

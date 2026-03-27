@@ -248,7 +248,7 @@ Summary: 10💡 11🔧 10✅ 0⛔ 0🗑️
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when typing commands quickly
-- I want all CLI argument values that support enumerations/aliases to accept their smallest differentiable token**s** and shortcodes
+- I want all CLI argument values that support enumerations/aliases to accept their smallest differentiable tokens and shortcodes
 - So that canonical labels are tokenized by whitespace-separated units and each unit is eligible for deterministic matching
 - So that `🟡 P2 - Medium` is treated as exactly 4 tokens:
 - `🟡`
