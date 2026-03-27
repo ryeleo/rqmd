@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 12💡 0🔧 10✅ 0⛔ 0🗑️
+Summary: 15💡 0🔧 10✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -149,3 +149,24 @@ Summary: 12💡 0🔧 10✅ 0⛔ 0🗑️
 - As an automation user
 - I want ambiguity failures in `--json` mode to return a stable machine-readable error payload
 - So that tools can branch on error type, inspect candidates, and auto-remediate input expansion.
+
+### RQMD-AUTOMATION-023: Filter flagged requirements
+- **Status:** 💡 Proposed
+- As an automation user
+- I want a `--filter-flagged` mode for non-interactive workflows
+- So that flagged requirements can be listed, walked, or exported without relying on status changes.
+
+### RQMD-AUTOMATION-024: JSON output for flagged items
+- **Status:** 💡 Proposed
+- As an automation user
+- I want `--filter-flagged --json` to return flagged requirements in the same stable grouped structure used by other filter modes
+- So that bots and scripts can consume focus lists consistently.
+
+### RQMD-AUTOMATION-025: Direct flagged-state mutation
+- **Status:** 💡 Proposed
+- As an automation user
+- I want to set flagged state directly with `--set-flagged REQUIREMENT-ID=true|false`
+- So that workflows can mutate flagged state deterministically without requiring interactive mode.
+- So that batch and CI jobs can manage flagged triage state using the same validation, ambiguity handling, and file-scope guardrails used by other mutation commands.
+- So that `--set-file` rows can also include flagged-state mutation values with the same canonical true/false normalization and row-level error reporting guarantees.
+- So that `--json` mutation runs return structured success/failure results for flagged updates consistent with the existing batch partial-failure model.

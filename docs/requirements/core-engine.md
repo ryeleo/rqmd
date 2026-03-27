@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 0🔧 16✅ 0⛔ 0🗑️
+Summary: 2💡 0🔧 16✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -119,6 +119,7 @@ Summary: 1💡 0🔧 16✅ 0⛔ 0🗑️
 
 ### RQMD-CORE-016: Initial scaffolding content/copy
 - **Status:** ✅ Verified
+- **Priority:** 🟠 P1 - High
 - As a rqmd user when users run `rqmd --init`
 - I want scaffold initialization to execute
 - So that generated `docs/requirements/README.md` includes a welcome message and instructions for getting started that is copied from:
@@ -127,9 +128,17 @@ Summary: 1💡 0🔧 16✅ 0⛔ 0🗑️
 - So that those instructions are included in the python package README somewhere, so they are published on pypi.org as a simple web page.
 - So that those documents are maintained in the "./init-docs" directory in this repo for easy editing and management.
 
-### RQMD-CORE-017: Unique-prefix parse and disambiguation contract
+### RQMD-CORE-017: Branded init and README messaging
 - **Status:** 💡 Proposed
-- As a rqmd user when I provide abbreviated long options or enumerated values
-- I want the parser to accept the minimal unique prefix
-- So that concise commands (for example `--filt V`) resolve deterministically to canonical option/value pairs.
-- So that ambiguous prefixes are rejected with a clear error listing valid disambiguation choices.
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when I first encounter rqmd through README or `rqmd --init`
+- I want branded, persuasive copy and direct project links
+- So that the tool clearly positions itself as human-readable, AI-readable, and ready for Requirements Driven Development (RDD).
+- So that generated scaffold copy and README messaging include a concise tagline plus direct links to the project GitHub homepage and/or PyPI page.
+
+### RQMD-CORE-018: First-class binary flagged field
+- **Status:** 💡 Proposed
+- As a rqmd user when I want to focus on a subset of requirements without changing project statuses
+- I want a simple binary flagged field on requirements
+- So that I can mark items for attention without introducing a new `Flagged` status into the status catalog.
+- So that flagged state can later participate in interactive focus workflows, filtering, and automation.

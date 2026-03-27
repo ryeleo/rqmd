@@ -3,7 +3,7 @@
 Scope: full undo/redo semantics, persistent history across restarts/crashes, branching and "lost changes" recovery, UI affordances, and storage/retention policies.
 
 <!-- acceptance-status-summary:start -->
-Summary: 10💡 0🔧 0✅ 0⛔ 0🗑️
+Summary: 11💡 0🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UNDO-001: Full undo/redo semantics
@@ -39,16 +39,17 @@ Summary: 10💡 0🔧 0✅ 0⛔ 0🗑️
 - **Status:** 💡 Proposed
 - As a rqmd user when durability and history expressiveness are required
 - I want to implement undo stack storage
-- So that implementations may choose from two recommended models:
-  - Append-only journal (JSONL or WAL) persisted to disk with atomic rename/fsync semantics and an optional compact/pack step
-  - Lightweight embedded git repository (recommended for maximum robustness and transparency) initialized in `.rqmd/history/` to leverage commit/branch semantics and existing tools
-- So that whichever backend is chosen, the system must provide atomic commits, durable fsync semantics for acknowledged writes, and a safe compact/garbage-collection path that preserves user-confirmable alternate branches.
+- So that rqmd uses a single hidden local git repository as the canonical history backend, initialized as `rqmd-history` under `.rqmd/history/`.
+- So that this `rqmd-history` repository is wrapped and managed by rqmd itself, and is not intended to be edited manually by users or shared as a remote collaboration repository.
+- So that this history backend remains local-only by default (no implicit remotes, push, fetch, or network synchronization).
+- So that the backend provides atomic commits, durable fsync semantics for acknowledged writes, and a safe compact/garbage-collection path that preserves user-confirmable alternate branches.
 
 ### RQMD-UNDO-006: Metadata, auditability, and provenance
 - **Status:** 💡 Proposed
 - As a rqmd user when teams need traceability for changes
 - I want to record history entries
 - So that each entry includes timestamp, actor (user or automated), command context, affected file paths, file diffs or delta payloads, and optional human-supplied reason text
+- So that each entry includes a stable `rqmd-history` commit identifier (and branch/ref context when applicable) to allow deterministic cross-referencing between undo, history, and audit views.
 - So that the UI and `--check` mode can render a human-readable history timeline showing provenance and diffs.
 
 ### RQMD-UNDO-007: UI affordances and commands
@@ -83,3 +84,10 @@ Summary: 10💡 0🔧 0✅ 0⛔ 0🗑️
 - I want to implement the system
 - So that an extensive test matrix covers unit tests for journal/git operations, integration tests for crash recovery (simulating abrupt termination), and UX tests for branch/replay flows
 - So that test fixtures include representative multi-file edits, branching and replay scenarios, and compaction behavior verification.
+
+### RQMD-UNDO-011: Unified undo and audit capture
+- **Status:** 💡 Proposed
+- As a rqmd user when traceability and recovery guarantees are required
+- I want every rqmd write operation to be recorded in the same `rqmd-history` backend used for undo/redo
+- So that undo/history and audit logging cannot drift or contradict each other.
+- So that all changes made by rqmd are captured with a navigable git-style timeline that rqmd can render in user-facing history and audit views.
