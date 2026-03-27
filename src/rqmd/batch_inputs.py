@@ -1,3 +1,11 @@
+"""Parse and validate batch input files for requirement status/priority updates.
+
+This module handles parsing of various batch input formats (JSONL, CSV, TSV)
+for non-interactive bulk requirement updates. It provides functions to parse
+individual --set entries as well as batch files, with comprehensive validation
+of input structure and allowed values.
+"""
+
 from __future__ import annotations
 
 import csv
@@ -14,6 +22,17 @@ except ImportError:
 
 
 def parse_set_entry(entry: str) -> tuple[str, str]:
+    """Parse a single --set command-line entry into criterion ID and status.
+
+    Args:
+        entry: A string in format 'ID=STATUS' (e.g., 'AC-001=verified').
+
+    Returns:
+        A tuple of (criterion_id, status).
+
+    Raises:
+        click.ClickException: If entry is malformed or missing required parts.
+    """
     raw = entry.strip()
     if "=" not in raw:
         raise click.ClickException(
@@ -32,6 +51,17 @@ def parse_set_entry(entry: str) -> tuple[str, str]:
 
 
 def parse_set_priority_entry(entry: str) -> tuple[str, str]:
+    """Parse a single --set-priority command-line entry into criterion ID and priority.
+
+    Args:
+        entry: A string in format 'ID=PRIORITY' (e.g., 'AC-001=p0').
+
+    Returns:
+        A tuple of (criterion_id, priority).
+
+    Raises:
+        click.ClickException: If entry is malformed or missing required parts.
+    """
     raw = entry.strip()
     if "=" not in raw:
         raise click.ClickException(
@@ -50,6 +80,17 @@ def parse_set_priority_entry(entry: str) -> tuple[str, str]:
 
 
 def parse_set_flagged_entry(entry: str) -> tuple[str, bool]:
+    """Parse a single --set-flagged command-line entry into criterion ID and boolean.
+
+    Args:
+        entry: A string in format 'ID=true|false' (e.g., 'AC-001=true').
+
+    Returns:
+        A tuple of (criterion_id, flagged_bool).
+
+    Raises:
+        click.ClickException: If entry is malformed or flagged value is not 'true'/'false'.
+    """
     raw = entry.strip()
     if "=" not in raw:
         raise click.ClickException(
@@ -68,6 +109,22 @@ def parse_set_flagged_entry(entry: str) -> tuple[str, bool]:
 
 
 def parse_batch_update_file(repo_root: Path, file_path_input: str) -> list[dict[str, str | None]]:
+    """Load and parse a batch update file (JSONL, CSV, or TSV).
+
+    Automatically detects file format based on file extension and delegates to the
+    appropriate parser (parse_batch_update_jsonl or parse_batch_update_csv).
+
+    Args:
+        repo_root: Root path of the project (for resolving relative paths).
+        file_path_input: Path to the batch file (absolute or repo-relative).
+
+    Returns:
+        A list of update dictionaries, each containing criterion_id and optional
+        status, priority, flagged, file, blocked_reason, and deprecated_reason.
+
+    Raises:
+        click.ClickException: If file not found, unsupported format, or invalid content.
+    """
     path = Path(file_path_input)
     if not path.is_absolute():
         path = (repo_root / file_path_input).resolve()
@@ -86,6 +143,25 @@ def parse_batch_update_file(repo_root: Path, file_path_input: str) -> list[dict[
 
 
 def parse_batch_update_jsonl(path: Path) -> list[dict[str, str | None]]:
+    """Parse JSONL (JSON Lines) batch update file.
+
+    Each line should be a JSON object with keys like:
+    - criterion_id/requirement_id/id/req_id/r_id: The requirement identifier (required)
+    - status: New status value (optional)
+    - priority: New priority value (optional)
+    - flagged: Boolean flag value 'true' or 'false' (optional)
+    - file: Filter criterion to this file only (optional)
+    - blocked_reason, deprecated_reason: Additional metadata (optional)
+
+    Args:
+        path: Path to the JSONL file.
+
+    Returns:
+        A list of update dictionaries.
+
+    Raises:
+        click.ClickException: If JSON is invalid, rows malformed, or no valid updates found.
+    """
     updates: list[dict[str, str | None]] = []
     with path.open("r", encoding="utf-8") as handle:
         for line_number, raw in enumerate(handle, start=1):
@@ -150,6 +226,26 @@ def parse_batch_update_jsonl(path: Path) -> list[dict[str, str | None]]:
 
 
 def parse_batch_update_csv(path: Path, delimiter: str = ",") -> list[dict[str, str | None]]:
+    """Parse CSV or TSV batch update file using DictReader.
+
+    Expected header columns (case-insensitive, flexible):
+    - criterion_id/requirement_id/id/req_id/r_id: The requirement identifier (required)
+    - status: New status value (optional)
+    - priority: New priority value (optional)
+    - flagged: Boolean 'true' or 'false' (optional)
+    - file: Filter criterion to this file only (optional)
+    - blocked_reason, deprecated_reason: Additional metadata (optional)
+
+    Args:
+        path: Path to the CSV or TSV file.
+        delimiter: Field delimiter (default: ',' for CSV; '\\t' for TSV).
+
+    Returns:
+        A list of update dictionaries.
+
+    Raises:
+        click.ClickException: If file is malformed, header missing, or no valid updates found.
+    """
     updates: list[dict[str, str | None]] = []
     with path.open("r", encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle, delimiter=delimiter)

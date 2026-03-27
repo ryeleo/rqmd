@@ -1,3 +1,12 @@
+"""Status update and display utilities for requirement criteria.
+
+This module provides:
+- Functions to update requirement status/priority/flagged fields in markdown
+- Display/printing of criterion details in formatted panels
+- Prompts for collecting blocked/deprecated reasons
+- File I/O and change application logic
+"""
+
 from __future__ import annotations
 
 import shutil
@@ -19,6 +28,14 @@ from .summary import process_file
 
 
 def _rule_style_kwargs(status_label: str) -> dict:
+    """Determine Click styling kwargs for a requirement status rule.
+
+    Args:
+        status_label: The status label (e.g., '✅ Verified').
+
+    Returns:
+        Dictionary of kwargs suitable for click.style().
+    """
     if status_label == "✅ Verified":
         return {"fg": "green"}
     if status_label == "💡 Proposed":
@@ -34,6 +51,16 @@ def print_criterion_panel(
     repo_root: Path,
     id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
 ) -> None:
+    """Print a formatted panel displaying a single requirement.
+
+    Includes ID, title, source file, full criterion block, and status-colored rule.
+
+    Args:
+        path: Path to the domain file.
+        requirement: The requirement dictionary.
+        repo_root: Root path of the project (for display formatting).
+        id_prefixes: Allowed ID prefixes (used for criterion extraction).
+    """
     criterion_id = str(requirement["id"])
     title = str(requirement["title"])
     status = str(requirement.get("status") or "")
@@ -62,6 +89,21 @@ def update_criterion_status(
     new_flagged: bool | None = None,
     apply_changes: bool = True,
 ) -> bool:
+    """Update all fields of a requirement in a markdown file.
+
+    Args:
+        path: Path to the domain file.
+        requirement: The requirement dictionary (must have status_line set).
+        new_status: New canonical status value.
+        blocked_reason: Optional blocked reason text.
+        deprecated_reason: Optional deprecated reason text.
+        new_priority: Optional new priority value.
+        new_flagged: Optional new flagged boolean state.
+        apply_changes: If True, write changes to disk; if False, return success only.
+
+    Returns:
+        True if changes were made and applied/validated successfully.
+    """
     lines = path.read_text(encoding="utf-8").splitlines()
     status_line = requirement["status_line"]
     blocked_reason_line = requirement.get("blocked_reason_line")

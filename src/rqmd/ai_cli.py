@@ -1,3 +1,14 @@
+"""AI CLI integration and export functions.
+
+This module provides:
+- Export endpoints for external AI agents (requirements, statuses, bodies)
+- AI-agent-safe JSON output with optional domain body inclusion
+- Audit logging of AI-driven status updates
+- AI workflow guidance and execution tracking
+- Domain body extraction with size management
+- Read-only and apply mode support
+"""
+
 from __future__ import annotations
 
 import json

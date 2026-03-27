@@ -1,3 +1,12 @@
+"""Target token resolution and completion logic.
+
+This module provides:
+- Parsing of target token files (JSONL, CSV, MD, TXT formats)
+- Tokenization of target input (IDs, file paths, sub-domains)
+- Completion suggestions for partial target tokens
+- Resolution of raw tokens to actual criteria/files
+"""
+
 from __future__ import annotations
 
 import json
@@ -11,6 +20,18 @@ from .markdown_io import display_name_from_h1, format_path_display
 
 
 def parse_target_token_file(repo_root: Path, file_path_input: str) -> list[str]:
+    """Parse target tokens from a file (TXT, CONF, or MD format).
+
+    Args:
+        repo_root: Root path of the project.
+        file_path_input: Path to the token file (absolute or repo-relative).
+
+    Returns:
+        List of extracted target tokens.
+
+    Raises:
+        click.ClickException: If file not found, wrong format, or no tokens extracted.
+    """
     path = Path(file_path_input)
     if not path.is_absolute():
         path = (repo_root / file_path_input).resolve()
@@ -33,6 +54,16 @@ def parse_target_token_file(repo_root: Path, file_path_input: str) -> list[str]:
 
 
 def tokenize_target_text(text: str) -> list[str]:
+    """Tokenize a text string into target tokens (IDs, file names, sub-domains).
+
+    Handles comments (lines after #), comma and whitespace separation.
+
+    Args:
+        text: Text content to tokenize.
+
+    Returns:
+        List of non-empty tokens.
+    """
     tokens: list[str] = []
     for raw_line in text.splitlines():
         uncommented = raw_line.split("#", 1)[0].replace(",", " ")
@@ -52,6 +83,16 @@ def collect_target_completion_tokens(
     domain_files: list[Path],
     id_prefixes: tuple[str, ...],
 ) -> list[str]:
+    """Collect all possible completion tokens (IDs, file names, sub-domains).
+
+    Args:
+        repo_root: Root path of the project.
+        domain_files: List of domain file paths.
+        id_prefixes: Allowed ID prefixes.
+
+    Returns:
+        Deduplicated list of completion tokens.
+    """
     ordered: list[str] = []
     seen: set[str] = set()
 
@@ -84,6 +125,17 @@ def complete_target_tokens(
     id_prefixes: tuple[str, ...],
     incomplete: str,
 ) -> list[str]:
+    """Complete partial target tokens.
+
+    Args:
+        repo_root: Root path of the project.
+        domain_files: List of domain file paths.
+        id_prefixes: Allowed ID prefixes.
+        incomplete: Partial token to match.
+
+    Returns:
+        Sorted list of matching completion tokens.
+    """
     prefix = _normalized_token(incomplete)
     candidates = collect_target_completion_tokens(repo_root, domain_files, id_prefixes)
     if not prefix:
@@ -98,6 +150,19 @@ def resolve_target_tokens(
     raw_tokens: list[str] | tuple[str, ...],
     id_prefixes: tuple[str, ...],
 ) -> list[tuple[Path, dict[str, object]]]:
+    """Resolve raw target tokens to (file, requirement) tuples.
+
+    Handles file-scoped tokens, ID-only tokens, and sub-domain tokens.
+
+    Args:
+        repo_root: Root path of the project.
+        domain_files: List of domain file paths.
+        raw_tokens: List of tokens to resolve (IDs, file names, sub-domains).
+        id_prefixes: Allowed ID prefixes.
+
+    Returns:
+        List of (file_path, requirement_dict) tuples.
+    """
     ordered_matches: list[tuple[Path, dict[str, object]]] = []
     seen_requirements: set[tuple[str, str]] = set()
 

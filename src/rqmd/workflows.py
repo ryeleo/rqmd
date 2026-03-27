@@ -126,6 +126,17 @@ def _cycle_sort_key(
     wrap_to_first: bool = False,
     reverse: bool = False,
 ) -> str | None:
+    """Cycle to the next/previous sort key from a list of columns.
+
+    Args:
+        current_key: Current sort key (or None for first).
+        columns: List of (key, label) tuples.
+        wrap_to_first: If True, wrap to first item when at end (or last when reverse).
+        reverse: If True, cycle backwards; if False, cycle forwards.
+
+    Returns:
+        The next sort key, or None if no rotation possible.
+    """
     keys = [key for key, _label in columns]
     if current_key is None:
         return keys[0] if keys else None
@@ -143,10 +154,28 @@ def _cycle_sort_key(
 
 
 def _sort_indicator(ascending: bool) -> str:
+    """Generate a sort direction indicator character.
+
+    Args:
+        ascending: If True, return up arrow; if False, return down arrow.
+
+    Returns:
+        A directional indicator character.
+    """
     return "↑" if ascending else "↓"
 
 
 def _format_sort_token(label: str, active: bool, ascending: bool) -> str:
+    """Format a sort token with styling.
+
+    Args:
+        label: Column label.
+        active: If True, apply bold styling.
+        ascending: Current sort direction.
+
+    Returns:
+        Formatted token with sort indicator.
+    """
     indicator = _sort_indicator(ascending) if active else " "
     text = f"{label} {indicator}"
     return click.style(text, bold=True) if active else text
@@ -242,6 +271,17 @@ def _build_criterion_sort_title(base_title: str, active_key: str | None, ascendi
 
 
 def get_sort_strategy_spec(name: str) -> dict[str, object]:
+    """Look up a sort strategy specification by name.
+
+    Args:
+        name: Strategy name (e.g., 'standard', 'status-focus', 'alpha-asc').
+
+    Returns:
+        Dictionary with keys: file_columns, file_default_key, criterion_columns, etc.
+
+    Raises:
+        click.ClickException: If strategy name not recognized.
+    """
     key = (name or "standard").strip().lower()
     if key not in SORT_STRATEGY_SPECS:
         supported = ", ".join(SORT_STRATEGY_NAMES)
@@ -281,6 +321,16 @@ def _sort_file_rows(
     sort_key: str | None,
     ascending: bool,
 ) -> list[tuple[Path, dict[str, int], str]]:
+    """Sort file rows by the specified key and direction.
+
+    Args:
+        rows: List of (path, counts, display_name) tuples.
+        sort_key: Sort column key (or None for unsorted).
+        ascending: If True, sort ascending; if False, sort descending.
+
+    Returns:
+        Sorted list of rows.
+    """
     if sort_key is None:
         return list(rows)
     if sort_key == "name":
@@ -917,6 +967,31 @@ def interactive_update_loop(
     include_priority_summary: bool = False,
     initial_file_path: Path | None = None,
 ) -> int:
+    """Run the interactive file/requirement/status selection and update loop.
+
+    Provides a multi-level menu interface:
+    1. Select a domain file
+    2. Select a requirement from the file
+    3. Select/confirm a new status and optional reason
+    4. Repeat or exit
+
+    Args:
+        repo_root: Root path of the project.
+        criteria_dir: Path to the requirements directory.
+        domain_files: List of domain file paths.
+        emoji_columns: If True, show emoji in file stat columns.
+        sort_files: If True, enable sorting toggle in file menu.
+        sort_strategy: Sort strategy name (e.g., 'standard', 'status-focus').
+        id_prefixes: Allowed ID prefixes for matching headers.
+        select_from_menu_fn: Menu selection function (injectable for testing).
+        include_status_emojis: If True, include emoji in status labels (auto-inferred if None).
+        priority_mode: If True, include priority tracking and summary.
+        include_priority_summary: If True, include priority counts in summary blocks.
+        initial_file_path: If provided, open this file on first iteration (skip file menu).
+
+    Returns:
+        Exit code (0 for success, non-zero for errors).
+    """
     if include_status_emojis is None:
         include_status_emojis = infer_include_status_emojis(domain_files)
     strategy = get_sort_strategy_spec(sort_strategy)

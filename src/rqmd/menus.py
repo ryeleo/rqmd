@@ -1,3 +1,13 @@
+"""Interactive menu rendering and selection utilities.
+
+This module provides:
+- ASCII width calculation accounting for ANSI codes and wide characters
+- Text truncation with ellipsis and ANSI-aware alignment
+- Terminal-based menu selection with single-key input
+- Zebra striping and sorting options for menu items
+- Paging and navigation support
+"""
+
 from __future__ import annotations
 
 import shutil
@@ -17,6 +27,14 @@ from .constants import (ANSI_ESCAPE_PATTERN, ANSI_RESET, MENU_NEXT,
 
 
 def visible_length(text: str) -> int:
+    """Calculate the visible display width of a string, accounting for ANSI codes and wide characters.
+
+    Args:
+        text: Text string (may contain ANSI escape codes and wide characters).
+
+    Returns:
+        The visible width in character positions.
+    """
     plain = ANSI_ESCAPE_PATTERN.sub("", text)
     width = 0
     for ch in plain:
@@ -36,6 +54,15 @@ def visible_length(text: str) -> int:
 
 
 def truncate_text(text: str, max_len: int) -> str:
+    """Truncate text to a maximum visible width, adding ellipsis if needed.
+
+    Args:
+        text: Text to truncate (may contain ANSI codes).
+        max_len: Maximum visible character width.
+
+    Returns:
+        Truncated text with ellipsis, preserving ANSI codes.
+    """
     if max_len <= 0:
         return ""
     if visible_length(text) <= max_len:
@@ -62,11 +89,30 @@ def truncate_text(text: str, max_len: int) -> str:
 
 
 def apply_background_preserving_styles(text: str, bg_ansi: str) -> str:
+    """Apply background styling while preserving ANSI resets.
+
+    Args:
+        text: Text with possible ANSI codes.
+        bg_ansi: Background ANSI code to apply.
+
+    Returns:
+        Text with background applied and resets patched.
+    """
     patched = text.replace(ANSI_RESET, ANSI_RESET + bg_ansi)
     return f"{bg_ansi}{patched}{ANSI_RESET}"
 
 
 def right_align_menu_suffix(label: str, suffix: str, index_width: int = 1) -> str:
+    """Right-align a suffix next to a label in terminal width.
+
+    Args:
+        label: Left-aligned menu label.
+        suffix: Right-aligned text (e.g., '(5/10)').
+        index_width: Width of the index column.
+
+    Returns:
+        Label with suffix right-aligned to fit terminal width.
+    """
     term_width = shutil.get_terminal_size(fallback=(120, 24)).columns
     prefix_width = 5 if index_width == 1 else (4 + index_width)
     label_len = visible_length(label)
@@ -78,6 +124,15 @@ def right_align_menu_suffix(label: str, suffix: str, index_width: int = 1) -> st
 
 
 def file_sort_key_by_priority(counts: dict[str, int], label: str) -> tuple[int, int, int, str]:
+    """Generate a sort key prioritizing implemented, then proposed, then verified counts.
+
+    Args:
+        counts: Dictionary of status counts.
+        label: File label (secondary sort key).
+
+    Returns:
+        A sort tuple (negative implemented, negative proposed, negative verified, label).
+    """
     black = counts["🔧 Implemented"]
     blue = counts["💡 Proposed"]
     green = counts["✅ Verified"]
@@ -101,6 +156,28 @@ def select_from_menu(
     selected_option_bg: str | None = None,
     footer_legend: str | None = None,
 ) -> int | str | None:
+    """Interactive menu selection with single-key navigation and paging.
+
+    Args:
+        title: Menu title/prompt.
+        options: List of menu options to display.
+        repeat_choice_right: If True, allow repeated selection without exiting.
+        zebra: If True, alternate row backgrounds (striping).
+        show_page_indicator: If True, show (X/Y) page indicator.
+        allow_paging_nav: If True, enable n/p for next/prev page navigation.
+        extra_key: Single extra key to bind (e.g., 'r' for notes).
+        extra_key_help: Help text for the extra key.
+        extra_key_return: Value to return when extra key is pressed.
+        option_right_labels: Optional right-aligned labels for each option.
+        extra_keys: Optional dict of extra keys to function descriptions.
+        extra_keys_help: Optional dict of extra key help text.
+        selected_option_index: Initial selected option index.
+        selected_option_bg: Background ANSI code for selected option.
+        footer_legend: Optional legend text displayed at menu footer.
+
+    Returns:
+        Index of selected option and the option text, or extra_key_return if key pressed.
+    """
     if not options:
         click.echo("No options available.")
         return None

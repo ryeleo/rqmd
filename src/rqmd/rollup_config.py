@@ -1,3 +1,12 @@
+"""Rollup configuration parsing and equation validation.
+
+This module provides:
+- Parsing of rollup map and rollup equation configurations
+- Validation of status tokens against the active status catalog
+- Equation compilation into rollup column definitions
+- Error reporting for invalid rollup specifications
+"""
+
 from __future__ import annotations
 
 import json
@@ -10,6 +19,11 @@ from .constants import STATUS_ORDER
 
 
 def _build_status_name_map() -> dict[str, str]:
+    """Build a mapping from status names/aliases to canonical labels.
+
+    Returns:
+        Dictionary mapping status names, slugs, and aliases to canonical labels.
+    """
     mapping: dict[str, str] = {}
     for label, slug in STATUS_ORDER:
         lowered = label.lower()
@@ -36,6 +50,19 @@ def _build_status_name_map() -> dict[str, str]:
 
 
 def _canonical_status_label(token: str, source: str, key: str) -> str:
+    """Validate and return the canonical label for a status token.
+
+    Args:
+        token: User-provided status token.
+        source: Source context for error messages.
+        key: Configuration key context for error messages.
+
+    Returns:
+        The canonical status label.
+
+    Raises:
+        click.ClickException: If token is not recognized.
+    """
     normalized = token.strip().lower()
     if not normalized:
         raise click.ClickException(f"Invalid rollup mapping in {source}: empty status token for '{key}'.")
@@ -51,6 +78,20 @@ def _canonical_status_label(token: str, source: str, key: str) -> str:
 
 
 def _parse_equation_line(equation: str, source: str) -> tuple[str, list[str]]:
+    """Parse a rollup equation line into column name and status list.
+
+    Format: COLUMN_NAME = STATUS + STATUS + ...
+
+    Args:
+        equation: The equation string to parse.
+        source: Source context for error messages.
+
+    Returns:
+        A tuple of (column_name, [status_labels]).
+
+    Raises:
+        click.ClickException: If equation is malformed or contains invalid statuses.
+    """
     if "=" not in equation:
         raise click.ClickException(f"Invalid rollup equation in {source}: '{equation}' (expected NAME = A + B).")
 
@@ -75,6 +116,18 @@ def _parse_equation_line(equation: str, source: str) -> tuple[str, list[str]]:
 
 
 def _parse_rollup_map(raw_map: object, source: str) -> list[tuple[str, list[str]]]:
+    """Parse a rollup_map configuration into column/status pairs.
+
+    Args:
+        raw_map: The raw configuration object (should be a dict).
+        source: Source context for error messages.
+
+    Returns:
+        List of (column_name, [status_labels]) tuples.
+
+    Raises:
+        click.ClickException: If configuration is malformed.
+    """
     if not isinstance(raw_map, dict):
         raise click.ClickException(f"Invalid rollup_map in {source}: expected an object mapping column names to statuses.")
 

@@ -1,3 +1,13 @@
+"""Summary generation and status counting utilities.
+
+This module provides:
+- Status counting and aggregation by file
+- Summary block generation and insertion into markdown files
+- Status line normalization
+- Table generation for verbose output
+- Priority counting and aggregation
+"""
+
 from __future__ import annotations
 
 import re
@@ -25,6 +35,14 @@ from .status_model import coerce_status_label, style_status_count
 
 
 def _plain_status_label(canonical_status: str) -> str:
+    """Extract the plain label portion from a canonical status (removing emoji).
+
+    Args:
+        canonical_status: Full status label (e.g., '✅ Verified').
+
+    Returns:
+        Plain label text (e.g., 'Verified').
+    """
     parts = canonical_status.split(" ", 1)
     return parts[1] if len(parts) > 1 else canonical_status
 
@@ -35,6 +53,17 @@ def build_summary_line(
     filename: str = "",
     include_status_emojis: bool = True,
 ) -> str:
+    """Build a summary line or table row from status counts.
+
+    Args:
+        counts: Dictionary mapping status labels to counts.
+        verbose: If True, return a table row list; if False, return inline summary string.
+        filename: Filename (only used when verbose=True).
+        include_status_emojis: If True, include emoji in output.
+
+    Returns:
+        Either a formatted string (terse mode) or a list (verbose mode).
+    """
     if verbose:
         # Build a table row for this file
         row = [filename] + [counts[label] for label, _ in STATUS_ORDER]
@@ -49,7 +78,15 @@ def build_summary_line(
 
 
 def build_summary_table(rows: list[list], verbose: bool = False) -> str:
-    """Build a tabular summary, optionally with headers."""
+    """Build a tabular summary with headers using tabulate.
+
+    Args:
+        rows: List of rows (each a list of values).
+        verbose: If True, include headers; if False, return empty string.
+
+    Returns:
+        A formatted table string, or empty string if not verbose or no rows.
+    """
     if not verbose or not rows:
         return ""
 
@@ -62,7 +99,16 @@ def build_summary_block(
     include_status_emojis: bool = True,
     priority_counts: dict[str, int] | None = None,
 ) -> str:
-    # Build simple inline summary for HTML comments in markdown.
+    """Build a markdown HTML comment block with status summary.
+
+    Args:
+        counts: Dictionary mapping status labels to counts.
+        include_status_emojis: If True, include emoji in output.
+        priority_counts: Optional dictionary of priority counts (appends priority summary).
+
+    Returns:
+        A multi-line summary block wrapped in <!-- acceptance-status-summary:start/end -->.
+    """
     parts = [
         f"{counts[label]}{label.split()[0] if include_status_emojis else _plain_status_label(label)}"
         for label, _ in STATUS_ORDER
@@ -88,8 +134,17 @@ def build_summary_block(
 
 
 def normalize_status_lines(text: str, include_status_emojis: bool = True) -> tuple[str, bool]:
-    changed = False
+    """Normalize all status lines in markdown text to canonical labels.
 
+    Args:
+        text: Markdown content to normalize.
+        include_status_emojis: If True, preserve emoji; if False, use plain labels.
+
+    Returns:
+        A tuple of (updated_text, changed) indicating whether modifications were made.
+
+    """
+    changed = False
     def replace_status_line(match: re.Match[str]) -> str:
         nonlocal changed
         raw_status = match.group("status")
@@ -109,6 +164,14 @@ def normalize_status_lines(text: str, include_status_emojis: bool = True) -> tup
 
 
 def count_statuses(text: str) -> dict[str, int]:
+    """Count requirements by status in markdown text.
+
+    Args:
+        text: Markdown content to analyze.
+
+    Returns:
+        Dictionary mapping status labels to counts.
+    """
     counts = {label: 0 for label, _ in STATUS_ORDER}
     for match in STATUS_PATTERN.finditer(text):
         raw_status = match.group("status")
@@ -118,7 +181,14 @@ def count_statuses(text: str) -> dict[str, int]:
 
 
 def count_priorities(text: str) -> dict[str, int]:
-    """Count requirements by priority level."""
+    """Count requirements by priority level in markdown text.
+
+    Args:
+        text: Markdown content to analyze.
+
+    Returns:
+        Dictionary mapping priority labels to counts.
+    """
     from .constants import PRIORITY_PATTERN
     from .priority_model import coerce_priority_label
     

@@ -1,3 +1,12 @@
+"""Priority model and normalization logic for requirement criteria.
+
+This module provides:
+- Priority label canonicalization and aliasing
+- Priority-based styling (ANSI colors, emoji handling)
+- Priority lookup tables and normalization
+- Display utilities for priority values
+"""
+
 from __future__ import annotations
 
 import click
@@ -8,6 +17,16 @@ from .constants import (ANSI_ESCAPE_PATTERN, ANSI_RESET, NON_ALNUM_PATTERN,
 
 
 def style_priority_label(priority_label: str) -> str:
+    """Apply ANSI styling to a full priority label.
+
+    Red for P0, yellow for P1, bright yellow for P2, green for P3.
+
+    Args:
+        priority_label: The full priority label (e.g., '🔴 P0 - Critical').
+
+    Returns:
+        Styled label text with ANSI codes.
+    """
     if priority_label.startswith("🔴"):
         return click.style(priority_label, fg="red")
     if priority_label.startswith("🟠"):
@@ -20,11 +39,27 @@ def style_priority_label(priority_label: str) -> str:
 
 
 def priority_emoji(priority_label: str) -> str:
+    """Extract the emoji from a priority label.
+
+    Args:
+        priority_label: The full priority label (e.g., '🔴 P0 - Critical').
+
+    Returns:
+        Just the emoji character(s).
+    """
     parts = priority_label.split(" ", 1)
     return parts[0] if parts else priority_label
 
 
 def priority_lookup() -> dict[str, str]:
+    """Build a lookup table for priority label resolution.
+
+    Maps various representations (lowercase label, slug, aliases) to their
+    canonical priority label.
+
+    Returns:
+        Dictionary mapping priority names/aliases to canonical labels.
+    """
     lookup: dict[str, str] = {}
     for label, slug in PRIORITY_ORDER:
         lower_label = label.lower()
@@ -45,12 +80,36 @@ PRIORITY_LOOKUP = priority_lookup()
 
 
 def priority_key(value: str) -> str:
+    """Generate a canonical key for a priority value for lookup purposes.
+
+    Removes ANSI codes, converts to lowercase, replaces non-alphanumeric with dashes.
+
+    Args:
+        value: The priority value to key.
+
+    Returns:
+        A canonical key suitable for lookup.
+    """
     key = ANSI_ESCAPE_PATTERN.sub("", value).strip().lower()
     key = NON_ALNUM_PATTERN.sub("-", key)
     return key.strip("-")
 
 
 def coerce_priority_label(value: str) -> str:
+    """Coerce a user-provided priority value to a canonical label.
+
+    Handles partial labels, missing emoji, and aliases through flexible matching
+    against the PRIORITY_LOOKUP table.
+
+    Args:
+        value: User-provided priority value (e.g., 'p0', 'critical', '🔴 P0 - Critical').
+
+    Returns:
+        The canonical priority label.
+
+    Raises:
+        ValueError: If the value cannot be matched to any priority.
+    """
     raw = value.strip()
     candidates: list[str] = [raw]
 
@@ -82,12 +141,6 @@ def coerce_priority_label(value: str) -> str:
     # If coercion fails, return None to indicate unset priority
     return "unset"
 
-
-def normalize_priority_input(value: str) -> str:
-    normalized = coerce_priority_label(value)
-    if normalized == "unset":
-        raise click.ClickException(f"Unrecognized priority input: {value}")
-    return normalized
 
 def normalize_priority_input(value: str) -> str:
     normalized = coerce_priority_label(value)

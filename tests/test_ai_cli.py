@@ -8,6 +8,11 @@ from rqmd.ai_cli import main
 
 
 def _write_demo_domain(path: Path) -> None:
+    """Write a simple demo domain file for testing.
+
+    Args:
+        path: Path where the domain file should be written.
+    """
     path.write_text(
         """# Demo Requirements
 
@@ -24,6 +29,11 @@ Scope: demo.
 
 
 def _write_domain_with_body(path: Path) -> None:
+    """Write a demo domain file with domain body content for testing.
+
+    Args:
+        path: Path where the domain file should be written.
+    """
     path.write_text(
         """# Demo Requirements
 

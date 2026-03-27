@@ -1,5 +1,18 @@
 RQMD-CORE-013 (domain/index sync maintenance) since it would reduce manual doc drift over time.
 
+## Key Links
+
+Add a "Links" section to each Requirement, so that ppl can add links to their requirements.
+
+Actually maybe add links as a top-level field for
+
+
+
+## Schema Versioning
+
+The schema for rqmd **is** version of this rqmd pakcckag. The rqdmmdersion should be part of the json contract and shnoudl be in requirements/README.md.
+
+
 ## Debug why rqmd fails for Speed Shooting VR
 
 - ValueError: Unrecognized status value: 💻 Desktop-Verified

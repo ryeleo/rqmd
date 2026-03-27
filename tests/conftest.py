@@ -18,6 +18,14 @@ Scope: demo requirements.
 
 @pytest.fixture
 def repo_with_domain_docs(tmp_path: Path) -> Path:
+    """Create a test repo with a single domain file.
+
+    Args:
+        tmp_path: Pytest temporary directory fixture.
+
+    Returns:
+        Path to the test repository root.
+    """
     repo = tmp_path / "repo"
     domain_dir = repo / "docs" / "requirements"
     domain_dir.mkdir(parents=True)
@@ -27,6 +35,14 @@ def repo_with_domain_docs(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def two_file_repo(tmp_path: Path) -> Path:
+    """Create a test repo with two domain files sharing requirement IDs.
+
+    Args:
+        tmp_path: Pytest temporary directory fixture.
+
+    Returns:
+        Path to the test repository root.
+    """
     repo = tmp_path / "repo"
     domain_dir = repo / "docs" / "requirements"
     domain_dir.mkdir(parents=True)

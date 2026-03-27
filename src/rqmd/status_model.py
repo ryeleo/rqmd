@@ -1,3 +1,13 @@
+"""Status model and normalization logic for requirement criteria.
+
+This module provides:
+- Status label canonicalization and aliasing
+- Status-based styling (ANSI colors, formatting)
+- Status lookup tables and normalization
+- Custom status catalog configuration
+- Display and slug generation for status values
+"""
+
 from __future__ import annotations
 
 import click
@@ -12,6 +22,14 @@ _DEFAULT_STATUS_PARSE_ALIASES = dict(STATUS_PARSE_ALIASES)
 
 
 def _status_slug(name: str) -> str:
+    """Convert a status name to a canonical slug (lowercase, dashes).
+
+    Args:
+        name: The status name to slugify.
+
+    Returns:
+        A slugified version of the name.
+    """
     return NON_ALNUM_PATTERN.sub("-", name.strip().lower()).strip("-")
 
 
@@ -79,6 +97,18 @@ def configure_status_catalog(raw_statuses: object | None) -> None:
 
 
 def style_status_count(status_label: str, value: object) -> str:
+    """Apply ANSI styling to a status count value.
+
+    Colors verified counts green, proposed with custom purple, blocked/deprecated
+    with dim styling, and returns plain text for other statuses.
+
+    Args:
+        status_label: The full status label (e.g., '✅ Verified').
+        value: The count value to style.
+
+    Returns:
+        Styled count text with ANSI codes.
+    """
     text = str(value)
     if status_label == "✅ Verified":
         return click.style(text, fg="green")
@@ -90,6 +120,14 @@ def style_status_count(status_label: str, value: object) -> str:
 
 
 def style_status_label(status_label: str) -> str:
+    """Apply ANSI styling to a full status label.
+
+    Args:
+        status_label: The full status label (e.g., '✅ Verified').
+
+    Returns:
+        Styled label text with ANSI codes.
+    """
     if status_label == "✅ Verified":
         return click.style(status_label, fg="green")
     if status_label == "💡 Proposed":
@@ -100,6 +138,15 @@ def style_status_label(status_label: str) -> str:
 
 
 def style_status_line(status_label: str, text: str) -> str:
+    """Apply ANSI styling to a line of text based on its status.
+
+    Args:
+        status_label: The full status label (e.g., '✅ Verified').
+        text: The text to style.
+
+    Returns:
+        Styled text with ANSI codes.
+    """
     if status_label == "✅ Verified":
         return click.style(text, fg="green")
     if status_label == "💡 Proposed":
@@ -110,11 +157,27 @@ def style_status_line(status_label: str, text: str) -> str:
 
 
 def status_emoji(status_label: str) -> str:
+    """Extract the emoji from a status label.
+
+    Args:
+        status_label: The full status label (e.g., '✅ Verified').
+
+    Returns:
+        Just the emoji character(s).
+    """
     parts = status_label.split(" ", 1)
     return parts[0] if parts else status_label
 
 
 def status_lookup() -> dict[str, str]:
+    """Build a lookup table for status label resolution.
+
+    Maps various representations (lowercase label, emoji+name, slug, aliases)
+    to their canonical status label.
+
+    Returns:
+        Dictionary mapping status names/aliases to canonical labels.
+    """
     lookup: dict[str, str] = {}
     for label, slug in STATUS_ORDER:
         lower_label = label.lower()
@@ -135,12 +198,36 @@ STATUS_LOOKUP = status_lookup()
 
 
 def status_key(value: str) -> str:
+    """Generate a canonical key for a status value for lookup purposes.
+
+    Removes ANSI codes, converts to lowercase, replaces non-alphanumeric with dashes.
+
+    Args:
+        value: The status value to key.
+
+    Returns:
+        A canonical key suitable for lookup.
+    """
     key = ANSI_ESCAPE_PATTERN.sub("", value).strip().lower()
     key = NON_ALNUM_PATTERN.sub("-", key)
     return key.strip("-")
 
 
 def coerce_status_label(value: str) -> str:
+    """Coerce a user-provided status value to a canonical label.
+
+    Handles partial labels, missing emoji, aliases, and typos through flexible
+    matching against the STATUS_LOOKUP table.
+
+    Args:
+        value: User-provided status value (e.g., 'verified', 'Ver', 'v', '✅ Verified').
+
+    Returns:
+        The canonical status label.
+
+    Raises:
+        ValueError: If the value cannot be matched to any status.
+    """
     raw = value.strip()
     candidates: list[str] = [raw]
 
@@ -173,6 +260,17 @@ def coerce_status_label(value: str) -> str:
 
 
 def normalize_status_input(value: str) -> str:
+    """Normalize user status input with click-exception error handling.
+
+    Args:
+        value: User-provided status value.
+
+    Returns:
+        The canonical status label.
+
+    Raises:
+        click.ClickException: If the value cannot be coerced to a valid status.
+    """
     try:
         return coerce_status_label(value)
     except ValueError as exc:
@@ -184,6 +282,17 @@ def normalize_status_input(value: str) -> str:
 
 
 def build_color_rollup_text(counts: dict[str, int]) -> str:
+    """Build a colored summary text showing status counts.
+
+    Summarizes proposed (blue), implemented (normal), verified (green),
+    and blocked/deprecated (dim) counts in a single styled line.
+
+    Args:
+        counts: Dictionary mapping status labels to counts.
+
+    Returns:
+        A colored/styled summary string.
+    """
     blue = counts["💡 Proposed"]
     normal = counts["🔧 Implemented"]
     green = counts["✅ Verified"]
