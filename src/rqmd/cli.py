@@ -112,12 +112,13 @@ from .summary import (build_summary_block, build_summary_line,
                       normalize_status_lines, print_custom_rollup_table,
                       print_global_rollup_table, print_summary_table,
                       process_file)
-from .target_selection import (complete_target_tokens,
-                                                             parse_target_token_file, resolve_target_tokens)
+from .target_selection import (complete_target_tokens, parse_target_token_file,
+                               resolve_target_tokens)
 from .workflows import (build_filtered_criteria_payload, build_summary_payload,
-                                                build_targeted_criteria_payload,
-                                                focused_target_interactive_loop as focused_target_interactive_loop_impl,
-                        print_criteria_list, print_criteria_tree)
+                        build_targeted_criteria_payload)
+from .workflows import \
+    focused_target_interactive_loop as focused_target_interactive_loop_impl
+from .workflows import print_criteria_list, print_criteria_tree
 
 __all__ = [
     "SUMMARY_START",
@@ -1440,6 +1441,50 @@ def main(
             include_status_emojis=include_status_emojis,
             include_priority_summary=show_priority_summary,
         )
+        if json_output:
+            payload = build_summary_payload(repo_root, resolved_criteria_dir, domain_files, sorted(changed_files))
+            payload["dry_run"] = dry_run
+            if set_priority_updates and not set_updates and not set_flagged_updates:
+                payload["mode"] = "set-priority"
+            elif set_flagged_updates and not set_updates and not set_priority_updates:
+                payload["mode"] = "set-flagged"
+            else:
+                payload["mode"] = "set"
+            payload["updates"] = update_results
+            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+            raise SystemExit(0)
+
+        if summary_table:
+            print_summary_table(table_rows, emoji_columns=emoji_columns)
+        raise SystemExit(0)
+
+    if json_output:
+        payload = dict(summary_payload)
+        payload["ok"] = True
+        click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+        raise SystemExit(0)
+
+    if interactive and not check:
+        # RQMD-INTERACTIVE-011: preflight write-permission gate
+        check_files_writable(domain_files, repo_root)
+        raise SystemExit(
+            interactive_update_loop(
+                repo_root,
+                resolved_criteria_dir_input,
+                domain_files,
+                emoji_columns=emoji_columns,
+                sort_files=False,
+                sort_strategy=sort_strategy,
+                id_prefixes=id_prefixes,
+                include_status_emojis=include_status_emojis,
+                priority_mode=priority_mode,
+                include_priority_summary=show_priority_summary,
+            )
+        )
+
+
+if __name__ == "__main__":
+    main()        )
         if json_output:
             payload = build_summary_payload(repo_root, resolved_criteria_dir, domain_files, sorted(changed_files))
             payload["dry_run"] = dry_run

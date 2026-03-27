@@ -19,8 +19,8 @@ from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
                         PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN)
 from .criteria_parser import (collect_sub_sections,
                               extract_criterion_block_with_lines,
-                              find_criterion_by_id,
-                              normalize_sub_domain_name, parse_criteria)
+                              find_criterion_by_id, normalize_sub_domain_name,
+                              parse_criteria)
 from .markdown_io import (display_name_from_h1, format_path_display,
                           iter_domain_files)
 from .menus import (right_align_menu_suffix, select_from_menu, truncate_text,
@@ -1691,6 +1691,30 @@ def lookup_criterion_interactive(
                 path,
                 requirement,
                 new_status,
+                blocked_reason=blocked_reason,
+                deprecated_reason=deprecated_reason,
+            )
+        process_file(
+            path,
+            check_only=False,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
+        )
+
+        if changed:
+            click.echo(f"Updated {requirement['id']} -> {selected_value}")
+        else:
+            click.echo(f"No change for {requirement['id']} ({selected_value})")
+
+        _, table_rows = collect_summary_rows(
+            domain_files,
+            check_only=True,
+            display_name_fn=display_name_from_h1,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
+        )
+        print_summary_table(table_rows, emoji_columns=emoji_columns)
+        return 0
                 blocked_reason=blocked_reason,
                 deprecated_reason=deprecated_reason,
             )
