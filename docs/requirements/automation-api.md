@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 20🔧 10✅ 0⛔ 0🗑️
+Summary: 3💡 21🔧 10✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -262,7 +262,7 @@ Summary: 4💡 20🔧 10✅ 0⛔ 0🗑️
 - So that resolution is deterministic: unique prefixes are accepted, ambiguous prefixes fail with candidate lists, and unknown tokens return clear validation errors.
 
 ### RQMD-AUTOMATION-032: Link-based filtering with `--has-link` and `--no-link`
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when managing requirements with external links (GitHub, Jira, etc.)
 - I want to filter requirements by link presence

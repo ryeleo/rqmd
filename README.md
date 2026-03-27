@@ -182,12 +182,13 @@ uv run rqmd --sub-domain api --as-json --no-walk
 
 Combine filters for slicing/dicing requirements:
 
-- OR across different filter flags (`--status`, `--priority`, `--flagged`/`--no-flag`, `--sub-domain`)
+- OR across different filter flags (`--status`, `--priority`, `--flagged`/`--no-flag`, `--has-link`/`--no-link`, `--sub-domain`)
 - AND within the same flag when repeated
 
 ```bash
 uv run rqmd --status proposed --priority p0 --as-tree
 uv run rqmd --no-flag --as-json --no-walk
+uv run rqmd --has-link --as-json --no-walk
 uv run rqmd --status proposed --status implemented --as-json --no-walk
 uv run rqmd --sub-domain query --sub-domain api --as-json --no-walk
 ```

@@ -77,49 +77,95 @@ except ImportError:
 
 from . import menus as menus_mod
 from . import workflows as workflows_mod
-from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
-                           parse_batch_update_jsonl, parse_set_entry,
-                           parse_set_flagged_entry, parse_set_priority_entry)
+from .batch_inputs import (
+    parse_batch_update_csv,
+    parse_batch_update_file,
+    parse_batch_update_jsonl,
+    parse_set_entry,
+    parse_set_flagged_entry,
+    parse_set_priority_entry,
+)
 from .config import load_config, load_statuses_file, validate_config
-from .constants import (DEFAULT_ID_PREFIXES, DEFAULT_REQUIREMENTS_DIR,
-                        ID_PREFIX_PATTERN, STATUS_ORDER, STATUS_PATTERN,
-                        SUMMARY_END, SUMMARY_START)
-from .markdown_io import (auto_detect_requirements_dir, check_files_writable,
-                          check_index_sync, discover_project_root,
-                          display_name_from_h1, format_path_display,
-                          initialize_requirements_scaffold, iter_domain_files,
-                          iter_requirements_search_roots, parse_index_links,
-                          resolve_requirements_dir, validate_files_readable)
+from .constants import (
+    DEFAULT_ID_PREFIXES,
+    DEFAULT_REQUIREMENTS_DIR,
+    ID_PREFIX_PATTERN,
+    STATUS_ORDER,
+    STATUS_PATTERN,
+    SUMMARY_END,
+    SUMMARY_START,
+)
+from .markdown_io import (
+    auto_detect_requirements_dir,
+    check_files_writable,
+    check_index_sync,
+    discover_project_root,
+    display_name_from_h1,
+    format_path_display,
+    initialize_requirements_scaffold,
+    iter_domain_files,
+    iter_requirements_search_roots,
+    parse_index_links,
+    resolve_requirements_dir,
+    validate_files_readable,
+)
 from .menus import select_from_menu
 from .priority_model import normalize_priority_input
-from .req_parser import (collect_requirements_by_filters,
-                         collect_requirements_by_flagged,
-                         collect_requirements_by_priority,
-                         collect_requirements_by_status,
-                         collect_requirements_by_sub_domain,
-                         find_requirement_by_id, normalize_id_prefixes,
-                         parse_requirements, resolve_id_prefixes)
+from .req_parser import (
+    collect_requirements_by_filters,
+    collect_requirements_by_flagged,
+    collect_requirements_by_links,
+    collect_requirements_by_priority,
+    collect_requirements_by_status,
+    collect_requirements_by_sub_domain,
+    find_requirement_by_id,
+    normalize_id_prefixes,
+    parse_requirements,
+    resolve_id_prefixes,
+)
 from .rollup_config import compute_rollup_column_values, resolve_rollup_columns
-from .status_model import (build_color_rollup_text, configure_status_catalog,
-                           normalize_status_input, style_status_count,
-                           style_status_label)
-from .status_update import (apply_status_change_by_id, print_criterion_panel,
-                            prompt_for_blocked_reason,
-                            prompt_for_deprecated_reason,
-                            update_criterion_status)
-from .summary import (build_summary_block, build_summary_line,
-                      build_summary_table, collect_summary_rows,
-                      count_statuses, insert_or_replace_summary,
-                      normalize_status_lines, print_custom_rollup_table,
-                      print_global_rollup_table, print_summary_table,
-                      process_file)
-from .target_selection import (complete_target_tokens, parse_target_token_file,
-                               resolve_target_tokens)
-from .workflows import (build_filtered_criteria_payload, build_summary_payload,
-                        build_targeted_criteria_payload)
-from .workflows import \
-    focused_target_interactive_loop as focused_target_interactive_loop_impl
-from .workflows import print_criteria_list, print_criteria_tree
+from .status_model import (
+    build_color_rollup_text,
+    configure_status_catalog,
+    normalize_status_input,
+    style_status_count,
+    style_status_label,
+)
+from .status_update import (
+    apply_status_change_by_id,
+    print_criterion_panel,
+    prompt_for_blocked_reason,
+    prompt_for_deprecated_reason,
+    update_criterion_status,
+)
+from .summary import (
+    build_summary_block,
+    build_summary_line,
+    build_summary_table,
+    collect_summary_rows,
+    count_statuses,
+    insert_or_replace_summary,
+    normalize_status_lines,
+    print_custom_rollup_table,
+    print_global_rollup_table,
+    print_summary_table,
+    process_file,
+)
+from .target_selection import (
+    complete_target_tokens,
+    parse_target_token_file,
+    resolve_target_tokens,
+)
+from .workflows import (
+    build_filtered_criteria_payload,
+    build_summary_payload,
+    build_targeted_criteria_payload,
+    print_criteria_list,
+    print_criteria_tree,
+)
+from .workflows import (
+    focused_target_interactive_loop as focused_target_interactive_loop_impl,
+)
 
 __all__ = [
     "SUMMARY_START",
@@ -551,6 +597,18 @@ def shell_complete_target_tokens(
     help="Filter unflagged requirements (Flagged: false or missing).",
 )
 @click.option(
+    "--has-link",
+    "filter_has_link",
+    is_flag=True,
+    help="Filter requirements that have one or more links.",
+)
+@click.option(
+    "--no-link",
+    "filter_no_link",
+    is_flag=True,
+    help="Filter requirements that have no links.",
+)
+@click.option(
     "--sub-domain",
     "filter_sub_domain",
     multiple=True,
@@ -733,6 +791,8 @@ def main(
     filter_priority: tuple[str, ...],
     filter_flagged: bool,
     filter_no_flag: bool,
+    filter_has_link: bool,
+    filter_no_link: bool,
     filter_sub_domain: tuple[str, ...],
     filter_ids_file: str | None,
     tree: bool,
@@ -814,7 +874,7 @@ def main(
         click.echo(root_discovery_message)
 
     if init_scaffold:
-        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or targets:
+        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or targets:
             raise click.ClickException(
                 "--bootstrap cannot be combined with --verify-summaries, --totals, positional ID, --filter-* / --as-tree, or --update-* options."
             )
@@ -931,6 +991,8 @@ def main(
             or filter_priority
             or filter_flagged
             or filter_no_flag
+            or filter_has_link
+            or filter_no_link
             or filter_sub_domain
             or filter_ids_file
             or set_requirement_id
@@ -1013,7 +1075,7 @@ def main(
         raise SystemExit(0)
 
     if strip_status_emojis or restore_status_emojis:
-        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or targets:
+        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or targets:
             raise click.ClickException(
                 "Emoji strip/restore modes cannot be combined with --verify-summaries, --totals, positional ID, --filter-* / --as-tree, or --update-* options."
             )
@@ -1096,6 +1158,8 @@ def main(
         or filter_priority
         or filter_flagged
         or filter_no_flag
+        or filter_has_link
+        or filter_no_link
         or filter_sub_domain
         or set_requirement_id
         or set_status
@@ -1166,7 +1230,7 @@ def main(
         domain_files = [positional_domain_file]
 
     if explicit_target_tokens:
-        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_sub_domain or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or rollup_mode:
+        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or rollup_mode:
             raise click.ClickException(
                 "Explicit target selection cannot be combined with --verify-summaries, --totals, --filter-*, or --update-* options."
             )
@@ -1257,7 +1321,7 @@ def main(
         print_summary_table(table_rows, emoji_columns=emoji_columns)
 
     if rollup_mode:
-        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree:
+        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree:
             raise click.ClickException("--totals cannot be combined with --verify-summaries, --status, --as-tree, or --update-* options.")
         rollup_columns, rollup_source = resolve_rollup_columns(
             repo_root,
@@ -1317,15 +1381,17 @@ def main(
     sub_domain_filters_raw = _expand_filter_values(filter_sub_domain)
 
     has_filter_mode = bool(
-        status_filters_raw or priority_filters_raw or filter_flagged or filter_no_flag or sub_domain_filters_raw
+        status_filters_raw or priority_filters_raw or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or sub_domain_filters_raw
     )
 
     if filter_flagged and filter_no_flag:
         raise click.ClickException("--flagged and --no-flag are mutually exclusive.")
+    if filter_has_link and filter_no_link:
+        raise click.ClickException("--has-link and --no-link are mutually exclusive.")
 
     # --as-tree/--as-list without an active filter mode is a no-op guard
     if (tree or list_output) and not (has_filter_mode or explicit_target_tokens):
-        raise click.ClickException("--as-tree/--as-list requires --status, --priority, --flagged/--no-flag, --sub-domain, or explicit target tokens.")
+        raise click.ClickException("--as-tree/--as-list requires --status, --priority, --flagged/--no-flag, --has-link/--no-link, --sub-domain, or explicit target tokens.")
 
     if has_filter_mode:
         if check or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
@@ -1356,6 +1422,8 @@ def main(
             and not normalized_priority_filters
             and not filter_flagged
             and not filter_no_flag
+            and not filter_has_link
+            and not filter_no_link
             and not sub_domain_filters_raw
         )
         is_priority_only_single = (
@@ -1363,12 +1431,16 @@ def main(
             and not normalized_status_filters
             and not filter_flagged
             and not filter_no_flag
+            and not filter_has_link
+            and not filter_no_link
             and not sub_domain_filters_raw
         )
         is_flagged_only = (
             filter_flagged
             and not normalized_status_filters
             and not normalized_priority_filters
+            and not filter_has_link
+            and not filter_no_link
             and not sub_domain_filters_raw
         )
         is_sub_domain_only_single = (
@@ -1382,6 +1454,24 @@ def main(
             filter_no_flag
             and not normalized_status_filters
             and not normalized_priority_filters
+            and not filter_has_link
+            and not filter_no_link
+            and not sub_domain_filters_raw
+        )
+        is_has_link_only = (
+            filter_has_link
+            and not normalized_status_filters
+            and not normalized_priority_filters
+            and not filter_flagged
+            and not filter_no_flag
+            and not sub_domain_filters_raw
+        )
+        is_no_link_only = (
+            filter_no_link
+            and not normalized_status_filters
+            and not normalized_priority_filters
+            and not filter_flagged
+            and not filter_no_flag
             and not sub_domain_filters_raw
         )
 
@@ -1527,6 +1617,64 @@ def main(
             print_criteria_tree(repo_root, criteria_by_file, "flagged=false", filter_label="flagged")
             raise SystemExit(0)
 
+        if is_has_link_only:
+            criteria_by_file = collect_requirements_by_links(
+                repo_root,
+                domain_files,
+                True,
+                id_prefixes=id_prefixes,
+            )
+
+            if json_output:
+                payload = build_filtered_criteria_payload(
+                    repo_root,
+                    resolved_criteria_dir,
+                    criteria_by_file,
+                    {"has_link": True, "no_link": False},
+                    include_body=include_body,
+                    id_prefixes=id_prefixes,
+                    filter_mode="filter-links",
+                    filter_label="links",
+                )
+                click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+                raise SystemExit(0)
+
+            if list_output:
+                print_criteria_list(repo_root, criteria_by_file, "has-link=true", filter_label="links")
+                raise SystemExit(0)
+
+            print_criteria_tree(repo_root, criteria_by_file, "has-link=true", filter_label="links")
+            raise SystemExit(0)
+
+        if is_no_link_only:
+            criteria_by_file = collect_requirements_by_links(
+                repo_root,
+                domain_files,
+                False,
+                id_prefixes=id_prefixes,
+            )
+
+            if json_output:
+                payload = build_filtered_criteria_payload(
+                    repo_root,
+                    resolved_criteria_dir,
+                    criteria_by_file,
+                    {"has_link": False, "no_link": True},
+                    include_body=include_body,
+                    id_prefixes=id_prefixes,
+                    filter_mode="filter-links",
+                    filter_label="links",
+                )
+                click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+                raise SystemExit(0)
+
+            if list_output:
+                print_criteria_list(repo_root, criteria_by_file, "has-link=false", filter_label="links")
+                raise SystemExit(0)
+
+            print_criteria_tree(repo_root, criteria_by_file, "has-link=false", filter_label="links")
+            raise SystemExit(0)
+
         if is_sub_domain_only_single:
             sub_domain_value = sub_domain_filters_raw[0]
             criteria_by_file = collect_requirements_by_sub_domain(
@@ -1566,6 +1714,7 @@ def main(
             status_filters=tuple(normalized_status_filters),
             priority_filters=tuple(normalized_priority_filters),
             flagged_filters=(True,) if filter_flagged else ((False,) if filter_no_flag else ()),
+            link_filters=(True,) if filter_has_link else ((False,) if filter_no_link else ()),
             sub_domain_filters=tuple(sub_domain_filters_raw),
             id_prefixes=id_prefixes,
         )
@@ -1574,6 +1723,7 @@ def main(
             "status": normalized_status_filters,
             "priority": normalized_priority_filters,
             "flagged": True if filter_flagged else (False if filter_no_flag else None),
+            "links": True if filter_has_link else (False if filter_no_link else None),
             "sub_domain": list(sub_domain_filters_raw),
             "logic": {
                 "across_flags": "or",
@@ -1590,6 +1740,10 @@ def main(
             label_parts.append("flagged=true")
         if filter_no_flag:
             label_parts.append("flagged=false")
+        if filter_has_link:
+            label_parts.append("has-link=true")
+        if filter_no_link:
+            label_parts.append("has-link=false")
         if sub_domain_filters_raw:
             label_parts.append(f"sub-domain={'+'.join(sub_domain_filters_raw)}")
         combined_label = " | ".join(label_parts) if label_parts else "combined filters"
@@ -1628,6 +1782,10 @@ def main(
             target_tokens.append("flagged:true")
         if filter_no_flag:
             target_tokens.append("flagged:false")
+        if filter_has_link:
+            target_tokens.append("has-link:true")
+        if filter_no_link:
+            target_tokens.append("has-link:false")
         target_tokens.extend(f"sub-domain:{value}" for value in sub_domain_filters_raw)
 
         raise SystemExit(
