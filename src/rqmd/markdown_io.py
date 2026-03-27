@@ -340,6 +340,70 @@ def display_name_from_h1(path: Path) -> str:
     return path.stem
 
 
+def scope_and_body_from_file(
+    path: Path,
+    id_prefixes: tuple[str, ...] = ("AC", "R", "RQMD"),
+) -> tuple[str | None, str | None]:
+    """Extract scope value and pre-requirement domain body from a markdown file.
+
+    The scope is the value of the first ``Scope: ...`` line.
+    The domain body is the freeform content between the H1/Scope lines
+    and the first requirement header (``### ID: Title``), excluding the
+    summary block.
+
+    Args:
+        path: Path to the markdown domain file.
+        id_prefixes: Requirement ID prefixes to detect the first requirement header.
+
+    Returns:
+        A tuple of (scope, body) — either may be None if absent.
+    """
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return None, None
+
+    header_pattern = re.compile(
+        r"^###\s+(?:" + "|".join(re.escape(p) for p in id_prefixes) + r")-[A-Z0-9-]+:\s*",
+        re.MULTILINE,
+    )
+
+    lines = text.splitlines()
+    scope: str | None = None
+    first_req_index: int | None = None
+
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if scope is None and stripped.startswith("Scope:"):
+            scope = stripped[len("Scope:"):].strip().rstrip(".")
+        if header_pattern.match(line):
+            first_req_index = i
+            break
+
+    if first_req_index is None or first_req_index == 0:
+        return scope, None
+
+    prelude = lines[:first_req_index]
+    in_summary = False
+    kept: list[str] = []
+    for line in prelude:
+        stripped = line.strip()
+        if stripped == "<!-- acceptance-status-summary:start -->":
+            in_summary = True
+            continue
+        if stripped == "<!-- acceptance-status-summary:end -->":
+            in_summary = False
+            continue
+        if in_summary:
+            continue
+        if stripped.startswith("# ") or stripped.startswith("Scope:"):
+            continue
+        kept.append(line)
+
+    body = "\n".join(kept).strip()
+    return scope, body if body else None
+
+
 def _load_init_template(template_name: str) -> str:
     """Load an initialization template from the repository or package.
 

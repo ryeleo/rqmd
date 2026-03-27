@@ -19,7 +19,7 @@ Summary: 2💡 0🔧 9✅ 0⛔ 0🗑️
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when different teams may use different priority vocabularies
 - I want the tool to read and write priorities
-- So that a canonical default set is available (e.g., `P0`,`P1`,`P2`,`P3` or `High`,`Med`,`Low`) and project-level overrides are supported via `.reqmd/status-catalog.yaml` or a new `.reqmd/priority-catalog.yaml`
+- So that a canonical default set is available (e.g., `P0`,`P1`,`P2`,`P3` or `High`,`Med`,`Low`) and project-level overrides are supported via `.reqmd/statuses.yml` or a new `.reqmd/priorities.yml`
 - So that normalization maps common aliases and case variants to canonical labels.
 
 ### RQMD-PRIORITY-003: Set status/priority combined UI

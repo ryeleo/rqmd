@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 10💡 11🔧 10✅ 0⛔ 0🗑️
+Summary: 2💡 19🔧 10✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -116,7 +116,7 @@ Summary: 10💡 11🔧 10✅ 0⛔ 0🗑️
 - So that I can preview exact changes before applying them.
 
 ### RQMD-AUTOMATION-015: Batch partial-failure report model
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a CI maintainer
 - I want per-row success/failure results in JSON and text batch modes
@@ -159,14 +159,14 @@ Summary: 10💡 11🔧 10✅ 0⛔ 0🗑️
 - So that the error output lists candidate option names and recommended full invocations.
 
 ### RQMD-AUTOMATION-021: Ambiguous value-prefix error contract
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a CLI user
 - I want ambiguous enumerated value prefixes (for example status values) to fail deterministically
 - So that the error output lists candidate canonical values and recommended full values.
 
 ### RQMD-AUTOMATION-022: JSON-formatted ambiguity errors
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As an automation user
 - I want ambiguity failures in `--as-json` mode to return a stable machine-readable error payload
@@ -197,7 +197,7 @@ Summary: 10💡 11🔧 10✅ 0⛔ 0🗑️
 - So that `--as-json` mutation runs return structured success/failure results for flagged updates consistent with the existing batch partial-failure model.
 
 ### RQMD-AUTOMATION-026: Full domain-document JSON contract
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As an automation user when consuming `--as-json` outputs for domain-level workflows
 - I want each domain entry to include all domain-document sections needed to reconstruct context, including `scope` and domain-level `body` aligned to RQMD-CORE-019
@@ -205,7 +205,7 @@ Summary: 10💡 11🔧 10✅ 0⛔ 0🗑️
 - So that `--as-json` responses expose deterministic keys/order for domain metadata and preserve domain `body` content verbatim when present.
 
 ### RQMD-AUTOMATION-027: ReqID list input mode
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when I want to target an explicit set of requirements
 - I want a non-interactive/selection mode that accepts a CLI token list of requirement IDs and/or domain identifiers
@@ -214,7 +214,7 @@ Summary: 10💡 11🔧 10✅ 0⛔ 0🗑️
 - So that list ordering is deterministic and duplicates are handled predictably.
 
 ### RQMD-AUTOMATION-028: ReqID list file parsing and comment support
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when managing a reusable requirement worklist
 - I want rqmd to accept a simple `.txt`/`.conf`/`.md` list file where requirement IDs, domain tokens, and subsection tokens may appear one-per-line or as comma/whitespace-separated tokens on any line
@@ -224,7 +224,7 @@ Summary: 10💡 11🔧 10✅ 0⛔ 0🗑️
 - So that subsection tokens are recognized by exact or case-insensitive prefix match and expand deterministically to all requirements in those subsections.
 
 ### RQMD-AUTOMATION-029: Filtered query by subsection
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As an automation user when filtering requirements within subsections
 - I want a `--sub-domain <NAME>` flag to filter results by subsection
@@ -235,7 +235,7 @@ Summary: 10💡 11🔧 10✅ 0⛔ 0🗑️
 - So that empty results are handled consistently with other filter modes.
 
 ### RQMD-AUTOMATION-030: Sub-domain metadata in JSON output
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As an automation consumer when processing JSON output
 - I want each requirement entry to include a `sub_domain` field (string or null)

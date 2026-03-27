@@ -59,7 +59,7 @@ Summary: 4💡 1🔧 10✅ 0⛔ 1🗑️
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when teams want customizable status catalog metadata and colors
 - I want to enable status customization
-- So that the tool supports loading config from a project file at `.rqmd/status-catalog.json` or `.rqmd/status-catalog.yaml` by default
+- So that the tool supports loading config from a project file at `.rqmd/statuses.json` or `.rqmd/statuses.yml` by default
 - So that the tool supports explicit override via `--status-config <path>`
 - So that effective precedence is: CLI override file > project default file > user-level config > built-in defaults
 - So that both JSON and YAML are supported: detection is by file extension (`.json`, `.yml`, `.yaml`) with content-based sniffing as a fallback; parsed content is validated against a single canonical schema to ensure consistent behavior across formats.
@@ -130,7 +130,7 @@ Summary: 4💡 1🔧 10✅ 0⛔ 1🗑️
 - **Priority:** 🟢 P3 - Low
 - **Deprecated:** Superseded by RQMD-ROLLUP-007, which generalizes roll-up customization through declarative roll-up mappings/expressions and can represent color behavior within that model.
 - As a rqmd user when projects may want consistent roll-up coloring across team tools and dashboards
-- I want to provide a project-level status config file (e.g. `.rqmd/status-catalog.json`)
+- I want to provide a project-level status config file (e.g. `.rqmd/statuses.json`)
 - So that the project config can include explicit roll-up color knobs such as `rollup_mode` (values: `per_status`|`bucketed`|`monochrome`), `bucket_map` to map statuses to roll-up buckets, and optional per-bucket `color` overrides
 - So that CLI flags can still override these knobs for ephemeral runs
 - So that roll-up rendering honors project-level knobs when present while falling back to user config and built-in defaults otherwise.

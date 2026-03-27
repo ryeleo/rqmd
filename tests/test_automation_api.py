@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
+
 from rqmd import cli
 
 
@@ -1082,6 +1083,81 @@ Scope: demo.
     assert ids == ["AC-DEMO-002", "AC-DEMO-010"]
 
 
+def test_RQMD_automation_015_update_file_text_mode_reports_partial_failures(repo_with_domain_docs: Path, tmp_path: Path) -> None:
+    update_file = tmp_path / "updates.jsonl"
+    update_file.write_text(
+        "\n".join(
+            [
+                '{"requirement_id":"AC-HELLO-001","status":"implemented"}',
+                '{"requirement_id":"AC-MISSING-999","status":"verified"}',
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo_with_domain_docs),
+            "--docs-dir",
+            "docs/requirements",
+            "--update-file",
+            str(update_file),
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Batch row results: 1 succeeded, 1 failed." in result.output
+    assert "Row 2 (AC-MISSING-999):" in result.output
+    assert "not found" in result.output
+
+    text = (repo_with_domain_docs / "docs" / "requirements" / "demo.md").read_text(encoding="utf-8")
+    assert "- **Status:** 🔧 Implemented" in text
+
+
+def test_RQMD_automation_015_update_file_json_mode_reports_partial_failures(repo_with_domain_docs: Path, tmp_path: Path) -> None:
+    update_file = tmp_path / "updates.jsonl"
+    update_file.write_text(
+        "\n".join(
+            [
+                '{"requirement_id":"AC-HELLO-001","status":"implemented"}',
+                '{"requirement_id":"AC-MISSING-999","status":"verified"}',
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo_with_domain_docs),
+            "--docs-dir",
+            "docs/requirements",
+            "--update-file",
+            str(update_file),
+            "--as-json",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 1
+    payload = json.loads(result.output)
+    assert payload["mode"] == "set"
+    assert payload["ok"] is False
+    assert payload["batch"] == {"total": 2, "succeeded": 1, "failed": 1}
+    assert len(payload["updates"]) == 2
+    assert payload["updates"][0]["ok"] is True
+    assert payload["updates"][1]["ok"] is False
+    assert "not found" in str(payload["updates"][1]["error"])
+
+
 def test_RQMD_automation_023_and_024_filter_flagged_json(two_file_repo: Path) -> None:
     first = two_file_repo / "docs" / "requirements" / "first.md"
     first.write_text(
@@ -1184,6 +1260,7 @@ Read-only routes.
     payload = json.loads(result.output)
     assert payload["mode"] == "filter-sub-domain"
     assert payload["sub_domain"] == "que"
+    assert payload["sub_domain_match_count"] == 2
     assert payload["total"] == 2
     assert [item["id"] for item in payload["files"][0]["requirements"]] == ["AC-DEMO-001", "AC-DEMO-002"]
     assert all(item["sub_domain"] == "Query API" for item in payload["files"][0]["requirements"])
@@ -1230,8 +1307,58 @@ Scope: demo.
     payload = json.loads(result.output)
     assert payload["mode"] == "filter-sub-domain"
     assert payload["sub_domain"] == "mutation"
+    assert payload["sub_domain_match_count"] == 0
     assert payload["total"] == 0
     assert payload["files"] == []
+
+
+def test_RQMD_automation_030_json_includes_sub_domain_null_and_sub_sections(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: Root requirement
+- **Status:** 💡 Proposed
+
+## Query API
+
+### AC-DEMO-002: Query requirement
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--status",
+            "proposed",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-status"
+    assert payload["total"] == 2
+    assert payload["files"][0]["sub_sections"] == [{"name": "Query API", "count": 1}]
+
+    requirements = payload["files"][0]["requirements"]
+    by_id = {entry["id"]: entry for entry in requirements}
+    assert "sub_domain" in by_id["AC-DEMO-001"]
+    assert by_id["AC-DEMO-001"]["sub_domain"] is None
+    assert by_id["AC-DEMO-002"]["sub_domain"] == "Query API"
 
 
 def test_RQMD_automation_029c_filter_sub_domain_list_output(tmp_path: Path) -> None:
@@ -1454,6 +1581,34 @@ def test_RQMD_automation_025_set_file_accepts_flagged_rows(repo_with_domain_docs
     assert "- **Flagged:** false" in text
 
 
+def test_RQMD_automation_022_filter_priority_json_returns_ambiguity_payload(repo_with_domain_docs: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo_with_domain_docs),
+            "--docs-dir",
+            "docs/requirements",
+            "--priority",
+            "P",
+            "--as-json",
+            "--no-table",
+            "--no-walk",
+        ],
+    )
+
+    assert result.exit_code == 1
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-priority"
+    assert payload["ok"] is False
+    assert payload["error"]["type"] == "ambiguous-input"
+    assert payload["error"]["field"] == "priority"
+    assert payload["error"]["input"] == "P"
+    assert "🔴 P0 - Critical" in payload["error"]["candidates"]
+    assert "🟢 P3 - Low" in payload["error"]["candidates"]
+
+
 def test_RQMD_automation_017_json_no_interactive_never_prompts(tmp_path: Path, monkeypatch) -> None:
     repo = tmp_path / "repo"
     repo.mkdir(parents=True)
@@ -1565,6 +1720,164 @@ def test_RQMD_automation_014_set_flagged_dry_run_json_reports_without_write(repo
     assert target.read_text(encoding="utf-8") == before
 
 
+def test_RQMD_automation_021_ambiguous_status_prefix_error_includes_recommendation() -> None:
+    """Test that a status ambiguity error message contains candidate list and 'Use one of:' suffix.
+
+    Uses configure_status_catalog to inject two statuses sharing a 'b' prefix, forcing ambiguity.
+    """
+    from rqmd.status_model import coerce_status_label, configure_status_catalog
+
+    configure_status_catalog([
+        {"name": "Bright", "shortcode": "bright", "emoji": "💡"},
+        {"name": "Blocked", "shortcode": "blocked", "emoji": "⛔"},
+    ])
+    try:
+        try:
+            coerce_status_label("b")
+            raise AssertionError("Expected ValueError for ambiguous 'b'")
+        except ValueError as exc:
+            err = str(exc)
+            assert "Ambiguous" in err, f"Expected 'Ambiguous' in: {err}"
+            assert "Use one of:" in err, f"Expected 'Use one of:' in: {err}"
+    finally:
+        configure_status_catalog(None)
+
+
+def test_RQMD_automation_021_ambiguous_priority_prefix_error_includes_recommendation(repo_with_domain_docs: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo_with_domain_docs),
+            "--docs-dir",
+            "docs/requirements",
+            "--priority",
+            "P",
+            "--no-table",
+            "--no-walk",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "Ambiguous" in result.output
+    assert "Use one of:" in result.output
+
+
+def test_RQMD_automation_026_filter_json_domain_entry_includes_scope(repo_with_domain_docs: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo_with_domain_docs),
+            "--docs-dir",
+            "docs/requirements",
+            "--status",
+            "implemented",
+            "--as-json",
+            "--no-table",
+            "--no-walk",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["files"], "Expected at least one domain file in payload"
+    domain = payload["files"][0]
+    assert "scope" in domain, "Domain entry must include 'scope' field"
+    assert domain["scope"] == "demo requirements"
+
+
+def test_RQMD_automation_026_filter_json_domain_entry_includes_domain_body(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain_dir = repo / "docs" / "requirements"
+    domain_dir.mkdir(parents=True)
+    (domain_dir / "demo.md").write_text(
+        """# Demo Domain Requirement
+
+Scope: example scope.
+
+This is a freeform domain body paragraph.
+
+### AC-DEMO-001: A requirement
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--status",
+            "proposed",
+            "--as-json",
+            "--no-table",
+            "--no-walk",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    domain = payload["files"][0]
+    assert "domain_body" in domain, "Domain entry must include 'domain_body' field"
+    assert "freeform domain body" in (domain["domain_body"] or "")
+
+
+def test_RQMD_automation_026_domain_body_is_none_when_no_preamble(repo_with_domain_docs: Path) -> None:
+    """When there is no freeform content before the first requirement, domain_body is None."""
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo_with_domain_docs),
+            "--docs-dir",
+            "docs/requirements",
+            "--status",
+            "implemented",
+            "--as-json",
+            "--no-table",
+            "--no-walk",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    domain = payload["files"][0]
+    # The sample fixture has no body content between Scope and first requirement.
+    assert domain["domain_body"] is None
+
+
+def test_RQMD_automation_026_summary_json_domain_entry_includes_scope(repo_with_domain_docs: Path) -> None:
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo_with_domain_docs),
+            "--docs-dir",
+            "docs/requirements",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "summary"
+    domain = payload["files"][0]
+    assert "scope" in domain, "Summary domain entry must include 'scope' field"
+    assert domain["scope"] == "demo requirements"
+    assert "domain_body" in domain, "Summary domain entry must include 'domain_body' field"
+
+
 def test_RQMD_automation_009b_summary_table_uses_five_status_headers(repo_with_domain_docs: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(
@@ -1669,3 +1982,138 @@ Scope: alpha.
 
     assert result.exit_code == 0
     assert result.output.find("Alpha Domain") < result.output.find("Zulu Domain")
+
+
+def test_RQMD_automation_027_deduplication_collapses_repeated_tokens(tmp_path: Path) -> None:
+    """When the same requirement ID appears multiple times via different tokens, it appears once in output."""
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: Item one
+- **Status:** ✅ Verified
+""",
+        encoding="utf-8",
+    )
+    # Pass AC-DEMO-001 twice and also domain stem 'demo' (which expands to AC-DEMO-001).
+    target_file = tmp_path / "focus.txt"
+    target_file.write_text("AC-DEMO-001\ndemo\nAC-DEMO-001\n", encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--targets-file",
+            str(target_file),
+            "--as-json",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    ids = [r["id"] for r in payload["files"][0]["requirements"]]
+    assert ids.count("AC-DEMO-001") == 1, "Duplicate requirement must be deduplicated"
+    assert payload["total"] == 1
+
+
+def test_RQMD_automation_028_targets_file_comment_only_lines_are_ignored(tmp_path: Path) -> None:
+    """Full-line comments starting with # are skipped; only real tokens are parsed."""
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: Item one
+- **Status:** ✅ Verified
+
+### AC-DEMO-002: Item two
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+    target_file = tmp_path / "focus.txt"
+    target_file.write_text(
+        "# This is a comment — should be ignored\nAC-DEMO-001  # inline comment\n",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--targets-file",
+            str(target_file),
+            "--as-json",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    ids = [r["id"] for r in payload["files"][0]["requirements"]]
+    assert ids == ["AC-DEMO-001"]
+    assert "AC-DEMO-002" not in ids
+
+
+def test_RQMD_automation_028_targets_file_comma_separated_tokens(tmp_path: Path) -> None:
+    """Comma-separated tokens on a single line are each parsed as separate tokens."""
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: Item one
+- **Status:** ✅ Verified
+
+### AC-DEMO-002: Item two
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+    target_file = tmp_path / "focus.txt"
+    target_file.write_text("AC-DEMO-001, AC-DEMO-002\n", encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--targets-file",
+            str(target_file),
+            "--as-json",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["total"] == 2
+    ids = [r["id"] for r in payload["files"][0]["requirements"]]
+    assert "AC-DEMO-001" in ids
+    assert "AC-DEMO-002" in ids
+

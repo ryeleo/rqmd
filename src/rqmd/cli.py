@@ -63,6 +63,7 @@ Notes:
 from __future__ import annotations
 
 import json
+import re
 import readline  # noqa: F401 — activates arrow-key line editing in input()/click.prompt()
 import sys
 from pathlib import Path
@@ -76,93 +77,48 @@ except ImportError:
 
 from . import menus as menus_mod
 from . import workflows as workflows_mod
-from .batch_inputs import (
-    parse_batch_update_csv,
-    parse_batch_update_file,
-    parse_batch_update_jsonl,
-    parse_set_entry,
-    parse_set_flagged_entry,
-    parse_set_priority_entry,
-)
+from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
+                           parse_batch_update_jsonl, parse_set_entry,
+                           parse_set_flagged_entry, parse_set_priority_entry)
 from .config import load_config, validate_config
-from .constants import (
-    DEFAULT_ID_PREFIXES,
-    DEFAULT_REQUIREMENTS_DIR,
-    ID_PREFIX_PATTERN,
-    STATUS_ORDER,
-    STATUS_PATTERN,
-    SUMMARY_END,
-    SUMMARY_START,
-)
-from .markdown_io import (
-    auto_detect_requirements_dir,
-    check_files_writable,
-    check_index_sync,
-    discover_project_root,
-    display_name_from_h1,
-    format_path_display,
-    initialize_requirements_scaffold,
-    iter_domain_files,
-    iter_requirements_search_roots,
-    parse_index_links,
-    resolve_requirements_dir,
-    validate_files_readable,
-)
+from .constants import (DEFAULT_ID_PREFIXES, DEFAULT_REQUIREMENTS_DIR,
+                        ID_PREFIX_PATTERN, STATUS_ORDER, STATUS_PATTERN,
+                        SUMMARY_END, SUMMARY_START)
+from .markdown_io import (auto_detect_requirements_dir, check_files_writable,
+                          check_index_sync, discover_project_root,
+                          display_name_from_h1, format_path_display,
+                          initialize_requirements_scaffold, iter_domain_files,
+                          iter_requirements_search_roots, parse_index_links,
+                          resolve_requirements_dir, validate_files_readable)
 from .menus import select_from_menu
 from .priority_model import normalize_priority_input
-from .req_parser import (
-    collect_requirements_by_flagged,
-    collect_requirements_by_priority,
-    collect_requirements_by_status,
-    collect_requirements_by_sub_domain,
-    find_requirement_by_id,
-    normalize_id_prefixes,
-    parse_requirements,
-    resolve_id_prefixes,
-)
+from .req_parser import (collect_requirements_by_flagged,
+                         collect_requirements_by_priority,
+                         collect_requirements_by_status,
+                         collect_requirements_by_sub_domain,
+                         find_requirement_by_id, normalize_id_prefixes,
+                         parse_requirements, resolve_id_prefixes)
 from .rollup_config import compute_rollup_column_values, resolve_rollup_columns
-from .status_model import (
-    build_color_rollup_text,
-    configure_status_catalog,
-    normalize_status_input,
-    style_status_count,
-    style_status_label,
-)
-from .status_update import (
-    apply_status_change_by_id,
-    print_criterion_panel,
-    prompt_for_blocked_reason,
-    prompt_for_deprecated_reason,
-    update_criterion_status,
-)
-from .summary import (
-    build_summary_block,
-    build_summary_line,
-    build_summary_table,
-    collect_summary_rows,
-    count_statuses,
-    insert_or_replace_summary,
-    normalize_status_lines,
-    print_custom_rollup_table,
-    print_global_rollup_table,
-    print_summary_table,
-    process_file,
-)
-from .target_selection import (
-    complete_target_tokens,
-    parse_target_token_file,
-    resolve_target_tokens,
-)
-from .workflows import (
-    build_filtered_criteria_payload,
-    build_summary_payload,
-    build_targeted_criteria_payload,
-    print_criteria_list,
-    print_criteria_tree,
-)
-from .workflows import (
-    focused_target_interactive_loop as focused_target_interactive_loop_impl,
-)
+from .status_model import (build_color_rollup_text, configure_status_catalog,
+                           normalize_status_input, style_status_count,
+                           style_status_label)
+from .status_update import (apply_status_change_by_id, print_criterion_panel,
+                            prompt_for_blocked_reason,
+                            prompt_for_deprecated_reason,
+                            update_criterion_status)
+from .summary import (build_summary_block, build_summary_line,
+                      build_summary_table, collect_summary_rows,
+                      count_statuses, insert_or_replace_summary,
+                      normalize_status_lines, print_custom_rollup_table,
+                      print_global_rollup_table, print_summary_table,
+                      process_file)
+from .target_selection import (complete_target_tokens, parse_target_token_file,
+                               resolve_target_tokens)
+from .workflows import (build_filtered_criteria_payload, build_summary_payload,
+                        build_targeted_criteria_payload)
+from .workflows import \
+    focused_target_interactive_loop as focused_target_interactive_loop_impl
+from .workflows import print_criteria_list, print_criteria_tree
 
 __all__ = [
     "SUMMARY_START",
@@ -203,6 +159,39 @@ __all__ = [
 
 apply_background_preserving_styles = menus_mod.apply_background_preserving_styles
 file_sort_key_by_priority = menus_mod.file_sort_key_by_priority
+
+_AMBIGUOUS_INPUT_PATTERN = re.compile(
+    r"^Ambiguous (?P<field>[a-z_]+) input '(?P<input>.+)'\. Matches: (?P<matches>[^.]+)(?:\..*)?$",
+    re.IGNORECASE,
+)
+
+
+def _build_json_ambiguity_payload(mode: str, message: str) -> dict[str, object] | None:
+    match = _AMBIGUOUS_INPUT_PATTERN.match(message.strip())
+    if not match:
+        return None
+
+    raw_matches = match.group("matches").strip()
+    candidates = [item.strip() for item in raw_matches.split(",") if item.strip()]
+    return {
+        "mode": mode,
+        "ok": False,
+        "error": {
+            "type": "ambiguous-input",
+            "field": match.group("field").lower(),
+            "input": match.group("input"),
+            "candidates": candidates,
+            "message": message,
+        },
+    }
+
+
+def _emit_json_ambiguity_error(mode: str, exc: click.ClickException) -> bool:
+    payload = _build_json_ambiguity_payload(mode, str(exc))
+    if payload is None:
+        return False
+    click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+    raise SystemExit(1)
 
 
 def prompt_for_init_prefix(default_prefix: str = "REQ") -> str:
@@ -1297,7 +1286,9 @@ def main(
             raise click.ClickException("--status cannot be combined with --verify-summaries / --update-id / --update-status / --scope-file.")
         try:
             normalized_status = normalize_status_input(filter_status)
-        except click.ClickException:
+        except click.ClickException as exc:
+            if json_output and _emit_json_ambiguity_error("filter-status", exc):
+                raise SystemExit(1)
             raise
         criteria_by_file = collect_requirements_by_status(
             repo_root,
@@ -1342,7 +1333,12 @@ def main(
     if filter_priority:
         if check or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file:
             raise click.ClickException("--priority cannot be combined with --verify-summaries / --update-id / --update-status / --update-priority / --scope-file.")
-        normalized_priority = normalize_priority_input(filter_priority)
+        try:
+            normalized_priority = normalize_priority_input(filter_priority)
+        except click.ClickException as exc:
+            if json_output and _emit_json_ambiguity_error("filter-priority", exc):
+                raise SystemExit(1)
+            raise
         criteria_by_file = collect_requirements_by_priority(
             repo_root,
             domain_files,
@@ -1538,61 +1534,89 @@ def main(
             raise click.ClickException("--blocked-note/--deprecated-note currently support single-target updates only.")
 
         update_results: list[dict[str, object]] = []
+        batch_mode = bool(set_file_input)
+        allow_partial_failures = batch_mode and len(update_requests) > 1
+        had_row_failures = False
         changed_files: set[Path] = set()
-        for request in update_requests:
+        for row_number, request in enumerate(update_requests, start=1):
             requirement_id_value = str(request["requirement_id"])
             status_value = str(request["status"]) if request["status"] is not None else None
             priority_value = str(request["priority"]) if request.get("priority") is not None else None
             flagged_value = request.get("flagged") if isinstance(request.get("flagged"), bool) else None
             row_file_filter = str(request["file"]) if request["file"] is not None else None
-            normalized_status = normalize_status_input(status_value) if status_value is not None else None
+            normalized_status: str | None = None
 
-            blocked_reason = str(request["blocked_reason"]) if request["blocked_reason"] is not None else None
-            deprecated_reason = str(request["deprecated_reason"]) if request["deprecated_reason"] is not None else None
-            if normalized_status is None or "Blocked" not in normalized_status:
-                blocked_reason = None
-            if normalized_status is None or "Deprecated" not in normalized_status:
-                deprecated_reason = None
+            try:
+                normalized_status = normalize_status_input(status_value) if status_value is not None else None
 
-            changed_path: Path | None = None
-            if row_file_filter:
-                candidate = (repo_root / row_file_filter).resolve()
-                if candidate.exists():
-                    changed_path = candidate
-            else:
-                for path in domain_files:
-                    if find_requirement_by_id(path, requirement_id_value, id_prefixes=id_prefixes):
-                        changed_path = path
-                        break
+                blocked_reason = str(request["blocked_reason"]) if request["blocked_reason"] is not None else None
+                deprecated_reason = str(request["deprecated_reason"]) if request["deprecated_reason"] is not None else None
+                if normalized_status is None or "Blocked" not in normalized_status:
+                    blocked_reason = None
+                if normalized_status is None or "Deprecated" not in normalized_status:
+                    deprecated_reason = None
 
-            changed = apply_status_change_by_id(
-                repo_root,
-                domain_files,
-                requirement_id=requirement_id_value,
-                new_status_input=status_value,
-                file_filter=row_file_filter,
-                blocked_reason=blocked_reason,
-                deprecated_reason=deprecated_reason,
-                new_priority_input=priority_value,
-                new_flagged_value=flagged_value,
-                include_status_emojis=include_status_emojis,
-                include_priority_summary=show_priority_summary,
-                id_prefixes=id_prefixes,
-                emit_output=not json_output,
-                dry_run=dry_run,
-            )
-            if changed and changed_path is not None:
-                changed_files.add(changed_path)
-            update_results.append(
-                {
-                    "requirement_id": requirement_id_value,
-                    "status": normalized_status,
-                    "priority": priority_value,
-                    "flagged": flagged_value,
-                    "file": row_file_filter,
-                    "changed": changed,
-                }
-            )
+                changed_path: Path | None = None
+                if row_file_filter:
+                    candidate = (repo_root / row_file_filter).resolve()
+                    if candidate.exists():
+                        changed_path = candidate
+                else:
+                    for path in domain_files:
+                        if find_requirement_by_id(path, requirement_id_value, id_prefixes=id_prefixes):
+                            changed_path = path
+                            break
+
+                changed = apply_status_change_by_id(
+                    repo_root,
+                    domain_files,
+                    requirement_id=requirement_id_value,
+                    new_status_input=status_value,
+                    file_filter=row_file_filter,
+                    blocked_reason=blocked_reason,
+                    deprecated_reason=deprecated_reason,
+                    new_priority_input=priority_value,
+                    new_flagged_value=flagged_value,
+                    include_status_emojis=include_status_emojis,
+                    include_priority_summary=show_priority_summary,
+                    id_prefixes=id_prefixes,
+                    emit_output=not json_output,
+                    dry_run=dry_run,
+                )
+                if changed and changed_path is not None:
+                    changed_files.add(changed_path)
+                update_results.append(
+                    {
+                        "row": row_number,
+                        "requirement_id": requirement_id_value,
+                        "status": normalized_status,
+                        "priority": priority_value,
+                        "flagged": flagged_value,
+                        "file": row_file_filter,
+                        "changed": changed,
+                        "ok": True,
+                        "error": None,
+                    }
+                )
+            except click.ClickException as exc:
+                if not allow_partial_failures:
+                    if json_output and _emit_json_ambiguity_error("set", exc):
+                        raise SystemExit(1)
+                    raise
+                had_row_failures = True
+                update_results.append(
+                    {
+                        "row": row_number,
+                        "requirement_id": requirement_id_value,
+                        "status": status_value,
+                        "priority": priority_value,
+                        "flagged": flagged_value,
+                        "file": row_file_filter,
+                        "changed": False,
+                        "ok": False,
+                        "error": str(exc),
+                    }
+                )
 
         _, table_rows = collect_summary_rows(
             domain_files,
@@ -1611,12 +1635,32 @@ def main(
             else:
                 payload["mode"] = "set"
             payload["updates"] = update_results
+            if allow_partial_failures:
+                failed_count = sum(1 for row in update_results if not bool(row.get("ok")))
+                payload["ok"] = failed_count == 0
+                payload["batch"] = {
+                    "total": len(update_results),
+                    "succeeded": len(update_results) - failed_count,
+                    "failed": failed_count,
+                }
             click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
-            raise SystemExit(0)
+            raise SystemExit(1 if had_row_failures else 0)
+
+        if allow_partial_failures:
+            failed_rows = [row for row in update_results if not bool(row.get("ok"))]
+            succeeded_count = len(update_results) - len(failed_rows)
+            click.echo(
+                f"Batch row results: {succeeded_count} succeeded, {len(failed_rows)} failed."
+            )
+            for row in failed_rows:
+                click.echo(
+                    f"Row {row['row']} ({row['requirement_id']}): {row['error']}",
+                    err=True,
+                )
 
         if summary_table:
             print_summary_table(table_rows, emoji_columns=emoji_columns)
-        raise SystemExit(0)
+        raise SystemExit(1 if had_row_failures else 0)
 
     if json_output:
         payload = dict(summary_payload)

@@ -17,15 +17,15 @@ except ImportError:
 from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
                         MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT,
                         PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN)
-from .req_parser import (collect_sub_sections,
-                              extract_requirement_block_with_lines,
-                              find_requirement_by_id, normalize_sub_domain_name,
-                              parse_requirements)
 from .markdown_io import (display_name_from_h1, format_path_display,
-                          iter_domain_files)
+                          iter_domain_files, scope_and_body_from_file)
 from .menus import (right_align_menu_suffix, select_from_menu, truncate_text,
                     visible_length)
 from .priority_model import style_priority_label
+from .req_parser import (collect_sub_sections,
+                         extract_requirement_block_with_lines,
+                         find_requirement_by_id, normalize_sub_domain_name,
+                         parse_requirements)
 from .status_model import (build_color_rollup_text, status_emoji,
                            style_status_label, style_status_line)
 from .status_update import (print_criterion_panel, prompt_for_blocked_reason,
@@ -637,22 +637,27 @@ def build_filtered_criteria_payload(
                 }
 
             criteria_payload.append(entry)
-        files_payload.append(
-            {
-                "path": relative_path,
-                "requirements": criteria_payload,
-                "sub_sections": sub_sections,
-            }
-        )
+        domain_scope, domain_body = scope_and_body_from_file(path, id_prefixes=id_prefixes)
+        domain_entry: dict[str, object] = {
+            "path": relative_path,
+            "scope": domain_scope,
+            "domain_body": domain_body,
+            "requirements": criteria_payload,
+            "sub_sections": sub_sections,
+        }
+        files_payload.append(domain_entry)
         total += len(criteria_payload)
 
-    return {
+    payload: dict[str, object] = {
         "mode": filter_mode,
         filter_label: target_value,
         "requirements_dir": format_path_display(criteria_dir, repo_root),
         "total": total,
         "files": files_payload,
     }
+    if filter_label == "sub_domain":
+        payload["sub_domain_match_count"] = total
+    return payload
 
 
 def build_summary_payload(
@@ -671,10 +676,13 @@ def build_summary_payload(
             totals[label] += counts[label]
 
         sub_sections = collect_sub_sections(path)
+        scope, domain_body = scope_and_body_from_file(path)
         files_payload.append(
             {
                 "path": format_path_display(path, repo_root),
                 "display_name": display_name_from_h1(path),
+                "scope": scope,
+                "domain_body": domain_body,
                 "changed": path.resolve() in changed_set,
                 "counts": {label: counts[label] for label, _slug in STATUS_ORDER},
                 "sub_sections": sub_sections,
@@ -746,9 +754,12 @@ def build_targeted_criteria_payload(
 
             criteria_payload.append(entry)
 
+        domain_scope, domain_body = scope_and_body_from_file(path, id_prefixes=id_prefixes)
         files_payload.append(
             {
                 "path": format_path_display(path, repo_root),
+                "scope": domain_scope,
+                "domain_body": domain_body,
                 "requirements": criteria_payload,
                 "sub_sections": collect_sub_sections(path, id_prefixes=id_prefixes),
             }
@@ -1832,6 +1843,35 @@ def lookup_criterion_interactive(
             new_status = selected_value or str(requirement.get("status") or "")
             blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
             deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+
+            changed = update_criterion_status(
+                path,
+                requirement,
+                new_status,
+                blocked_reason=blocked_reason,
+                deprecated_reason=deprecated_reason,
+            )
+        process_file(
+            path,
+            check_only=False,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
+        )
+
+        if changed:
+            click.echo(f"Updated {requirement['id']} -> {selected_value}")
+        else:
+            click.echo(f"No change for {requirement['id']} ({selected_value})")
+
+        _, table_rows = collect_summary_rows(
+            domain_files,
+            check_only=True,
+            display_name_fn=display_name_from_h1,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
+        )
+        print_summary_table(table_rows, emoji_columns=emoji_columns)
+        return 0
 
             changed = update_criterion_status(
                 path,

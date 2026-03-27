@@ -296,7 +296,8 @@ def coerce_status_label(value: str) -> str:
             return prefix_matches[0]
         if len(prefix_matches) > 1:
             raise ValueError(
-                f"Ambiguous status input '{value}'. Matches: {', '.join(prefix_matches)}"
+                f"Ambiguous status input '{value}'. Matches: {', '.join(prefix_matches)}. "
+                f"Use one of: {', '.join(prefix_matches)}"
             )
 
     raise ValueError(f"Unrecognized status value: {value}")

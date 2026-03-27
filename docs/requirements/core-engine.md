@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
+Summary: 5💡 1🔧 16✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -178,3 +178,17 @@ Summary: 3💡 1🔧 16✅ 0⛔ 0🗑️
 - So that RQMD-AUTOMATION-029/030 and RQMD-INTERACTIVE-020/021 can expose subsection metadata for filtering, JSON export, and completion behavior.
 - So that parsing and summary regeneration preserve domain-body content verbatim and never treat it as requirement text.
 - So that future interactive and automation surfaces can consume this domain-body model through a single canonical core contract.
+
+### RQMD-CORE-021: Per-requirement external links field
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when I want to link a requirement to external systems (GitHub issues, Jira, TDX, etc.)
+- I want each requirement to support an optional top-level `**Links:**` field
+- So that the field appears directly below Status/Priority and contains one or more link entries as list items
+- So that each entry may be a plain URL or a markdown hyperlink in `[label](url)` format
+- So that the parser recognizes the `**Links:**` field as a first-class top-level metadata field alongside Status and Priority
+- So that requirements without a Links field parse and serialize without any change in behavior
+- So that the links list is included in JSON export as a `links` array where each entry carries `url` and optional `label` fields
+- So that plain URLs without markdown formatting are stored with a null/empty label and round-trip back as plain URLs
+- So that write-back preserves the original link formatting verbatim unless the user explicitly edits or reformats it
+- So that summary block generation and status counting are not affected by the presence or absence of links.

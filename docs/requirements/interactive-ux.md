@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 0🔧 18✅ 0⛔ 4🗑️
+Summary: 4💡 0🔧 18✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -259,3 +259,16 @@ colors:
 	blocked: red
 	deprecated: grey
 ```
+
+### RQMD-INTERACTIVE-022: Interactive link entry with URL-to-hyperlink auto-formatting
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when I want to add or manage external links on a requirement interactively
+- I want a link-editing flow accessible from the requirement detail view
+- So that the user can add a new link by entering either a plain URL or a pre-formatted `[label](url)` markdown hyperlink
+- So that when the user enters a plain URL without markdown formatting, rqmd prompts "Add a label? (enter to skip)"
+- So that if the user provides a label rqmd automatically formats the entry as `[label](url)` before saving
+- So that if the user skips the label prompt the plain URL is written to the `**Links:**` field as-is
+- So that the user can add multiple links in a single interactive session before returning to the requirement view
+- So that existing links are displayed and the user can select one to remove or re-format it
+- So that this flow depends on the `**Links:**` field contract defined in RQMD-CORE-021 and does not introduce a separate link storage path.

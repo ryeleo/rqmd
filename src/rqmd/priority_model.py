@@ -11,15 +11,9 @@ from __future__ import annotations
 
 import click
 
-from .constants import (
-    ANSI_ESCAPE_PATTERN,
-    ANSI_RESET,
-    NON_ALNUM_PATTERN,
-    NON_ALNUM_PREFIX_PATTERN,
-    PRIORITY_ALIASES,
-    PRIORITY_ORDER,
-    PRIORITY_PARSE_ALIASES,
-)
+from .constants import (ANSI_ESCAPE_PATTERN, ANSI_RESET, NON_ALNUM_PATTERN,
+                        NON_ALNUM_PREFIX_PATTERN, PRIORITY_ALIASES,
+                        PRIORITY_ORDER, PRIORITY_PARSE_ALIASES)
 
 
 def style_priority_label(priority_label: str) -> str:
@@ -168,7 +162,8 @@ def normalize_priority_input(value: str) -> str:
         matches = _priority_prefix_matches(value)
         if len(matches) > 1:
             raise click.ClickException(
-                f"Ambiguous priority input '{value}'. Matches: {', '.join(matches)}"
+                f"Ambiguous priority input '{value}'. Matches: {', '.join(matches)}. "
+                f"Use one of: {', '.join(matches)}"
             )
         raise click.ClickException(f"Unrecognized priority input: {value}")
     return normalized

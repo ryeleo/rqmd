@@ -1,10 +1,12 @@
 RQMD-CORE-013 (domain/index sync maintenance) since it would reduce manual doc drift over time.
 
-## Key Links
+## External Links
 
-Add a "Links" section to each Requirement, so that ppl can add links to their requirements.
+Core-engine: Add a "Links" section to each Requirement, so that ppl can add links to their requirements. This way, external systems (e.g. github issues, TDX, Jira) can easily be linked to requirements, and users can quickly jump to related work in other systems from these requirement docs (if gh-cli is enabled, the AI agent could even make updates directly to linked GH issues, just saying).
 
-Actually maybe add links as a top-level field for
+Core-engine: Make links as a top-level field, so it is very easy.
+
+UX: Let the user enter url or markdown hyperlink -- if they skip the markdown formatting and just use url, offer to optionally take 'label: ' next and automatically turn it into a hyperlink!
 
 
 
