@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 5💡 10🔧 10✅ 0⛔ 0🗑️
+Summary: 6💡 10🔧 10✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -170,3 +170,10 @@ Summary: 5💡 10🔧 10✅ 0⛔ 0🗑️
 - So that batch and CI jobs can manage flagged triage state using the same validation, ambiguity handling, and file-scope guardrails used by other mutation commands.
 - So that `--set-file` rows can also include flagged-state mutation values with the same canonical true/false normalization and row-level error reporting guarantees.
 - So that `--json` mutation runs return structured success/failure results for flagged updates consistent with the existing batch partial-failure model.
+
+### RQMD-AUTOMATION-026: Domain-body JSON contract
+- **Status:** 💡 Proposed
+- As an automation user when consuming `--json` outputs for domain-level workflows
+- I want an explicit machine-readable contract for optional domain-body payloads aligned to RQMD-CORE-019
+- So that clients can request domain-body content with a dedicated opt-in flag and receive deterministic keys/order.
+- So that default compact JSON responses exclude domain-body text to preserve payload size and avoid accidental downstream churn.

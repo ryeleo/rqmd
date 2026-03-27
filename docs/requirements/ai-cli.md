@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 7💡 0🔧 0✅ 0⛔ 3🗑️
+Summary: 8💡 0🔧 0✅ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -71,3 +71,10 @@ Summary: 7💡 0🔧 0✅ 0⛔ 3🗑️
 - I want rqmd-ai to emit a structured audit record of inputs, decisions, and outputs
 - So that AI-assisted requirement changes remain traceable and reviewable.
 - So that emitted audit records are sourced from the same local `rqmd-history` backend defined by `RQMD-UNDO-005` and `RQMD-UNDO-011`, rather than a parallel audit store.
+
+### RQMD-AI-011: Domain-body context export for prompts
+- **Status:** 💡 Proposed
+- As an AI operator preparing prompts with domain-level context
+- I want rqmd-ai exports to optionally include domain-body content aligned with RQMD-CORE-019
+- So that model prompts can include architecture/rationale notes without embedding those notes into individual requirement bodies.
+- So that domain-body inclusion is explicit and bounded (for example size-capped or section-filtered) to keep prompt payloads stable and cost-aware.

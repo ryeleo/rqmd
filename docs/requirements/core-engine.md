@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 1🔧 16✅ 0⛔ 0🗑️
+Summary: 2💡 1🔧 16✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -142,3 +142,11 @@ Summary: 1💡 1🔧 16✅ 0⛔ 0🗑️
 - I want a simple binary flagged field on requirements
 - So that I can mark items for attention without introducing a new `Flagged` status into the status catalog.
 - So that flagged state can later participate in interactive focus workflows, filtering, and automation.
+
+### RQMD-CORE-019: Domain-level body parsing and preservation
+- **Status:** 💡 Proposed
+- As a rqmd maintainer when requirement domains include long-form narrative notes
+- I want each domain markdown file to support an explicit optional domain-level body section (separate from per-requirement bodies)
+- So that implementation rationale, migration guidance, and AI-generated domain notes can live at domain scope without polluting requirement entries.
+- So that parsing and summary regeneration preserve domain-body content verbatim and never treat it as requirement text.
+- So that future interactive and automation surfaces can consume this domain-body model through a single canonical core contract.

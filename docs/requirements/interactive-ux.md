@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 0🔧 13✅ 0⛔ 4🗑️
+Summary: 5💡 0🔧 13✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -110,6 +110,14 @@ Summary: 4💡 0🔧 13✅ 0⛔ 4🗑️
 - As a rqmd user when I am reviewing requirements interactively
 - I want to toggle a requirement's binary flagged state without changing its status
 - So that I can quickly mark or unmark items that need special attention during triage and review.
+
+### RQMD-INTERACTIVE-018: Domain-level notes discoverability in interactive mode
+- **Status:** 💡 Proposed
+- As a rqmd user when I open a domain in interactive mode
+- I want optional domain-level notes/body content to be discoverable in-context (for example in a compact notes pane or explicit notes command)
+- So that implementation guidance and AI-authored domain rationale are available without cluttering individual requirement bodies.
+- So that interactive navigation remains focused on requirement editing while preserving fast access to domain context.
+- So that this UX behavior depends on the canonical domain-body model defined by RQMD-CORE-019 rather than a separate interactive-only parsing path.
 
 ### RQMD-INTERACTIVE-009A: Up key for hierarchical navigation
 - **Status:** ✅ Verified

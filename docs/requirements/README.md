@@ -24,6 +24,7 @@ Status workflow:
 - [AI CLI](ai-cli.md) - `rqmd-ai`-specific prompt export, guarded apply flows, onboarding guidance, and auditability requirements
 - [Sorting](sorting.md) - ordering rules, toggles, deterministic ranking behavior
 - [Roll-up](roll-up.md) - summary counts, bucket rendering, and visual roll-up output
+- [Screen-Write UI](screen-write.md) - full-screen renderer mode, terminal capability fallback, and redraw ergonomics
 - [Time Machine](time-machine.md) - branch-aware historical browsing, detached views, and replay from prior states
 - [Portability](portability.md) - repo root, requirements directory, cross-project assumptions
 - [Packaging](packaging.md) - package layout, entrypoints, install/run behavior
@@ -42,6 +43,7 @@ Status workflow:
 | RQMD-AI-* | AI CLI |
 | RQMD-SORTING-* | Sorting |
 | RQMD-ROLLUP-* | Roll-up |
+| RQMD-UI-* | Screen-Write UI |
 | RQMD-TIME-* | Time Machine |
 | RQMD-PORTABILITY-* | Portability |
 | RQMD-PACKAGING-* | Packaging |

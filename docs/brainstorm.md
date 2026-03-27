@@ -36,22 +36,6 @@ Add to the schema for requirements/.md docs to include this field as an optional
 
 
 
-## 
-
---json should include a "body" field by default, right? So that when you use it, you can super easily grok the entire requirement object including the text and line references, which is really helpful for automation and AI parsing. Maybe add a `--no-body` flag to disable that if you just want a flat status list or something.
-
-## rqmd --filter-status Implemented
-
-If a user runs a command, leaves, and comes back, they should be brought back to the same index they were at to continue their work.
-There should be a way to go back to 1 or to the end also.
-
-## sort orders
-
-The default sort should also effect the inital summary output! (Looks to be ascending names instead of descending right now)
-
-## "[Shift+]s=sort"
-
-Optionally make it so holding shift while pressing `s` in interactive mode goes to the prior column instead of the next column.
 
 ## ctrl + z
 
@@ -68,7 +52,7 @@ This becons the idea of saving a state change log, so that undo/redo persists af
 This file should be a true index of the last time the tool ran.
 Maybe even we should "assume that all updates to the markdown files are made via the tool."
 
-## rqMD instead of rqMD?
+## rqMD instead of reqMD?
 
 I think rqMD is so nice and short! And it still conveys the right sound when you prononce it naturally even without the "e"!
 
@@ -191,3 +175,49 @@ Main structural change from the previous queue:
 
 Remember that I really want to keep development snappy in terms of running lots of tests, but I also want you to do many cycles of development since we have such solid requirements and tests lined up now.
 Remember 
+
+
+## Summary of what has been implemented since yesterday around 7pm
+
+163/163 tests passed (100%)
+
+- Automation and JSON contract improvements:
+  - Stable mode-specific JSON key contracts documented and enforced in tests.
+  - Deterministic ordering for filter JSON payloads (files by path, requirements by ID).
+  - Filter-flagged automation path and JSON support.
+  - Direct flagged-state mutation support in automation flows.
+  - Prompt suppression guarantees for non-interactive and JSON runs.
+  - Exit-code behavior documented for automation.
+  - Main touchpoints: cli.py, batch_inputs.py, criteria_parser.py, test_automation_api.py, README.md, automation-api.md.
+
+- Non-destructive mutation preview support:
+  - Dry-run behavior added for mutation-style commands and migration/update workflows.
+  - Behavior validated through test updates.
+  - Main touchpoints: cli.py, test_automation_api.py, automation-api.md, README.md.
+
+- Portability/root discovery enhancements:
+  - Upward repo-root discovery behavior and portability-facing docs/tests alignment.
+  - Main touchpoints: markdown_io.py, cli.py, test_portability_packaging_docs.py, portability.md, README.md.
+
+- Interactive UX and sorting behavior refinements:
+  - Shift-aware key handling in menus.
+  - Reverse sort cycling support (Shift+S semantics in interactive menus).
+  - Filtered walk navigation upgrades:
+    - Shift+N reverse navigation behavior.
+    - g/G jump to beginning/end.
+    - End-of-filter no longer forces exit; now shows no more target message and stays in flow.
+  - Legend/contract text synced with behavior.
+  - Main touchpoints: menus.py, workflows.py, test_interactive.py, sorting.md, interactive-ux.md, README.md.
+
+- Requirements and documentation synchronization:
+  - Acceptance criteria wording/status updates across multiple requirement domain docs.
+  - README command/contract text updated to reflect implemented behavior.
+  - Main touchpoints: automation-api.md, core-engine.md, interactive-ux.md, sorting.md, portability.md, README.md.
+
+Commit timeline since that window:
+- 859795e, cbcaf9f, 348cadc, 2df2852, 332775a, 9c3d8c9
+- Latest 9c3d8c9 is the breakfix that restored runnability and testability.
+
+If you want, I can next produce a tighter change log grouped by requirement ID (for example: RQMD-AUTOMATION-0xx, RQMD-SORTING-0xx, RQMD-INTERACTIVE-0xx) with implemented vs still proposed counts.
+
+Made changes.
