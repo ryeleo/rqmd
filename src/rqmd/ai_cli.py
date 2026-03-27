@@ -26,12 +26,19 @@ except ImportError:
     sys.exit(1)
 
 from .batch_inputs import parse_set_entry
-from .req_parser import (extract_criterion_block_with_lines,
-                              normalize_id_prefixes, parse_criteria,
-                              resolve_id_prefixes)
-from .markdown_io import (discover_project_root, format_path_display,
-                          iter_domain_files, resolve_criteria_dir,
-                          validate_files_readable)
+from .markdown_io import (
+    discover_project_root,
+    format_path_display,
+    iter_domain_files,
+    resolve_criteria_dir,
+    validate_files_readable,
+)
+from .req_parser import (
+    extract_criterion_block_with_lines,
+    normalize_id_prefixes,
+    parse_criteria,
+    resolve_id_prefixes,
+)
 from .status_model import normalize_status_input
 from .status_update import apply_status_change_by_id
 

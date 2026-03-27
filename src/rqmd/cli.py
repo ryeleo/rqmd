@@ -76,49 +76,93 @@ except ImportError:
 
 from . import menus as menus_mod
 from . import workflows as workflows_mod
-from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
-                           parse_batch_update_jsonl, parse_set_entry,
-                           parse_set_flagged_entry, parse_set_priority_entry)
+from .batch_inputs import (
+    parse_batch_update_csv,
+    parse_batch_update_file,
+    parse_batch_update_jsonl,
+    parse_set_entry,
+    parse_set_flagged_entry,
+    parse_set_priority_entry,
+)
 from .config import load_config, validate_config
-from .constants import (DEFAULT_REQUIREMENTS_DIR, DEFAULT_ID_PREFIXES,
-                        ID_PREFIX_PATTERN, STATUS_ORDER, STATUS_PATTERN,
-                        SUMMARY_END, SUMMARY_START)
-from .req_parser import (collect_criteria_by_flagged,
-                              collect_criteria_by_priority,
-                              collect_criteria_by_status,
-                              collect_criteria_by_sub_domain,
-                              find_criterion_by_id, normalize_id_prefixes,
-                              parse_criteria, resolve_id_prefixes)
-from .markdown_io import (auto_detect_criteria_dir, check_files_writable,
-                          check_index_sync, discover_project_root,
-                          display_name_from_h1, format_path_display,
-                          initialize_requirements_scaffold,
-                          iter_criteria_search_roots, iter_domain_files,
-                          parse_index_links, resolve_criteria_dir,
-                          validate_files_readable)
+from .constants import (
+    DEFAULT_ID_PREFIXES,
+    DEFAULT_REQUIREMENTS_DIR,
+    ID_PREFIX_PATTERN,
+    STATUS_ORDER,
+    STATUS_PATTERN,
+    SUMMARY_END,
+    SUMMARY_START,
+)
+from .markdown_io import (
+    auto_detect_criteria_dir,
+    check_files_writable,
+    check_index_sync,
+    discover_project_root,
+    display_name_from_h1,
+    format_path_display,
+    initialize_requirements_scaffold,
+    iter_criteria_search_roots,
+    iter_domain_files,
+    parse_index_links,
+    resolve_criteria_dir,
+    validate_files_readable,
+)
 from .menus import select_from_menu
 from .priority_model import normalize_priority_input
+from .req_parser import (
+    collect_criteria_by_flagged,
+    collect_criteria_by_priority,
+    collect_criteria_by_status,
+    collect_criteria_by_sub_domain,
+    find_criterion_by_id,
+    normalize_id_prefixes,
+    parse_criteria,
+    resolve_id_prefixes,
+)
 from .rollup_config import compute_rollup_column_values, resolve_rollup_columns
-from .status_model import (build_color_rollup_text, configure_status_catalog,
-                           normalize_status_input, style_status_count,
-                           style_status_label)
-from .status_update import (apply_status_change_by_id, print_criterion_panel,
-                            prompt_for_blocked_reason,
-                            prompt_for_deprecated_reason,
-                            update_criterion_status)
-from .summary import (build_summary_block, build_summary_line,
-                      build_summary_table, collect_summary_rows,
-                      count_statuses, insert_or_replace_summary,
-                      normalize_status_lines, print_custom_rollup_table,
-                      print_global_rollup_table, print_summary_table,
-                      process_file)
-from .target_selection import (complete_target_tokens, parse_target_token_file,
-                               resolve_target_tokens)
-from .workflows import (build_filtered_criteria_payload, build_summary_payload,
-                        build_targeted_criteria_payload)
-from .workflows import \
-    focused_target_interactive_loop as focused_target_interactive_loop_impl
-from .workflows import print_criteria_list, print_criteria_tree
+from .status_model import (
+    build_color_rollup_text,
+    configure_status_catalog,
+    normalize_status_input,
+    style_status_count,
+    style_status_label,
+)
+from .status_update import (
+    apply_status_change_by_id,
+    print_criterion_panel,
+    prompt_for_blocked_reason,
+    prompt_for_deprecated_reason,
+    update_criterion_status,
+)
+from .summary import (
+    build_summary_block,
+    build_summary_line,
+    build_summary_table,
+    collect_summary_rows,
+    count_statuses,
+    insert_or_replace_summary,
+    normalize_status_lines,
+    print_custom_rollup_table,
+    print_global_rollup_table,
+    print_summary_table,
+    process_file,
+)
+from .target_selection import (
+    complete_target_tokens,
+    parse_target_token_file,
+    resolve_target_tokens,
+)
+from .workflows import (
+    build_filtered_criteria_payload,
+    build_summary_payload,
+    build_targeted_criteria_payload,
+    print_criteria_list,
+    print_criteria_tree,
+)
+from .workflows import (
+    focused_target_interactive_loop as focused_target_interactive_loop_impl,
+)
 
 __all__ = [
     "SUMMARY_START",
