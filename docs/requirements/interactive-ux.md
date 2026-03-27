@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 0🔧 17✅ 0⛔ 4🗑️
+Summary: 3💡 0🔧 18✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -110,7 +110,7 @@ Summary: 4💡 0🔧 17✅ 0⛔ 4🗑️
 - So that users can set status once then exit.
 
 ### RQMD-INTERACTIVE-016: Open specific domain file from CLI entry
-- **Status:** 💡 Proposed
+- **Status:** ✅ Verified
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when a user invokes `rqmd` with a path to a domain file (absolute or repo-root-relative)
 - I want the provided path to resolve to a valid markdown domain file containing criteria
