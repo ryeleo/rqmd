@@ -5,7 +5,6 @@ import re
 from pathlib import Path
 
 from click.testing import CliRunner
-
 from rqmd.ai_cli import main
 from rqmd.constants import JSON_SCHEMA_VERSION
 
