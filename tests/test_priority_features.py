@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-
 from rqmd import cli
 from rqmd.criteria_parser import parse_criteria
-from rqmd.summary import build_summary_block, collect_summary_rows, count_priorities, process_file
+from rqmd.summary import (build_summary_block, collect_summary_rows,
+                          count_priorities, process_file)
 
 
 @pytest.fixture
@@ -388,6 +388,10 @@ Text.
         assert criteria[0]["priority_line"] is not None
         assert isinstance(criteria[0]["priority_line"], int)
         assert criteria[0]["priority_line"] > 0
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
 
 
 if __name__ == "__main__":
