@@ -150,6 +150,7 @@ Summary: 1💡 23🔧 10✅ 0⛔ 0🗑️
 - I want unique minimal prefixes for long option names and enumerated values to be accepted (for example, `--filt V` -> `--status Verified`)
 - So that fast terminal usage is supported without sacrificing determinism.
 - So that ambiguous prefixes fail with a clear disambiguation error listing valid matches.
+- **Note:** The enumerated-value prefix half (e.g. `V` → `Verified`) is already implemented and tested. The option-name abbreviation half (e.g. `--stat` → `--status`) via single-character shortcode is a reasonable approach, but is explicitly deferred to **absolute lowest priority** — implement this last, only after the JSON API contract is fully stable and no further breaking changes are expected. Adding abbreviation resolution to a large option set risks surfacing ambiguity regressions during active development.
 
 ### RQMD-AUTOMATION-020: Ambiguous option-prefix error contract
 - **Status:** 🔧 Implemented

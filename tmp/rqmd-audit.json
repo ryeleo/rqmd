@@ -1,0 +1,222 @@
+{
+  "mode": "summary",
+  "requirements_dir": "docs/requirements",
+  "changed_files": [],
+  "totals": {
+    "💡 Proposed": 48,
+    "🔧 Implemented": 40,
+    "✅ Verified": 88,
+    "⛔ Blocked": 0,
+    "🗑️ Deprecated": 12
+  },
+  "files": [
+    {
+      "path": "docs/requirements/ai-cli.md",
+      "display_name": "AI CLI",
+      "scope": "a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs",
+      "domain_body": null,
+      "changed": false,
+      "counts": {
+        "💡 Proposed": 1,
+        "🔧 Implemented": 8,
+        "✅ Verified": 0,
+        "⛔ Blocked": 0,
+        "🗑️ Deprecated": 3
+      },
+      "sub_sections": []
+    },
+    {
+      "path": "docs/requirements/automation-api.md",
+      "display_name": "Automation API",
+      "scope": "non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior",
+      "domain_body": null,
+      "changed": false,
+      "counts": {
+        "💡 Proposed": 1,
+        "🔧 Implemented": 23,
+        "✅ Verified": 10,
+        "⛔ Blocked": 0,
+        "🗑️ Deprecated": 0
+      },
+      "sub_sections": []
+    },
+    {
+      "path": "docs/requirements/core-engine.md",
+      "display_name": "Core Engine",
+      "scope": "parsing, status normalization, summary generation, and requirement discovery",
+      "domain_body": null,
+      "changed": false,
+      "counts": {
+        "💡 Proposed": 4,
+        "🔧 Implemented": 4,
+        "✅ Verified": 16,
+        "⛔ Blocked": 0,
+        "🗑️ Deprecated": 0
+      },
+      "sub_sections": []
+    },
+    {
+      "path": "docs/requirements/interactive-ux.md",
+      "display_name": "Interactive UX",
+      "scope": "interactive menus, keyboard navigation, and in-session requirement status editing",
+      "domain_body": null,
+      "changed": false,
+      "counts": {
+        "💡 Proposed": 4,
+        "🔧 Implemented": 0,
+        "✅ Verified": 18,
+        "⛔ Blocked": 0,
+        "🗑️ Deprecated": 4
+      },
+      "sub_sections": []
+    },
+    {
+      "path": "docs/requirements/packaging.md",
+      "display_name": "Packaging s",
+      "scope": "package layout, installability, module entrypoints, and publication readiness",
+      "domain_body": null,
+      "changed": false,
+      "counts": {
+        "💡 Proposed": 1,
+        "🔧 Implemented": 0,
+        "✅ Verified": 9,
+        "⛔ Blocked": 0,
+        "🗑️ Deprecated": 0
+      },
+      "sub_sections": []
+    },
+    {
+      "path": "docs/requirements/portability.md",
+      "display_name": "Portability",
+      "scope": "cross-project operation, path configuration, and repo-agnostic behavior",
+      "domain_body": null,
+      "changed": false,
+      "counts": {
+        "💡 Proposed": 1,
+        "🔧 Implemented": 5,
+        "✅ Verified": 10,
+        "⛔ Blocked": 0,
+        "🗑️ Deprecated": 1
+      },
+      "sub_sections": []
+    },
+    {
+      "path": "docs/requirements/priority.md",
+      "display_name": "Priority",
+      "scope": "add a first-class `Priority` field to requirement entries, integrate priority into interactive and non-interactive flows, and allow priority-aware sorting and summaries",
+      "domain_body": null,
+      "changed": false,
+      "counts": {
+        "💡 Proposed": 3,
+        "🔧 Implemented": 0,
+        "✅ Verified": 9,
+        "⛔ Blocked": 0,
+        "🗑️ Deprecated": 0
+      },
+      "sub_sections": []
+    },
+    {
+      "path": "docs/requirements/roll-up.md",
+      "display_name": "Roll-up",
+      "scope": "status aggregation, per-file summary generation, and roll-up display output",
+      "domain_body": null,
+      "changed": false,
+      "counts": {
+        "💡 Proposed": 0,
+        "🔧 Implemented": 0,
+        "✅ Verified": 6,
+        "⛔ Blocked": 0,
+        "🗑️ Deprecated": 1
+      },
+      "sub_sections": []
+    },
+    {
+      "path": "docs/requirements/screen-write.md",
+      "display_name": "Screen-Write UI",
+      "scope": "interactive menus, paginated views, and terminal rendering behavior",
+      "domain_body": null,
+      "changed": false,
+      "counts": {
+        "💡 Proposed": 10,
+        "🔧 Implemented": 0,
+        "✅ Verified": 0,
+        "⛔ Blocked": 0,
+        "🗑️ Deprecated": 1
+      },
+      "sub_sections": []
+    },
+    {
+      "path": "docs/requirements/sorting.md",
+      "display_name": "Sorting",
+      "scope": "deterministic ordering, sort toggles, and priority-based ranking in interactive views",
+      "domain_body": null,
+      "changed": false,
+      "counts": {
+        "💡 Proposed": 0,
+        "🔧 Implemented": 0,
+        "✅ Verified": 9,
+        "⛔ Blocked": 0,
+        "🗑️ Deprecated": 2
+      },
+      "sub_sections": []
+    },
+    {
+      "path": "docs/requirements/test-subsections.md",
+      "display_name": "Test Subsections",
+      "scope": "testing H2 subsection parsing",
+      "domain_body": null,
+      "changed": false,
+      "counts": {
+        "💡 Proposed": 2,
+        "🔧 Implemented": 0,
+        "✅ Verified": 1,
+        "⛔ Blocked": 0,
+        "🗑️ Deprecated": 0
+      },
+      "sub_sections": [
+        {
+          "name": "Query API",
+          "count": 2,
+          "body": "This subsection covers read-only operations."
+        },
+        {
+          "name": "Mutation API",
+          "count": 1,
+          "body": "This subsection covers write operations."
+        }
+      ]
+    },
+    {
+      "path": "docs/requirements/time-machine.md",
+      "display_name": "Time Machine",
+      "scope": "branch-aware temporal navigation, historical inspection, detached point-in-time views, replay from past states, and timeline-oriented UX for requirement catalogs",
+      "domain_body": null,
+      "changed": false,
+      "counts": {
+        "💡 Proposed": 10,
+        "🔧 Implemented": 0,
+        "✅ Verified": 0,
+        "⛔ Blocked": 0,
+        "🗑️ Deprecated": 0
+      },
+      "sub_sections": []
+    },
+    {
+      "path": "docs/requirements/undo.md",
+      "display_name": "Undo / History",
+      "scope": "full undo/redo semantics, persistent history across restarts/crashes, branching and \"lost changes\" recovery, UI affordances, and storage/retention policies",
+      "domain_body": null,
+      "changed": false,
+      "counts": {
+        "💡 Proposed": 11,
+        "🔧 Implemented": 0,
+        "✅ Verified": 0,
+        "⛔ Blocked": 0,
+        "🗑️ Deprecated": 0
+      },
+      "sub_sections": []
+    }
+  ],
+  "ok": true,
+  "schema_version": "1.0.0"
+}

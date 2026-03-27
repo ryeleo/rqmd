@@ -1,12 +1,16 @@
 # Example status-catalog showing statuses, rollup_mode, and bucket mapping
-rollup_mode: bucketed # options: per_status | bucketed | monochrome
+rollup_mode: bucketed  # options: per_status | bucketed | monochrome
 
 bucket_map:
-  proposed: proposed
-  implemented: in_progress
-  verified: done
-  blocked: blocked
-  deprecated: deprecated
+  proposed:          proposed
+  pytested:          in_progress
+  ai_blocked:        blocked
+  ai_skipped:        blocked
+  ai_verified:       done
+  done:              done
+  change_requested:  in_progress
+  cancelled:         deprecated
+  deprecated:        deprecated
 
 statuses:
   - name: Proposed
@@ -15,23 +19,47 @@ statuses:
     color: cyan
     rollup_color: blue
 
-  - name: Implemented
-    shortcode: IMP
-    emoji: "🔧"
+  - name: Pytested
+    shortcode: PYT
+    emoji: "🧪"
     color: yellow
     rollup_color: in_progress
 
-  - name: Verified
-    shortcode: VER
+  - name: AI Blocked
+    shortcode: AIB
+    emoji: "🚧"
+    color: red
+    rollup_color: blocked
+
+  - name: AI Skipped
+    shortcode: AIS
+    emoji: "⏭️"
+    color: grey
+    rollup_color: blocked
+
+  - name: AI Verified
+    shortcode: AIV
+    emoji: "🤖"
+    color: green
+    rollup_color: done
+
+  - name: Done
+    shortcode: DON
     emoji: "✅"
     color: green
     rollup_color: done
 
-  - name: Blocked
-    shortcode: BLK
-    emoji: "⛔"
-    color: red
-    rollup_color: blocked
+  - name: Change Requested
+    shortcode: CHG
+    emoji: "🔄"
+    color: yellow
+    rollup_color: in_progress
+
+  - name: Cancelled
+    shortcode: CAN
+    emoji: "❌"
+    color: grey
+    rollup_color: deprecated
 
   - name: Deprecated
     shortcode: DEP

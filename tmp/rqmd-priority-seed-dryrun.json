@@ -1,0 +1,9 @@
+{
+  "mode": "init-priorities",
+  "requirements_dir": "docs/requirements",
+  "default_priority": "🟡 P2 - Medium",
+  "dry_run": true,
+  "changed_files": [],
+  "changed_count": 0,
+  "schema_version": "1.0.0"
+}
