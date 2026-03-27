@@ -1,5 +1,21 @@
 RQMD-CORE-013 (domain/index sync maintenance) since it would reduce manual doc drift over time.
 
+## Option to add Agent and Skill instructions for AI Agents
+
+Rqmd should offer to install a core set of agent and skill instructions for AI agents to use when working with the tool. This would include instructions for how to interpret the JSON contract, how to use the `rqmd` CLI in various modes, and how to update requirements and documentation as part of implementation work. This would help ensure that AI agents can effectively contribute to the project without needing extensive manual guidance on how to interact with the tool and maintain alignment between code, tests, requirements, and documentation.
+
+## Filter support at CLI
+
+- should be able to combine filters.
+- OR between different filter flags, AND within the same flag.
+
+- Should be able to filter on anything:
+    - "--has-link" (and the inverse, "--no-link")
+    - "--has-flag" (and the inverse, "--no-flag")
+    - "--priority"
+
+
+
 ## External Links
 
 Core-engine: Add a "Links" section to each Requirement, so that ppl can add links to their requirements. This way, external systems (e.g. github issues, TDX, Jira) can easily be linked to requirements, and users can quickly jump to related work in other systems from these requirement docs (if gh-cli is enabled, the AI agent could even make updates directly to linked GH issues, just saying).

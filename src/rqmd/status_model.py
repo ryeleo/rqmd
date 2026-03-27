@@ -19,6 +19,7 @@ from .constants import (ANSI_ESCAPE_PATTERN, ANSI_RESET, NON_ALNUM_PATTERN,
 _DEFAULT_STATUS_ORDER = list(STATUS_ORDER)
 _DEFAULT_STATUS_ALIASES = dict(STATUS_ALIASES)
 _DEFAULT_STATUS_PARSE_ALIASES = dict(STATUS_PARSE_ALIASES)
+_STATUS_COLORS: dict[str, str] = {}  # canonical label -> click fg color name
 
 
 def _status_slug(name: str) -> str:
@@ -37,15 +38,16 @@ def configure_status_catalog(raw_statuses: object | None) -> None:
     """Configure runtime status catalog from config, or reset to defaults.
 
     Expected item schema for custom statuses:
-      {"name": <str>, "shortcode": <str>, "emoji": <str>}
+      {"name": <str>, "shortcode": <str>, "emoji": <str>}  # color/rollup_color optional
     """
-    global STATUS_LOOKUP
+    global STATUS_LOOKUP, _STATUS_COLORS
 
     STATUS_ORDER[:] = list(_DEFAULT_STATUS_ORDER)
     STATUS_ALIASES.clear()
     STATUS_ALIASES.update(_DEFAULT_STATUS_ALIASES)
     STATUS_PARSE_ALIASES.clear()
     STATUS_PARSE_ALIASES.update(_DEFAULT_STATUS_PARSE_ALIASES)
+    _STATUS_COLORS.clear()
 
     if raw_statuses is None:
         STATUS_LOOKUP = status_lookup()
@@ -79,6 +81,10 @@ def configure_status_catalog(raw_statuses: object | None) -> None:
         seen_labels.add(lowered)
         custom_order.append((label, _status_slug(name)))
 
+        color = str(item.get("color", "")).strip() or None
+        if color:
+            _STATUS_COLORS[label] = color
+
     STATUS_ORDER[:] = custom_order
 
     # Keep legacy alias only when verified is present in configured catalog.
@@ -110,6 +116,9 @@ def style_status_count(status_label: str, value: object) -> str:
         Styled count text with ANSI codes.
     """
     text = str(value)
+    configured_color = _STATUS_COLORS.get(status_label)
+    if configured_color:
+        return click.style(text, fg=configured_color)
     if status_label == "✅ Verified":
         return click.style(text, fg="green")
     if status_label == "💡 Proposed":
@@ -128,6 +137,9 @@ def style_status_label(status_label: str) -> str:
     Returns:
         Styled label text with ANSI codes.
     """
+    configured_color = _STATUS_COLORS.get(status_label)
+    if configured_color:
+        return click.style(status_label, fg=configured_color)
     if status_label == "✅ Verified":
         return click.style(status_label, fg="green")
     if status_label == "💡 Proposed":
@@ -147,6 +159,9 @@ def style_status_line(status_label: str, text: str) -> str:
     Returns:
         Styled text with ANSI codes.
     """
+    configured_color = _STATUS_COLORS.get(status_label)
+    if configured_color:
+        return click.style(text, fg=configured_color)
     if status_label == "✅ Verified":
         return click.style(text, fg="green")
     if status_label == "💡 Proposed":

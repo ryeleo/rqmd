@@ -6,8 +6,11 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
+
 from rqmd import cli
-from rqmd.config import load_config, validate_config
+from rqmd.config import load_config, load_statuses_file, validate_config
+from rqmd.status_model import (_STATUS_COLORS, configure_status_catalog,
+                               style_status_label)
 
 
 def test_RQMD_portability_006_load_config_from_rqmd_json(tmp_path: Path) -> None:
@@ -394,3 +397,158 @@ def test_RQMD_portability_011_ssvr_corpus_copy_accepts_desktop_verified_set_stat
     updated = target_file.read_text(encoding="utf-8")
     assert "### AC-MM-PRACTICE-002: Start creates a fresh Practice flow" in updated
     assert "- **Status:** 💻 Desktop-Verified" in updated
+
+
+def test_RQMD_portability_007_load_statuses_file_explicit_path(tmp_path: Path) -> None:
+  """load_statuses_file with an explicit override path loads the file."""
+  catalog = tmp_path / "my-statuses.yml"
+  catalog.write_text(
+    """- name: Alpha
+  shortcode: A
+  emoji: "🅰️"
+- name: Beta
+  shortcode: B
+  emoji: "🅱️"
+""",
+    encoding="utf-8",
+  )
+  result = load_statuses_file(tmp_path, str(catalog))
+  assert result is not None
+  assert len(result) == 2
+  assert result[0]["name"] == "Alpha"
+  assert result[1]["name"] == "Beta"
+
+
+def test_RQMD_portability_007_load_statuses_file_explicit_path_dict_form(tmp_path: Path) -> None:
+  """load_statuses_file with a dict-form YAML (with 'statuses' key) extracts the list."""
+  catalog = tmp_path / "catalog.yml"
+  catalog.write_text(
+    """statuses:
+  - name: Custom
+    shortcode: C
+    emoji: "🔹"
+rollup_mode: per_status
+""",
+    encoding="utf-8",
+  )
+  result = load_statuses_file(tmp_path, str(catalog))
+  assert result is not None
+  assert len(result) == 1
+  assert result[0]["name"] == "Custom"
+
+
+def test_RQMD_portability_007_load_statuses_file_not_found_raises(tmp_path: Path) -> None:
+  """load_statuses_file raises ValueError when override path does not exist."""
+  with pytest.raises(ValueError, match="not found"):
+    load_statuses_file(tmp_path, "nonexistent/statuses.yml")
+
+
+def test_RQMD_portability_007_load_statuses_file_auto_detect_rqmd_dir(tmp_path: Path) -> None:
+  """load_statuses_file auto-detects .rqmd/statuses.yml under repo_root."""
+  rqmd_dir = tmp_path / ".rqmd"
+  rqmd_dir.mkdir()
+  (rqmd_dir / "statuses.yml").write_text(
+    """\
+- name: InProgress
+  shortcode: IP
+  emoji: "🔄"
+""",
+    encoding="utf-8",
+  )
+  result = load_statuses_file(tmp_path)
+  assert result is not None
+  assert result[0]["name"] == "InProgress"
+
+
+def test_RQMD_portability_007_load_statuses_file_returns_none_when_absent(tmp_path: Path) -> None:
+  """load_statuses_file returns None when no override and no .rqmd/statuses.* found."""
+  result = load_statuses_file(tmp_path)
+  assert result is None
+
+
+def test_RQMD_portability_007_cli_status_config_overrides_unified_config(tmp_path: Path) -> None:
+  """--status-config file takes precedence over statuses in .rqmd.yml."""
+  repo = tmp_path / "repo"
+  domain = repo / "docs" / "requirements"
+  domain.mkdir(parents=True)
+
+  # Unified config with standard statuses
+  (repo / ".rqmd.yml").write_text(
+    "statuses:\n  - name: Proposed\n    shortcode: P\n    emoji: \"💡\"\n",
+    encoding="utf-8",
+  )
+
+  # Separate override file with a custom status
+  override = tmp_path / "custom.yml"
+  override.write_text(
+    "- name: InReview\n  shortcode: IR\n  emoji: \"👀\"\n"
+    "- name: Shipped\n  shortcode: SH\n  emoji: \"🚀\"\n",
+    encoding="utf-8",
+  )
+
+  (domain / "demo.md").write_text(
+    "# Demo\n\nScope: demo.\n\n### AC-001: Item\n- **Status:** 👀 InReview\n",
+    encoding="utf-8",
+  )
+
+  runner = CliRunner()
+  result = runner.invoke(
+    cli.main,
+    [
+      "--project-root", str(repo),
+      "--docs-dir", "docs/requirements",
+      "--status-config", str(override),
+      "--verify-summaries",
+      "--no-walk",
+      "--no-table",
+    ],
+  )
+
+  assert result.exit_code in (0, 1), result.output
+  assert "Unrecognized" not in result.output
+
+
+def test_RQMD_portability_007_cli_status_config_error_on_missing_file(tmp_path: Path) -> None:
+  """--status-config with a nonexistent path exits with an error."""
+  repo = tmp_path / "repo"
+  domain = repo / "docs" / "requirements"
+  domain.mkdir(parents=True)
+  (domain / "demo.md").write_text(
+    "# Demo\n\nScope: demo.\n\n### AC-001: Item\n- **Status:** 💡 Proposed\n",
+    encoding="utf-8",
+  )
+
+  runner = CliRunner()
+  result = runner.invoke(
+    cli.main,
+    [
+      "--project-root", str(repo),
+      "--docs-dir", "docs/requirements",
+      "--status-config", "nonexistent/statuses.yml",
+      "--verify-summaries",
+      "--no-table",
+    ],
+  )
+
+  assert result.exit_code != 0
+  assert "not found" in result.output.lower() or "error" in result.output.lower()
+
+
+def test_RQMD_portability_011_color_field_stored_in_status_colors() -> None:
+  """color field in custom status catalog is stored and used by style_status_label."""
+  configure_status_catalog([
+    {"name": "Active", "shortcode": "A", "emoji": "🔵", "color": "cyan"},
+    {"name": "Done", "shortcode": "D", "emoji": "✅"},
+  ])
+  try:
+    assert _STATUS_COLORS.get("🔵 Active") == "cyan"
+    styled = style_status_label("🔵 Active")
+    assert "Active" in styled  # styled label still contains the name
+    # Done has no color -> not in _STATUS_COLORS
+    assert "✅ Done" not in _STATUS_COLORS
+  finally:
+    configure_status_catalog(None)  # reset to defaults
+    # Done has no color -> not in _STATUS_COLORS
+    assert "✅ Done" not in _STATUS_COLORS
+  finally:
+    configure_status_catalog(None)  # reset to defaults
