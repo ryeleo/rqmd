@@ -1,5 +1,9 @@
 RQMD-CORE-013 (domain/index sync maintenance) since it would reduce manual doc drift over time.
 
+## TODO
+
+follow-on requirement for --set-flagged ID=true|false so automation can mutate flagged state directly too.
+
 ## codify the "implement all proposed items" approach in the README and contribution guidelines
 
 This works great with AI agents!

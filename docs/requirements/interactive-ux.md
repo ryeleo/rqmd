@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 0🔧 13✅ 0⛔ 4🗑️
+Summary: 4💡 0🔧 13✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -101,6 +101,12 @@ Summary: 3💡 0🔧 13✅ 0⛔ 4🗑️
 - So that this behavior mirrors positional ID entry: users can immediately set status/priority or navigate requirements within that file
 - So that in non-interactive modes the provided file path scopes non-interactive commands (e.g., `--set`, `--check`, `--set-priority`) to that file only
 - So that if the file path is invalid the tool prints a helpful error and suggestions (nearest matching domain files, common typos), and offers to search for similar files.
+
+### RQMD-INTERACTIVE-017: Interactive flagged-state toggling
+- **Status:** 💡 Proposed
+- As a rqmd user when I am reviewing requirements interactively
+- I want to toggle a requirement's binary flagged state without changing its status
+- So that I can quickly mark or unmark items that need special attention during triage and review.
 
 ### RQMD-INTERACTIVE-009A: Up key for hierarchical navigation
 - **Status:** ✅ Verified

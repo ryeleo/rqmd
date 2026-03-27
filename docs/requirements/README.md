@@ -20,8 +20,8 @@ Status workflow:
 ### AC CLI
 - [Core Engine](core-engine.md) - parsing, normalization, summaries, requirements extraction
 - [Interactive UX](interactive-ux.md) - keyboard-driven status update flows
-- [Automation API](automation-api.md) - non-interactive set/set-file/filter behavior
-- [AI CLI](ai-cli.md) - `rqmd-ai` companion workflows for AI planning, guided updates, and deterministic machine output
+- [Automation API](automation-api.md) - shared non-interactive set/set-file/filter/json contracts for machine and CI usage
+- [AI CLI](ai-cli.md) - `rqmd-ai`-specific prompt export, guarded apply flows, onboarding guidance, and auditability requirements
 - [Sorting](sorting.md) - ordering rules, toggles, deterministic ranking behavior
 - [Roll-up](roll-up.md) - summary counts, bucket rendering, and visual roll-up output
 - [Time Machine](time-machine.md) - branch-aware historical browsing, detached views, and replay from prior states
