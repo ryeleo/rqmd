@@ -146,7 +146,7 @@ Interactive entry panels can start in priority mode:
 uv run rqmd --priority-mode
 ```
 
-Within an entry panel, press `t` to toggle between status and priority editing.
+Within an entry panel, press `t` to cycle status, priority, and flagged editing.
 
 Regenerate summary blocks with priority aggregates included:
 
@@ -190,6 +190,33 @@ Bulk set by repeated flags:
 ```bash
 uv run rqmd --set AC-EXAMPLE-001=implemented --set AC-EXAMPLE-002=verified
 ```
+
+## AI CLI (rqmd-ai)
+
+`rqmd-ai` is a companion command for AI-oriented workflows. It is read-only by default and supports prompt-context export, plan previews, and guarded apply mode.
+
+Guidance mode:
+
+```bash
+uv run rqmd-ai --json
+```
+
+Export context for prompts:
+
+```bash
+uv run rqmd-ai --json --export-status proposed
+uv run rqmd-ai --json --export-id RQMD-CORE-001 --include-body
+uv run rqmd-ai --json --export-file ai-cli.md --include-domain-body --max-domain-body-chars 2000
+```
+
+Plan first, then apply explicitly:
+
+```bash
+uv run rqmd-ai --json --set RQMD-CORE-001=implemented
+uv run rqmd-ai --json --apply --set RQMD-CORE-001=implemented
+```
+
+When apply mode runs, rqmd-ai appends a structured audit event to the local shared history backend at `.rqmd/history/rqmd-history/audit.jsonl`.
 
 Batch set from file:
 

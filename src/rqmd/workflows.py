@@ -356,11 +356,31 @@ def _priority_highlight_bg(priority: str) -> str:
     return "\x1b[48;5;238m"
 
 
+ENTRY_FIELDS = ("status", "priority", "flagged")
+
+
+def _next_entry_field(current: str) -> str:
+    try:
+        current_index = ENTRY_FIELDS.index(current)
+    except ValueError:
+        return ENTRY_FIELDS[0]
+    return ENTRY_FIELDS[(current_index + 1) % len(ENTRY_FIELDS)]
+
+
 def _build_requirement_field_menu(
     requirement: dict[str, object],
     active_field: str,
     title_suffix: str = "",
 ) -> tuple[str, list[str], list[str], int | None, str]:
+    if active_field == "flagged":
+        labels = ["true", "false"]
+        options = ["Flagged: true", "Flagged: false"]
+        current_flagged = requirement.get("flagged")
+        current_index = 0 if current_flagged is True else 1 if current_flagged is False else None
+        highlight_bg = "\x1b[48;5;88m" if current_flagged is True else "\x1b[48;5;238m"
+        title = f"Set flagged for {requirement['id']}{title_suffix}\nsetting: flagged"
+        return title, labels, options, current_index, highlight_bg
+
     if active_field == "priority":
         labels = [label for label, _ in PRIORITY_ORDER]
         options = [style_priority_label(label) for label in labels]
@@ -802,7 +822,7 @@ def focused_target_interactive_loop(
             save_current(flat_list, index)
             return 0
         if action == "toggle-field":
-            current_entry_field = "priority" if current_entry_field == "status" else "status"
+            current_entry_field = _next_entry_field(current_entry_field)
             save_current(flat_list, index)
             continue
         if action == "nav-prev":
@@ -835,6 +855,13 @@ def focused_target_interactive_loop(
                 requirement,
                 str(requirement.get("status") or ""),
                 new_priority=selected_value,
+            )
+        elif current_entry_field == "flagged":
+            changed = update_criterion_status(
+                path,
+                requirement,
+                str(requirement.get("status") or ""),
+                new_flagged=(selected_value == "true"),
             )
         else:
             new_status = selected_value or str(requirement.get("status") or "")
@@ -1117,7 +1144,7 @@ def interactive_update_loop(
                 criterion_index = None
                 continue
             if action == "toggle-field":
-                current_entry_field = "priority" if current_entry_field == "status" else "status"
+                current_entry_field = _next_entry_field(current_entry_field)
                 continue
             if action == "nav-prev":
                 if history_pos > 0:
@@ -1146,6 +1173,19 @@ def interactive_update_loop(
                     selected_criterion,
                     str(selected_criterion.get("status") or ""),
                     new_priority=selected_value,
+                )
+                process_file(
+                    selected_path,
+                    check_only=False,
+                    include_status_emojis=include_status_emojis,
+                    include_priority_summary=include_priority_summary,
+                )
+            elif current_entry_field == "flagged":
+                changed = update_criterion_status(
+                    selected_path,
+                    selected_criterion,
+                    str(selected_criterion.get("status") or ""),
+                    new_flagged=(selected_value == "true"),
                 )
                 process_file(
                     selected_path,
@@ -1334,7 +1374,7 @@ def filtered_interactive_loop(
             save_current(flat_list, index)
             return 0
         if action == "toggle-field":
-            current_entry_field = "priority" if current_entry_field == "status" else "status"
+            current_entry_field = _next_entry_field(current_entry_field)
             save_current(flat_list, index)
             continue
         if action == "nav-prev":
@@ -1368,6 +1408,13 @@ def filtered_interactive_loop(
                 requirement,
                 str(requirement.get("status") or ""),
                 new_priority=selected_value,
+            )
+        elif current_entry_field == "flagged":
+            changed = update_criterion_status(
+                path,
+                requirement,
+                str(requirement.get("status") or ""),
+                new_flagged=(selected_value == "true"),
             )
         else:
             new_status = selected_value or str(requirement.get("status") or "")
@@ -1533,7 +1580,7 @@ def filtered_priority_interactive_loop(
             save_current(flat_list, index)
             return 0
         if action == "toggle-field":
-            current_entry_field = "priority" if current_entry_field == "status" else "status"
+            current_entry_field = _next_entry_field(current_entry_field)
             save_current(flat_list, index)
             continue
         if action == "nav-prev":
@@ -1567,6 +1614,13 @@ def filtered_priority_interactive_loop(
                 requirement,
                 str(requirement.get("status") or ""),
                 new_priority=selected_value,
+            )
+        elif current_entry_field == "flagged":
+            changed = update_criterion_status(
+                path,
+                requirement,
+                str(requirement.get("status") or ""),
+                new_flagged=(selected_value == "true"),
             )
         else:
             new_status = selected_value or str(requirement.get("status") or "")
@@ -1672,7 +1726,7 @@ def lookup_criterion_interactive(
             return 0
 
         if action == "toggle-field":
-            current_entry_field = "priority" if current_entry_field == "status" else "status"
+            current_entry_field = _next_entry_field(current_entry_field)
             continue
 
         if current_entry_field == "priority":
@@ -1681,6 +1735,13 @@ def lookup_criterion_interactive(
                 requirement,
                 str(requirement.get("status") or ""),
                 new_priority=selected_value,
+            )
+        elif current_entry_field == "flagged":
+            changed = update_criterion_status(
+                path,
+                requirement,
+                str(requirement.get("status") or ""),
+                new_flagged=(selected_value == "true"),
             )
         else:
             new_status = selected_value or str(requirement.get("status") or "")
@@ -1691,30 +1752,6 @@ def lookup_criterion_interactive(
                 path,
                 requirement,
                 new_status,
-                blocked_reason=blocked_reason,
-                deprecated_reason=deprecated_reason,
-            )
-        process_file(
-            path,
-            check_only=False,
-            include_status_emojis=include_status_emojis,
-            include_priority_summary=include_priority_summary,
-        )
-
-        if changed:
-            click.echo(f"Updated {requirement['id']} -> {selected_value}")
-        else:
-            click.echo(f"No change for {requirement['id']} ({selected_value})")
-
-        _, table_rows = collect_summary_rows(
-            domain_files,
-            check_only=True,
-            display_name_fn=display_name_from_h1,
-            include_status_emojis=include_status_emojis,
-            include_priority_summary=include_priority_summary,
-        )
-        print_summary_table(table_rows, emoji_columns=emoji_columns)
-        return 0
                 blocked_reason=blocked_reason,
                 deprecated_reason=deprecated_reason,
             )

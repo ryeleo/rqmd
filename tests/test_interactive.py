@@ -665,6 +665,38 @@ def test_RQMD_interactive_009a_lookup_mode_up_exits(monkeypatch, repo_with_domai
     assert result == 0
 
 
+def test_RQMD_interactive_017_lookup_toggle_updates_flagged(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    domain_file = criteria_dir / "demo.md"
+    domain_file.write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: Demo
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    actions = iter(["toggle-field", "toggle-field", 0])
+    monkeypatch.setattr(cli, "select_from_menu", lambda *args, **kwargs: next(actions))
+
+    result = cli.lookup_criterion_interactive(
+        repo_root=repo,
+        domain_files=[domain_file],
+        criterion_id="AC-DEMO-001",
+        emoji_columns=False,
+        id_prefixes=("AC",),
+    )
+
+    assert result == 0
+    text = domain_file.read_text(encoding="utf-8")
+    assert "- **Flagged:** true" in text
+
+
 def test_RQMD_interactive_009b_filtered_walk_up_exits(monkeypatch, repo_with_domain_docs: Path) -> None:
     domain_file = repo_with_domain_docs / "docs" / "requirements" / "demo.md"
     monkeypatch.setattr(cli, "select_from_menu", lambda *args, **kwargs: "up")

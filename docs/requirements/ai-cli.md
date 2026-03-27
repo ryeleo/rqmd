@@ -3,18 +3,18 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 8💡 0🔧 0✅ 0⛔ 3🗑️
+Summary: 0💡 7🔧 0✅ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
 - As a rqmd user when AI-assisted requirement work is needed
 - I want a dedicated rqmd-ai command in this package
 - So that AI workflows are explicit and separate from core rqmd interactive editing behavior.
 
 ### RQMD-AI-002: Read-only by default
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
 - As a safety-focused user when running AI operations
 - I want rqmd-ai to default to read-only planning/reporting
@@ -29,28 +29,28 @@ Summary: 8💡 0🔧 0✅ 0⛔ 3🗑️
 - Superseded by `RQMD-AUTOMATION-010`, `RQMD-AUTOMATION-011`, `RQMD-AUTOMATION-012`, and `RQMD-AUTOMATION-013`, which should define the shared machine-output contract for both `rqmd` and any future `rqmd-ai` surface.
 
 ### RQMD-AI-004: Requirement context export for prompts
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
 - As an AI operator when preparing model prompts
 - I want rqmd-ai to export selected requirement context by ID/file/status
 - So that prompts can include only relevant requirement slices with stable identifiers.
 
 ### RQMD-AI-005: Patch-plan preview before apply
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
 - As a maintainer when AI suggests doc updates
 - I want rqmd-ai to provide a patch preview and change summary first
 - So that humans can review intended modifications before any write occurs.
 
 ### RQMD-AI-006: Apply mode with guardrails
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
 - As a repository owner when enabling AI writes
 - I want rqmd-ai --apply to enforce strict validation and conflict checks
 - So that malformed edits, unknown IDs, and cross-file ambiguity are rejected safely.
 
 ### RQMD-AI-007: Teaching-oriented guidance output
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
 - As a team lead when onboarding contributors and AI agents
 - I want rqmd-ai to output concise guidance on requirement conventions and status workflow
@@ -74,7 +74,7 @@ Summary: 8💡 0🔧 0✅ 0⛔ 3🗑️
 - Superseded by `RQMD-AUTOMATION-017`, which should remain the single source of truth for prompt-suppression behavior across machine-oriented CLI modes.
 
 ### RQMD-AI-010: End-to-end audit report
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
 - As a compliance-oriented user when AI modifies requirements
 - I want rqmd-ai to emit a structured audit record of inputs, decisions, and outputs
@@ -82,7 +82,7 @@ Summary: 8💡 0🔧 0✅ 0⛔ 3🗑️
 - So that emitted audit records are sourced from the same local `rqmd-history` backend defined by `RQMD-UNDO-005` and `RQMD-UNDO-011`, rather than a parallel audit store.
 
 ### RQMD-AI-011: Domain-body context export for prompts
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
 - As an AI operator preparing prompts with domain-level context
 - I want rqmd-ai exports to optionally include domain-body content aligned with RQMD-CORE-019

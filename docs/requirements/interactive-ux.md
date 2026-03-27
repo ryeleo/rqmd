@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
+Summary: 4💡 0🔧 17✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -121,7 +121,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 - If both an ID and a filename are provided as positional arguments, the tool should prioritize the ID for lookup and open the file containing that ID if found; if the ID is not found but the file is valid, it should open the specified file and print a warning about the missing ID.
 
 ### RQMD-INTERACTIVE-017: Interactive flagged-state toggling
-- **Status:** 💡 Proposed
+- **Status:** ✅ Verified
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when I am reviewing requirements interactively
 - I want to toggle a requirement's binary flagged state without changing its status
@@ -137,7 +137,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 - So that this UX behavior depends on the canonical domain-body model defined by RQMD-CORE-019 rather than a separate interactive-only parsing path.
 
 ### RQMD-INTERACTIVE-019: Explicit ReqID-list focused interactive walk
-- **Status:** 💡 Proposed
+- **Status:** ✅ Verified
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when I only want to work a specific subset of requirements
 - I want to provide an explicit target list at CLI (via positional args or `--filter-ids-file`) and launch a focused interactive walk
@@ -148,7 +148,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 - So that missing/invalid tokens are reported clearly before entering the walk.
 
 ### RQMD-INTERACTIVE-020: Case-insensitive tab completion for positional targets
-- **Status:** 💡 Proposed
+- **Status:** ✅ Verified
 - **Priority:** 🟠 P1 - High
 - As a rqmd user invoking CLI commands from zsh
 - I want tab completion for positional target tokens
@@ -158,7 +158,7 @@ Summary: 8💡 0🔧 13✅ 0⛔ 4🗑️
 - So that subsection tokens are expanded when used in target lists or `--filter-ids-file`, expanding to all requirements in that subsection.
 
 ### RQMD-INTERACTIVE-021: Subsection navigation and discovery in interactive mode
-- **Status:** 💡 Proposed
+- **Status:** ✅ Verified
 - **Priority:** 🟠 P1 - High
 - As an interactive user when navigating requirements within a domain that has H2 subsections
 - I want the menu to expose subsection structure
