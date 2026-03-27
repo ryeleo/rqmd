@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 22🔧 10✅ 0⛔ 0🗑️
+Summary: 1💡 23🔧 10✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -152,7 +152,7 @@ Summary: 2💡 22🔧 10✅ 0⛔ 0🗑️
 - So that ambiguous prefixes fail with a clear disambiguation error listing valid matches.
 
 ### RQMD-AUTOMATION-020: Ambiguous option-prefix error contract
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a CLI user
 - I want ambiguous long-option prefixes to fail deterministically

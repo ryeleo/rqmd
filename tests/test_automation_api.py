@@ -2644,3 +2644,149 @@ Scope: demo.
     assert "AC-DEMO-001" in ids
     assert "AC-DEMO-002" in ids
 
+
+# ─── RQMD-AUTOMATION-019: Unique-prefix argument/value abbreviations ────────────
+
+
+_UNIQUE_STATUS_PREFIX_CASES = [
+    ("P", "💡 Proposed"),
+    ("Pro", "💡 Proposed"),
+    ("I", "🔧 Implemented"),
+    ("Impl", "🔧 Implemented"),
+    ("V", "✅ Verified"),
+    ("Ver", "✅ Verified"),
+    ("B", "⛔ Blocked"),
+    ("Bl", "⛔ Blocked"),
+    ("D", "🗑️ Deprecated"),
+    ("Dep", "🗑️ Deprecated"),
+]
+
+
+@pytest.mark.parametrize("prefix,expected_canonical", _UNIQUE_STATUS_PREFIX_CASES)
+def test_RQMD_automation_019_update_status_prefix_resolves_to_canonical(
+    prefix: str, expected_canonical: str, tmp_path: Path
+) -> None:
+    """Unique status value prefix in --update-status resolves to the canonical label."""
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: Target
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--update-id",
+            "AC-DEMO-001",
+            "--update-status",
+            prefix,
+            "--as-json",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["updates"][0]["requirement_id"] == "AC-DEMO-001"
+    assert payload["updates"][0]["status"] == expected_canonical
+
+
+@pytest.mark.parametrize("prefix,expected_canonical", _UNIQUE_STATUS_PREFIX_CASES)
+def test_RQMD_automation_019_status_filter_prefix_resolves_to_canonical(
+    prefix: str, expected_canonical: str, tmp_path: Path
+) -> None:
+    """Unique status value prefix in --status filter resolves to the canonical label."""
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        f"""# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: Target
+- **Status:** {expected_canonical}
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--status",
+            prefix,
+            "--as-json",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["status"] == expected_canonical
+    assert payload["total"] == 1
+    assert payload["files"][0]["requirements"][0]["id"] == "AC-DEMO-001"
+
+
+# ─── RQMD-AUTOMATION-019/020: Option-name prefix abbreviation ────────────────
+
+
+# ─── RQMD-AUTOMATION-020: Ambiguous option-prefix error contract ─────────────
+
+
+def test_RQMD_automation_020_ambiguous_option_prefix_fails_with_candidate_list(tmp_path: Path) -> None:
+    """Ambiguous prefix `--as` (matches --as-json, --as-list, --as-tree) exits non-zero
+    and includes candidate option names in the error output."""
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: Target
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--as",  # ambiguous: --as-json, --as-list, --as-tree all share this prefix
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code != 0
+    # Click lists candidate options in the error output when abbreviation is ambiguous.
+    candidates_mentioned = sum(
+        1 for opt in ("--as-json", "--as-list", "--as-tree") if opt in result.output
+    )
+    assert candidates_mentioned >= 2
+
