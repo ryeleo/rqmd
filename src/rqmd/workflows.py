@@ -915,6 +915,7 @@ def interactive_update_loop(
     include_status_emojis: bool | None = None,
     priority_mode: bool = False,
     include_priority_summary: bool = False,
+    initial_file_path: Path | None = None,
 ) -> int:
     if include_status_emojis is None:
         include_status_emojis = infer_include_status_emojis(domain_files)
@@ -925,6 +926,7 @@ def interactive_update_loop(
     current_file_sort_ascending = bool(strategy["file_default_ascending"])
     ordered_paths = [path.resolve() for path in domain_files]
     force_rescan = True
+    pending_initial_file = initial_file_path.resolve() if isinstance(initial_file_path, Path) else None
 
     while True:
         if force_rescan:
@@ -960,59 +962,67 @@ def interactive_update_loop(
             for _, counts, label in file_rows
         ]
 
-        file_choice = select_from_menu_fn(
-            _build_file_sort_title(
-                "Select file",
-                active_key=current_file_sort_key,
-                ascending=current_file_sort_ascending,
-                columns=file_columns,
-                emoji_columns=emoji_columns,
-            ),
-            file_options,
-            repeat_choice_right=True,
-            zebra=True,
-            extra_keys={
-                MENU_TOGGLE_SORT: "cycle-sort",
-                "S": "cycle-sort-backward",
-                MENU_TOGGLE_DIRECTION: "toggle-direction",
-                MENU_REFRESH: "refresh",
-            },
-            footer_legend=_build_sort_footer(current_file_sort_ascending),
-        )
-        if file_choice is None:
-            return 0
-        if file_choice == "up":
-            continue
-        if file_choice == "cycle-sort":
-            current_file_sort_key = _cycle_sort_key(current_file_sort_key, file_columns, wrap_to_first=True) or "name"
-            current_file_sort_ascending = False
-            force_rescan = True
-            mode = current_file_sort_key
-            click.echo(f"Select file sort: {mode} ({'asc' if current_file_sort_ascending else 'dsc'})")
-            continue
-        if file_choice == "cycle-sort-backward":
-            current_file_sort_key = _cycle_sort_key(
-                current_file_sort_key,
-                file_columns,
-                wrap_to_first=True,
-                reverse=True,
-            ) or "name"
-            current_file_sort_ascending = False
-            force_rescan = True
-            mode = current_file_sort_key
-            click.echo(f"Select file sort: {mode} ({'asc' if current_file_sort_ascending else 'dsc'})")
-            continue
-        if file_choice == "toggle-direction":
-            current_file_sort_ascending = not current_file_sort_ascending
-            force_rescan = True
-            click.echo(f"Select file direction: {'asc' if current_file_sort_ascending else 'dsc'}")
-            continue
-        if file_choice == "refresh":
-            force_rescan = True
-            click.echo("Select file refreshed.")
-            continue
+        selected_path: Path | None = None
+        if pending_initial_file is not None:
+            initial_match = next((path for path, _counts, _label in file_rows if path.resolve() == pending_initial_file), None)
+            if initial_match is not None:
+                selected_path = initial_match
+            pending_initial_file = None
 
-        selected_path = file_rows[int(file_choice)][0]
+        if selected_path is None:
+            file_choice = select_from_menu_fn(
+                _build_file_sort_title(
+                    "Select file",
+                    active_key=current_file_sort_key,
+                    ascending=current_file_sort_ascending,
+                    columns=file_columns,
+                    emoji_columns=emoji_columns,
+                ),
+                file_options,
+                repeat_choice_right=True,
+                zebra=True,
+                extra_keys={
+                    MENU_TOGGLE_SORT: "cycle-sort",
+                    "S": "cycle-sort-backward",
+                    MENU_TOGGLE_DIRECTION: "toggle-direction",
+                    MENU_REFRESH: "refresh",
+                },
+                footer_legend=_build_sort_footer(current_file_sort_ascending),
+            )
+            if file_choice is None:
+                return 0
+            if file_choice == "up":
+                continue
+            if file_choice == "cycle-sort":
+                current_file_sort_key = _cycle_sort_key(current_file_sort_key, file_columns, wrap_to_first=True) or "name"
+                current_file_sort_ascending = False
+                force_rescan = True
+                mode = current_file_sort_key
+                click.echo(f"Select file sort: {mode} ({'asc' if current_file_sort_ascending else 'dsc'})")
+                continue
+            if file_choice == "cycle-sort-backward":
+                current_file_sort_key = _cycle_sort_key(
+                    current_file_sort_key,
+                    file_columns,
+                    wrap_to_first=True,
+                    reverse=True,
+                ) or "name"
+                current_file_sort_ascending = False
+                force_rescan = True
+                mode = current_file_sort_key
+                click.echo(f"Select file sort: {mode} ({'asc' if current_file_sort_ascending else 'dsc'})")
+                continue
+            if file_choice == "toggle-direction":
+                current_file_sort_ascending = not current_file_sort_ascending
+                force_rescan = True
+                click.echo(f"Select file direction: {'asc' if current_file_sort_ascending else 'dsc'}")
+                continue
+            if file_choice == "refresh":
+                force_rescan = True
+                click.echo("Select file refreshed.")
+                continue
+
+            selected_path = file_rows[int(file_choice)][0]
 
         criterion_default_key = strategy["criterion_default_key"]
         current_criterion_sort_key: str | None = str(criterion_default_key) if criterion_default_key is not None else None

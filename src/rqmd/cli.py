@@ -187,6 +187,26 @@ def infer_include_status_emojis(domain_files: list[Path]) -> bool:
     return False
 
 
+def resolve_positional_domain_file_token(
+    repo_root: Path,
+    domain_files: list[Path],
+    token: str,
+) -> Path | None:
+    raw = token.strip()
+    if not raw:
+        return None
+
+    candidate_input = Path(raw).expanduser()
+    candidate = candidate_input.resolve() if candidate_input.is_absolute() else (repo_root / candidate_input).resolve()
+    domain_lookup = {path.resolve(): path for path in domain_files}
+    return domain_lookup.get(candidate)
+
+
+def looks_like_requirement_id_token(token: str, id_prefixes: tuple[str, ...]) -> bool:
+    upper = token.strip().upper()
+    return any(upper.startswith(f"{prefix}-") for prefix in id_prefixes)
+
+
 def interactive_update_loop(
     repo_root: Path,
     criteria_dir: str,
@@ -198,6 +218,7 @@ def interactive_update_loop(
     include_status_emojis: bool | None = None,
     priority_mode: bool = False,
     include_priority_summary: bool = False,
+    initial_file_path: Path | None = None,
 ) -> int:
     return workflows_mod.interactive_update_loop(
         repo_root=repo_root,
@@ -211,6 +232,7 @@ def interactive_update_loop(
         include_status_emojis=include_status_emojis,
         priority_mode=priority_mode,
         include_priority_summary=include_priority_summary,
+        initial_file_path=initial_file_path,
     )
 
 
@@ -957,27 +979,100 @@ def main(
     if filter_ids_file:
         explicit_target_tokens.extend(parse_target_token_file(repo_root, filter_ids_file))
 
-    # Preserve legacy single-ID lookup mode when only one positional token is provided.
-    if len(targets) == 1 and not filter_ids_file:
-        single_target = targets[0]
-        exact_id_matches = []
-        for path in domain_files:
-            requirement = find_criterion_by_id(path, single_target, id_prefixes=id_prefixes)
-            if requirement:
-                exact_id_matches.append((path, requirement))
-        if len(exact_id_matches) == 1 and not (check or filter_status or filter_priority or filter_flagged or filter_sub_domain or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or json_output or not interactive):
-            raise SystemExit(
-                lookup_criterion_interactive(
-                    repo_root,
-                    domain_files,
-                    criterion_id=single_target,
-                    emoji_columns=emoji_columns,
-                    id_prefixes=id_prefixes,
-                    include_status_emojis=include_status_emojis,
-                    priority_mode=priority_mode,
-                    include_priority_summary=show_priority_summary,
+    positional_domain_files: list[Path] = []
+    if not filter_ids_file:
+        seen_files: set[Path] = set()
+        for token in targets:
+            matched_path = resolve_positional_domain_file_token(repo_root, domain_files, token)
+            if matched_path and matched_path not in seen_files:
+                positional_domain_files.append(matched_path)
+                seen_files.add(matched_path)
+
+    if len(positional_domain_files) > 1:
+        display = ", ".join(format_path_display(path, repo_root) for path in positional_domain_files)
+        raise click.ClickException(f"Provide at most one positional domain file path at a time; got: {display}")
+
+    positional_domain_file = positional_domain_files[0] if positional_domain_files else None
+    if positional_domain_file and not filter_ids_file:
+        explicit_target_tokens = [
+            token
+            for token in explicit_target_tokens
+            if resolve_positional_domain_file_token(repo_root, domain_files, token) is None
+        ]
+
+    has_non_lookup_mode = bool(
+        check
+        or filter_status
+        or filter_priority
+        or filter_flagged
+        or filter_sub_domain
+        or set_criterion_id
+        or set_status
+        or set_updates
+        or set_priority_updates
+        or set_flagged_updates
+        or set_file_input
+        or set_file
+        or tree
+        or rollup_mode
+        or json_output
+        or not interactive
+    )
+
+    # Preserve legacy single-ID lookup mode and prioritize explicit ID lookup over positional file hints.
+    if not filter_ids_file and not has_non_lookup_mode:
+        for token in targets:
+            exact_id_matches = []
+            for path in domain_files:
+                requirement = find_criterion_by_id(path, token, id_prefixes=id_prefixes)
+                if requirement:
+                    exact_id_matches.append((path, requirement))
+            if len(exact_id_matches) == 1:
+                raise SystemExit(
+                    lookup_criterion_interactive(
+                        repo_root,
+                        domain_files,
+                        criterion_id=token,
+                        emoji_columns=emoji_columns,
+                        id_prefixes=id_prefixes,
+                        include_status_emojis=include_status_emojis,
+                        priority_mode=priority_mode,
+                        include_priority_summary=show_priority_summary,
+                    )
                 )
+
+    if positional_domain_file and not filter_ids_file and not has_non_lookup_mode:
+        unresolved_id_like = [
+            token
+            for token in targets
+            if resolve_positional_domain_file_token(repo_root, domain_files, token) is None
+            and looks_like_requirement_id_token(token, id_prefixes)
+        ]
+        if unresolved_id_like:
+            missing = ", ".join(unresolved_id_like)
+            click.echo(
+                f"Warning: requirement ID not found ({missing}); opening {format_path_display(positional_domain_file, repo_root)} instead.",
+                err=True,
             )
+
+        raise SystemExit(
+            interactive_update_loop(
+                repo_root,
+                resolved_criteria_dir_input,
+                domain_files,
+                emoji_columns=emoji_columns,
+                sort_files=False,
+                sort_strategy=sort_strategy,
+                id_prefixes=id_prefixes,
+                include_status_emojis=include_status_emojis,
+                priority_mode=priority_mode,
+                include_priority_summary=show_priority_summary,
+                initial_file_path=positional_domain_file,
+            )
+        )
+
+    if positional_domain_file and has_non_lookup_mode:
+        domain_files = [positional_domain_file]
 
     if explicit_target_tokens:
         if check or filter_status or filter_priority or filter_flagged or filter_sub_domain or set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or rollup_mode:
@@ -1294,6 +1389,9 @@ def main(
     non_interactive_requested = bool(
         set_criterion_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file
     )
+    if non_interactive_requested and positional_domain_file and not set_file and not set_file_input:
+        set_file = format_path_display(positional_domain_file, repo_root)
+
     if non_interactive_requested:
         if check:
             raise click.ClickException("--check cannot be combined with --set-requirement-id/--set-status.")
@@ -1441,50 +1539,6 @@ def main(
             include_status_emojis=include_status_emojis,
             include_priority_summary=show_priority_summary,
         )
-        if json_output:
-            payload = build_summary_payload(repo_root, resolved_criteria_dir, domain_files, sorted(changed_files))
-            payload["dry_run"] = dry_run
-            if set_priority_updates and not set_updates and not set_flagged_updates:
-                payload["mode"] = "set-priority"
-            elif set_flagged_updates and not set_updates and not set_priority_updates:
-                payload["mode"] = "set-flagged"
-            else:
-                payload["mode"] = "set"
-            payload["updates"] = update_results
-            click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
-            raise SystemExit(0)
-
-        if summary_table:
-            print_summary_table(table_rows, emoji_columns=emoji_columns)
-        raise SystemExit(0)
-
-    if json_output:
-        payload = dict(summary_payload)
-        payload["ok"] = True
-        click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
-        raise SystemExit(0)
-
-    if interactive and not check:
-        # RQMD-INTERACTIVE-011: preflight write-permission gate
-        check_files_writable(domain_files, repo_root)
-        raise SystemExit(
-            interactive_update_loop(
-                repo_root,
-                resolved_criteria_dir_input,
-                domain_files,
-                emoji_columns=emoji_columns,
-                sort_files=False,
-                sort_strategy=sort_strategy,
-                id_prefixes=id_prefixes,
-                include_status_emojis=include_status_emojis,
-                priority_mode=priority_mode,
-                include_priority_summary=show_priority_summary,
-            )
-        )
-
-
-if __name__ == "__main__":
-    main()        )
         if json_output:
             payload = build_summary_payload(repo_root, resolved_criteria_dir, domain_files, sorted(changed_files))
             payload["dry_run"] = dry_run

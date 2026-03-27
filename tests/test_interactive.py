@@ -602,6 +602,158 @@ def test_RQMD_interactive_009_positional_lookup_mode(monkeypatch, repo_with_doma
     assert called["value"] is True
 
 
+def test_RQMD_interactive_016_positional_file_opens_requirement_list_first(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "one.md").write_text(
+        """# One Domain
+
+Scope: one.
+
+### AC-ONE-001: One
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+    target = domain / "two.md"
+    target.write_text(
+        """# Two Domain
+
+Scope: two.
+
+### AC-TWO-001: Two
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    captured: dict[str, object] = {}
+
+    def fake_interactive_loop(repo_root, criteria_dir, domain_files, emoji_columns, sort_files, sort_strategy, id_prefixes, include_status_emojis, priority_mode, include_priority_summary, initial_file_path=None):
+        captured["initial_file_path"] = initial_file_path
+        captured["domain_files"] = list(domain_files)
+        return 0
+
+    monkeypatch.setattr(cli, "interactive_update_loop", fake_interactive_loop)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "docs/requirements/two.md",
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["initial_file_path"] == target
+    assert len(captured["domain_files"]) == 2
+
+
+def test_RQMD_interactive_016_non_interactive_positional_file_scopes_updates(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    one = domain / "one.md"
+    two = domain / "two.md"
+    one.write_text(
+        """# One Domain
+
+Scope: one.
+
+### AC-SHARED-001: Shared
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+    two.write_text(
+        """# Two Domain
+
+Scope: two.
+
+### AC-SHARED-001: Shared
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "docs/requirements/one.md",
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--set",
+            "AC-SHARED-001=verified",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "✅ Verified" in one.read_text(encoding="utf-8")
+    assert "✅ Verified" not in two.read_text(encoding="utf-8")
+
+
+def test_RQMD_interactive_016_prefers_id_lookup_when_id_and_file_are_both_positional(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "one.md").write_text(
+        """# One Domain
+
+Scope: one.
+
+### AC-ONE-001: One
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+    (domain / "two.md").write_text(
+        """# Two Domain
+
+Scope: two.
+
+### AC-TWO-001: Two
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    called = {"lookup": False}
+
+    def fake_lookup(repo_root, domain_files, criterion_id, emoji_columns, id_prefixes, include_status_emojis, priority_mode, include_priority_summary):
+        called["lookup"] = True
+        assert criterion_id == "AC-TWO-001"
+        return 0
+
+    monkeypatch.setattr(cli, "lookup_criterion_interactive", fake_lookup)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "AC-TWO-001",
+            "docs/requirements/one.md",
+            "--repo-root",
+            str(repo),
+            "--requirements-dir",
+            "docs/requirements",
+            "--no-summary-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert called["lookup"] is True
+
+
 def test_RQMD_interactive_019_multiple_targets_launch_focused_walk(monkeypatch, tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"

@@ -95,6 +95,18 @@ Interactive mode:
 uv run rqmd
 ```
 
+Open a specific domain file directly (absolute or repo-root-relative path):
+
+```bash
+uv run rqmd docs/requirements/interactive-ux.md
+```
+
+In non-interactive modes, a positional domain file path scopes operations to that file:
+
+```bash
+uv run rqmd docs/requirements/interactive-ux.md --set AC-EXAMPLE-001=verified
+```
+
 Interactive file and requirement menus now support:
 
 - `s` to cycle sort columns
