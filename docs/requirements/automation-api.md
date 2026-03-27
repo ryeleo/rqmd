@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 11💡 10🔧 10✅ 0⛔ 0🗑️
+Summary: 10💡 11🔧 10✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -245,7 +245,7 @@ Summary: 11💡 10🔧 10✅ 0⛔ 0🗑️
 - So that schema documentation clearly specifies the null-vs-absent distinction for `sub_domain` and `sub_sections`.
 
 ### RQMD-AUTOMATION-031: Minimal differentiable token matching for CLI args and values
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when typing commands quickly
 - I want all CLI argument values that support enumerations/aliases to accept their smallest differentiable token**s** and shortcodes

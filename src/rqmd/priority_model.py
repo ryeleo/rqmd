@@ -79,6 +79,15 @@ def priority_lookup() -> dict[str, str]:
 PRIORITY_LOOKUP = priority_lookup()
 
 
+def _priority_prefix_matches(value: str) -> list[str]:
+    """Return canonical priority labels matching a prefix-like input."""
+    token = priority_key(value)
+    if not token:
+        return []
+    matches = sorted({label for key, label in PRIORITY_LOOKUP.items() if key.startswith(token)})
+    return matches
+
+
 def priority_key(value: str) -> str:
     """Generate a canonical key for a priority value for lookup purposes.
 
@@ -138,6 +147,11 @@ def coerce_priority_label(value: str) -> str:
             if canonical_key in PRIORITY_LOOKUP:
                 return PRIORITY_LOOKUP[canonical_key]
 
+        # Accept the smallest differentiable token/prefix when unique.
+        prefix_matches = _priority_prefix_matches(candidate)
+        if len(prefix_matches) == 1:
+            return prefix_matches[0]
+
     # If coercion fails, return None to indicate unset priority
     return "unset"
 
@@ -145,5 +159,10 @@ def coerce_priority_label(value: str) -> str:
 def normalize_priority_input(value: str) -> str:
     normalized = coerce_priority_label(value)
     if normalized == "unset":
+        matches = _priority_prefix_matches(value)
+        if len(matches) > 1:
+            raise click.ClickException(
+                f"Ambiguous priority input '{value}'. Matches: {', '.join(matches)}"
+            )
         raise click.ClickException(f"Unrecognized priority input: {value}")
     return normalized

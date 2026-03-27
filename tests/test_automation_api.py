@@ -580,6 +580,45 @@ def test_RQMD_automation_008d_filtered_tree_accepts_plain_proposed_label(two_fil
     assert "first.md" not in result.output
 
 
+def test_RQMD_automation_008d_filtered_tree_accepts_status_prefix_token(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain_dir = repo / "docs" / "requirements"
+    domain_dir.mkdir(parents=True)
+    (domain_dir / "demo.md").write_text(
+        """# Demo Requirement
+
+Scope: demo.
+
+### AC-ONE-001: Verified item
+- **Status:** ✅ Verified
+
+### AC-ONE-002: Proposed item
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--status",
+            "Ver",
+            "--as-tree",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "AC-ONE-001" in result.output
+    assert "AC-ONE-002" not in result.output
+
+
 def test_RQMD_automation_008e_filtered_json_output_for_proposed(two_file_repo: Path) -> None:
     runner = CliRunner()
     result = runner.invoke(

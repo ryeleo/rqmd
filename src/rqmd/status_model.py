@@ -197,6 +197,19 @@ def status_lookup() -> dict[str, str]:
 STATUS_LOOKUP = status_lookup()
 
 
+def _status_prefix_matches(value: str) -> list[str]:
+    """Return canonical status labels matching a prefix-like input.
+
+    Matching is performed against normalized lookup keys and de-duplicated
+    canonical labels.
+    """
+    token = status_key(value)
+    if not token:
+        return []
+    matches = sorted({label for key, label in STATUS_LOOKUP.items() if key.startswith(token)})
+    return matches
+
+
 def status_key(value: str) -> str:
     """Generate a canonical key for a status value for lookup purposes.
 
@@ -256,6 +269,15 @@ def coerce_status_label(value: str) -> str:
             if canonical_key in STATUS_LOOKUP:
                 return STATUS_LOOKUP[canonical_key]
 
+        # Accept the smallest differentiable token/prefix when unique.
+        prefix_matches = _status_prefix_matches(candidate)
+        if len(prefix_matches) == 1:
+            return prefix_matches[0]
+        if len(prefix_matches) > 1:
+            raise ValueError(
+                f"Ambiguous status input '{value}'. Matches: {', '.join(prefix_matches)}"
+            )
+
     raise ValueError(f"Unrecognized status value: {value}")
 
 
@@ -274,6 +296,8 @@ def normalize_status_input(value: str) -> str:
     try:
         return coerce_status_label(value)
     except ValueError as exc:
+        if str(exc).startswith("Ambiguous status input"):
+            raise click.ClickException(str(exc)) from exc
         raise click.ClickException(
             "Unrecognized status input "
             f"'{value}'. Use one of: "

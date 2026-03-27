@@ -299,6 +299,85 @@ class TestRQMDPriority004ModeFlag:
         assert payload["mode"] == "filter-priority"
         assert payload["priority"] == "🔴 P0 - Critical"
 
+    def test_filter_priority_json_output_accepts_prefix_token(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        criteria_dir = repo / "docs" / "requirements"
+        criteria_dir.mkdir(parents=True)
+        (criteria_dir / "demo.md").write_text(
+            """# Demo Requirements
+
+### AC-001: Hot path
+- **Status:** 💡 Proposed
+- **Priority:** 🔴 P0 - Critical
+
+### AC-002: Medium item
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+""",
+            encoding="utf-8",
+        )
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli.main,
+            [
+                "--project-root",
+                str(repo),
+                "--docs-dir",
+                "docs/requirements",
+                "--priority",
+                "M",
+                "--as-json",
+                "--no-walk",
+                "--no-table",
+            ],
+        )
+
+        assert result.exit_code == 0
+        payload = json.loads(result.output)
+        assert payload["mode"] == "filter-priority"
+        assert payload["priority"] == "🟡 P2 - Medium"
+        assert payload["total"] == 1
+
+    def test_filter_priority_rejects_ambiguous_prefix(self, tmp_path: Path):
+        repo = tmp_path / "repo"
+        criteria_dir = repo / "docs" / "requirements"
+        criteria_dir.mkdir(parents=True)
+        (criteria_dir / "demo.md").write_text(
+            """# Demo Requirements
+
+### AC-001: Hot path
+- **Status:** 💡 Proposed
+- **Priority:** 🔴 P0 - Critical
+
+### AC-002: Medium item
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+""",
+            encoding="utf-8",
+        )
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli.main,
+            [
+                "--project-root",
+                str(repo),
+                "--docs-dir",
+                "docs/requirements",
+                "--priority",
+                "P",
+                "--as-json",
+                "--no-walk",
+                "--no-table",
+            ],
+        )
+
+        assert result.exit_code != 0
+        assert "Ambiguous priority input" in result.output
+        assert "🔴 P0 - Critical" in result.output
+        assert "🟡 P2 - Medium" in result.output
+
     def test_init_priorities_dry_run_does_not_modify_file(self, tmp_path: Path):
         repo = tmp_path / "repo"
         domain = repo / "docs" / "requirements"
