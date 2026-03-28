@@ -12,7 +12,6 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from rqmd.theme import ZEBRA_BG_DARK, ZEBRA_BG_LIGHT, resolve_zebra_bg
 
 
