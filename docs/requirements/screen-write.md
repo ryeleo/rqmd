@@ -3,7 +3,7 @@
 Scope: interactive menus, paginated views, and terminal rendering behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 8🔧 0✅ 0⛔ 1🗑️
+Summary: 1💡 9🔧 0✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UI-001: Screen-write rendering mode
@@ -52,7 +52,7 @@ Summary: 2💡 8🔧 0✅ 0⛔ 1🗑️
 - So that messages do not shift the main content and the legend reliably updates (e.g., `d=[asc|dsc]`).
 
 ### RQMD-UI-007: Accessibility & contrast-preserving redraws
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟢 P3 - Low
 - As an accessibility-minded user
 - I want screen-write redrawing to preserve color contrast and zebra/background choices and to re-validate contrast after any automatic adjustments

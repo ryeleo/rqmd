@@ -34,6 +34,7 @@ from .constants import (
 )
 
 _SCREEN_WRITE_ENABLED = False
+_COLORIZED_REDRAW_ENABLED = True
 _RESIZE_SIGNAL_PENDING = False
 
 
@@ -46,6 +47,17 @@ def set_screen_write_enabled(enabled: bool) -> None:
 def get_screen_write_enabled() -> bool:
     """Return whether full-screen redraw behavior is enabled."""
     return _SCREEN_WRITE_ENABLED
+
+
+def set_colorized_redraw_enabled(enabled: bool) -> None:
+    """Enable or disable colorized row backgrounds in interactive menus."""
+    global _COLORIZED_REDRAW_ENABLED
+    _COLORIZED_REDRAW_ENABLED = bool(enabled)
+
+
+def get_colorized_redraw_enabled() -> bool:
+    """Return whether colorized row backgrounds are enabled."""
+    return _COLORIZED_REDRAW_ENABLED
 
 
 def _mark_resize_pending(_signum: int, _frame: object) -> None:
@@ -281,9 +293,9 @@ def select_from_menu(
                 else:
                     line = left
 
-                if selected_option_index is not None and global_idx == selected_option_index and selected_option_bg:
+                if _COLORIZED_REDRAW_ENABLED and selected_option_index is not None and global_idx == selected_option_index and selected_option_bg:
                     line = apply_background_preserving_styles(line, selected_option_bg)
-                elif zebra and (idx % 2 == 1):
+                elif _COLORIZED_REDRAW_ENABLED and zebra and (idx % 2 == 1):
                     line = apply_background_preserving_styles(
                         line, zebra_bg if zebra_bg is not None else ZEBRA_BG
                     )

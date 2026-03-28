@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added priority undo/history semantics coverage: priority-only updates are recorded as first-class `set-priority` history operations, and combined status+priority updates are captured atomically as a single `update-requirement` history entry with undo/redo restoration behavior (RQMD-PRIORITY-008).
 - Added UI-010 renderer verification coverage with a dedicated row-diff helper (`compute_row_diff`) and tests covering changed-row detection, row removal semantics, and integration behavior across both TTY screen-write and non-TTY fallback paths for CI stability (RQMD-UI-010).
 - Added UI-008 terminal resize handling in interactive menus by wiring SIGWINCH lifecycle management (install on TTY entry, consume pending resize markers, restore previous handler on exit) with regression tests to ensure resize events preserve stable rendering and selection flow (RQMD-UI-008).
+- Added UI-007 contrast-preserving redraw safeguards: vetted zebra background accessibility checks, CLI-level colorized redraw gating, and fallback to plain non-colorized menu rendering when background contrast cannot be trusted (RQMD-UI-007).
 
 - Added `extract_blocking_id()` to `req_parser.py`; `blocking_id` and `blocked_reason` fields now appear in JSON exports from `rqmd` and `rqmd-ai` when a requirement is blocked by a linked or bare requirement ID (RQMD-CORE-022).
 - Added `parse_domain_priority_metadata()` to `req_parser.py`; `domain_priority` and `sub_section_priorities` fields now appear in JSON payloads when domain-level `**Priority:**` metadata is present (RQMD-PRIORITY-012).
@@ -71,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated requirement status to mark `RQMD-PRIORITY-008` as Implemented (undo/history semantics for priority-only and combined mutations).
 - Updated requirement status to mark `RQMD-UI-010` as Implemented (renderer diff-engine and terminal-path test coverage in CI).
 - Updated requirement status to mark `RQMD-UI-008` as Implemented (SIGWINCH resize reflow handling in interactive screen-write flows).
+- Updated requirement status to mark `RQMD-UI-007` as Implemented (contrast-preserving redraw validation with safe color fallback).
 
 - Switched requirements index layout from sibling requirements.md files to in-directory README.md files.
 - Updated rqmd auto-detection to use docs/requirements/README.md and requirements/README.md.

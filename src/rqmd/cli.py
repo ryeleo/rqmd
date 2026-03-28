@@ -1270,7 +1270,7 @@ def main(
     menus_mod.set_screen_write_enabled(screen_write_enabled)
 
     # Resolve interactive zebra striping color from theme detection.
-    from .theme import detect_theme, resolve_zebra_bg
+    from .theme import detect_theme, is_accessible_zebra_bg, resolve_zebra_bg
     _detected_theme, _theme_source = detect_theme(
         cli_override=theme,
         config_override=str(config.get("theme") or ""),
@@ -1279,6 +1279,10 @@ def main(
         _detected_theme,
         config_zebra_bg=str(config.get("ui", {}).get("zebra_bg") or "") or None,
     )
+    colorized_redraw_enabled = is_accessible_zebra_bg(zebra_bg, _detected_theme)
+    if not colorized_redraw_enabled:
+        zebra_bg = None
+    menus_mod.set_colorized_redraw_enabled(colorized_redraw_enabled)
 
     requested_init_prefix: str | None = None
     if id_prefixes:

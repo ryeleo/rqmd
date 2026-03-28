@@ -22,6 +22,12 @@ ZEBRA_BG_DARK = "\x1b[48;5;254m"
 # Zebra stripe for light-background terminals — medium gray, readable contrast
 ZEBRA_BG_LIGHT = "\x1b[48;5;250m"
 
+# Vetted zebra backgrounds that have been manually verified for readability.
+_VETTED_ZEBRA_BACKGROUNDS = {
+    ZEBRA_BG_DARK,
+    ZEBRA_BG_LIGHT,
+}
+
 
 def _probe_macos() -> ThemeMode:
     """Return 'dark' or 'light' on macOS, or None if inconclusive."""
@@ -111,3 +117,16 @@ def resolve_zebra_bg(
         return ZEBRA_BG_LIGHT
     # "dark" or None → use the existing default (light gray, works on dark bg)
     return ZEBRA_BG_DARK
+
+
+def is_accessible_zebra_bg(bg_ansi: str | None, theme: ThemeMode) -> bool:
+    """Return whether zebra background styling is contrast-safe.
+
+    The check is intentionally conservative: only vetted ANSI backgrounds are
+    allowed for colorized redraw. Unknown overrides fall back to plain redraw so
+    interaction remains readable across terminal/theme combinations.
+    """
+    if not bg_ansi:
+        return False
+    _ = theme  # Reserved for future theme-specific contrast policies.
+    return bg_ansi in _VETTED_ZEBRA_BACKGROUNDS
