@@ -152,6 +152,23 @@ def file_sort_key_by_priority(counts: dict[str, int], label: str) -> tuple[int, 
     return (-black, -blue, -green, label)
 
 
+def compute_row_diff(previous_rows: list[str], current_rows: list[str]) -> list[tuple[int, str]]:
+    """Return changed row positions between two rendered menu snapshots.
+
+    The return value is a list of ``(row_index, row_text)`` tuples for rows that
+    changed or were newly appended in ``current_rows``. Missing trailing rows are
+    represented as empty strings for clear/overwrite behavior in renderer callers.
+    """
+    updates: list[tuple[int, str]] = []
+    max_rows = max(len(previous_rows), len(current_rows))
+    for row_index in range(max_rows):
+        prev = previous_rows[row_index] if row_index < len(previous_rows) else None
+        curr = current_rows[row_index] if row_index < len(current_rows) else ""
+        if prev != curr:
+            updates.append((row_index, curr))
+    return updates
+
+
 def select_from_menu(
     title: str,
     options: list[str],

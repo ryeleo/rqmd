@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added explicit rqmd-ai apply audit linkage to `rqmd-history` commits, including per-update history entry metadata (`entry_index`, commit, stable `hid:` identifier, timestamp, command, branch) in both API payloads and persisted audit events for deterministic undo/audit cross-referencing (RQMD-UNDO-011).
 - Added structured history delta payloads to persisted `rqmd-history` entries and `rqmd --history --as-json` output, including per-file numstat summaries (`additions`, `deletions`, `files_changed`) alongside existing provenance metadata for audit and timeline consumers (RQMD-UNDO-006).
 - Added priority undo/history semantics coverage: priority-only updates are recorded as first-class `set-priority` history operations, and combined status+priority updates are captured atomically as a single `update-requirement` history entry with undo/redo restoration behavior (RQMD-PRIORITY-008).
+- Added UI-010 renderer verification coverage with a dedicated row-diff helper (`compute_row_diff`) and tests covering changed-row detection, row removal semantics, and integration behavior across both TTY screen-write and non-TTY fallback paths for CI stability (RQMD-UI-010).
 
 - Added `extract_blocking_id()` to `req_parser.py`; `blocking_id` and `blocked_reason` fields now appear in JSON exports from `rqmd` and `rqmd-ai` when a requirement is blocked by a linked or bare requirement ID (RQMD-CORE-022).
 - Added `parse_domain_priority_metadata()` to `req_parser.py`; `domain_priority` and `sub_section_priorities` fields now appear in JSON payloads when domain-level `**Priority:**` metadata is present (RQMD-PRIORITY-012).
@@ -67,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated requirement status to mark `RQMD-UNDO-011` as Implemented (unified undo and audit capture cross-referencing through `rqmd-history`).
 - Updated requirement status to mark `RQMD-UNDO-006` as Implemented (history metadata, provenance, and delta payload coverage).
 - Updated requirement status to mark `RQMD-PRIORITY-008` as Implemented (undo/history semantics for priority-only and combined mutations).
+- Updated requirement status to mark `RQMD-UI-010` as Implemented (renderer diff-engine and terminal-path test coverage in CI).
 
 - Switched requirements index layout from sibling requirements.md files to in-directory README.md files.
 - Updated rqmd auto-detection to use docs/requirements/README.md and requirements/README.md.

@@ -3,7 +3,7 @@
 Scope: interactive menus, paginated views, and terminal rendering behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 6🔧 0✅ 0⛔ 1🗑️
+Summary: 3💡 7🔧 0✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UI-001: Screen-write rendering mode
@@ -79,7 +79,7 @@ Summary: 4💡 6🔧 0✅ 0⛔ 1🗑️
 - So that when redraw or startup timing exceeds 60ms consistently, the renderer falls back to coarser updates and emits diagnostics in verbose mode.
 
 ### RQMD-UI-010: Testing and CI expectations
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟢 P3 - Low
 - As a rqmd QA engineer
 - I want unit tests for the rendering diff engine and integration tests that exercise both TTY and non-TTY paths
