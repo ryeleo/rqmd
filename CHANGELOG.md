@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added UI-007 contrast-preserving redraw safeguards: vetted zebra background accessibility checks, CLI-level colorized redraw gating, and fallback to plain non-colorized menu rendering when background contrast cannot be trusted (RQMD-UI-007).
 - Added UI-009 adaptive performance heuristics with a dedicated render-mode controller using smoothed latency windows (median/p95), hysteresis thresholds, and cooldown-based anti-thrashing transitions between `screen-write` and `append` rendering modes, including regression tests for sustained-latency degrade/recover behavior (RQMD-UI-009).
 - Added UNDO-003 branching history support with automatic recovery branch creation on divergence, new `HistoryManager` methods (`checkout_branch`, `cherry_pick`, `replay_branch`, `label_branch`, `discard_branch`, `get_branches`), branch head tracking in state metadata, and comprehensive regression tests for branch navigation, preservation of alternate timelines, and replay workflows (RQMD-UNDO-003).
+- Added `rqmd --history-discard-branch <name>` as a dedicated non-interactive history mode for pruning alternate branches, with explicit confirmation enforcement (`--force-yes`) for automation-safe destructive operations and JSON/text result payloads (RQMD-UNDO-004).
 
 - Added `extract_blocking_id()` to `req_parser.py`; `blocking_id` and `blocked_reason` fields now appear in JSON exports from `rqmd` and `rqmd-ai` when a requirement is blocked by a linked or bare requirement ID (RQMD-CORE-022).
 - Added `parse_domain_priority_metadata()` to `req_parser.py`; `domain_priority` and `sub_section_priorities` fields now appear in JSON payloads when domain-level `**Priority:**` metadata is present (RQMD-PRIORITY-012).
@@ -71,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated requirement status to mark `RQMD-UNDO-010` as Implemented (undo/history verification matrix coverage).
 - Updated requirement status to mark `RQMD-UNDO-011` as Implemented (unified undo and audit capture cross-referencing through `rqmd-history`).
 - Updated requirement status to mark `RQMD-UNDO-006` as Implemented (history metadata, provenance, and delta payload coverage).
+- Updated requirement status to mark `RQMD-UNDO-004` as Implemented (interactive/non-interactive confirmation guardrails for history-destructive branch discard actions).
 - Updated requirement status to mark `RQMD-PRIORITY-008` as Implemented (undo/history semantics for priority-only and combined mutations).
 - Updated requirement status to mark `RQMD-UI-010` as Implemented (renderer diff-engine and terminal-path test coverage in CI).
 - Updated requirement status to mark `RQMD-UI-008` as Implemented (SIGWINCH resize reflow handling in interactive screen-write flows).

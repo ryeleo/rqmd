@@ -3,7 +3,7 @@
 Scope: full undo/redo semantics, persistent history across restarts/crashes, branching and "lost changes" recovery, UI affordances, and storage/retention policies.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 8🔧 0✅ 0⛔ 0🗑️
+Summary: 2💡 9🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UNDO-001: Full undo/redo semantics
@@ -33,7 +33,7 @@ Summary: 3💡 8🔧 0✅ 0⛔ 0🗑️
 - So that the system supports reapplying or cherry-picking individual changes from alternate branches.
 
 ### RQMD-UNDO-004: Interactive reconfirmation when rewriting history
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when the user attempts to perform an action that would lose reachable history (e.g., pruning, garbage-collecting alternate branches, or compacting history beyond retention)
 - I want such an action to require explicit confirmation in interactive mode

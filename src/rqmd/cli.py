@@ -756,6 +756,13 @@ def _filter_timeline_nodes(
     help="Display persistent history entries with cursor/head metadata (useful with --as-json for automation).",
 )
 @click.option(
+    "--history-discard-branch",
+    "history_discard_branch",
+    type=str,
+    default=None,
+    help="Discard an alternate history branch by name (requires confirmation; use --force-yes for non-interactive automation).",
+)
+@click.option(
     "--timeline-branch",
     "timeline_filter_branch",
     type=str,
@@ -1100,6 +1107,7 @@ def main(
     redo_last: bool,
     show_timeline: bool,
     show_history: bool,
+    history_discard_branch: str | None,
     timeline_filter_branch: str | None,
     timeline_filter_actor: str | None,
     timeline_filter_command: str | None,
@@ -2314,6 +2322,7 @@ def main(
         or redo_last
         or show_timeline
         or show_history
+        or history_discard_branch
     )
     if non_interactive_requested and positional_domain_file and not set_file and not set_file_input:
         set_file = format_path_display(positional_domain_file, repo_root)
@@ -2331,11 +2340,66 @@ def main(
             + int(bool(redo_last))
             + int(bool(show_timeline))
             + int(bool(show_history))
+            + int(bool(history_discard_branch))
         )
         if mode_count > 1:
             raise click.ClickException(
-                "Use exactly one non-interactive update mode: --undo, --redo, --timeline, --history, --update-file, --update ID=STATUS (repeatable), --update-priority ID=PRIORITY (repeatable), --update-flagged ID=true|false (repeatable), or --update-id with --update-status."
+                "Use exactly one non-interactive update mode: --undo, --redo, --timeline, --history, --history-discard-branch, --update-file, --update ID=STATUS (repeatable), --update-priority ID=PRIORITY (repeatable), --update-flagged ID=true|false (repeatable), or --update-id with --update-status."
             )
+
+        if history_discard_branch:
+            history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
+            branches = history_manager.get_branches()
+            branch_name = history_discard_branch.strip()
+            if branch_name not in branches:
+                raise click.ClickException(f"Unknown history branch: {history_discard_branch!r}")
+
+            branch_info = branches[branch_name]
+            confirmed = bool(confirm_yes)
+            if not confirmed:
+                if not sys.stdin.isatty() or json_output:
+                    raise click.ClickException(
+                        "Discarding history branches requires confirmation. Re-run with --force-yes."
+                    )
+                confirmed = click.confirm(
+                    (
+                        f"Discard history branch '{branch_name}' "
+                        f"({branch_info.get('entry_count', 0)} entries)? This cannot be undone."
+                    ),
+                    default=False,
+                    show_default=True,
+                )
+
+            if not confirmed:
+                payload = {
+                    "mode": "history-discard-branch",
+                    "branch": branch_name,
+                    "discarded": False,
+                    "cancelled": True,
+                    "branches": history_manager.get_branches(),
+                }
+                if json_output:
+                    _emit_json_payload(payload)
+                else:
+                    click.echo("Branch discard cancelled.")
+                raise SystemExit(0)
+
+            discarded = history_manager.discard_branch(branch_name)
+            payload = {
+                "mode": "history-discard-branch",
+                "branch": branch_name,
+                "discarded": discarded,
+                "cancelled": False,
+                "branches": history_manager.get_branches(),
+            }
+            if json_output:
+                _emit_json_payload(payload)
+            else:
+                if discarded:
+                    click.echo(f"Discarded history branch '{branch_name}'.")
+                else:
+                    click.echo(f"No branch discarded for '{branch_name}'.")
+            raise SystemExit(0)
 
         if show_history:
             history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
