@@ -144,6 +144,7 @@ def select_from_menu(
     options: list[str],
     repeat_choice_right: bool = False,
     zebra: bool = False,
+    zebra_bg: str | None = None,
     show_page_indicator: bool = True,
     allow_paging_nav: bool = True,
     extra_key: str | None = None,
@@ -218,7 +219,9 @@ def select_from_menu(
             if selected_option_index is not None and global_idx == selected_option_index and selected_option_bg:
                 line = apply_background_preserving_styles(line, selected_option_bg)
             elif zebra and (idx % 2 == 1):
-                line = apply_background_preserving_styles(line, ZEBRA_BG)
+                line = apply_background_preserving_styles(
+                    line, zebra_bg if zebra_bg is not None else ZEBRA_BG
+                )
 
             click.echo(line)
 

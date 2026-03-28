@@ -2,30 +2,8 @@
   "mode": "filter-status",
   "status": "💡 Proposed",
   "requirements_dir": "docs/requirements",
-  "total": 49,
+  "total": 38,
   "files": [
-    {
-      "path": "docs/requirements/ai-cli.md",
-      "scope": "a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs",
-      "domain_body": null,
-      "requirements": [
-        {
-          "id": "RQMD-AI-012",
-          "title": "Installable AI agent/skill instruction bundle",
-          "sub_domain": null,
-          "body": {
-            "markdown": "### RQMD-AI-012: Installable AI agent/skill instruction bundle\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a team maintainer when onboarding AI-assisted contributors\n- I want rqmd to install a standard agent/skill instruction bundle into the workspace\n- So that AI agents have a consistent contract for JSON modes, workflow sequencing, and requirement/doc update expectations\n- So that installation supports a dry-run preview and idempotent re-run behavior\n- So that teams can choose a minimal or full preset while preserving existing customized instruction files unless explicit overwrite is requested\n- So that installed guidance references local commands and requirement file conventions in this repository layout.",
-            "lines": {
-              "header": 92,
-              "status": 93,
-              "body_start": 92,
-              "body_end": 100
-            }
-          }
-        }
-      ],
-      "sub_sections": []
-    },
     {
       "path": "docs/requirements/automation-api.md",
       "scope": "non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior",
@@ -36,26 +14,12 @@
           "title": "Unique-prefix argument/value abbreviations",
           "sub_domain": null,
           "body": {
-            "markdown": "### RQMD-AUTOMATION-019: Unique-prefix argument/value abbreviations\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a CLI user\n- I want unique minimal prefixes for long option names and enumerated values to be accepted (for example, `--filt V` -> `--status Verified`)\n- So that fast terminal usage is supported without sacrificing determinism.\n- So that ambiguous prefixes fail with a clear disambiguation error listing valid matches.",
+            "markdown": "### RQMD-AUTOMATION-019: Unique-prefix argument/value abbreviations\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a CLI user\n- I want unique minimal prefixes for long option names and enumerated values to be accepted (for example, `--filt V` -> `--status Verified`)\n- So that fast terminal usage is supported without sacrificing determinism.\n- So that ambiguous prefixes fail with a clear disambiguation error listing valid matches.\n- **Note:** The enumerated-value prefix half (e.g. `V` → `Verified`) is already implemented and tested. The option-name abbreviation half (e.g. `--stat` → `--status`) via single-character shortcode is a reasonable approach, but is explicitly deferred to **absolute lowest priority** — implement this last, only after the JSON API contract is fully stable and no further breaking changes are expected. Adding abbreviation resolution to a large option set risks surfacing ambiguity regressions during active development.",
             "lines": {
               "header": 146,
               "status": 147,
               "body_start": 146,
-              "body_end": 153
-            }
-          }
-        },
-        {
-          "id": "RQMD-AUTOMATION-020",
-          "title": "Ambiguous option-prefix error contract",
-          "sub_domain": null,
-          "body": {
-            "markdown": "### RQMD-AUTOMATION-020: Ambiguous option-prefix error contract\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a CLI user\n- I want ambiguous long-option prefixes to fail deterministically\n- So that the error output lists candidate option names and recommended full invocations.",
-            "lines": {
-              "header": 154,
-              "status": 155,
-              "body_start": 154,
-              "body_end": 160
+              "body_end": 154
             }
           }
         }
@@ -68,34 +32,6 @@
       "domain_body": null,
       "requirements": [
         {
-          "id": "RQMD-CORE-017",
-          "title": "Branded init and README messaging",
-          "sub_domain": null,
-          "body": {
-            "markdown": "### RQMD-CORE-017: Branded init and README messaging\n- **Status:** 💡 Proposed\n- **Priority:** 🟠 P1 - High\n- As a rqmd user when I first encounter rqmd through README or `rqmd --bootstrap`\n- I want branded, persuasive copy and direct project links\n- So that the tool clearly positions itself as human-readable, AI-readable, and ready for Requirements Driven Development (RDD).\n- So that generated scaffold copy and README messaging include a concise tagline plus direct links to the project GitHub homepage and/or PyPI page.",
-            "lines": {
-              "header": 146,
-              "status": 147,
-              "body_start": 146,
-              "body_end": 153
-            }
-          }
-        },
-        {
-          "id": "RQMD-CORE-022",
-          "title": "Enhanced blocking with linked requirements",
-          "sub_domain": null,
-          "body": {
-            "markdown": "### RQMD-CORE-022: Enhanced blocking with linked requirements\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when marking a requirement as blocked\n- I want to optionally link it to another requirement that is blocking it\n- So that the block reason field supports both free-form text and markdown hyperlinks to other requirement IDs\n- So that users can quickly navigate between blocking and blocked requirements\n- So that interactive mode offers a search/select UI for finding and linking blocking requirements by ID or title prefix\n- So that round-trip editing preserves manually entered hyperlinks verbatim\n- So that JSON export includes an optional `blocking_id` field capturing the linked requirement ID when present.",
-            "lines": {
-              "header": 196,
-              "status": 197,
-              "body_start": 196,
-              "body_end": 206
-            }
-          }
-        },
-        {
           "id": "RQMD-CORE-023",
           "title": "Global requirement ID prefix renaming tool",
           "sub_domain": null,
@@ -106,20 +42,6 @@
               "status": 208,
               "body_start": 207,
               "body_end": 216
-            }
-          }
-        },
-        {
-          "id": "RQMD-CORE-024",
-          "title": "Generated top-level README from requirement domains",
-          "sub_domain": null,
-          "body": {
-            "markdown": "### RQMD-CORE-024: Generated top-level README from requirement domains\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when project README guidance drifts from requirement docs\n- I want rqmd to generate the project-level README requirement index sections from domain files automatically and on demand\n- So that top-level README sections describing requirement domains and status rollups are regenerated deterministically from `docs/requirements/*.md`\n- So that generated sections are clearly bounded by markers and preserve hand-authored content outside those markers\n- So that repeated generation is idempotent and produces no diff when inputs are unchanged\n- So that teams can treat README generation as a routine maintenance step in local workflows and CI.\n- So that during normal usage, the README is automatically kept up to date \n- So that every time the summary renders or anything changes, make sure the README is up to date (if that isn't too slow..? -- test performance when we add this)\n- So that when app opens, when app closes, when user makes any change in any requirement file, the top level README is kept up to date.\n- So that README can be regenerated with separate CLI flag.",
-            "lines": {
-              "header": 217,
-              "status": 218,
-              "body_start": 217,
-              "body_end": 229
             }
           }
         }
@@ -158,78 +80,6 @@
               "body_end": 230
             }
           }
-        },
-        {
-          "id": "RQMD-INTERACTIVE-018",
-          "title": "Domain-level notes discoverability in interactive mode",
-          "sub_domain": null,
-          "body": {
-            "markdown": "### RQMD-INTERACTIVE-018: Domain-level notes discoverability in interactive mode\n- **Status:** 💡 Proposed\n- **Priority:** 🟠 P1 - High\n- As a rqmd user when I open a domain in interactive mode\n- I want optional domain-level notes/body content to be discoverable in-context (for example in a compact notes pane or explicit notes command)\n- So that implementation guidance and AI-authored domain rationale are available without cluttering individual requirement bodies.\n- So that interactive navigation remains focused on requirement editing while preserving fast access to domain context.\n- So that this UX behavior depends on the canonical domain-body model defined by RQMD-CORE-019 rather than a separate interactive-only parsing path.",
-            "lines": {
-              "header": 130,
-              "status": 131,
-              "body_start": 130,
-              "body_end": 138
-            }
-          }
-        },
-        {
-          "id": "RQMD-INTERACTIVE-022",
-          "title": "Interactive link entry with URL-to-hyperlink auto-formatting",
-          "sub_domain": null,
-          "body": {
-            "markdown": "### RQMD-INTERACTIVE-022: Interactive link entry with URL-to-hyperlink auto-formatting\n- **Status:** 💡 Proposed\n- **Priority:** 🟠 P1 - High\n- As a rqmd user when I want to add or manage external links on a requirement interactively\n- I want a link-editing flow accessible from the requirement detail view\n- So that the user can add a new link by entering either a plain URL or a pre-formatted `[label](url)` markdown hyperlink\n- So that when the user enters a plain URL without markdown formatting, rqmd prompts \"Add a label? (enter to skip)\"\n- So that if the user provides a label rqmd automatically formats the entry as `[label](url)` before saving\n- So that if the user skips the label prompt the plain URL is written to the `**Links:**` field as-is\n- So that the user can add multiple links in a single interactive session before returning to the requirement view\n- So that existing links are displayed and the user can select one to remove or re-format it\n- So that this flow depends on the `**Links:**` field contract defined in RQMD-CORE-021 and does not introduce a separate link storage path.",
-            "lines": {
-              "header": 263,
-              "status": 264,
-              "body_start": 263,
-              "body_end": 274
-            }
-          }
-        }
-      ],
-      "sub_sections": []
-    },
-    {
-      "path": "docs/requirements/packaging.md",
-      "scope": "package layout, installability, module entrypoints, and publication readiness",
-      "domain_body": null,
-      "requirements": [
-        {
-          "id": "RQMD-PACKAGING-010",
-          "title": "Shell completion distribution and activation guidance",
-          "sub_domain": null,
-          "body": {
-            "markdown": "### RQMD-PACKAGING-010: Shell completion distribution and activation guidance\n- **Status:** 💡 Proposed\n- **Priority:** 🟠 P1 - High\n- As a rqmd user when installing rqmd on a workstation\n- I want shell completion support to be available for zsh (and documented for bash/fish where supported)\n- So that users can enable completion using standard shell-init patterns without hand-maintaining completion scripts.\n- So that dynamic completion can query rqmd for current domain/requirement tokens at completion time and stay in sync with repository docs.\n- So that packaging/README instructions include copy-paste-safe activation commands and troubleshooting notes for completion cache refresh.",
-            "lines": {
-              "header": 81,
-              "status": 82,
-              "body_start": 81,
-              "body_end": 88
-            }
-          }
-        }
-      ],
-      "sub_sections": []
-    },
-    {
-      "path": "docs/requirements/portability.md",
-      "scope": "cross-project operation, path configuration, and repo-agnostic behavior",
-      "domain_body": null,
-      "requirements": [
-        {
-          "id": "RQMD-PORTABILITY-017",
-          "title": "Unknown status compatibility and recovery guidance",
-          "sub_domain": null,
-          "body": {
-            "markdown": "### RQMD-PORTABILITY-017: Unknown status compatibility and recovery guidance\n- **Status:** 💡 Proposed\n- **Priority:** 🟠 P1 - High\n- As a rqmd user when imported requirement docs include unconfigured statuses (for example `💻 Desktop-Verified`)\n- I want rqmd to fail with actionable compatibility guidance instead of opaque value errors\n- So that errors identify the unknown status value, source file, and nearest configured matches\n- So that output recommends concrete remediation paths (status catalog config update, alias mapping, or one-time migration command)\n- So that check/filter/list modes can optionally continue in a read-only degraded mode while still surfacing unknown values deterministically\n- So that automation JSON errors include a machine-readable error type for unknown status values.",
-            "lines": {
-              "header": 157,
-              "status": 158,
-              "body_start": 157,
-              "body_end": 165
-            }
-          }
         }
       ],
       "sub_sections": []
@@ -250,34 +100,6 @@
               "status": 67,
               "body_start": 66,
               "body_end": 72
-            }
-          }
-        },
-        {
-          "id": "RQMD-PRIORITY-011",
-          "title": "Project-customizable priority catalog schema",
-          "sub_domain": null,
-          "body": {
-            "markdown": "### RQMD-PRIORITY-011: Project-customizable priority catalog schema\n- **Status:** 💡 Proposed\n- **Priority:** 🟠 P1 - High\n- As a rqmd user when projects have domain-specific priority terminology\n- I want priority definitions to be configurable per project similarly to status definitions\n- So that each priority entry supports a custom display name, shortcode, and emoji (for example `{\"name\": \"Critical\", \"shortcode\": \"C\", \"emoji\": \"🔥\"}`)\n- So that parsing, normalization, rendering, sorting labels, and JSON outputs all use the configured priority catalog consistently\n- So that defaults remain available when no project override is present.",
-            "lines": {
-              "header": 87,
-              "status": 88,
-              "body_start": 87,
-              "body_end": 95
-            }
-          }
-        },
-        {
-          "id": "RQMD-PRIORITY-012",
-          "title": "Domain and sub-domain priority metadata",
-          "sub_domain": null,
-          "body": {
-            "markdown": "### RQMD-PRIORITY-012: Domain and sub-domain priority metadata\n- **Status:** 💡 Proposed\n- **Priority:** 🟢 P3 - Low\n- As a rqmd user when planning work at architecture or stream level\n- I want optional priority metadata at domain and sub-domain scope\n- So that a domain file can declare an overall domain priority and optional per-H2 sub-domain priorities\n- So that requirement-level priority remains authoritative for per-item workflows while domain/sub-domain priorities support planning and roll-up views\n- So that missing domain/sub-domain priorities are treated as unset and never block existing parsing or mutation behavior\n- So that JSON outputs include these fields when present, with stable null/absent behavior when not set.",
-            "lines": {
-              "header": 96,
-              "status": 97,
-              "body_start": 96,
-              "body_end": 104
             }
           }
         }

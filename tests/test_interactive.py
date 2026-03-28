@@ -630,7 +630,7 @@ Scope: two.
 
     captured: dict[str, object] = {}
 
-    def fake_interactive_loop(repo_root, criteria_dir, domain_files, emoji_columns, sort_files, sort_strategy, id_prefixes, include_status_emojis, priority_mode, include_priority_summary, initial_file_path=None):
+    def fake_interactive_loop(repo_root, criteria_dir, domain_files, emoji_columns, sort_files, sort_strategy, id_prefixes, include_status_emojis, priority_mode, include_priority_summary, initial_file_path=None, **kwargs):
         captured["initial_file_path"] = initial_file_path
         captured["domain_files"] = list(domain_files)
         return 0
@@ -1162,7 +1162,7 @@ Scope: demo.
 def test_RQMD_interactive_001_default_invokes_interactive_loop(monkeypatch, repo_with_domain_docs: Path) -> None:
     called = {"value": False}
 
-    def fake_loop(repo_root, criteria_dir, domain_files, emoji_columns, sort_files, sort_strategy, id_prefixes, include_status_emojis, priority_mode, include_priority_summary):
+    def fake_loop(repo_root, criteria_dir, domain_files, emoji_columns, sort_files, sort_strategy, id_prefixes, include_status_emojis, priority_mode, include_priority_summary, **kwargs):
         called["value"] = True
         assert sort_strategy == "standard"
         assert id_prefixes == ("AC", "R", "RQMD")

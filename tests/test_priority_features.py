@@ -236,7 +236,7 @@ class TestRQMDPriority004ModeFlag:
 
         captured: dict[str, object] = {}
 
-        def fake_loop(repo_root, criteria_dir, domain_files, emoji_columns, sort_files, sort_strategy, id_prefixes, include_status_emojis, priority_mode, include_priority_summary):
+        def fake_loop(repo_root, criteria_dir, domain_files, emoji_columns, sort_files, sort_strategy, id_prefixes, include_status_emojis, priority_mode, include_priority_summary, **kwargs):
             captured["priority_mode"] = priority_mode
             captured["include_priority_summary"] = include_priority_summary
             return 0

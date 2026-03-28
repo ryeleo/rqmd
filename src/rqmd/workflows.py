@@ -1026,6 +1026,7 @@ def interactive_update_loop(
     priority_mode: bool = False,
     include_priority_summary: bool = False,
     initial_file_path: Path | None = None,
+    zebra_bg: str | None = None,
 ) -> int:
     """Run the interactive file/requirement/status selection and update loop.
 
@@ -1116,6 +1117,7 @@ def interactive_update_loop(
                 file_options,
                 repeat_choice_right=True,
                 zebra=True,
+                zebra_bg=zebra_bg,
                 extra_keys={
                     MENU_TOGGLE_SORT: "cycle-sort",
                     "S": "cycle-sort-backward",
@@ -1194,6 +1196,7 @@ def interactive_update_loop(
                     ),
                     criterion_options,
                     zebra=True,
+                    zebra_bg=zebra_bg,
                     option_right_labels=criterion_right_labels,
                     extra_keys={
                         MENU_TOGGLE_SORT: "cycle-sort",

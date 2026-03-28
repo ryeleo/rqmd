@@ -384,6 +384,7 @@ def interactive_update_loop(
     priority_mode: bool = False,
     include_priority_summary: bool = False,
     initial_file_path: Path | None = None,
+    zebra_bg: str | None = None,
 ) -> int:
     return workflows_mod.interactive_update_loop(
         repo_root=repo_root,
@@ -398,6 +399,7 @@ def interactive_update_loop(
         priority_mode=priority_mode,
         include_priority_summary=include_priority_summary,
         initial_file_path=initial_file_path,
+        zebra_bg=zebra_bg,
     )
 
 
@@ -716,6 +718,13 @@ def shell_complete_target_tokens(
     help="Select a named interactive sort strategy catalog.",
 )
 @click.option(
+    "--theme",
+    "theme",
+    type=click.Choice(["light", "dark"], case_sensitive=False),
+    default=None,
+    help="Override terminal theme for interactive zebra striping (light or dark).",
+)
+@click.option(
     "--totals",
     "rollup_mode",
     is_flag=True,
@@ -874,6 +883,7 @@ def main(
     list_output: bool,
     summary_table: bool,
     sort_strategy: str,
+    theme: str | None,
     rollup_mode: bool,
     rollup_map_entries: tuple[str, ...],
     rollup_config: str | None,
@@ -940,6 +950,17 @@ def main(
         sort_strategy = config["sort_strategy"]
     if state_dir == "system-temp" and "state_dir" in config:
         state_dir = config["state_dir"]
+
+    # Resolve interactive zebra striping color from theme detection.
+    from .theme import detect_theme, resolve_zebra_bg
+    _detected_theme, _theme_source = detect_theme(
+        cli_override=theme,
+        config_override=str(config.get("theme") or ""),
+    )
+    zebra_bg = resolve_zebra_bg(
+        _detected_theme,
+        config_zebra_bg=str(config.get("ui", {}).get("zebra_bg") or "") or None,
+    )
 
     requested_init_prefix: str | None = None
     if id_prefixes:
@@ -1316,6 +1337,7 @@ def main(
                 priority_mode=priority_mode,
                 include_priority_summary=show_priority_summary,
                 initial_file_path=positional_domain_file,
+                zebra_bg=zebra_bg,
             )
         )
 
@@ -2148,6 +2170,7 @@ def main(
                 include_status_emojis=include_status_emojis,
                 priority_mode=priority_mode,
                 include_priority_summary=show_priority_summary,
+                zebra_bg=zebra_bg,
             )
         )
 

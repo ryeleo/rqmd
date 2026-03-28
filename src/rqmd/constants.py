@@ -73,6 +73,9 @@ NON_ALNUM_PREFIX_PATTERN = re.compile(r"^[^a-zA-Z0-9]+")
 NON_ALNUM_PATTERN = re.compile(r"[^a-z0-9]+")
 
 ANSI_RESET = "\x1b[0m"
+# Default zebra stripe (light gray) — works on dark-background terminals.
 ZEBRA_BG = "\x1b[48;5;254m"
+# Zebra stripe for light-background terminals (medium gray).
+ZEBRA_BG_LIGHT = "\x1b[48;5;250m"
 # Fixed 256-color purple for Proposed status; avoids theme-dependent drift.
 PROPOSED_FG = "\x1b[38;5;135m"

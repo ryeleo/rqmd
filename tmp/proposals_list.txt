@@ -1,0 +1,38 @@
+RQMD-AUTOMATION-019 - Unique-prefix argument/value abbreviations
+RQMD-CORE-023 - Global requirement ID prefix renaming tool
+RQMD-INTERACTIVE-012 - Accessibility-safe zebra and color override rendering
+RQMD-INTERACTIVE-013 - Terminal light/dark detection for automatic zebra adjustment
+RQMD-PRIORITY-008 - Undo and history semantics
+RQMD-UI-001 - Screen-write rendering mode
+RQMD-UI-002 - Explicit `--screen-write` toggle and config precedence
+RQMD-UI-003 - Safe fallback for non-TTY and limited terminals
+RQMD-UI-004 - Minimal-diff redraw semantics
+RQMD-UI-005 - Pagination and stable cursor semantics
+RQMD-UI-006 - Footer legend and transient notifications area
+RQMD-UI-007 - Accessibility & contrast-preserving redraws
+RQMD-UI-008 - Terminal resize handling
+RQMD-UI-009 - Performance targets and heuristics
+RQMD-UI-010 - Testing and CI expectations
+RQMD-TEST-002 - Complex query
+RQMD-TEST-003 - Create operation
+RQMD-TIME-001 - Point-in-time catalog browsing
+RQMD-TIME-002 - Branch-aware historical timeline
+RQMD-TIME-003 - Detached historical view mode
+RQMD-TIME-004 - Historical context and activity inspection
+RQMD-TIME-005 - Compare historical points and branches
+RQMD-TIME-006 - Replay and restore from historical points
+RQMD-TIME-007 - Timeline filters and queryable navigation
+RQMD-TIME-008 - Stable historical identifiers and deep links
+RQMD-TIME-009 - Exportable temporal reports
+RQMD-TIME-010 - Verification coverage for temporal navigation
+RQMD-UNDO-001 - Full undo/redo semantics
+RQMD-UNDO-002 - Persistent history across restarts and crashes
+RQMD-UNDO-003 - Branching history and "lost changes" visibility
+RQMD-UNDO-004 - Interactive reconfirmation when rewriting history
+RQMD-UNDO-005 - Storage backend and crash-safety
+RQMD-UNDO-006 - Metadata, auditability, and provenance
+RQMD-UNDO-007 - UI affordances and commands
+RQMD-UNDO-008 - Size, retention, and compaction policy
+RQMD-UNDO-009 - Programmatic API and automation
+RQMD-UNDO-010 - Tests and verification
+RQMD-UNDO-011 - Unified undo and audit capture
