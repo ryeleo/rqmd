@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from click.testing import CliRunner
-
 from rqmd.cli import main as rqmd_main
 from rqmd.history import HistoryManager
 from rqmd.status_update import apply_status_change_by_id
