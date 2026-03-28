@@ -3,7 +3,7 @@
 Scope: add a first-class `Priority` field to requirement entries, integrate priority into interactive and non-interactive flows, and allow priority-aware sorting and summaries.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 2🔧 9✅ 0⛔ 0🗑️
+Summary: 0💡 3🔧 9✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PRIORITY-001: First-class priority field
@@ -64,7 +64,7 @@ Summary: 1💡 2🔧 9✅ 0⛔ 0🗑️
 - So that a migration mode (for example `rqmd --seed-priorities`) can populate default priorities (e.g., unset or `P3`) and update files idempotently.
 
 ### RQMD-PRIORITY-008: Undo and history semantics
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when priority edits are recorded
 - I want to make or undo priority changes
