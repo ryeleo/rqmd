@@ -3,7 +3,7 @@
 Scope: full undo/redo semantics, persistent history across restarts/crashes, branching and "lost changes" recovery, UI affordances, and storage/retention policies.
 
 <!-- acceptance-status-summary:start -->
-Summary: 6💡 5🔧 0✅ 0⛔ 0🗑️
+Summary: 5💡 6🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UNDO-001: Full undo/redo semantics
@@ -96,7 +96,7 @@ Summary: 6💡 5🔧 0✅ 0⛔ 0🗑️
 - So that test fixtures include representative multi-file edits, branching and replay scenarios, and compaction behavior verification.
 
 ### RQMD-UNDO-011: Unified undo and audit capture
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when traceability and recovery guarantees are required
 - I want every rqmd write operation to be recorded in the same `rqmd-history` backend used for undo/redo

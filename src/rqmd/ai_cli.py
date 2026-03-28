@@ -590,8 +590,15 @@ def _build_apply_audit_record(
                 "requested_status": entry.get("requested_status"),
                 "normalized_status": entry.get("status"),
                 "decision": "applied" if changed else "no-op",
+                "history_entry": entry.get("history_entry"),
             }
         )
+
+    history_entries = [
+        entry.get("history_entry")
+        for entry in updates
+        if isinstance(entry.get("history_entry"), dict)
+    ]
 
     return {
         "event_id": f"rqmd-ai-{uuid4().hex}",
@@ -616,6 +623,7 @@ def _build_apply_audit_record(
         "decisions": decisions,
         "outputs": {
             "changed_count": changed_count,
+            "history_entries": history_entries,
         },
     }
 
@@ -991,10 +999,13 @@ def _plan_or_apply_updates(
 
     changed_count = 0
     audit: dict[str, object] | None = None
+    history_manager = HistoryManager(repo_root=repo_root, requirements_dir=requirements_dir) if apply else None
     for req_id, status_input in updates:
         normalized = normalize_status_input(status_input)
         changed = False
+        history_entry: dict[str, object] | None = None
         if apply:
+            before_entries = history_manager.list_entries() if history_manager is not None else []
             changed = apply_status_change_by_id(
                 repo_root=repo_root,
                 domain_files=domain_files,
@@ -1007,6 +1018,19 @@ def _plan_or_apply_updates(
             )
             if changed:
                 changed_count += 1
+                if history_manager is not None:
+                    after_entries = history_manager.list_entries()
+                    if len(after_entries) > len(before_entries):
+                        latest_entry = after_entries[-1]
+                        commit_hash = str(latest_entry.get("commit") or "")
+                        history_entry = {
+                            "entry_index": len(after_entries) - 1,
+                            "commit": commit_hash,
+                            "stable_id": history_manager.build_stable_history_id(commit_hash) if commit_hash else None,
+                            "timestamp": latest_entry.get("timestamp"),
+                            "command": latest_entry.get("command"),
+                            "branch": latest_entry.get("branch"),
+                        }
 
         payload_updates.append(
             {
@@ -1014,6 +1038,7 @@ def _plan_or_apply_updates(
                 "requested_status": status_input,
                 "status": normalized,
                 "changed": changed,
+                "history_entry": history_entry,
             }
         )
 

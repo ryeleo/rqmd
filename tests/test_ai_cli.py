@@ -8,6 +8,7 @@ from click.testing import CliRunner
 from rqmd.ai_cli import main
 from rqmd.cli import main as rqmd_main
 from rqmd.constants import JSON_SCHEMA_VERSION
+from rqmd.history import HistoryManager
 
 
 def _assert_schema_version(payload: dict[str, object]) -> None:
@@ -251,6 +252,13 @@ def test_RQMD_AI_010_apply_emits_structured_audit_record(tmp_path: Path) -> None
     assert payload["audit"] is not None
     _assert_schema_version(payload)
     assert payload["audit"]["backend"] == "rqmd-history"
+    assert payload["updates"][0]["history_entry"] is not None
+    assert str(payload["updates"][0]["history_entry"]["stable_id"]).startswith("hid:")
+
+    manager = HistoryManager(repo_root=repo, requirements_dir="docs/requirements")
+    resolved = manager.resolve_ref(str(payload["updates"][0]["history_entry"]["entry_index"]))
+    assert resolved is not None
+    assert resolved["commit"] == payload["updates"][0]["history_entry"]["commit"]
 
     audit_log = repo / ".rqmd" / "history" / "rqmd-history" / "audit.jsonl"
     assert audit_log.exists()
@@ -261,7 +269,10 @@ def test_RQMD_AI_010_apply_emits_structured_audit_record(tmp_path: Path) -> None
     assert record["mode"] == "apply"
     assert record["inputs"]["update_count"] == 1
     assert record["outputs"]["changed_count"] == 1
+    assert record["outputs"]["history_entries"]
     assert record["decisions"][0]["decision"] == "applied"
+    assert record["decisions"][0]["history_entry"] is not None
+    assert str(record["decisions"][0]["history_entry"]["stable_id"]).startswith("hid:")
 
 
 def test_RQMD_AI_012_install_bundle_dry_run_preview(tmp_path: Path) -> None:
