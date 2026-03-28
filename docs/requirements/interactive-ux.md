@@ -261,7 +261,7 @@ colors:
 ```
 
 ### RQMD-INTERACTIVE-022: Interactive link entry with URL-to-hyperlink auto-formatting
-- **Status:** 💡 Proposed
+- **Status:** � Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when I want to add or manage external links on a requirement interactively
 - I want a link-editing flow accessible from the requirement detail view

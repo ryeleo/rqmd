@@ -1,0 +1,15 @@
+"""Tests for RQMD-CORE-022: Enhanced blocking with linked requirements."""
+
+import json
+from pathlib import Path
+
+import pytest
+from click.testing import CliRunner
+
+from src.rqmd.req_parser import extract_blocking_id
+
+
+class TestExtractBlockingId:
+    def test_returns_none_for_none(self):
+        assert extract_blocking_id(None) is None
+

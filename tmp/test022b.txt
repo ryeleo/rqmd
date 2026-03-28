@@ -1,0 +1,30 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.8, pytest-9.0.2, pluggy-1.6.0 -- /Users/rleonar7/git-repos/ac-cli/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/rleonar7/git-repos/ac-cli
+configfile: pyproject.toml
+collecting ... collected 21 items
+
+tests/test_RQMD_interactive_022.py::TestEntryFields::test_links_in_entry_fields PASSED [  4%]
+tests/test_RQMD_interactive_022.py::TestEntryFields::test_entry_fields_order PASSED [  9%]
+tests/test_RQMD_interactive_022.py::TestBuildRequirementFieldMenuLinks::test_returns_links_title PASSED [ 14%]
+tests/test_RQMD_interactive_022.py::TestBuildRequirementFieldMenuLinks::test_returns_manage_label PASSED [ 19%]
+tests/test_RQMD_interactive_022.py::TestBuildRequirementFieldMenuLinks::test_no_links_shows_no_links PASSED [ 23%]
+tests/test_RQMD_interactive_022.py::TestBuildRequirementFieldMenuLinks::test_single_link_singular PASSED [ 28%]
+tests/test_RQMD_interactive_022.py::TestBuildRequirementFieldMenuLinks::test_multiple_links_plural PASSED [ 33%]
+tests/test_RQMD_interactive_022.py::TestBuildRequirementFieldMenuLinks::test_current_index_is_none PASSED [ 38%]
+tests/test_RQMD_interactive_022.py::TestAddLinkToFile::test_creates_links_section_when_absent PASSED [ 42%]
+tests/test_RQMD_interactive_022.py::TestAddLinkToFile::test_appends_to_existing_links_section PASSED [ 47%]
+tests/test_RQMD_interactive_022.py::TestAddLinkToFile::test_markdown_link_stored_verbatim PASSED [ 52%]
+tests/test_RQMD_interactive_022.py::TestAddLinkToFile::test_does_nothing_when_no_metadata_anchor PASSED [ 57%]
+tests/test_RQMD_interactive_022.py::TestRemoveLinkFromFile::test_removes_link_by_index PASSED [ 61%]
+tests/test_RQMD_interactive_022.py::TestRemoveLinkFromFile::test_removes_header_when_last_link_removed PASSED [ 66%]
+tests/test_RQMD_interactive_022.py::TestRemoveLinkFromFile::test_noop_when_no_links_section PASSED [ 71%]
+tests/test_RQMD_interactive_022.py::TestRemoveLinkFromFile::test_noop_on_out_of_range_index PASSED [ 76%]
+tests/test_RQMD_interactive_022.py::TestPromptForLinksFlow::test_empty_input_returns_false PASSED [ 80%]
+tests/test_RQMD_interactive_022.py::TestPromptForLinksFlow::test_adding_plain_url_without_label PASSED [ 85%]
+tests/test_RQMD_interactive_022.py::TestPromptForLinksFlow::test_adding_plain_url_with_label PASSED [ 90%]
+tests/test_RQMD_interactive_022.py::TestPromptForLinksFlow::test_adding_markdown_link_skips_label_prompt PASSED [ 95%]
+tests/test_RQMD_interactive_022.py::TestPromptForLinksFlow::test_removing_link_by_number PASSED [100%]
+
+============================== 21 passed in 0.14s ==============================

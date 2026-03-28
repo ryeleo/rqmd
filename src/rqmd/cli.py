@@ -167,14 +167,10 @@ from .workflows import (
     build_filtered_criteria_payload,
     build_summary_payload,
     build_targeted_criteria_payload,
+    focused_target_interactive_loop as focused_target_interactive_loop_impl,
     print_criteria_list,
     print_criteria_tree,
 )
-from .workflows import (
-    focused_target_interactive_loop as focused_target_interactive_loop_impl,
-)
-    focused_target_interactive_loop as focused_target_interactive_loop_impl
-from .workflows import print_criteria_list, print_criteria_tree
 
 __all__ = [
     "SUMMARY_START",

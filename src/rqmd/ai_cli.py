@@ -42,7 +42,6 @@ from .req_parser import (
     parse_requirements,
     resolve_id_prefixes,
 )
-                         parse_requirements, resolve_id_prefixes)
 from .status_model import normalize_status_input
 from .status_update import apply_status_change_by_id
 

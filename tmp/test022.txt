@@ -1,0 +1,625 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.8, pytest-9.0.2, pluggy-1.6.0 -- /Users/rleonar7/git-repos/ac-cli/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/rleonar7/git-repos/ac-cli
+configfile: pyproject.toml
+collecting ... collected 21 items
+
+tests/test_RQMD_interactive_022.py::TestEntryFields::test_links_in_entry_fields PASSED [  4%]
+tests/test_RQMD_interactive_022.py::TestEntryFields::test_entry_fields_order PASSED [  9%]
+tests/test_RQMD_interactive_022.py::TestBuildRequirementFieldMenuLinks::test_returns_links_title PASSED [ 14%]
+tests/test_RQMD_interactive_022.py::TestBuildRequirementFieldMenuLinks::test_returns_manage_label PASSED [ 19%]
+tests/test_RQMD_interactive_022.py::TestBuildRequirementFieldMenuLinks::test_no_links_shows_no_links PASSED [ 23%]
+tests/test_RQMD_interactive_022.py::TestBuildRequirementFieldMenuLinks::test_single_link_singular PASSED [ 28%]
+tests/test_RQMD_interactive_022.py::TestBuildRequirementFieldMenuLinks::test_multiple_links_plural PASSED [ 33%]
+tests/test_RQMD_interactive_022.py::TestBuildRequirementFieldMenuLinks::test_current_index_is_none PASSED [ 38%]
+tests/test_RQMD_interactive_022.py::TestAddLinkToFile::test_creates_links_section_when_absent FAILED [ 42%]
+tests/test_RQMD_interactive_022.py::TestAddLinkToFile::test_appends_to_existing_links_section FAILED [ 47%]
+tests/test_RQMD_interactive_022.py::TestAddLinkToFile::test_markdown_link_stored_verbatim FAILED [ 52%]
+tests/test_RQMD_interactive_022.py::TestAddLinkToFile::test_does_nothing_when_no_metadata_anchor PASSED [ 57%]
+tests/test_RQMD_interactive_022.py::TestRemoveLinkFromFile::test_removes_link_by_index FAILED [ 61%]
+tests/test_RQMD_interactive_022.py::TestRemoveLinkFromFile::test_removes_header_when_last_link_removed FAILED [ 66%]
+tests/test_RQMD_interactive_022.py::TestRemoveLinkFromFile::test_noop_when_no_links_section FAILED [ 71%]
+tests/test_RQMD_interactive_022.py::TestRemoveLinkFromFile::test_noop_on_out_of_range_index FAILED [ 76%]
+tests/test_RQMD_interactive_022.py::TestPromptForLinksFlow::test_empty_input_returns_false FAILED [ 80%]
+tests/test_RQMD_interactive_022.py::TestPromptForLinksFlow::test_adding_plain_url_without_label FAILED [ 85%]
+tests/test_RQMD_interactive_022.py::TestPromptForLinksFlow::test_adding_plain_url_with_label FAILED [ 90%]
+tests/test_RQMD_interactive_022.py::TestPromptForLinksFlow::test_adding_markdown_link_skips_label_prompt FAILED [ 95%]
+tests/test_RQMD_interactive_022.py::TestPromptForLinksFlow::test_removing_link_by_number FAILED [100%]
+
+=================================== FAILURES ===================================
+___________ TestAddLinkToFile.test_creates_links_section_when_absent ___________
+
+self = <test_RQMD_interactive_022.TestAddLinkToFile object at 0x108e02850>
+tmp_path = PosixPath('/private/var/folders/5d/5hg_4m955pz8c5c5cgt45kcc0000gq/T/pytest-of-rleonar7/pytest-326/test_creates_links_section_whe0')
+
+    def test_creates_links_section_when_absent(self, tmp_path: Path):
+        path = _make_req_file(
+            tmp_path,
+            "# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n",
+        )
+>       req = _parse_first_req(path)
+              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_RQMD_interactive_022.py:110: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_RQMD_interactive_022.py:28: in _parse_first_req
+    reqs = parse_requirements(path.read_text(encoding="utf-8"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = '# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n'
+id_prefixes = ('AC', 'R', 'RQMD')
+
+    def parse_requirements(
+        path: Path,
+        id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    ) -> list[dict[str, object]]:
+        """Parse all requirements from a markdown domain file.
+    
+        Extracts requirement headers (### ID: Title), status lines, and associated metadata
+        (priority, blocked reason, deprecated reason, flagged status, sub-domain).
+    
+        Args:
+            path: Path to the markdown file.
+            id_prefixes: Allowed ID prefixes for matching headers.
+    
+        Returns:
+            List of requirement dictionaries with keys: id, title, status, status_line,
+            priority, priority_line, blocked_reason, blocked_reason_line,
+            deprecated_reason, deprecated_reason_line, flagged, flagged_line, sub_domain.
+            Only requirements with a status_line are included.
+        """
+>       lines = path.read_text(encoding="utf-8").splitlines()
+                ^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'read_text'
+
+src/rqmd/req_parser.py:314: AttributeError
+___________ TestAddLinkToFile.test_appends_to_existing_links_section ___________
+
+self = <test_RQMD_interactive_022.TestAddLinkToFile object at 0x108e02f10>
+tmp_path = PosixPath('/private/var/folders/5d/5hg_4m955pz8c5c5cgt45kcc0000gq/T/pytest-of-rleonar7/pytest-326/test_appends_to_existing_links0')
+
+    def test_appends_to_existing_links_section(self, tmp_path: Path):
+        path = _make_req_file(
+            tmp_path,
+            "# Domain\n\n### RQMD-LINK-001: Item\n"
+            "- **Status:** 💡 Proposed\n"
+            "- **Links:**\n"
+            "  - https://first.com\n",
+        )
+>       req = _parse_first_req(path)
+              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_RQMD_interactive_022.py:124: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_RQMD_interactive_022.py:28: in _parse_first_req
+    reqs = parse_requirements(path.read_text(encoding="utf-8"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = '# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n- **Links:**\n  - https://first.com\n'
+id_prefixes = ('AC', 'R', 'RQMD')
+
+    def parse_requirements(
+        path: Path,
+        id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    ) -> list[dict[str, object]]:
+        """Parse all requirements from a markdown domain file.
+    
+        Extracts requirement headers (### ID: Title), status lines, and associated metadata
+        (priority, blocked reason, deprecated reason, flagged status, sub-domain).
+    
+        Args:
+            path: Path to the markdown file.
+            id_prefixes: Allowed ID prefixes for matching headers.
+    
+        Returns:
+            List of requirement dictionaries with keys: id, title, status, status_line,
+            priority, priority_line, blocked_reason, blocked_reason_line,
+            deprecated_reason, deprecated_reason_line, flagged, flagged_line, sub_domain.
+            Only requirements with a status_line are included.
+        """
+>       lines = path.read_text(encoding="utf-8").splitlines()
+                ^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'read_text'
+
+src/rqmd/req_parser.py:314: AttributeError
+_____________ TestAddLinkToFile.test_markdown_link_stored_verbatim _____________
+
+self = <test_RQMD_interactive_022.TestAddLinkToFile object at 0x108e035d0>
+tmp_path = PosixPath('/private/var/folders/5d/5hg_4m955pz8c5c5cgt45kcc0000gq/T/pytest-of-rleonar7/pytest-326/test_markdown_link_stored_verb0')
+
+    def test_markdown_link_stored_verbatim(self, tmp_path: Path):
+        path = _make_req_file(
+            tmp_path,
+            "# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n",
+        )
+>       req = _parse_first_req(path)
+              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_RQMD_interactive_022.py:135: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_RQMD_interactive_022.py:28: in _parse_first_req
+    reqs = parse_requirements(path.read_text(encoding="utf-8"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = '# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n'
+id_prefixes = ('AC', 'R', 'RQMD')
+
+    def parse_requirements(
+        path: Path,
+        id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    ) -> list[dict[str, object]]:
+        """Parse all requirements from a markdown domain file.
+    
+        Extracts requirement headers (### ID: Title), status lines, and associated metadata
+        (priority, blocked reason, deprecated reason, flagged status, sub-domain).
+    
+        Args:
+            path: Path to the markdown file.
+            id_prefixes: Allowed ID prefixes for matching headers.
+    
+        Returns:
+            List of requirement dictionaries with keys: id, title, status, status_line,
+            priority, priority_line, blocked_reason, blocked_reason_line,
+            deprecated_reason, deprecated_reason_line, flagged, flagged_line, sub_domain.
+            Only requirements with a status_line are included.
+        """
+>       lines = path.read_text(encoding="utf-8").splitlines()
+                ^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'read_text'
+
+src/rqmd/req_parser.py:314: AttributeError
+______________ TestRemoveLinkFromFile.test_removes_link_by_index _______________
+
+self = <test_RQMD_interactive_022.TestRemoveLinkFromFile object at 0x108e045d0>
+tmp_path = PosixPath('/private/var/folders/5d/5hg_4m955pz8c5c5cgt45kcc0000gq/T/pytest-of-rleonar7/pytest-326/test_removes_link_by_index0')
+
+    def test_removes_link_by_index(self, tmp_path: Path):
+        path = _make_req_file(
+            tmp_path,
+            "# Domain\n\n### RQMD-LINK-001: Item\n"
+            "- **Status:** 💡 Proposed\n"
+            "- **Links:**\n"
+            "  - https://first.com\n"
+            "  - https://second.com\n",
+        )
+>       req = _parse_first_req(path)
+              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_RQMD_interactive_022.py:163: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_RQMD_interactive_022.py:28: in _parse_first_req
+    reqs = parse_requirements(path.read_text(encoding="utf-8"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = '# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n- **Links:**\n  - https://first.com\n  - https://second.com\n'
+id_prefixes = ('AC', 'R', 'RQMD')
+
+    def parse_requirements(
+        path: Path,
+        id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    ) -> list[dict[str, object]]:
+        """Parse all requirements from a markdown domain file.
+    
+        Extracts requirement headers (### ID: Title), status lines, and associated metadata
+        (priority, blocked reason, deprecated reason, flagged status, sub-domain).
+    
+        Args:
+            path: Path to the markdown file.
+            id_prefixes: Allowed ID prefixes for matching headers.
+    
+        Returns:
+            List of requirement dictionaries with keys: id, title, status, status_line,
+            priority, priority_line, blocked_reason, blocked_reason_line,
+            deprecated_reason, deprecated_reason_line, flagged, flagged_line, sub_domain.
+            Only requirements with a status_line are included.
+        """
+>       lines = path.read_text(encoding="utf-8").splitlines()
+                ^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'read_text'
+
+src/rqmd/req_parser.py:314: AttributeError
+______ TestRemoveLinkFromFile.test_removes_header_when_last_link_removed _______
+
+self = <test_RQMD_interactive_022.TestRemoveLinkFromFile object at 0x108e04d10>
+tmp_path = PosixPath('/private/var/folders/5d/5hg_4m955pz8c5c5cgt45kcc0000gq/T/pytest-of-rleonar7/pytest-326/test_removes_header_when_last_0')
+
+    def test_removes_header_when_last_link_removed(self, tmp_path: Path):
+        path = _make_req_file(
+            tmp_path,
+            "# Domain\n\n### RQMD-LINK-001: Item\n"
+            "- **Status:** 💡 Proposed\n"
+            "- **Links:**\n"
+            "  - https://only.com\n",
+        )
+>       req = _parse_first_req(path)
+              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_RQMD_interactive_022.py:178: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_RQMD_interactive_022.py:28: in _parse_first_req
+    reqs = parse_requirements(path.read_text(encoding="utf-8"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = '# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n- **Links:**\n  - https://only.com\n'
+id_prefixes = ('AC', 'R', 'RQMD')
+
+    def parse_requirements(
+        path: Path,
+        id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    ) -> list[dict[str, object]]:
+        """Parse all requirements from a markdown domain file.
+    
+        Extracts requirement headers (### ID: Title), status lines, and associated metadata
+        (priority, blocked reason, deprecated reason, flagged status, sub-domain).
+    
+        Args:
+            path: Path to the markdown file.
+            id_prefixes: Allowed ID prefixes for matching headers.
+    
+        Returns:
+            List of requirement dictionaries with keys: id, title, status, status_line,
+            priority, priority_line, blocked_reason, blocked_reason_line,
+            deprecated_reason, deprecated_reason_line, flagged, flagged_line, sub_domain.
+            Only requirements with a status_line are included.
+        """
+>       lines = path.read_text(encoding="utf-8").splitlines()
+                ^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'read_text'
+
+src/rqmd/req_parser.py:314: AttributeError
+____________ TestRemoveLinkFromFile.test_noop_when_no_links_section ____________
+
+self = <test_RQMD_interactive_022.TestRemoveLinkFromFile object at 0x108e05490>
+tmp_path = PosixPath('/private/var/folders/5d/5hg_4m955pz8c5c5cgt45kcc0000gq/T/pytest-of-rleonar7/pytest-326/test_noop_when_no_links_sectio0')
+
+    def test_noop_when_no_links_section(self, tmp_path: Path):
+        path = _make_req_file(
+            tmp_path,
+            "# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n",
+        )
+>       req = _parse_first_req(path)
+              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_RQMD_interactive_022.py:189: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_RQMD_interactive_022.py:28: in _parse_first_req
+    reqs = parse_requirements(path.read_text(encoding="utf-8"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = '# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n'
+id_prefixes = ('AC', 'R', 'RQMD')
+
+    def parse_requirements(
+        path: Path,
+        id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    ) -> list[dict[str, object]]:
+        """Parse all requirements from a markdown domain file.
+    
+        Extracts requirement headers (### ID: Title), status lines, and associated metadata
+        (priority, blocked reason, deprecated reason, flagged status, sub-domain).
+    
+        Args:
+            path: Path to the markdown file.
+            id_prefixes: Allowed ID prefixes for matching headers.
+    
+        Returns:
+            List of requirement dictionaries with keys: id, title, status, status_line,
+            priority, priority_line, blocked_reason, blocked_reason_line,
+            deprecated_reason, deprecated_reason_line, flagged, flagged_line, sub_domain.
+            Only requirements with a status_line are included.
+        """
+>       lines = path.read_text(encoding="utf-8").splitlines()
+                ^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'read_text'
+
+src/rqmd/req_parser.py:314: AttributeError
+____________ TestRemoveLinkFromFile.test_noop_on_out_of_range_index ____________
+
+self = <test_RQMD_interactive_022.TestRemoveLinkFromFile object at 0x108e05c50>
+tmp_path = PosixPath('/private/var/folders/5d/5hg_4m955pz8c5c5cgt45kcc0000gq/T/pytest-of-rleonar7/pytest-326/test_noop_on_out_of_range_inde0')
+
+    def test_noop_on_out_of_range_index(self, tmp_path: Path):
+        path = _make_req_file(
+            tmp_path,
+            "# Domain\n\n### RQMD-LINK-001: Item\n"
+            "- **Status:** 💡 Proposed\n"
+            "- **Links:**\n"
+            "  - https://only.com\n",
+        )
+>       req = _parse_first_req(path)
+              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_RQMD_interactive_022.py:202: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_RQMD_interactive_022.py:28: in _parse_first_req
+    reqs = parse_requirements(path.read_text(encoding="utf-8"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = '# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n- **Links:**\n  - https://only.com\n'
+id_prefixes = ('AC', 'R', 'RQMD')
+
+    def parse_requirements(
+        path: Path,
+        id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    ) -> list[dict[str, object]]:
+        """Parse all requirements from a markdown domain file.
+    
+        Extracts requirement headers (### ID: Title), status lines, and associated metadata
+        (priority, blocked reason, deprecated reason, flagged status, sub-domain).
+    
+        Args:
+            path: Path to the markdown file.
+            id_prefixes: Allowed ID prefixes for matching headers.
+    
+        Returns:
+            List of requirement dictionaries with keys: id, title, status, status_line,
+            priority, priority_line, blocked_reason, blocked_reason_line,
+            deprecated_reason, deprecated_reason_line, flagged, flagged_line, sub_domain.
+            Only requirements with a status_line are included.
+        """
+>       lines = path.read_text(encoding="utf-8").splitlines()
+                ^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'read_text'
+
+src/rqmd/req_parser.py:314: AttributeError
+____________ TestPromptForLinksFlow.test_empty_input_returns_false _____________
+
+self = <test_RQMD_interactive_022.TestPromptForLinksFlow object at 0x108e06490>
+tmp_path = PosixPath('/private/var/folders/5d/5hg_4m955pz8c5c5cgt45kcc0000gq/T/pytest-of-rleonar7/pytest-326/test_empty_input_returns_false0')
+
+    def test_empty_input_returns_false(self, tmp_path: Path):
+        """Pressing Enter immediately (empty input) → no changes, returns False."""
+        path = _make_req_file(
+            tmp_path,
+            "# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n",
+        )
+>       req = _parse_first_req(path)
+              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_RQMD_interactive_022.py:219: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_RQMD_interactive_022.py:28: in _parse_first_req
+    reqs = parse_requirements(path.read_text(encoding="utf-8"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = '# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n'
+id_prefixes = ('AC', 'R', 'RQMD')
+
+    def parse_requirements(
+        path: Path,
+        id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    ) -> list[dict[str, object]]:
+        """Parse all requirements from a markdown domain file.
+    
+        Extracts requirement headers (### ID: Title), status lines, and associated metadata
+        (priority, blocked reason, deprecated reason, flagged status, sub-domain).
+    
+        Args:
+            path: Path to the markdown file.
+            id_prefixes: Allowed ID prefixes for matching headers.
+    
+        Returns:
+            List of requirement dictionaries with keys: id, title, status, status_line,
+            priority, priority_line, blocked_reason, blocked_reason_line,
+            deprecated_reason, deprecated_reason_line, flagged, flagged_line, sub_domain.
+            Only requirements with a status_line are included.
+        """
+>       lines = path.read_text(encoding="utf-8").splitlines()
+                ^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'read_text'
+
+src/rqmd/req_parser.py:314: AttributeError
+__________ TestPromptForLinksFlow.test_adding_plain_url_without_label __________
+
+self = <test_RQMD_interactive_022.TestPromptForLinksFlow object at 0x108e06bd0>
+tmp_path = PosixPath('/private/var/folders/5d/5hg_4m955pz8c5c5cgt45kcc0000gq/T/pytest-of-rleonar7/pytest-326/test_adding_plain_url_without_0')
+
+    def test_adding_plain_url_without_label(self, tmp_path: Path):
+        path = _make_req_file(
+            tmp_path,
+            "# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n",
+        )
+>       req = _parse_first_req(path)
+              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_RQMD_interactive_022.py:229: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_RQMD_interactive_022.py:28: in _parse_first_req
+    reqs = parse_requirements(path.read_text(encoding="utf-8"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = '# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n'
+id_prefixes = ('AC', 'R', 'RQMD')
+
+    def parse_requirements(
+        path: Path,
+        id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    ) -> list[dict[str, object]]:
+        """Parse all requirements from a markdown domain file.
+    
+        Extracts requirement headers (### ID: Title), status lines, and associated metadata
+        (priority, blocked reason, deprecated reason, flagged status, sub-domain).
+    
+        Args:
+            path: Path to the markdown file.
+            id_prefixes: Allowed ID prefixes for matching headers.
+    
+        Returns:
+            List of requirement dictionaries with keys: id, title, status, status_line,
+            priority, priority_line, blocked_reason, blocked_reason_line,
+            deprecated_reason, deprecated_reason_line, flagged, flagged_line, sub_domain.
+            Only requirements with a status_line are included.
+        """
+>       lines = path.read_text(encoding="utf-8").splitlines()
+                ^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'read_text'
+
+src/rqmd/req_parser.py:314: AttributeError
+___________ TestPromptForLinksFlow.test_adding_plain_url_with_label ____________
+
+self = <test_RQMD_interactive_022.TestPromptForLinksFlow object at 0x108e07350>
+tmp_path = PosixPath('/private/var/folders/5d/5hg_4m955pz8c5c5cgt45kcc0000gq/T/pytest-of-rleonar7/pytest-326/test_adding_plain_url_with_lab0')
+
+    def test_adding_plain_url_with_label(self, tmp_path: Path):
+        path = _make_req_file(
+            tmp_path,
+            "# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n",
+        )
+>       req = _parse_first_req(path)
+              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_RQMD_interactive_022.py:242: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_RQMD_interactive_022.py:28: in _parse_first_req
+    reqs = parse_requirements(path.read_text(encoding="utf-8"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = '# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n'
+id_prefixes = ('AC', 'R', 'RQMD')
+
+    def parse_requirements(
+        path: Path,
+        id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    ) -> list[dict[str, object]]:
+        """Parse all requirements from a markdown domain file.
+    
+        Extracts requirement headers (### ID: Title), status lines, and associated metadata
+        (priority, blocked reason, deprecated reason, flagged status, sub-domain).
+    
+        Args:
+            path: Path to the markdown file.
+            id_prefixes: Allowed ID prefixes for matching headers.
+    
+        Returns:
+            List of requirement dictionaries with keys: id, title, status, status_line,
+            priority, priority_line, blocked_reason, blocked_reason_line,
+            deprecated_reason, deprecated_reason_line, flagged, flagged_line, sub_domain.
+            Only requirements with a status_line are included.
+        """
+>       lines = path.read_text(encoding="utf-8").splitlines()
+                ^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'read_text'
+
+src/rqmd/req_parser.py:314: AttributeError
+_____ TestPromptForLinksFlow.test_adding_markdown_link_skips_label_prompt ______
+
+self = <test_RQMD_interactive_022.TestPromptForLinksFlow object at 0x108e07b10>
+tmp_path = PosixPath('/private/var/folders/5d/5hg_4m955pz8c5c5cgt45kcc0000gq/T/pytest-of-rleonar7/pytest-326/test_adding_markdown_link_skip0')
+
+    def test_adding_markdown_link_skips_label_prompt(self, tmp_path: Path):
+        path = _make_req_file(
+            tmp_path,
+            "# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n",
+        )
+>       req = _parse_first_req(path)
+              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_RQMD_interactive_022.py:254: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_RQMD_interactive_022.py:28: in _parse_first_req
+    reqs = parse_requirements(path.read_text(encoding="utf-8"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = '# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n'
+id_prefixes = ('AC', 'R', 'RQMD')
+
+    def parse_requirements(
+        path: Path,
+        id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    ) -> list[dict[str, object]]:
+        """Parse all requirements from a markdown domain file.
+    
+        Extracts requirement headers (### ID: Title), status lines, and associated metadata
+        (priority, blocked reason, deprecated reason, flagged status, sub-domain).
+    
+        Args:
+            path: Path to the markdown file.
+            id_prefixes: Allowed ID prefixes for matching headers.
+    
+        Returns:
+            List of requirement dictionaries with keys: id, title, status, status_line,
+            priority, priority_line, blocked_reason, blocked_reason_line,
+            deprecated_reason, deprecated_reason_line, flagged, flagged_line, sub_domain.
+            Only requirements with a status_line are included.
+        """
+>       lines = path.read_text(encoding="utf-8").splitlines()
+                ^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'read_text'
+
+src/rqmd/req_parser.py:314: AttributeError
+_____________ TestPromptForLinksFlow.test_removing_link_by_number ______________
+
+self = <test_RQMD_interactive_022.TestPromptForLinksFlow object at 0x108e142d0>
+tmp_path = PosixPath('/private/var/folders/5d/5hg_4m955pz8c5c5cgt45kcc0000gq/T/pytest-of-rleonar7/pytest-326/test_removing_link_by_number0')
+
+    def test_removing_link_by_number(self, tmp_path: Path):
+        path = _make_req_file(
+            tmp_path,
+            "# Domain\n\n### RQMD-LINK-001: Item\n"
+            "- **Status:** 💡 Proposed\n"
+            "- **Links:**\n"
+            "  - https://remove-me.com\n",
+        )
+>       req = _parse_first_req(path)
+              ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_RQMD_interactive_022.py:272: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_RQMD_interactive_022.py:28: in _parse_first_req
+    reqs = parse_requirements(path.read_text(encoding="utf-8"))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = '# Domain\n\n### RQMD-LINK-001: Item\n- **Status:** 💡 Proposed\n- **Links:**\n  - https://remove-me.com\n'
+id_prefixes = ('AC', 'R', 'RQMD')
+
+    def parse_requirements(
+        path: Path,
+        id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    ) -> list[dict[str, object]]:
+        """Parse all requirements from a markdown domain file.
+    
+        Extracts requirement headers (### ID: Title), status lines, and associated metadata
+        (priority, blocked reason, deprecated reason, flagged status, sub-domain).
+    
+        Args:
+            path: Path to the markdown file.
+            id_prefixes: Allowed ID prefixes for matching headers.
+    
+        Returns:
+            List of requirement dictionaries with keys: id, title, status, status_line,
+            priority, priority_line, blocked_reason, blocked_reason_line,
+            deprecated_reason, deprecated_reason_line, flagged, flagged_line, sub_domain.
+            Only requirements with a status_line are included.
+        """
+>       lines = path.read_text(encoding="utf-8").splitlines()
+                ^^^^^^^^^^^^^^
+E       AttributeError: 'str' object has no attribute 'read_text'
+
+src/rqmd/req_parser.py:314: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_RQMD_interactive_022.py::TestAddLinkToFile::test_creates_links_section_when_absent
+FAILED tests/test_RQMD_interactive_022.py::TestAddLinkToFile::test_appends_to_existing_links_section
+FAILED tests/test_RQMD_interactive_022.py::TestAddLinkToFile::test_markdown_link_stored_verbatim
+FAILED tests/test_RQMD_interactive_022.py::TestRemoveLinkFromFile::test_removes_link_by_index
+FAILED tests/test_RQMD_interactive_022.py::TestRemoveLinkFromFile::test_removes_header_when_last_link_removed
+FAILED tests/test_RQMD_interactive_022.py::TestRemoveLinkFromFile::test_noop_when_no_links_section
+FAILED tests/test_RQMD_interactive_022.py::TestRemoveLinkFromFile::test_noop_on_out_of_range_index
+FAILED tests/test_RQMD_interactive_022.py::TestPromptForLinksFlow::test_empty_input_returns_false
+FAILED tests/test_RQMD_interactive_022.py::TestPromptForLinksFlow::test_adding_plain_url_without_label
+FAILED tests/test_RQMD_interactive_022.py::TestPromptForLinksFlow::test_adding_plain_url_with_label
+FAILED tests/test_RQMD_interactive_022.py::TestPromptForLinksFlow::test_adding_markdown_link_skips_label_prompt
+FAILED tests/test_RQMD_interactive_022.py::TestPromptForLinksFlow::test_removing_link_by_number
+========================= 12 failed, 9 passed in 0.22s =========================
