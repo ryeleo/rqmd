@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 2🔧 18✅ 0⛔ 4🗑️
+Summary: 0💡 4🔧 18✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -196,7 +196,7 @@ Summary: 2💡 2🔧 18✅ 0⛔ 4🗑️
 - So that rqmd prints a clear per-file permission failure report with remediation guidance.
 
 ### RQMD-INTERACTIVE-012: Accessibility-safe zebra and color override rendering
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when terminal themes vary and default zebra/background colors may reduce readability
 - I want to configure user or project color overrides
@@ -205,7 +205,7 @@ Summary: 2💡 2🔧 18✅ 0⛔ 4🗑️
 - So that rqmd falls back to safe defaults when configured colors are invalid or unsupported by the terminal.
 
 ### RQMD-INTERACTIVE-013: Terminal light/dark detection for automatic zebra adjustment
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when users benefit from automatic contrast-appropriate styling
 - I want rqmd to start an interactive session

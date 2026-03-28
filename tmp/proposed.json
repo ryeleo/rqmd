@@ -1,0 +1,580 @@
+{
+  "mode": "filter-status",
+  "status": "💡 Proposed",
+  "requirements_dir": "docs/requirements",
+  "total": 36,
+  "files": [
+    {
+      "path": "docs/requirements/automation-api.md",
+      "scope": "non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior",
+      "domain_body": null,
+      "requirements": [
+        {
+          "id": "RQMD-AUTOMATION-019",
+          "title": "Unique-prefix argument/value abbreviations",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-AUTOMATION-019: Unique-prefix argument/value abbreviations\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a CLI user\n- I want unique minimal prefixes for long option names and enumerated values to be accepted (for example, `--filt V` -> `--status Verified`)\n- So that fast terminal usage is supported without sacrificing determinism.\n- So that ambiguous prefixes fail with a clear disambiguation error listing valid matches.\n- **Note:** The enumerated-value prefix half (e.g. `V` → `Verified`) is already implemented and tested. The option-name abbreviation half (e.g. `--stat` → `--status`) via single-character shortcode is a reasonable approach, but is explicitly deferred to **absolute lowest priority** — implement this last, only after the JSON API contract is fully stable and no further breaking changes are expected. Adding abbreviation resolution to a large option set risks surfacing ambiguity regressions during active development.",
+            "lines": {
+              "header": 146,
+              "status": 147,
+              "body_start": 146,
+              "body_end": 154
+            }
+          }
+        }
+      ],
+      "sub_sections": []
+    },
+    {
+      "path": "docs/requirements/core-engine.md",
+      "scope": "parsing, status normalization, summary generation, and requirement discovery",
+      "domain_body": null,
+      "requirements": [
+        {
+          "id": "RQMD-CORE-023",
+          "title": "Global requirement ID prefix renaming tool",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-CORE-023: Global requirement ID prefix renaming tool\n- **Status:** 💡 Proposed\n- **Priority:** 🟢 P3 - Low\n- As a rqmd user when a project outgrows its initial ID prefix (e.g., REQ- becomes too generic)\n- I want a one-time bulk rename command\n- So that all requirement headers, links, and citations are updated consistently across all domain files\n- So that the tool validates that the new prefix is unique and does not conflict with existing IDs in other domains\n- So that the operation is reversible via undo (once RQMD-UNDO is implemented)\n- So that a summary report shows all changed files and rename counts.",
+            "lines": {
+              "header": 207,
+              "status": 208,
+              "body_start": 207,
+              "body_end": 216
+            }
+          }
+        }
+      ],
+      "sub_sections": []
+    },
+    {
+      "path": "docs/requirements/priority.md",
+      "scope": "add a first-class `Priority` field to requirement entries, integrate priority into interactive and non-interactive flows, and allow priority-aware sorting and summaries",
+      "domain_body": null,
+      "requirements": [
+        {
+          "id": "RQMD-PRIORITY-008",
+          "title": "Undo and history semantics",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-PRIORITY-008: Undo and history semantics\n- **Status:** 💡 Proposed\n- **Priority:** 🟠 P1 - High\n- As a rqmd user when priority edits are recorded\n- I want to make or undo priority changes\n- So that the undo/history subsystem treats priority changes as first-class operations (atomic with status changes when performed together) and records them in history entries.",
+            "lines": {
+              "header": 66,
+              "status": 67,
+              "body_start": 66,
+              "body_end": 72
+            }
+          }
+        }
+      ],
+      "sub_sections": []
+    },
+    {
+      "path": "docs/requirements/screen-write.md",
+      "scope": "interactive menus, paginated views, and terminal rendering behavior",
+      "domain_body": null,
+      "requirements": [
+        {
+          "id": "RQMD-UI-001",
+          "title": "Screen-write rendering mode",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UI-001: Screen-write rendering mode\n- **Status:** 💡 Proposed\n- **Priority:** 🟢 P3 - Low\n- As a rqmd user when interactive menus are displayed\n- I want the UI to use screen-write style full-screen updates instead of line-by-line scrolling\n- So that page changes, pagination, and ephemeral menus feel snappy and visually stable\n- So that the interactive experience avoids confusing scrollback artifacts and preserves layout across refreshes.",
+            "lines": {
+              "header": 9,
+              "status": 10,
+              "body_start": 9,
+              "body_end": 16
+            }
+          }
+        },
+        {
+          "id": "RQMD-UI-002",
+          "title": "Explicit `--screen-write` toggle and config precedence",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UI-002: Explicit `--screen-write` toggle and config precedence\n- **Status:** 💡 Proposed\n- **Priority:** 🟢 P3 - Low\n- As a rqmd user when launching the tool\n- I want a CLI flag `--screen-write` and a configuration option `screen_write: true|false` in project/user config\n- So that users can opt in or out and project settings may assert their preferred rendering mode\n- So that precedence follows: CLI > project config > user config > built-in default (default = `true` when TTY supports it).",
+            "lines": {
+              "header": 17,
+              "status": 18,
+              "body_start": 17,
+              "body_end": 24
+            }
+          }
+        },
+        {
+          "id": "RQMD-UI-003",
+          "title": "Safe fallback for non-TTY and limited terminals",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UI-003: Safe fallback for non-TTY and limited terminals\n- **Status:** 💡 Proposed\n- **Priority:** 🟢 P3 - Low\n- As a rqmd user when running in a non-interactive environment or a terminal lacking full-capability support\n- I want rqmd to automatically fall back to the existing scrolling/append-style output\n- So that scripts, CI, and terminals without `clear`/ANSI support remain functional and deterministic.",
+            "lines": {
+              "header": 25,
+              "status": 26,
+              "body_start": 25,
+              "body_end": 31
+            }
+          }
+        },
+        {
+          "id": "RQMD-UI-004",
+          "title": "Minimal-diff redraw semantics",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UI-004: Minimal-diff redraw semantics\n- **Status:** 💡 Proposed\n- **Priority:** 🟢 P3 - Low\n- As a rqmd developer working on performance\n- I want the screen-write implementation to support minimal-diff updates (only redraw changed regions when feasible)\n- So that redraws are efficient and avoid excessive flicker on slow terminals\n- Implementation note: implement a simple row-diff strategy first, with fallbacks to full `clear` + re-render when diffing is disabled or not supported.",
+            "lines": {
+              "header": 32,
+              "status": 33,
+              "body_start": 32,
+              "body_end": 39
+            }
+          }
+        },
+        {
+          "id": "RQMD-UI-005",
+          "title": "Pagination and stable cursor semantics",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UI-005: Pagination and stable cursor semantics\n- **Status:** 💡 Proposed\n- **Priority:** 🟢 P3 - Low\n- As a rqmd user navigating pages or lists\n- I want the UI to maintain a stable cursor/selection position across page changes and re-renders\n- So that pressing `n`, `p`, `s`, or `d` results in predictable focus and selection, and the visible window always centers around the active selection where appropriate.",
+            "lines": {
+              "header": 40,
+              "status": 41,
+              "body_start": 40,
+              "body_end": 46
+            }
+          }
+        },
+        {
+          "id": "RQMD-UI-006",
+          "title": "Footer legend and transient notifications area",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UI-006: Footer legend and transient notifications area\n- **Status:** 💡 Proposed\n- **Priority:** 🟢 P3 - Low\n- As a rqmd user in interactive mode\n- I want a reserved footer region for the standardized legend and short transient messages (e.g., detection source, errors)\n- So that messages do not shift the main content and the legend reliably updates (e.g., `d=[asc|dsc]`).",
+            "lines": {
+              "header": 47,
+              "status": 48,
+              "body_start": 47,
+              "body_end": 53
+            }
+          }
+        },
+        {
+          "id": "RQMD-UI-007",
+          "title": "Accessibility & contrast-preserving redraws",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UI-007: Accessibility & contrast-preserving redraws\n- **Status:** 💡 Proposed\n- **Priority:** 🟢 P3 - Low\n- As an accessibility-minded user\n- I want screen-write redrawing to preserve color contrast and zebra/background choices and to re-validate contrast after any automatic adjustments\n- So that colors remain legible after mode switches or terminal resize; include a fallback to disable colorized redraw if contrast rules fail.",
+            "lines": {
+              "header": 54,
+              "status": 55,
+              "body_start": 54,
+              "body_end": 60
+            }
+          }
+        },
+        {
+          "id": "RQMD-UI-008",
+          "title": "Terminal resize handling",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UI-008: Terminal resize handling\n- **Status:** 💡 Proposed\n- **Priority:** 🟢 P3 - Low\n- As a rqmd user when the terminal is resized\n- I want rqmd to handle SIGWINCH gracefully and reflow the current view into the new dimensions without losing selection state or corrupting the scrollback buffer.",
+            "lines": {
+              "header": 61,
+              "status": 62,
+              "body_start": 61,
+              "body_end": 66
+            }
+          }
+        },
+        {
+          "id": "RQMD-UI-009",
+          "title": "Performance targets and heuristics",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UI-009: Performance targets and heuristics\n- **Status:** 💡 Proposed\n- **Priority:** 🟢 P3 - Low\n- As a rqmd maintainer\n- I want the entire rqmd interactive app (startup, first interactive paint, file/requirement/status menus, filtered walks, paging, and redraws) to stay snappy, with a target of <=50ms and an acceptable upper bound of <=60ms on typical modern terminals for menus under 80 rows\n- So that interactive latency remains low and perceived snappiness is preserved.\n- So that startup regressions are visible early and can block adoption of heavier UI layers unless they stay within the same budget.\n- So that this requirement acts as the single latency budget source for interactive mode and other domains reference it rather than redefining thresholds.\n- So that renderer-mode switching is protected by anti-thrashing rules (hysteresis plus minimum dwell time) and does not oscillate at threshold boundaries.\n- So that the system uses smoothed timing windows (for example rolling median/p95 over recent redraws) rather than one-frame spikes when deciding mode changes.\n- So that at most one auto-mode transition can occur within a bounded cooldown window (for example 2-5 seconds) unless explicitly overridden by user input.\n- So that when a mode transition occurs, a brief transition notice can be emitted only in verbose mode and never floods the normal interaction surface.\n- So that when redraw or startup timing exceeds 60ms consistently, the renderer falls back to coarser updates and emits diagnostics in verbose mode.",
+            "lines": {
+              "header": 67,
+              "status": 68,
+              "body_start": 67,
+              "body_end": 80
+            }
+          }
+        },
+        {
+          "id": "RQMD-UI-010",
+          "title": "Testing and CI expectations",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UI-010: Testing and CI expectations\n- **Status:** 💡 Proposed\n- **Priority:** 🟢 P3 - Low\n- As a rqmd QA engineer\n- I want unit tests for the rendering diff engine and integration tests that exercise both TTY and non-TTY paths\n- So that screen-write behavior is validated across supported terminal types and the fallback mode remains covered in CI.",
+            "lines": {
+              "header": 81,
+              "status": 82,
+              "body_start": 81,
+              "body_end": 87
+            }
+          }
+        }
+      ],
+      "sub_sections": []
+    },
+    {
+      "path": "docs/requirements/test-subsections.md",
+      "scope": "testing H2 subsection parsing",
+      "domain_body": null,
+      "requirements": [
+        {
+          "id": "RQMD-TEST-002",
+          "title": "Complex query",
+          "sub_domain": "Query API",
+          "body": {
+            "markdown": "### RQMD-TEST-002: Complex query\n- **Status:** 💡 Proposed\n- **Priority:** 🟢 P3 - Low\n- Given a complex query with joins\n- When executed\n- Then optimized results are returned.\n\n## Mutation API\n\nThis subsection covers write operations.",
+            "lines": {
+              "header": 20,
+              "status": 21,
+              "body_start": 20,
+              "body_end": 30
+            }
+          }
+        },
+        {
+          "id": "RQMD-TEST-003",
+          "title": "Create operation",
+          "sub_domain": "Mutation API",
+          "body": {
+            "markdown": "### RQMD-TEST-003: Create operation\n- **Status:** 💡 Proposed\n- **Priority:** 🟢 P3 - Low\n- Given valid input\n- When create endpoint is called\n- Then entity is persisted.",
+            "lines": {
+              "header": 31,
+              "status": 32,
+              "body_start": 31,
+              "body_end": 36
+            }
+          }
+        }
+      ],
+      "sub_sections": [
+        {
+          "name": "Query API",
+          "count": 2,
+          "body": "This subsection covers read-only operations."
+        },
+        {
+          "name": "Mutation API",
+          "count": 1,
+          "body": "This subsection covers write operations."
+        }
+      ]
+    },
+    {
+      "path": "docs/requirements/time-machine.md",
+      "scope": "branch-aware temporal navigation, historical inspection, detached point-in-time views, replay from past states, and timeline-oriented UX for requirement catalogs",
+      "domain_body": null,
+      "requirements": [
+        {
+          "id": "RQMD-TIME-001",
+          "title": "Point-in-time catalog browsing",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-TIME-001: Point-in-time catalog browsing\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when a requirements catalog with recorded history\n- I want to select a prior timestamp, revision, or history entry\n- So that rqmd can present the full catalog as it existed at that point in time without mutating the current working state\n- So that the user can inspect files, requirement statuses, reasons, and summaries exactly as recorded for that historical point.",
+            "lines": {
+              "header": 9,
+              "status": 10,
+              "body_start": 9,
+              "body_end": 16
+            }
+          }
+        },
+        {
+          "id": "RQMD-TIME-002",
+          "title": "Branch-aware historical timeline",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-TIME-002: Branch-aware historical timeline\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when history may diverge into multiple branches after undo, replay, or alternate edits\n- I want rqmd to render timeline history\n- So that the timeline shows branch structure explicitly rather than flattening divergent paths into a single linear list\n- So that each node identifies parent lineage, branch name or generated label, timestamp, and affected scope.",
+            "lines": {
+              "header": 17,
+              "status": 18,
+              "body_start": 17,
+              "body_end": 24
+            }
+          }
+        },
+        {
+          "id": "RQMD-TIME-003",
+          "title": "Detached historical view mode",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-TIME-003: Detached historical view mode\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when a user wants to inspect prior state safely\n- I want to enter a historical point from the timeline\n- So that rqmd opens a detached read-only view rooted at that historical revision\n- So that status changes or edits are blocked until the user returns to a writable head or explicitly starts a replay/apply flow.",
+            "lines": {
+              "header": 25,
+              "status": 26,
+              "body_start": 25,
+              "body_end": 32
+            }
+          }
+        },
+        {
+          "id": "RQMD-TIME-004",
+          "title": "Historical context and activity inspection",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-TIME-004: Historical context and activity inspection\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when a user is viewing a prior revision\n- I want rqmd to render that historical state\n- So that the UI shows what changed at that point including changed files, affected requirement IDs, before/after status values, reason text, and actor/context metadata\n- So that the user can move backward or forward through neighboring entries while preserving orientation in the same branch.",
+            "lines": {
+              "header": 33,
+              "status": 34,
+              "body_start": 33,
+              "body_end": 40
+            }
+          }
+        },
+        {
+          "id": "RQMD-TIME-005",
+          "title": "Compare historical points and branches",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-TIME-005: Compare historical points and branches\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when users need to understand how the catalog evolved\n- I want to select two points in time, two branches, or a branch point and current head\n- So that rqmd can render a diff-oriented comparison of summaries, requirement statuses, reasons, and affected documents\n- So that the comparison highlights additions, removals, and status transitions in a machine-readable and human-readable form.",
+            "lines": {
+              "header": 41,
+              "status": 42,
+              "body_start": 41,
+              "body_end": 48
+            }
+          }
+        },
+        {
+          "id": "RQMD-TIME-006",
+          "title": "Replay and restore from historical points",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-TIME-006: Replay and restore from historical points\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when a user finds a useful historical point\n- I want to choose to restore, replay, or cherry-pick from that point\n- So that rqmd offers explicit actions to (a) restore the catalog to that exact state, (b) replay subsequent changes from a chosen branch, or (c) cherry-pick selected historical entries onto current head\n- So that each action previews the resulting branch topology and file effects before writes occur.",
+            "lines": {
+              "header": 49,
+              "status": 50,
+              "body_start": 49,
+              "body_end": 56
+            }
+          }
+        },
+        {
+          "id": "RQMD-TIME-007",
+          "title": "Timeline filters and queryable navigation",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-TIME-007: Timeline filters and queryable navigation\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when long-lived projects may accumulate dense history\n- I want to browse the timeline\n- So that rqmd supports filters by branch, requirement ID, file path, actor, status transition, date range, and operation type\n- So that filtered navigation still preserves branch lineage so users understand where matching events sit in the larger history graph.",
+            "lines": {
+              "header": 57,
+              "status": 58,
+              "body_start": 57,
+              "body_end": 64
+            }
+          }
+        },
+        {
+          "id": "RQMD-TIME-008",
+          "title": "Stable historical identifiers and deep links",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-TIME-008: Stable historical identifiers and deep links\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when users may need to share or automate a historical view\n- I want rqmd to expose a timeline node or detached historical view\n- So that each point-in-time state has a stable identifier that can be referenced in CLI commands, JSON output, and future UI deep links\n- So that identifiers remain valid across process restarts unless history has been explicitly pruned with confirmation.",
+            "lines": {
+              "header": 65,
+              "status": 66,
+              "body_start": 65,
+              "body_end": 72
+            }
+          }
+        },
+        {
+          "id": "RQMD-TIME-009",
+          "title": "Exportable temporal reports",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-TIME-009: Exportable temporal reports\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when teams may need audit or review artifacts from historical states\n- I want automation to request a historical export\n- So that rqmd can emit JSON and text reports for a selected point-in-time state or comparison range including branch metadata, summary totals, and per-requirement status details\n- So that exports clearly indicate the selected historical source and whether the view is detached, restored, or current head.",
+            "lines": {
+              "header": 73,
+              "status": 74,
+              "body_start": 73,
+              "body_end": 80
+            }
+          }
+        },
+        {
+          "id": "RQMD-TIME-010",
+          "title": "Verification coverage for temporal navigation",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-TIME-010: Verification coverage for temporal navigation\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when time-travel workflows combine persistence, branching, and presentation logic\n- I want to implement the time-machine feature set\n- So that tests cover branch graph reconstruction, detached historical reads, point-to-point diffs, replay/restore previews, and stable identifier resolution\n- So that fixtures include branching histories where multiple timelines touch the same requirement IDs across multiple files.",
+            "lines": {
+              "header": 81,
+              "status": 82,
+              "body_start": 81,
+              "body_end": 87
+            }
+          }
+        }
+      ],
+      "sub_sections": []
+    },
+    {
+      "path": "docs/requirements/undo.md",
+      "scope": "full undo/redo semantics, persistent history across restarts/crashes, branching and \"lost changes\" recovery, UI affordances, and storage/retention policies",
+      "domain_body": null,
+      "requirements": [
+        {
+          "id": "RQMD-UNDO-001",
+          "title": "Full undo/redo semantics",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UNDO-001: Full undo/redo semantics\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when a user makes sequential edits (status changes, reason edits, file updates)\n- I want to request `undo`\n- So that the most recent change is reverted and the UI updates to reflect the prior state\n- So that `redo` reapplies the reverted change in order when requested\n- So that compound user actions (multi-file or multi-field updates performed by one command) are treated atomically for undo/redo.",
+            "lines": {
+              "header": 9,
+              "status": 10,
+              "body_start": 9,
+              "body_end": 17
+            }
+          }
+        },
+        {
+          "id": "RQMD-UNDO-002",
+          "title": "Persistent history across restarts and crashes",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UNDO-002: Persistent history across restarts and crashes\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when the application exits normally or crashes unexpectedly\n- I want to restart rqmd\n- So that the full undo/redo history up to the last acknowledged write is available for inspection and replay\n- So that no acknowledged write is lost due to process exit or crash (durability is guaranteed for committed operations).",
+            "lines": {
+              "header": 18,
+              "status": 19,
+              "body_start": 18,
+              "body_end": 25
+            }
+          }
+        },
+        {
+          "id": "RQMD-UNDO-003",
+          "title": "Branching history and \"lost changes\" visibility",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UNDO-003: Branching history and \"lost changes\" visibility\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when a user performs `undo` multiple times and then issues a new change (creating a divergent history)\n- I want the divergence to occur\n- So that the system preserves the prior undone sequence as an alternate branch (not permanently discarded)\n- So that the UI surfaces the existence of the alternate branch and offers the user options: (a) keep divergent branch as a named branch, (b) replay/apply the branch onto the new HEAD, (c) permanently discard the branch after explicit confirmation\n- So that the system supports reapplying or cherry-picking individual changes from alternate branches.",
+            "lines": {
+              "header": 26,
+              "status": 27,
+              "body_start": 26,
+              "body_end": 34
+            }
+          }
+        },
+        {
+          "id": "RQMD-UNDO-004",
+          "title": "Interactive reconfirmation when rewriting history",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UNDO-004: Interactive reconfirmation when rewriting history\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when the user attempts to perform an action that would lose reachable history (e.g., pruning, garbage-collecting alternate branches, or compacting history beyond retention)\n- I want such an action to require explicit confirmation in interactive mode\n- So that rqmd prompts the user with a concise summary of what will be lost and requires explicit confirmation before proceeding.",
+            "lines": {
+              "header": 35,
+              "status": 36,
+              "body_start": 35,
+              "body_end": 41
+            }
+          }
+        },
+        {
+          "id": "RQMD-UNDO-005",
+          "title": "Storage backend and crash-safety",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UNDO-005: Storage backend and crash-safety\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when durability and history expressiveness are required\n- I want to implement undo stack storage\n- So that rqmd uses a single hidden local git repository as the canonical history backend, initialized as `rqmd-history` under `.rqmd/history/`.\n- So that this `rqmd-history` repository is wrapped and managed by rqmd itself, and is not intended to be edited manually by users or shared as a remote collaboration repository.\n- So that this history backend remains local-only by default (no implicit remotes, push, fetch, or network synchronization).\n- So that the backend provides atomic commits, durable fsync semantics for acknowledged writes, and a safe compact/garbage-collection path that preserves user-confirmable alternate branches.",
+            "lines": {
+              "header": 42,
+              "status": 43,
+              "body_start": 42,
+              "body_end": 51
+            }
+          }
+        },
+        {
+          "id": "RQMD-UNDO-006",
+          "title": "Metadata, auditability, and provenance",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UNDO-006: Metadata, auditability, and provenance\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when teams need traceability for changes\n- I want to record history entries\n- So that each entry includes timestamp, actor (user or automated), command context, affected file paths, file diffs or delta payloads, and optional human-supplied reason text\n- So that each entry includes a stable `rqmd-history` commit identifier (and branch/ref context when applicable) to allow deterministic cross-referencing between undo, history, and audit views.\n- So that the UI and `--verify-summaries` mode can render a human-readable history timeline showing provenance and diffs.",
+            "lines": {
+              "header": 52,
+              "status": 53,
+              "body_start": 52,
+              "body_end": 60
+            }
+          }
+        },
+        {
+          "id": "RQMD-UNDO-007",
+          "title": "UI affordances and commands",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UNDO-007: UI affordances and commands\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when working in interactive and non-interactive modes\n- I want to expose history controls\n- So that rqmd provides:\n  - `undo` and `redo` commands / keys\n  - `history` listing with paging that shows branches, commits, and diffs\n  - `branch` and `checkout` primitives for working with alternate histories\n  - `replay` and `cherry-pick` for applying past changes to current head\n  - safe `gc`/`prune` commands that require confirmation\n- So that interactive prompts clearly explain consequences and offer to save named snapshots before destructive operations.",
+            "lines": {
+              "header": 61,
+              "status": 62,
+              "body_start": 61,
+              "body_end": 73
+            }
+          }
+        },
+        {
+          "id": "RQMD-UNDO-008",
+          "title": "Size, retention, and compaction policy",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UNDO-008: Size, retention, and compaction policy\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when history can grow indefinitely\n- I want storage to grow beyond configured thresholds\n- So that rqmd supports configurable retention policies: retain-last-N, retain-by-age, and retain-by-size\n- So that compaction/packing can merge idempotent/delta entries to reduce storage while preserving user-visible undo semantics\n- So that defaults are conservative (retain 90 days or last 1000 entries) with project and user overrides.",
+            "lines": {
+              "header": 74,
+              "status": 75,
+              "body_start": 74,
+              "body_end": 82
+            }
+          }
+        },
+        {
+          "id": "RQMD-UNDO-009",
+          "title": "Programmatic API and automation",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UNDO-009: Programmatic API and automation\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when CI/automation users may need to inspect or replay history non-interactively\n- I want automation to invoke history APIs\n- So that a machine-friendly interface is available (JSON output, programmatic commands) to list entries, export patches, and apply or revert specific entries.",
+            "lines": {
+              "header": 83,
+              "status": 84,
+              "body_start": 83,
+              "body_end": 89
+            }
+          }
+        },
+        {
+          "id": "RQMD-UNDO-010",
+          "title": "Tests and verification",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UNDO-010: Tests and verification\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when the complexity of persistent undo and branching\n- I want to implement the system\n- So that an extensive test matrix covers unit tests for journal/git operations, integration tests for crash recovery (simulating abrupt termination), and UX tests for branch/replay flows\n- So that test fixtures include representative multi-file edits, branching and replay scenarios, and compaction behavior verification.",
+            "lines": {
+              "header": 90,
+              "status": 91,
+              "body_start": 90,
+              "body_end": 97
+            }
+          }
+        },
+        {
+          "id": "RQMD-UNDO-011",
+          "title": "Unified undo and audit capture",
+          "sub_domain": null,
+          "body": {
+            "markdown": "### RQMD-UNDO-011: Unified undo and audit capture\n- **Status:** 💡 Proposed\n- **Priority:** 🟡 P2 - Medium\n- As a rqmd user when traceability and recovery guarantees are required\n- I want every rqmd write operation to be recorded in the same `rqmd-history` backend used for undo/redo\n- So that undo/history and audit logging cannot drift or contradict each other.\n- So that all changes made by rqmd are captured with a navigable git-style timeline that rqmd can render in user-facing history and audit views.",
+            "lines": {
+              "header": 98,
+              "status": 99,
+              "body_start": 98,
+              "body_end": 104
+            }
+          }
+        }
+      ],
+      "sub_sections": []
+    }
+  ],
+  "schema_version": "1.0.0"
+}

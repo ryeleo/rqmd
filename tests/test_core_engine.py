@@ -751,3 +751,93 @@ def test_RQMD_priority_002_coerce_priority_unknown_yields_unset() -> None:
     assert coerce_priority_label("unknown") == "unset"
     assert coerce_priority_label("maybe") == "unset"
     assert coerce_priority_label("") == "unset"
+
+
+def test_RQMD_core_023_rename_id_prefix_updates_headers_and_citations(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "alpha.md").write_text(
+        "# Alpha\n\n"
+        "### AC-ALPHA-001: First\n"
+        "- **Status:** 💡 Proposed\n"
+        "- Depends on AC-ALPHA-002\n\n"
+        "### AC-ALPHA-002: Second\n"
+        "- **Status:** ✅ Verified\n",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root", str(repo),
+            "--docs-dir", "docs/requirements",
+            "--rename-id-prefix", "AC=RQMD",
+            "--no-table",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    updated = (domain / "alpha.md").read_text(encoding="utf-8")
+    assert "### RQMD-ALPHA-001: First" in updated
+    assert "### RQMD-ALPHA-002: Second" in updated
+    assert "Depends on RQMD-ALPHA-002" in updated
+
+
+def test_RQMD_core_023_rename_id_prefix_detects_conflicts(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "alpha.md").write_text(
+        "# Alpha\n\n"
+        "### AC-ALPHA-001: First\n"
+        "- **Status:** 💡 Proposed\n\n"
+        "### RQMD-ALPHA-001: Existing\n"
+        "- **Status:** ✅ Verified\n",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root", str(repo),
+            "--docs-dir", "docs/requirements",
+            "--rename-id-prefix", "AC=RQMD",
+            "--no-table",
+        ],
+    )
+    assert result.exit_code != 0
+    assert "conflict" in result.output.lower()
+
+
+def test_RQMD_core_023_rename_id_prefix_json_dry_run(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    file_path = domain / "alpha.md"
+    original = (
+        "# Alpha\n\n"
+        "### AC-ALPHA-001: First\n"
+        "- **Status:** 💡 Proposed\n"
+    )
+    file_path.write_text(original, encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root", str(repo),
+            "--docs-dir", "docs/requirements",
+            "--rename-id-prefix", "AC=RQMD",
+            "--dry-run",
+            "--as-json",
+            "--no-table",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["mode"] == "rename-id-prefix"
+    assert payload["dry_run"] is True
+    assert payload["replacement_count"] == 1
+    assert file_path.read_text(encoding="utf-8") == original
