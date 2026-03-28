@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 7🔧 16✅ 0⛔ 0🗑️
+Summary: 0💡 8🔧 16✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -205,7 +205,7 @@ Summary: 1💡 7🔧 16✅ 0⛔ 0🗑️
 - So that JSON export includes an optional `blocking_id` field capturing the linked requirement ID when present.
 
 ### RQMD-CORE-023: Global requirement ID prefix renaming tool
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟢 P3 - Low
 - As a rqmd user when a project outgrows its initial ID prefix (e.g., REQ- becomes too generic)
 - I want a one-time bulk rename command

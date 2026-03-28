@@ -70,6 +70,7 @@ class TestSelectFromMenuZebraBgParam:
             with patch.object(menus, "click") as mock_click:
                 mock_click.getchar.return_value = "q"
                 menus.select_from_menu(
+                    "Theme test",
                     self._make_options(),
                     zebra=True,
                     zebra_bg=custom_bg,
@@ -99,6 +100,7 @@ class TestSelectFromMenuZebraBgParam:
             with patch.object(menus, "click") as mock_click:
                 mock_click.getchar.return_value = "q"
                 menus.select_from_menu(
+                    "Theme test",
                     self._make_options(),
                     zebra=True,
                     zebra_bg=None,

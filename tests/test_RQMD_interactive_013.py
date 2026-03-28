@@ -154,20 +154,18 @@ class TestThemeCliOption:
     def test_theme_light_accepted(self, tmp_path: Path):
         repo = self._make_repo(tmp_path)
 
-        def fake_loop(*args, **kwargs):
-            return 0
-
         runner = CliRunner()
-        result = runner.invoke(
-            cli.main,
-            [
-                "--project-root", str(repo),
-                "--docs-dir", "docs/requirements",
-                "--no-table",
-                "--theme", "light",
-            ],
-            catch_exceptions=False,
-        )
+        with patch("rqmd.cli.interactive_update_loop", return_value=0):
+            result = runner.invoke(
+                cli.main,
+                [
+                    "--project-root", str(repo),
+                    "--docs-dir", "docs/requirements",
+                    "--no-table",
+                    "--theme", "light",
+                ],
+                catch_exceptions=False,
+            )
         # Exit 0 (interactive loop not actually entered —
         # we accept any non-error exit to confirm option is parsed)
         assert result.exit_code in (0, 1)  # 1 is acceptable if terminal not a TTY
@@ -177,16 +175,17 @@ class TestThemeCliOption:
         repo = self._make_repo(tmp_path)
 
         runner = CliRunner()
-        result = runner.invoke(
-            cli.main,
-            [
-                "--project-root", str(repo),
-                "--docs-dir", "docs/requirements",
-                "--no-table",
-                "--theme", "dark",
-            ],
-            catch_exceptions=False,
-        )
+        with patch("rqmd.cli.interactive_update_loop", return_value=0):
+            result = runner.invoke(
+                cli.main,
+                [
+                    "--project-root", str(repo),
+                    "--docs-dir", "docs/requirements",
+                    "--no-table",
+                    "--theme", "dark",
+                ],
+                catch_exceptions=False,
+            )
         assert result.exit_code in (0, 1)
         assert "Error: Invalid value for '--theme'" not in (result.output or "")
 

@@ -276,6 +276,38 @@ def _expand_filter_values(raw_values: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(values)
 
 
+def _parse_prefix_rename_spec(raw: str) -> tuple[str, str]:
+    spec = str(raw).strip()
+    if "=" not in spec:
+        raise click.ClickException("--rename-id-prefix requires OLD=NEW format, for example --rename-id-prefix AC=RQMD.")
+    old_raw, new_raw = spec.split("=", 1)
+    old_prefix = old_raw.strip().upper().rstrip("-")
+    new_prefix = new_raw.strip().upper().rstrip("-")
+    if not old_prefix or not new_prefix:
+        raise click.ClickException("--rename-id-prefix requires both OLD and NEW prefixes.")
+    if not ID_PREFIX_PATTERN.fullmatch(old_prefix) or not ID_PREFIX_PATTERN.fullmatch(new_prefix):
+        raise click.ClickException("Invalid prefix in --rename-id-prefix; use uppercase letters/numbers only.")
+    if old_prefix == new_prefix:
+        raise click.ClickException("--rename-id-prefix OLD and NEW must be different.")
+    return old_prefix, new_prefix
+
+
+def _collect_requirement_ids_from_text(text: str) -> set[str]:
+    return set(
+        match.group("id")
+        for match in re.finditer(
+            r"^###\s+(?P<id>[A-Z][A-Z0-9]*-[A-Z0-9][A-Z0-9-]*)\s*:",
+            text,
+            flags=re.MULTILINE,
+        )
+    )
+
+
+def _rename_requirement_id_prefix_in_text(text: str, old_prefix: str, new_prefix: str) -> tuple[str, int]:
+    pattern = re.compile(rf"\b{re.escape(old_prefix)}-(?P<suffix>[A-Z0-9][A-Z0-9-]*)\b")
+    return pattern.subn(lambda m: f"{new_prefix}-{m.group('suffix')}", text)
+
+
 def prompt_for_init_prefix(default_prefix: str = "REQ") -> str:
     click.echo("Initialize scaffold: choose a requirement ID key prefix (for example AC, R, RQMD).")
     click.echo("Tip: customize this for your project to avoid generic IDs.")
@@ -547,6 +579,13 @@ def shell_complete_target_tokens(
     help="Non-interactive batch mode: path to .jsonl/.csv/.tsv with rows containing requirement_id/requirement_id/id/req_id/r_id and status.",
 )
 @click.option(
+    "--rename-id-prefix",
+    "rename_id_prefix",
+    type=str,
+    default=None,
+    help="One-time bulk rename: OLD=NEW to rewrite requirement ID prefixes across domain files (for example --rename-id-prefix AC=RQMD).",
+)
+@click.option(
     "--scope-file",
     "set_file",
     type=str,
@@ -814,6 +853,7 @@ def main(
     set_updates: tuple[str, ...],
     dry_run: bool,
     set_file_input: str | None,
+    rename_id_prefix: str | None,
     set_file: str | None,
     set_blocked_reason: str | None,
     set_deprecated_reason: str | None,
@@ -1035,6 +1075,97 @@ def main(
     validate_files_readable(domain_files, repo_root)
 
     include_status_emojis = infer_include_status_emojis(domain_files)
+
+    if rename_id_prefix:
+        if (
+            check
+            or filter_status
+            or filter_priority
+            or filter_flagged
+            or filter_no_flag
+            or filter_has_link
+            or filter_no_link
+            or filter_sub_domain
+            or filter_ids_file
+            or set_requirement_id
+            or set_status
+            or set_updates
+            or set_priority_updates
+            or set_flagged_updates
+            or set_file_input
+            or set_file
+            or tree
+            or rollup_mode
+            or targets
+            or strip_status_emojis
+            or restore_status_emojis
+            or init_priorities
+            or init_scaffold
+        ):
+            raise click.ClickException(
+                "--rename-id-prefix cannot be combined with check/filter/update/tree/rollup/lookup/bootstrap or migration modes."
+            )
+
+        old_prefix, new_prefix = _parse_prefix_rename_spec(rename_id_prefix)
+        changed_files: list[dict[str, object]] = []
+        existing_new_ids: set[str] = set()
+        rename_target_ids: set[str] = set()
+
+        for path in domain_files:
+            text = path.read_text(encoding="utf-8")
+            ids = _collect_requirement_ids_from_text(text)
+            existing_new_ids.update({rid for rid in ids if rid.startswith(f"{new_prefix}-")})
+            rename_target_ids.update({rid for rid in ids if rid.startswith(f"{old_prefix}-")})
+
+        projected_new_ids = {f"{new_prefix}-{rid.split('-', 1)[1]}" for rid in rename_target_ids}
+        conflicts = sorted(existing_new_ids.intersection(projected_new_ids - rename_target_ids))
+        if conflicts:
+            preview = ", ".join(conflicts[:5])
+            suffix = "..." if len(conflicts) > 5 else ""
+            raise click.ClickException(
+                "--rename-id-prefix conflict: target prefix already exists for one or more IDs "
+                f"({preview}{suffix})."
+            )
+
+        total_replacements = 0
+        for path in domain_files:
+            original = path.read_text(encoding="utf-8")
+            updated, replacements = _rename_requirement_id_prefix_in_text(original, old_prefix, new_prefix)
+            if replacements == 0:
+                continue
+            total_replacements += replacements
+            if not dry_run:
+                path.write_text(updated, encoding="utf-8")
+                process_file(
+                    path,
+                    check_only=False,
+                    include_status_emojis=include_status_emojis,
+                    include_priority_summary=show_priority_summary,
+                )
+            changed_files.append(
+                {
+                    "path": format_path_display(path, repo_root),
+                    "replacements": replacements,
+                }
+            )
+
+        payload = {
+            "mode": "rename-id-prefix",
+            "old_prefix": old_prefix,
+            "new_prefix": new_prefix,
+            "dry_run": dry_run,
+            "changed_file_count": len(changed_files),
+            "replacement_count": total_replacements,
+            "files": changed_files,
+        }
+        if json_output:
+            _emit_json_payload(payload)
+        else:
+            action = "Would update" if dry_run else "Updated"
+            click.echo(f"{action} {len(changed_files)} file(s); {total_replacements} replacement(s).")
+            for entry in changed_files:
+                click.echo(f"  - {entry['path']}: {entry['replacements']}")
+        raise SystemExit(0)
 
     if strip_status_emojis and restore_status_emojis:
         raise click.ClickException("Use either --strip-status-icons or --restore-status-icons, not both.")
