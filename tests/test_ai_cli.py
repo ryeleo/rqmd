@@ -463,6 +463,91 @@ def test_RQMD_TIME_001_rejects_unknown_history_ref(tmp_path: Path) -> None:
     assert "Unknown --history-ref target" in result.output
 
 
+def test_RQMD_TIME_003_history_ref_rejects_write_mode(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    bootstrap = runner.invoke(
+        rqmd_main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--update-id",
+            "RQMD-DEMO-001",
+            "--update-status",
+            "verified",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+    assert bootstrap.exit_code == 0
+
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--history-ref",
+            "0",
+            "--write",
+            "--update",
+            "RQMD-DEMO-001=implemented",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "--history-ref cannot be combined with --write" in result.output
+
+
+def test_RQMD_TIME_003_history_ref_rejects_update_mode(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    bootstrap = runner.invoke(
+        rqmd_main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--update-id",
+            "RQMD-DEMO-001",
+            "--update-status",
+            "verified",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+    assert bootstrap.exit_code == 0
+
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--history-ref",
+            "0",
+            "--update",
+            "RQMD-DEMO-001=implemented",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "--history-ref cannot be combined with --update; historical exports are read-only." in result.output
+
+
 def test_RQMD_TIME_004_history_activity_shows_before_after_and_neighbors(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"

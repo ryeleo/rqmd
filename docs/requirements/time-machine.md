@@ -3,7 +3,7 @@
 Scope: branch-aware temporal navigation, historical inspection, detached point-in-time views, replay from past states, and timeline-oriented UX for requirement catalogs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 6💡 4🔧 0✅ 0⛔ 0🗑️
+Summary: 5💡 5🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-TIME-001: Point-in-time catalog browsing
@@ -23,7 +23,7 @@ Summary: 6💡 4🔧 0✅ 0⛔ 0🗑️
 - So that each node identifies parent lineage, branch name or generated label, timestamp, and affected scope.
 
 ### RQMD-TIME-003: Detached historical view mode
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a user wants to inspect prior state safely
 - I want to enter a historical point from the timeline
