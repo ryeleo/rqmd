@@ -3,7 +3,7 @@
 Scope: branch-aware temporal navigation, historical inspection, detached point-in-time views, replay from past states, and timeline-oriented UX for requirement catalogs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 7🔧 0✅ 0⛔ 0🗑️
+Summary: 2💡 8🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-TIME-001: Point-in-time catalog browsing
@@ -55,7 +55,7 @@ Summary: 3💡 7🔧 0✅ 0⛔ 0🗑️
 - So that each action previews the resulting branch topology and file effects before writes occur.
 
 ### RQMD-TIME-007: Timeline filters and queryable navigation
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when long-lived projects may accumulate dense history
 - I want to browse the timeline

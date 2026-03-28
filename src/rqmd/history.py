@@ -414,6 +414,7 @@ class HistoryManager:
                 "command": entry.get("command"),
                 "actor": entry.get("actor"),
                 "reason": entry.get("reason"),
+                "files": list(entry.get("files") or []),
                 "branch": entry.get("branch", "main"),
                 "parent_commit": entry.get("parent_commit"),
                 "branch_point": entry.get("branch_point"),

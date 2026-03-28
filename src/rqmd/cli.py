@@ -66,6 +66,7 @@ import json
 import re
 import readline  # noqa: F401 — activates arrow-key line editing in input()/click.prompt()
 import sys
+from datetime import datetime
 from pathlib import Path
 
 try:
@@ -517,6 +518,162 @@ def shell_complete_target_tokens(
     return [completion_item(item) for item in items]
 
 
+def _parse_iso8601_filter(value: str, option_name: str) -> datetime:
+    raw = value.strip()
+    if raw.endswith("Z"):
+        raw = raw[:-1] + "+00:00"
+    try:
+        return datetime.fromisoformat(raw)
+    except ValueError as exc:
+        raise click.ClickException(
+            f"Invalid {option_name} value {value!r}. Expected ISO-8601 datetime (for example 2026-03-28T16:20:00+00:00)."
+        ) from exc
+
+
+def _build_snapshot_status_map(
+    history_manager: HistoryManager,
+    commit_hash: str,
+    id_prefixes: tuple[str, ...],
+) -> dict[str, str | None]:
+    tempdir = history_manager.materialize_snapshot_tempdir(commit_hash)
+    try:
+        root = Path(tempdir.name)
+        domain_files = iter_domain_files(root, history_manager.requirements_dir.as_posix())
+        mapping: dict[str, str | None] = {}
+        for path in domain_files:
+            for requirement in parse_requirements(path, id_prefixes=id_prefixes):
+                req_id = str(requirement.get("id") or "")
+                if req_id:
+                    mapping[req_id] = requirement.get("status")
+        return mapping
+    finally:
+        tempdir.cleanup()
+
+
+def _enrich_timeline_nodes_with_change_metadata(
+    history_manager: HistoryManager,
+    timeline_nodes: dict[str, dict[str, object]],
+    id_prefixes: tuple[str, ...],
+) -> None:
+    status_cache: dict[str, dict[str, str | None]] = {}
+
+    def _status_map(commit_hash: str) -> dict[str, str | None]:
+        if commit_hash not in status_cache:
+            status_cache[commit_hash] = _build_snapshot_status_map(history_manager, commit_hash, id_prefixes)
+        return status_cache[commit_hash]
+
+    ordered_items = sorted(
+        timeline_nodes.items(),
+        key=lambda item: int(item[1].get("entry_index", -1)),
+    )
+
+    for commit_hash, node in ordered_items:
+        parent_commit = str(node.get("parent_commit") or "")
+        if not parent_commit:
+            node["changed_requirement_ids"] = []
+            node["status_transitions"] = []
+            continue
+
+        current_map = _status_map(commit_hash)
+        parent_map = _status_map(parent_commit)
+
+        changed_ids: list[str] = []
+        transitions: list[dict[str, object]] = []
+        for req_id in sorted(set(current_map).union(parent_map)):
+            before_status = parent_map.get(req_id)
+            after_status = current_map.get(req_id)
+            if before_status == after_status:
+                continue
+            changed_ids.append(req_id)
+            transitions.append(
+                {
+                    "id": req_id,
+                    "before_status": before_status,
+                    "after_status": after_status,
+                }
+            )
+
+        node["changed_requirement_ids"] = changed_ids
+        node["status_transitions"] = transitions
+
+
+def _filter_timeline_nodes(
+    timeline_nodes: dict[str, dict[str, object]],
+    branch_filter: str | None,
+    actor_filter: str | None,
+    command_filter: str | None,
+    file_filter: str | None,
+    requirement_id_filter: str | None,
+    transition_filter: str | None,
+    from_filter: datetime | None,
+    to_filter: datetime | None,
+) -> dict[str, dict[str, object]]:
+    def _contains_casefold(haystack: str | None, needle: str | None) -> bool:
+        if not needle:
+            return True
+        if haystack is None:
+            return False
+        return needle.casefold() in haystack.casefold()
+
+    before_filter: str | None = None
+    after_filter: str | None = None
+    if transition_filter:
+        if "->" in transition_filter:
+            before_raw, after_raw = transition_filter.split("->", 1)
+            before_filter = before_raw.strip() or None
+            after_filter = after_raw.strip() or None
+        else:
+            before_filter = transition_filter.strip() or None
+
+    filtered: dict[str, dict[str, object]] = {}
+    for commit_hash, node in timeline_nodes.items():
+        if branch_filter and not _contains_casefold(str(node.get("branch") or ""), branch_filter):
+            continue
+        if actor_filter and not _contains_casefold(str(node.get("actor") or ""), actor_filter):
+            continue
+        if command_filter and not _contains_casefold(str(node.get("command") or ""), command_filter):
+            continue
+
+        files = [str(item) for item in (node.get("files") or [])]
+        if file_filter and not any(file_filter.casefold() in value.casefold() for value in files):
+            continue
+
+        changed_ids = [str(item) for item in (node.get("changed_requirement_ids") or [])]
+        if requirement_id_filter and not any(requirement_id_filter.casefold() == value.casefold() for value in changed_ids):
+            continue
+
+        transitions = node.get("status_transitions") or []
+        if before_filter or after_filter:
+            matched_transition = False
+            for transition in transitions:
+                if not isinstance(transition, dict):
+                    continue
+                before_value = str(transition.get("before_status") or "")
+                after_value = str(transition.get("after_status") or "")
+                if before_filter and not _contains_casefold(before_value, before_filter):
+                    continue
+                if after_filter and not _contains_casefold(after_value, after_filter):
+                    continue
+                matched_transition = True
+                break
+            if not matched_transition:
+                continue
+
+        timestamp_raw = str(node.get("timestamp") or "")
+        if (from_filter or to_filter) and timestamp_raw:
+            timestamp_value = _parse_iso8601_filter(timestamp_raw, "timeline node timestamp")
+            if from_filter and timestamp_value < from_filter:
+                continue
+            if to_filter and timestamp_value > to_filter:
+                continue
+        elif from_filter or to_filter:
+            continue
+
+        filtered[commit_hash] = node
+
+    return filtered
+
+
 @click.command(
     context_settings={"help_option_names": ["-h", "--help"]},
     help=__doc__,
@@ -591,6 +748,62 @@ def shell_complete_target_tokens(
     "show_timeline",
     is_flag=True,
     help="Display the history timeline showing branches and entry points (useful with --as-json for automation).",
+)
+@click.option(
+    "--timeline-branch",
+    "timeline_filter_branch",
+    type=str,
+    default=None,
+    help="Filter --timeline output by branch name (case-insensitive contains match).",
+)
+@click.option(
+    "--timeline-actor",
+    "timeline_filter_actor",
+    type=str,
+    default=None,
+    help="Filter --timeline output by actor metadata (case-insensitive contains match).",
+)
+@click.option(
+    "--timeline-command",
+    "timeline_filter_command",
+    type=str,
+    default=None,
+    help="Filter --timeline output by command/operation type (case-insensitive contains match).",
+)
+@click.option(
+    "--timeline-file",
+    "timeline_filter_file",
+    type=str,
+    default=None,
+    help="Filter --timeline output by changed file path token.",
+)
+@click.option(
+    "--timeline-requirement-id",
+    "timeline_filter_requirement_id",
+    type=str,
+    default=None,
+    help="Filter --timeline output to entries that changed the specified requirement ID.",
+)
+@click.option(
+    "--timeline-transition",
+    "timeline_filter_transition",
+    type=str,
+    default=None,
+    help="Filter --timeline output by transition token (for example 'Proposed->Implemented').",
+)
+@click.option(
+    "--timeline-from",
+    "timeline_filter_from",
+    type=str,
+    default=None,
+    help="Filter --timeline output to entries at/after this ISO-8601 timestamp.",
+)
+@click.option(
+    "--timeline-to",
+    "timeline_filter_to",
+    type=str,
+    default=None,
+    help="Filter --timeline output to entries at/before this ISO-8601 timestamp.",
 )
 @click.option(
     "--update-file",
@@ -880,6 +1093,14 @@ def main(
     undo_last: bool,
     redo_last: bool,
     show_timeline: bool,
+    timeline_filter_branch: str | None,
+    timeline_filter_actor: str | None,
+    timeline_filter_command: str | None,
+    timeline_filter_file: str | None,
+    timeline_filter_requirement_id: str | None,
+    timeline_filter_transition: str | None,
+    timeline_filter_from: str | None,
+    timeline_filter_to: str | None,
     dry_run: bool,
     set_file_input: str | None,
     rename_id_prefix: str | None,
@@ -2057,8 +2278,30 @@ def main(
             )
         )
 
+    timeline_filter_requested = bool(
+        timeline_filter_branch
+        or timeline_filter_actor
+        or timeline_filter_command
+        or timeline_filter_file
+        or timeline_filter_requirement_id
+        or timeline_filter_transition
+        or timeline_filter_from
+        or timeline_filter_to
+    )
+    if timeline_filter_requested and not show_timeline:
+        raise click.ClickException("--timeline-* filters require --timeline.")
+
     non_interactive_requested = bool(
-        set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or undo_last or redo_last
+        set_requirement_id
+        or set_status
+        or set_updates
+        or set_priority_updates
+        or set_flagged_updates
+        or set_file_input
+        or set_file
+        or undo_last
+        or redo_last
+        or show_timeline
     )
     if non_interactive_requested and positional_domain_file and not set_file and not set_file_input:
         set_file = format_path_display(positional_domain_file, repo_root)
@@ -2114,6 +2357,44 @@ def main(
         if show_timeline:
             history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
             timeline_graph = history_manager.get_timeline_graph()
+            timeline_nodes = {
+                commit: dict(node)
+                for commit, node in timeline_graph.get("nodes", {}).items()
+            }
+
+            _enrich_timeline_nodes_with_change_metadata(
+                history_manager,
+                timeline_nodes,
+                id_prefixes=id_prefixes,
+            )
+
+            from_filter = _parse_iso8601_filter(timeline_filter_from, "--timeline-from") if timeline_filter_from else None
+            to_filter = _parse_iso8601_filter(timeline_filter_to, "--timeline-to") if timeline_filter_to else None
+            filtered_nodes = _filter_timeline_nodes(
+                timeline_nodes,
+                branch_filter=timeline_filter_branch,
+                actor_filter=timeline_filter_actor,
+                command_filter=timeline_filter_command,
+                file_filter=timeline_filter_file,
+                requirement_id_filter=timeline_filter_requirement_id,
+                transition_filter=timeline_filter_transition,
+                from_filter=from_filter,
+                to_filter=to_filter,
+            )
+
+            timeline_graph["nodes"] = filtered_nodes
+            timeline_graph["entries_count_filtered"] = len(filtered_nodes)
+            timeline_graph["filters"] = {
+                "branch": timeline_filter_branch,
+                "actor": timeline_filter_actor,
+                "command": timeline_filter_command,
+                "file": timeline_filter_file,
+                "requirement_id": timeline_filter_requirement_id,
+                "transition": timeline_filter_transition,
+                "from": timeline_filter_from,
+                "to": timeline_filter_to,
+            }
+
             branches = history_manager.get_branches()
             payload = {
                 "timeline": timeline_graph,
@@ -2125,6 +2406,7 @@ def main(
                 # Display timeline in human-readable format
                 click.echo("=== Timeline ===", err=False)
                 click.echo(f"Entries: {timeline_graph['entries_count']}", err=False)
+                click.echo(f"Entries (filtered): {timeline_graph['entries_count_filtered']}", err=False)
                 click.echo(f"Current branch: {timeline_graph['current_branch']}", err=False)
                 click.echo(f"Current head: {timeline_graph['cursor']}", err=False)
                 click.echo("\n=== Branches ===", err=False)
@@ -2132,7 +2414,11 @@ def main(
                     marker = " (current)" if branch_info["is_current"] else ""
                     click.echo(f"  {branch_name}: {branch_info['entry_count']} entries{marker}", err=False)
                 click.echo("\n=== Timeline Entries ===", err=False)
-                for commit, node in timeline_graph["nodes"].items():
+                ordered_nodes = sorted(
+                    timeline_graph["nodes"].items(),
+                    key=lambda item: int(item[1].get("entry_index", -1)),
+                )
+                for _commit, node in ordered_nodes:
                     marker = " [HEAD]" if node["is_current_head"] else ""
                     branch_label = f" ({node['branch']})" if node['branch'] != "main" else ""
                     click.echo(f"  {node['entry_index']}: {node['command']}{branch_label}{marker}", err=False)
