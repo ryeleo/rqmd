@@ -14,7 +14,8 @@ Key requirements:
 - Minimal latency overhead from diff computation
 """
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 from rqmd import menus as menus_mod
