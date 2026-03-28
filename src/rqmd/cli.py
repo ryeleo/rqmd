@@ -750,6 +750,12 @@ def _filter_timeline_nodes(
     help="Display the history timeline showing branches and entry points (useful with --as-json for automation).",
 )
 @click.option(
+    "--history",
+    "show_history",
+    is_flag=True,
+    help="Display persistent history entries with cursor/head metadata (useful with --as-json for automation).",
+)
+@click.option(
     "--timeline-branch",
     "timeline_filter_branch",
     type=str,
@@ -1093,6 +1099,7 @@ def main(
     undo_last: bool,
     redo_last: bool,
     show_timeline: bool,
+    show_history: bool,
     timeline_filter_branch: str | None,
     timeline_filter_actor: str | None,
     timeline_filter_command: str | None,
@@ -2302,6 +2309,7 @@ def main(
         or undo_last
         or redo_last
         or show_timeline
+        or show_history
     )
     if non_interactive_requested and positional_domain_file and not set_file and not set_file_input:
         set_file = format_path_display(positional_domain_file, repo_root)
@@ -2318,11 +2326,64 @@ def main(
             + int(bool(undo_last))
             + int(bool(redo_last))
             + int(bool(show_timeline))
+            + int(bool(show_history))
         )
         if mode_count > 1:
             raise click.ClickException(
-                "Use exactly one non-interactive update mode: --undo, --redo, --timeline, --update-file, --update ID=STATUS (repeatable), --update-priority ID=PRIORITY (repeatable), --update-flagged ID=true|false (repeatable), or --update-id with --update-status."
+                "Use exactly one non-interactive update mode: --undo, --redo, --timeline, --history, --update-file, --update ID=STATUS (repeatable), --update-priority ID=PRIORITY (repeatable), --update-flagged ID=true|false (repeatable), or --update-id with --update-status."
             )
+
+        if show_history:
+            history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
+            entries = history_manager.list_entries()
+            timeline_graph = history_manager.get_timeline_graph()
+            cursor = int(timeline_graph.get("cursor", -1))
+            current_branch = str(timeline_graph.get("current_branch") or "main")
+
+            entries_payload: list[dict[str, object]] = []
+            for index, entry in enumerate(entries):
+                commit = str(entry.get("commit") or "")
+                entries_payload.append(
+                    {
+                        "entry_index": index,
+                        "commit": commit,
+                        "stable_id": history_manager.build_stable_history_id(commit) if commit else None,
+                        "timestamp": entry.get("timestamp"),
+                        "command": entry.get("command"),
+                        "actor": entry.get("actor"),
+                        "reason": entry.get("reason"),
+                        "branch": entry.get("branch"),
+                        "parent_commit": entry.get("parent_commit"),
+                        "files": list(entry.get("files") or []),
+                        "is_current_head": index == cursor,
+                    }
+                )
+
+            payload = {
+                "mode": "history-log",
+                "requirements_dir": format_path_display(resolved_criteria_dir, repo_root),
+                "entries_count": len(entries_payload),
+                "cursor": cursor,
+                "current_branch": current_branch,
+                "can_undo": history_manager.can_undo(),
+                "can_redo": history_manager.can_redo(),
+                "entries": entries_payload,
+            }
+
+            if json_output:
+                _emit_json_payload(payload)
+            else:
+                click.echo("=== History ===", err=False)
+                click.echo(f"Entries: {payload['entries_count']}", err=False)
+                click.echo(f"Current branch: {payload['current_branch']}", err=False)
+                click.echo(f"Cursor: {payload['cursor']}", err=False)
+                for item in entries_payload:
+                    marker = " [HEAD]" if item["is_current_head"] else ""
+                    click.echo(
+                        f"  {item['entry_index']}: {item['command']} ({item['branch']}) {item['commit']}{marker}",
+                        err=False,
+                    )
+            raise SystemExit(0)
 
         if undo_last or redo_last:
             if set_file or set_file_input or set_blocked_reason or set_deprecated_reason:
