@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `rqmd-ai --history-report` for exportable temporal reports in both JSON (`--as-json`) and text form, covering single detached historical states (`--history-ref`) and point-to-point comparison ranges (`--compare-refs`) with summary counters and per-requirement details (RQMD-TIME-009).
 - Added timeline query filters in `rqmd --timeline` for branch, actor, command, file path, requirement ID, transition token, and ISO-8601 date ranges, with enriched node metadata (`changed_requirement_ids`, `status_transitions`) to support machine-readable navigation in long-lived histories (RQMD-TIME-007).
 - Added `rqmd-ai --history-action` read-only previews for `restore`, `replay`, and `cherry-pick` planning workflows, including action-step metadata and diff-style impact summaries before any write paths are used (RQMD-TIME-006).
+- Added a temporal verification matrix test suite covering branch graph reconstruction, detached historical reads, point-to-point diffs, replay previews, and stable identifier resolution across multi-file branching fixtures (RQMD-TIME-010).
 - Added `rqmd --undo` and `rqmd --redo` non-interactive catalog restoration commands backed by persistent snapshot history, including automatic baseline capture on the first rqmd mutation (RQMD-UNDO-001).
 - Added persistent hidden `.rqmd/history/rqmd-history` git-backed catalog snapshots plus on-disk cursor state (v2.0) with branch tracking for durable undo/redo recovery and branch-aware history across process restarts (RQMD-UNDO-005, RQMD-TIME-002).
 
@@ -53,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated requirement status to mark `RQMD-TIME-009` as Implemented (exportable temporal state and comparison reports via `--history-report`).
 - Updated requirement status to mark `RQMD-TIME-007` as Implemented (timeline filters and queryable navigation in `--timeline`).
 - Updated requirement status to mark `RQMD-TIME-006` as Implemented (restore/replay/cherry-pick preview planning via `--history-action`).
+- Updated requirement status to mark `RQMD-TIME-010` as Implemented (temporal verification coverage matrix).
 
 - Switched requirements index layout from sibling requirements.md files to in-directory README.md files.
 - Updated rqmd auto-detection to use docs/requirements/README.md and requirements/README.md.

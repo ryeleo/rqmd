@@ -3,7 +3,7 @@
 Scope: branch-aware temporal navigation, historical inspection, detached point-in-time views, replay from past states, and timeline-oriented UX for requirement catalogs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 9🔧 0✅ 0⛔ 0🗑️
+Summary: 0💡 10🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-TIME-001: Point-in-time catalog browsing
@@ -79,7 +79,7 @@ Summary: 1💡 9🔧 0✅ 0⛔ 0🗑️
 - So that exports clearly indicate the selected historical source and whether the view is detached, restored, or current head.
 
 ### RQMD-TIME-010: Verification coverage for temporal navigation
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when time-travel workflows combine persistence, branching, and presentation logic
 - I want to implement the time-machine feature set
