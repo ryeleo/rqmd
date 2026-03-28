@@ -16,6 +16,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from click.testing import CliRunner
+
 from rqmd import cli
 from rqmd.theme import _probe_gnome, _probe_macos, detect_theme
 
