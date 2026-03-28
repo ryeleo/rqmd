@@ -6,7 +6,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 from click.testing import CliRunner
-
 from rqmd import menus as menus_mod
 from rqmd.cli import main as rqmd_main
 from rqmd.theme import ZEBRA_BG_DARK, ZEBRA_BG_LIGHT, is_accessible_zebra_bg
