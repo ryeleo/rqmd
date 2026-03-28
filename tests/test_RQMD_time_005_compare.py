@@ -205,6 +205,50 @@ def test_RQMD_time_005_compare_latest_keyword(tmp_path: Path) -> None:
     assert payload["ref_b"]["entry_index"] == 1
 
 
+def test_RQMD_time_005_compare_stable_ids_as_refs(tmp_path: Path) -> None:
+    """Stable history ids (hid:<commit>) are accepted by --compare-refs."""
+    _setup_two_snapshots(tmp_path)
+    runner = CliRunner()
+
+    baseline = runner.invoke(
+        ai_main,
+        [
+            "--as-json",
+            "--compare-refs",
+            "0..1",
+            "--project-root",
+            str(tmp_path),
+            "--docs-dir",
+            "docs/requirements",
+            "--id-namespace",
+            "DEMO",
+        ],
+    )
+    assert baseline.exit_code == 0
+    baseline_payload = json.loads(baseline.output)
+    ref_a = baseline_payload["ref_a"]["stable_id"]
+    ref_b = baseline_payload["ref_b"]["stable_id"]
+
+    stable = runner.invoke(
+        ai_main,
+        [
+            "--as-json",
+            "--compare-refs",
+            f"{ref_a}..{ref_b}",
+            "--project-root",
+            str(tmp_path),
+            "--docs-dir",
+            "docs/requirements",
+            "--id-namespace",
+            "DEMO",
+        ],
+    )
+    assert stable.exit_code == 0
+    stable_payload = json.loads(stable.output)
+    assert stable_payload["ref_a"]["stable_id"] == ref_a
+    assert stable_payload["ref_b"]["stable_id"] == ref_b
+
+
 def test_RQMD_time_005_ref_a_details_present(tmp_path: Path) -> None:
     """ref_a and ref_b both contain commit, entry_index, timestamp metadata."""
     _setup_two_snapshots(tmp_path)
@@ -215,8 +259,10 @@ def test_RQMD_time_005_ref_a_details_present(tmp_path: Path) -> None:
     )
     assert result.exit_code == 0
     payload = json.loads(result.output)
-    for key in ("entry_index", "commit", "timestamp", "command"):
+    for key in ("entry_index", "commit", "stable_id", "timestamp", "command"):
         assert key in payload["ref_a"], f"Missing key {key} in ref_a"
         assert key in payload["ref_b"], f"Missing key {key} in ref_b"
+    assert str(payload["ref_a"]["stable_id"]).startswith("hid:")
+    assert str(payload["ref_b"]["stable_id"]).startswith("hid:")
     assert payload["ref_a"]["entry_index"] == 0
     assert payload["ref_b"]["entry_index"] == 1

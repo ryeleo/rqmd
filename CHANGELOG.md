@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added branch-aware historical timeline in the history backend: automatically creates recovery branches when undoing and making divergent edits, with full DAG reconstruction and branch tracking in state metadata (RQMD-TIME-002).
 - Added historical activity context in `rqmd-ai` history exports, including neighboring entry pointers and per-requirement before/after status deltas for the selected history entry (RQMD-TIME-004).
 - Added `--compare-refs` to `rqmd-ai` for point-in-time diff views between any two history refs; supports `A..B` and `A B` syntax with entry indices, commit hashes, `head`, `current`, and `latest` keywords; returns structured JSON with status transitions, added/removed requirements, and cumulative summary counters (RQMD-TIME-005).
+- Added stable history identifiers (`hid:<commit>`) in `rqmd-ai` historical payloads (`history_source`, compare refs, and neighbors), and support for resolving those identifiers in `--history-ref` and `--compare-refs` for durable deep links (RQMD-TIME-008).
 - Added `rqmd --undo` and `rqmd --redo` non-interactive catalog restoration commands backed by persistent snapshot history, including automatic baseline capture on the first rqmd mutation (RQMD-UNDO-001).
 - Added persistent hidden `.rqmd/history/rqmd-history` git-backed catalog snapshots plus on-disk cursor state (v2.0) with branch tracking for durable undo/redo recovery and branch-aware history across process restarts (RQMD-UNDO-005, RQMD-TIME-002).
 
@@ -45,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated requirement status to mark `RQMD-TIME-005` as Implemented (compare historical points via `--compare-refs`).
 - Updated requirement status to mark `RQMD-TIME-003` as Implemented (detached historical view mode via `--history-ref`).
+- Updated requirement status to mark `RQMD-TIME-008` as Implemented (stable historical identifiers and deep-linkable refs).
 
 - Switched requirements index layout from sibling requirements.md files to in-directory README.md files.
 - Updated rqmd auto-detection to use docs/requirements/README.md and requirements/README.md.

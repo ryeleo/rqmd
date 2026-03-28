@@ -3,7 +3,7 @@
 Scope: branch-aware temporal navigation, historical inspection, detached point-in-time views, replay from past states, and timeline-oriented UX for requirement catalogs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 5💡 5🔧 0✅ 0⛔ 0🗑️
+Summary: 4💡 6🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-TIME-001: Point-in-time catalog browsing
@@ -63,7 +63,7 @@ Summary: 5💡 5🔧 0✅ 0⛔ 0🗑️
 - So that filtered navigation still preserves branch lineage so users understand where matching events sit in the larger history graph.
 
 ### RQMD-TIME-008: Stable historical identifiers and deep links
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when users may need to share or automate a historical view
 - I want rqmd to expose a timeline node or detached historical view

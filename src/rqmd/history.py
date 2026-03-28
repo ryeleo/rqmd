@@ -15,6 +15,7 @@ HISTORY_ROOT_RELATIVE = Path(".rqmd/history")
 HISTORY_REPO_RELATIVE = HISTORY_ROOT_RELATIVE / "rqmd-history"
 STATE_FILE_RELATIVE = HISTORY_ROOT_RELATIVE / "state.json"
 CATALOG_DIRNAME = "catalog"
+STABLE_HISTORY_ID_PREFIX = "hid:"
 
 
 class HistoryInitError(Exception):
@@ -209,10 +210,19 @@ class HistoryManager:
     def list_entries(self) -> list[dict[str, Any]]:
         return list(self._read_state().get("entries", []))
 
+    def build_stable_history_id(self, commit_hash: str) -> str:
+        """Return a stable external identifier for a history commit."""
+        return f"{STABLE_HISTORY_ID_PREFIX}{commit_hash}"
+
     def resolve_ref(self, ref: str) -> dict[str, Any] | None:
         normalized = ref.strip()
         if not normalized:
             return None
+
+        if normalized.lower().startswith(STABLE_HISTORY_ID_PREFIX):
+            normalized = normalized[len(STABLE_HISTORY_ID_PREFIX):]
+            if not normalized:
+                return None
 
         entries = self.list_entries()
         if not entries:

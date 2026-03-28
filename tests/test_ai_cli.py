@@ -432,9 +432,73 @@ def test_RQMD_TIME_001_export_context_from_history_entry(tmp_path: Path) -> None
     assert payload["mode"] == "export-context"
     assert payload["history_source"]["detached"] is True
     assert payload["history_source"]["entry_index"] == 0
+    assert str(payload["history_source"]["stable_id"]).startswith("hid:")
     assert payload["total"] == 1
     assert payload["files"][0]["requirements"][0]["status"] == "💡 Proposed"
     assert "✅ Verified" in domain.read_text(encoding="utf-8")
+
+
+def test_RQMD_TIME_008_history_ref_accepts_stable_id(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    domain = criteria_dir / "demo.md"
+    _write_demo_domain(domain)
+
+    runner = CliRunner()
+    applied = runner.invoke(
+        rqmd_main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--update-id",
+            "RQMD-DEMO-001",
+            "--update-status",
+            "verified",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+    assert applied.exit_code == 0
+
+    first_payload_result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--as-json",
+            "--dump-status",
+            "proposed",
+            "--history-ref",
+            "0",
+        ],
+    )
+    assert first_payload_result.exit_code == 0
+    first_payload = json.loads(first_payload_result.output)
+    stable_id = str(first_payload["history_source"]["stable_id"])
+
+    stable_ref_result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--as-json",
+            "--dump-status",
+            "proposed",
+            "--history-ref",
+            stable_id,
+        ],
+    )
+    assert stable_ref_result.exit_code == 0
+    stable_payload = json.loads(stable_ref_result.output)
+    assert stable_payload["history_source"]["entry_index"] == 0
+    assert stable_payload["history_source"]["stable_id"] == stable_id
 
 
 def test_RQMD_TIME_001_rejects_unknown_history_ref(tmp_path: Path) -> None:
