@@ -7,6 +7,7 @@ from pathlib import Path
 
 import click
 from click.testing import CliRunner
+
 from rqmd import cli, menus
 
 
