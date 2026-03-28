@@ -1,0 +1,12 @@
+CHANGELOG.md
+docs/requirements/core-engine.md
+docs/requirements/interactive-ux.md
+docs/requirements/priority.md
+src/rqmd/ai_cli.py
+src/rqmd/cli.py
+src/rqmd/config.py
+src/rqmd/priority_model.py
+src/rqmd/req_parser.py
+src/rqmd/status_update.py
+src/rqmd/workflows.py
+tests/test_RQMD_core_024.py

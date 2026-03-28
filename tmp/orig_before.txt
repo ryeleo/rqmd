@@ -1,0 +1,18 @@
+alue})")
+
+        _, table_rows = collect_summary_rows(
+            domain_files,
+            check_only=True,
+            display_name_fn=display_name_from_h1,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
+        )
+        print_summary_table(table_rows, emoji_columns=emoji_columns)
+
+        if index < len(flat_list) - 1:
+            index += 1
+        else:
+            index = 0
+        save_current(flat_list, index)
+
+

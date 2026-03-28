@@ -656,6 +656,51 @@ def collect_requirements_by_links(
     return result
 
 
+# Pattern for bare requirement IDs (PREFIX-SUFFIX) in free text.
+_BARE_REQ_ID_PATTERN = re.compile(r"\b([A-Z][A-Z0-9]*-[A-Z0-9][A-Z0-9-]*)\b")
+# Pattern for the label of a markdown link: [LABEL](target)
+_MD_LINK_LABEL_PATTERN = re.compile(r"\[([^\]]+)\]\([^)]*\)")
+
+
+def extract_blocking_id(
+    blocked_reason: str | None,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+) -> str | None:
+    """Extract a linked requirement ID from a blocked reason string.
+
+    Looks first for markdown hyperlinks whose label is a requirement ID,
+    then for bare requirement IDs in the text.  The first match is returned.
+
+    Args:
+        blocked_reason: The raw blocked reason text, or None.
+        id_prefixes: Allowed ID prefixes to match against.
+
+    Returns:
+        A requirement ID string (e.g. ``"RQMD-CORE-001"``) or ``None``.
+    """
+    if not blocked_reason:
+        return None
+
+    upper_prefixes = tuple(p.upper() for p in id_prefixes)
+
+    # Try markdown link labels first: [RQMD-CORE-001](some-target)
+    for m in _MD_LINK_LABEL_PATTERN.finditer(blocked_reason):
+        label = m.group(1).strip()
+        bare = _BARE_REQ_ID_PATTERN.match(label)
+        if bare:
+            candidate = bare.group(1).upper()
+            if any(candidate.startswith(f"{pfx}-") for pfx in upper_prefixes):
+                return candidate
+
+    # Fall back to bare ID anywhere in the text
+    for m in _BARE_REQ_ID_PATTERN.finditer(blocked_reason):
+        candidate = m.group(1).upper()
+        if any(candidate.startswith(f"{pfx}-") for pfx in upper_prefixes):
+            return candidate
+
+    return None
+
+
 def collect_requirements_by_filters(
     repo_root: Path,
     domain_files: list[Path],
@@ -736,3 +781,96 @@ def collect_requirements_by_filters(
             result[path] = matching
 
     return result
+
+
+def parse_domain_priority_metadata(
+    path: Path,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+) -> dict[str, object]:
+    """Parse domain-level and per-H2 sub-section priority metadata.
+
+    Looks for an optional ``- **Priority:** <label>`` line in the domain
+    preamble (before the first requirement header) and in each H2 sub-section
+    header block (lines between the ``## Title`` line and the next header).
+
+    Args:
+        path: Path to the markdown domain file.
+        id_prefixes: Requirement ID prefixes to detect requirement headers.
+
+    Returns:
+        A dict with keys:
+        - ``"domain_priority"``: ``str | None``
+        - ``"sub_section_priorities"``: ``dict[str, str | None]`` mapping
+          H2 section title to priority label.
+    """
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return {"domain_priority": None, "sub_section_priorities": {}}
+
+    req_header = re.compile(
+        r"^###\s+(?:" + "|".join(re.escape(p) for p in id_prefixes) + r")-[A-Z0-9-]+:\s*",
+        re.MULTILINE,
+    )
+    h2_header = re.compile(r"^## (?P<title>.+?)\s*$", re.MULTILINE)
+
+    lines = text.splitlines()
+    domain_priority: str | None = None
+    sub_section_priorities: dict[str, str | None] = {}
+
+    current_h2_title: str | None = None
+    current_h2_lines: list[str] = []
+
+    def _extract_priority_from_lines(block: list[str]) -> str | None:
+        for bl in block:
+            m = PRIORITY_PATTERN.match(bl)
+            if m:
+                return m.group("priority").strip()
+        return None
+
+    in_preamble = True
+    preamble_lines: list[str] = []
+
+    for line in lines:
+        if req_header.match(line):
+            # Entered requirements section — flush preamble
+            if in_preamble:
+                in_preamble = False
+                domain_priority = _extract_priority_from_lines(preamble_lines)
+            # Flush any open H2 block
+            if current_h2_title is not None:
+                sub_section_priorities[current_h2_title] = _extract_priority_from_lines(current_h2_lines)
+                current_h2_title = None
+                current_h2_lines = []
+            continue
+
+        h2m = h2_header.match(line)
+        if h2m:
+            # Flush preamble if not yet done
+            if in_preamble:
+                in_preamble = False
+                domain_priority = _extract_priority_from_lines(preamble_lines)
+            # Flush previous H2 block
+            if current_h2_title is not None:
+                sub_section_priorities[current_h2_title] = _extract_priority_from_lines(current_h2_lines)
+            current_h2_title = h2m.group("title").strip()
+            current_h2_lines = []
+            continue
+
+        if in_preamble:
+            preamble_lines.append(line)
+        elif current_h2_title is not None:
+            current_h2_lines.append(line)
+
+    # Flush any remaining H2 block
+    if current_h2_title is not None:
+        sub_section_priorities[current_h2_title] = _extract_priority_from_lines(current_h2_lines)
+
+    # If we never left the preamble (no req headers or H2 headers)
+    if in_preamble:
+        domain_priority = _extract_priority_from_lines(preamble_lines)
+
+    return {
+        "domain_priority": domain_priority,
+        "sub_section_priorities": sub_section_priorities,
+    }

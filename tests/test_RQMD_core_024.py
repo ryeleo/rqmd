@@ -5,11 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from src.rqmd.readme_gen import (
-    extract_domain_summaries,
-    generate_readme_section,
-    sync_readme_from_domains,
-)
+from src.rqmd.readme_gen import (extract_domain_summaries,
+                                 generate_readme_section,
+                                 sync_readme_from_domains)
 
 
 def test_RQMD_core_024_extract_domain_summaries(tmp_path: Path):

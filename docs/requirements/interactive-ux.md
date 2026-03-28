@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 0🔧 18✅ 0⛔ 4🗑️
+Summary: 3💡 1🔧 18✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -128,7 +128,7 @@ Summary: 4💡 0🔧 18✅ 0⛔ 4🗑️
 - So that I can quickly mark or unmark items that need special attention during triage and review.
 
 ### RQMD-INTERACTIVE-018: Domain-level notes discoverability in interactive mode
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when I open a domain in interactive mode
 - I want optional domain-level notes/body content to be discoverable in-context (for example in a compact notes pane or explicit notes command)

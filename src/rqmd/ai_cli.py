@@ -30,9 +30,9 @@ from .constants import JSON_SCHEMA_VERSION
 from .markdown_io import (discover_project_root, format_path_display,
                           iter_domain_files, resolve_requirements_dir,
                           validate_files_readable)
-from .req_parser import (extract_requirement_block_with_lines,
-                         normalize_id_prefixes, parse_requirements,
-                         resolve_id_prefixes)
+from .req_parser import (extract_blocking_id, extract_requirement_block_with_lines,
+                         normalize_id_prefixes, parse_domain_priority_metadata,
+                         parse_requirements, resolve_id_prefixes)
 from .status_model import normalize_status_input
 from .status_update import apply_status_change_by_id
 
@@ -376,6 +376,12 @@ def _export_context(
                 "flagged": requirement.get("flagged"),
                 "sub_domain": requirement.get("sub_domain"),
             }
+            blocked_reason = requirement.get("blocked_reason")
+            if blocked_reason is not None:
+                entry["blocked_reason"] = blocked_reason
+                bid = extract_blocking_id(str(blocked_reason), id_prefixes)
+                if bid is not None:
+                    entry["blocking_id"] = bid
             if include_body:
                 block, start_line, end_line = extract_requirement_block_with_lines(
                     path,
@@ -397,6 +403,11 @@ def _export_context(
                 "path": format_path_display(path, repo_root),
                 "requirements": entries,
             }
+            domain_priority_meta = parse_domain_priority_metadata(path, id_prefixes=id_prefixes)
+            if domain_priority_meta["domain_priority"] is not None:
+                file_payload["domain_priority"] = domain_priority_meta["domain_priority"]
+            if domain_priority_meta["sub_section_priorities"]:
+                file_payload["sub_section_priorities"] = domain_priority_meta["sub_section_priorities"]
             if include_domain_body:
                 file_payload["domain_body"] = _extract_domain_body(
                     path,

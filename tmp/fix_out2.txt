@@ -1,0 +1,4 @@
+Found 3 instances of 8-space else branch (with blank line)
+After replace, total links branches: 5
+Wrote fixed file
+✓ Syntax OK!

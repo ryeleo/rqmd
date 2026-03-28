@@ -1,0 +1,15 @@
+DIFF: CHANGELOG.md
+docs/requirements/core-engine.md
+docs/requirements/interactive-ux.md
+docs/requirements/priority.md
+src/rqmd/ai_cli.py
+src/rqmd/cli.py
+src/rqmd/config.py
+src/rqmd/priority_model.py
+src/rqm
+LOG: 3f00aa6 Summary: "Next 10 Proposals" - Phase 1 Complete ✅ I've successfully completed Phase 1 of implementing the next 10 Proposed requirements for the rqmd CLI tool. Here's what was delivered:
+da2ea21 WIP2
+2a75582 WIP
+STASH: 
+FOUND def interactive_update_loop at char 35552
+CONTEXT: 'def interactive_update_loop(\n    repo_root: Path,\n    criteria_dir: str,\n    domain_files: list[Path],\n    emoji_columns: bool,\n    sort_files: bool,\n    sort_strategy: str = "standard",\n    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,\n    select_from_menu_fn=select_from_menu,\n    include_status_emojis: bool | None = None,\n    priority_mode: bool = False,\n    include_priority_summary: bool '

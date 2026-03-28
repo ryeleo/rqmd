@@ -80,7 +80,7 @@ from . import workflows as workflows_mod
 from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
                            parse_batch_update_jsonl, parse_set_entry,
                            parse_set_flagged_entry, parse_set_priority_entry)
-from .config import load_config, load_statuses_file, validate_config
+from .config import load_config, load_priorities_file, load_statuses_file, validate_config
 from .constants import (DEFAULT_ID_PREFIXES, DEFAULT_REQUIREMENTS_DIR,
                         ID_PREFIX_PATTERN, JSON_SCHEMA_VERSION, STATUS_ORDER,
                         STATUS_PATTERN, SUMMARY_END, SUMMARY_START)
@@ -91,7 +91,7 @@ from .markdown_io import (auto_detect_requirements_dir, check_files_writable,
                           iter_requirements_search_roots, parse_index_links,
                           resolve_requirements_dir, validate_files_readable)
 from .menus import select_from_menu
-from .priority_model import normalize_priority_input
+from .priority_model import configure_priority_catalog, normalize_priority_input
 from .req_parser import (collect_requirements_by_filters,
                          collect_requirements_by_flagged,
                          collect_requirements_by_links,
@@ -751,6 +751,13 @@ def shell_complete_target_tokens(
     help="Path to a status catalog file (.yml, .yaml, or .json). Overrides .rqmd/statuses.yml auto-detection.",
 )
 @click.option(
+    "--priorities-config",
+    "priorities_config",
+    type=str,
+    default=None,
+    help="Path to a priority catalog file (.yml, .yaml, or .json). Overrides .rqmd/priorities.yml auto-detection.",
+)
+@click.option(
     "--docs-dir",
     "requirements_dir",
     type=str,
@@ -834,6 +841,7 @@ def main(
     confirm_yes: bool,
     targets: tuple[str, ...],
     status_config: str | None,
+    priorities_config: str | None,
 ) -> None:
     repo_root_source = ctx.get_parameter_source("repo_root")
     repo_root_explicit = repo_root_source != click.core.ParameterSource.DEFAULT
@@ -861,6 +869,14 @@ def main(
         configure_status_catalog(effective_statuses)
     except ValueError as exc:
         raise click.ClickException(f"Config error: {exc}") from exc
+
+    try:
+        standalone_priorities = load_priorities_file(repo_root, priorities_config)
+        effective_priorities = standalone_priorities if standalone_priorities is not None else config.get("priorities")
+        configure_priority_catalog(effective_priorities)
+    except ValueError as exc:
+        raise click.ClickException(f"Config error: {exc}") from exc
+    ctx.call_on_close(lambda: configure_priority_catalog(None))
     ctx.call_on_close(lambda: configure_status_catalog(None))
 
     # Apply config defaults (CLI flags override config file)

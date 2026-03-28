@@ -213,6 +213,74 @@ def load_statuses_file(
     return None
 
 
+def _parse_priorities_from_path(path: Path) -> List[Any]:
+    """Load and extract a priorities list from a catalog file.
+
+    The file may be:
+    - A YAML/JSON list (priorities directly).
+    - A YAML/JSON dict with a top-level 'priorities' key.
+    """
+    suffix = path.suffix.lower()
+    if suffix in {".yml", ".yaml"}:
+        data: Any = _load_yaml_any(path)
+    elif suffix == ".json":
+        data = _load_json_any(path)
+    else:
+        try:
+            data = _load_yaml_any(path)
+        except ValueError:
+            try:
+                data = _load_json_any(path)
+            except ValueError as exc:
+                raise ValueError(
+                    f"Cannot parse {path}: not valid JSON or YAML"
+                ) from exc
+
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict) and "priorities" in data:
+        priorities = data["priorities"]
+        if not isinstance(priorities, list):
+            raise ValueError(f"'priorities' in {path} must be a list")
+        return priorities
+    raise ValueError(
+        f"Priority config file {path} must be a JSON/YAML list or a dict with a 'priorities' key"
+    )
+
+
+def load_priorities_file(
+    repo_root: Path,
+    override_path: str | None = None,
+) -> List[Any] | None:
+    """Load a standalone priorities catalog file.
+
+    Precedence:
+    1. ``override_path`` (from ``--priorities-config``): resolved relative to
+       *repo_root* when not absolute; raises ValueError if not found.
+    2. Auto-detect: ``.rqmd/priorities.yml``, ``.rqmd/priorities.yaml``,
+       ``.rqmd/priorities.json`` under *repo_root*.
+    3. Return ``None`` if neither applies (caller falls back to unified config).
+    """
+    if override_path is not None:
+        path = Path(override_path)
+        if not path.is_absolute():
+            path = (repo_root / override_path).resolve()
+        if not path.exists():
+            raise ValueError(f"--priorities-config file not found: {override_path}")
+        return _parse_priorities_from_path(path)
+
+    candidates = [
+        repo_root / ".rqmd" / "priorities.yml",
+        repo_root / ".rqmd" / "priorities.yaml",
+        repo_root / ".rqmd" / "priorities.json",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return _parse_priorities_from_path(candidate)
+
+    return None
+
+
 def validate_config(config: dict[str, Any]) -> None:
     """
     Validate that config keys are known and values are reasonable.
@@ -233,6 +301,7 @@ def validate_config(config: dict[str, Any]) -> None:
         "rollup_map",
         "rollup_equations",
         "statuses",
+        "priorities",
     }
     
     for key in config:

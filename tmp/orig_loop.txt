@@ -1,0 +1,45 @@
+def interactive_update_loop(
+    repo_root: Path,
+    criteria_dir: str,
+    domain_files: list[Path],
+    emoji_columns: bool,
+    sort_files: bool,
+    sort_strategy: str = "standard",
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+    select_from_menu_fn=select_from_menu,
+    include_status_emojis: bool | None = None,
+    priority_mode: bool = False,
+    include_priority_summary: bool = False,
+    initial_file_path: Path | None = None,
+) -> int:
+    """Run the interactive file/requirement/status selection and update loop.
+
+    Provides a multi-level menu interface:
+    1. Select a domain file
+    2. Select a requirement from the file
+    3. Select/confirm a new status and optional reason
+    4. Repeat or exit
+
+    Args:
+        repo_root: Root path of the project.
+        criteria_dir: Path to the requirements directory.
+        domain_files: List of domain file paths.
+        emoji_columns: If True, show emoji in file stat columns.
+        sort_files: If True, enable sorting toggle in file menu.
+        sort_strategy: Sort strategy name (e.g., 'standard', 'status-focus').
+        id_prefixes: Allowed ID prefixes for matching headers.
+        select_from_menu_fn: Menu selection function (injectable for testing).
+        include_status_emojis: If True, include emoji in status labels (auto-inferred if None).
+        priority_mode: If True, include priority tracking and summary.
+        include_priority_summary: If True, include priority counts in summary blocks.
+        initial_file_path: If provided, open this file on first iteration (skip file menu).
+
+    Returns:
+        Exit code (0 for success, non-zero for errors).
+    """
+    if include_status_emojis is None:
+        include_status_emojis = infer_include_status_emojis(domain_files)
+    strategy = get_sort_strategy_spec(sort_strategy)
+    file_columns = list(strategy["file_columns"])
+    criterion_columns = list(strategy["criterion_columns"])
+    current_file_sort_key = str(strategy["file_default_key

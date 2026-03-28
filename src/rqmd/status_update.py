@@ -10,6 +10,7 @@ This module provides:
 from __future__ import annotations
 
 import shutil
+import re
 import sys
 from pathlib import Path
 
@@ -20,8 +21,9 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import DEFAULT_ID_PREFIXES
+from .constants import DEFAULT_ID_PREFIXES, LINK_ITEM_PATTERN, LINKS_HEADER_PATTERN
 from .req_parser import extract_requirement_block, find_requirement_by_id
+from .markdown_io import scope_and_body_from_file
 from .priority_model import coerce_priority_label
 from .status_model import normalize_status_input
 from .summary import process_file
@@ -73,6 +75,18 @@ def print_criterion_panel(
     click.echo(click.style(rule, **rule_kwargs))
     click.echo(click.style(f"{requirement_id}: {title}", bold=True))
     click.echo(click.style(f"Source: {path.relative_to(repo_root).as_posix()}", dim=True))
+
+    _, domain_body = scope_and_body_from_file(path, id_prefixes=id_prefixes)
+    if domain_body:
+        domain_lines = [ln for ln in domain_body.splitlines() if ln.strip()]
+        max_notes_lines = 3
+        truncated = len(domain_lines) > max_notes_lines
+        display_lines = domain_lines[:max_notes_lines]
+        notes_text = " | ".join(display_lines)
+        if truncated:
+            notes_text += " …"
+        click.echo(click.style(f"Domain notes: {notes_text}", dim=True))
+
     click.echo(click.style(rule, **rule_kwargs))
     if criterion_text:
         click.echo(criterion_text)
@@ -234,6 +248,118 @@ def prompt_for_priority() -> str:
     click.echo("Invalid choice. Skipping priority update.")
     return ""
 
+
+def _add_link_to_file(path: Path, requirement: dict, link_text: str) -> None:
+    """Append a link item to a requirement's **Links:** section.
+
+    Creates the **Links:** header if it doesn't yet exist.
+    """
+    lines = path.read_text(encoding="utf-8").splitlines()
+    links_line = requirement.get("links_line")
+    if isinstance(links_line, int):
+        # Find the end of the existing link items block
+        insert_at = links_line + 1
+        while insert_at < len(lines) and LINK_ITEM_PATTERN.match(lines[insert_at]):
+            insert_at += 1
+        lines.insert(insert_at, f"  - {link_text}")
+    else:
+        # No **Links:** header yet - insert after the last known metadata line
+        candidates = [
+            requirement.get("flagged_line"),
+            requirement.get("deprecated_reason_line"),
+            requirement.get("blocked_reason_line"),
+            requirement.get("priority_line"),
+            requirement.get("status_line"),
+        ]
+        insert_after = max((ln for ln in candidates if isinstance(ln, int)), default=None)
+        if insert_after is None:
+            return
+        insert_at = insert_after + 1
+        lines.insert(insert_at, f"  - {link_text}")
+        lines.insert(insert_at, "- **Links:**")
+    path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+
+
+def _remove_link_from_file(path: Path, requirement: dict, link_index: int) -> None:
+    """Remove the link item at *link_index* from a requirement's **Links:** section.
+
+    Removes the **Links:** header too when the section becomes empty.
+    """
+    lines = path.read_text(encoding="utf-8").splitlines()
+    links_line = requirement.get("links_line")
+    if not isinstance(links_line, int):
+        return
+    item_line_numbers: list[int] = []
+    for idx in range(links_line + 1, len(lines)):
+        if LINK_ITEM_PATTERN.match(lines[idx]):
+            item_line_numbers.append(idx)
+        else:
+            break
+    if link_index >= len(item_line_numbers):
+        return
+    lines.pop(item_line_numbers[link_index])
+    if len(item_line_numbers) == 1:
+        # Section is now empty - remove header too
+        lines.pop(links_line)
+    path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+
+
+def prompt_for_links_flow(
+    path: Path,
+    requirement: dict,
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+) -> bool:
+    """Interactive loop for managing links on a requirement.
+
+    Displays existing links numbered, then lets the user add (by entering a URL
+    or ``[label](url)``) or remove (by entering the item number) links.  The
+    loop continues until the user presses Enter on an empty line.
+
+    Returns True if any changes were written to disk.
+    """
+    changed = False
+    req = requirement
+    while True:
+        existing_links: list[dict] = req.get("links") or []  # type: ignore[assignment]
+        click.echo()
+        if existing_links:
+            click.echo("Links:")
+            for i, link in enumerate(existing_links, 1):
+                label = link.get("label")
+                url = str(link.get("url") or "")
+                click.echo(f"  {i}. {f'[{label}]({url})' if label else url}")
+        else:
+            click.echo("No links yet.")
+        click.echo("Enter a number to remove, a URL or [label](url) to add,")
+        raw = click.prompt("or press Enter to go back", default="", show_default=False).strip()
+        if not raw:
+            return changed
+        if raw.isdigit():
+            idx = int(raw) - 1
+            if 0 <= idx < len(existing_links):
+                _remove_link_from_file(path, req, idx)
+                changed = True
+                refreshed = find_requirement_by_id(path, str(req["id"]), id_prefixes)
+                if refreshed:
+                    req = refreshed
+            else:
+                click.echo(f"Invalid number. Enter 1-{len(existing_links)}.")
+            continue
+        # Add operation
+        link_text = raw
+        if raw.startswith(("http://", "https://", "ftp://", "/")) and not re.match(
+            r"^\[[^\]]+\]\(", raw
+        ):
+            label = click.prompt(
+                "Add a label? (press Enter to skip)", default="", show_default=False
+            ).strip()
+            if label:
+                link_text = f"[{label}]({raw})"
+        _add_link_to_file(path, req, link_text)
+        changed = True
+        refreshed = find_requirement_by_id(path, str(req["id"]), id_prefixes)
+        if refreshed:
+            req = refreshed
 
 def apply_status_change_by_id(
     repo_root: Path,

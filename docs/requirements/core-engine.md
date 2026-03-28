@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 6🔧 16✅ 0⛔ 0🗑️
+Summary: 1💡 7🔧 16✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -194,7 +194,7 @@ Summary: 2💡 6🔧 16✅ 0⛔ 0🗑️
 - So that summary block generation and status counting are not affected by the presence or absence of links.
 
 ### RQMD-CORE-022: Enhanced blocking with linked requirements
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when marking a requirement as blocked
 - I want to optionally link it to another requirement that is blocking it

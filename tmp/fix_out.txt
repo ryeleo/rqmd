@@ -1,0 +1,11 @@
+Got HEAD content: 72852 chars
+✓ Updated import
+✓ Updated ENTRY_FIELDS
+✓ Added links menu branch
+Found 1 instances of 8-space else branch
+After replace, found 1 instances of links branch
+Found 1 instances of 12-space selected_criterion else branch
+✓ Updated 12-space (selected_criterion) branch
+
+Wrote fixed file: 74000 chars
+✓ Syntax OK!

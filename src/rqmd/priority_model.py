@@ -5,6 +5,7 @@ This module provides:
 - Priority-based styling (ANSI colors, emoji handling)
 - Priority lookup tables and normalization
 - Display utilities for priority values
+- Custom priority catalog configuration (RQMD-PRIORITY-011)
 """
 
 from __future__ import annotations
@@ -15,11 +16,86 @@ from .constants import (ANSI_ESCAPE_PATTERN, ANSI_RESET, NON_ALNUM_PATTERN,
                         NON_ALNUM_PREFIX_PATTERN, PRIORITY_ALIASES,
                         PRIORITY_ORDER, PRIORITY_PARSE_ALIASES)
 
+_DEFAULT_PRIORITY_ORDER = list(PRIORITY_ORDER)
+_DEFAULT_PRIORITY_ALIASES: dict[str, str] = dict(PRIORITY_ALIASES)
+_DEFAULT_PRIORITY_PARSE_ALIASES: dict[str, str] = dict(PRIORITY_PARSE_ALIASES)
+_PRIORITY_COLORS: dict[str, str] = {}  # canonical label -> click fg color name
+
+
+def _priority_slug(name: str) -> str:
+    """Convert a priority name to a canonical slug."""
+    return NON_ALNUM_PATTERN.sub("-", name.strip().lower()).strip("-")
+
+
+def configure_priority_catalog(raw_priorities: object | None) -> None:
+    """Configure runtime priority catalog from config, or reset to defaults.
+
+    Expected item schema for custom priorities:
+      {"name": <str>, "shortcode": <str>, "emoji": <str>}  # color optional
+
+    Args:
+        raw_priorities: List of priority dicts, or None to reset to defaults.
+
+    Raises:
+        ValueError: If the config is invalid.
+    """
+    global PRIORITY_LOOKUP, _PRIORITY_COLORS
+
+    PRIORITY_ORDER[:] = list(_DEFAULT_PRIORITY_ORDER)
+    PRIORITY_ALIASES.clear()
+    PRIORITY_ALIASES.update(_DEFAULT_PRIORITY_ALIASES)
+    PRIORITY_PARSE_ALIASES.clear()
+    PRIORITY_PARSE_ALIASES.update(_DEFAULT_PRIORITY_PARSE_ALIASES)
+    _PRIORITY_COLORS.clear()
+
+    if raw_priorities is None:
+        PRIORITY_LOOKUP = priority_lookup()
+        return
+
+    if not isinstance(raw_priorities, list) or not raw_priorities:
+        raise ValueError("Config key 'priorities' must be a non-empty list")
+
+    seen_labels: set[str] = set()
+    custom_order: list[tuple[str, str]] = []
+
+    for index, item in enumerate(raw_priorities, start=1):
+        if not isinstance(item, dict):
+            raise ValueError(f"Config key 'priorities' item #{index} must be an object")
+
+        name = str(item.get("name", "")).strip()
+        shortcode = str(item.get("shortcode", "")).strip()
+        emoji = str(item.get("emoji", "")).strip()
+
+        if not name:
+            raise ValueError(f"Config key 'priorities' item #{index} missing non-empty 'name'")
+        if not shortcode:
+            raise ValueError(f"Config key 'priorities' item #{index} missing non-empty 'shortcode'")
+        if not emoji:
+            raise ValueError(f"Config key 'priorities' item #{index} missing non-empty 'emoji'")
+
+        label = f"{emoji} {name}".strip()
+        lowered = label.lower()
+        if lowered in seen_labels:
+            raise ValueError(f"Config key 'priorities' has duplicate label: {label}")
+        seen_labels.add(lowered)
+        custom_order.append((label, _priority_slug(shortcode)))
+
+        color = str(item.get("color", "")).strip() or None
+        if color:
+            _PRIORITY_COLORS[label] = color
+
+        # Register shortcode and name as parse alias
+        PRIORITY_PARSE_ALIASES[shortcode.lower()] = label
+        PRIORITY_PARSE_ALIASES[name.lower()] = label
+
+    PRIORITY_ORDER[:] = custom_order
+    PRIORITY_LOOKUP = priority_lookup()
+
 
 def style_priority_label(priority_label: str) -> str:
     """Apply ANSI styling to a full priority label.
 
-    Red for P0, yellow for P1, bright yellow for P2, green for P3.
+    Uses configured color if present; falls back to default emoji-based rules.
 
     Args:
         priority_label: The full priority label (e.g., '🔴 P0 - Critical').
@@ -27,6 +103,9 @@ def style_priority_label(priority_label: str) -> str:
     Returns:
         Styled label text with ANSI codes.
     """
+    configured_color = _PRIORITY_COLORS.get(priority_label)
+    if configured_color:
+        return click.style(priority_label, fg=configured_color)
     if priority_label.startswith("🔴"):
         return click.style(priority_label, fg="red")
     if priority_label.startswith("🟠"):

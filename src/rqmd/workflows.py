@@ -29,7 +29,7 @@ from .req_parser import (collect_sub_sections,
 from .status_model import (build_color_rollup_text, status_emoji,
                            style_status_label, style_status_line)
 from .status_update import (print_criterion_panel, prompt_for_blocked_reason,
-                            prompt_for_deprecated_reason,
+                            prompt_for_deprecated_reason, prompt_for_links_flow,
                             update_criterion_status)
 from .summary import (collect_summary_rows, count_priorities, count_statuses,
                       print_summary_table, process_file)
@@ -406,7 +406,7 @@ def _priority_highlight_bg(priority: str) -> str:
     return "\x1b[48;5;238m"
 
 
-ENTRY_FIELDS = ("status", "priority", "flagged")
+ENTRY_FIELDS = ("status", "priority", "flagged", "links")
 
 
 def _next_entry_field(current: str) -> str:
@@ -442,6 +442,15 @@ def _build_requirement_field_menu(
         highlight_bg = _priority_highlight_bg(current_value)
         title = f"Set priority for {requirement['id']}{title_suffix}\nsetting: priority"
         return title, labels, options, current_index, highlight_bg
+
+    if active_field == "links":
+        existing_links = requirement.get("links") or []
+        link_count = len(existing_links)  # type: ignore[arg-type]
+        count_str = f"{link_count} link{'s' if link_count != 1 else ''}" if link_count else "no links"
+        labels = ["manage"]
+        options = [f"🔗 Manage links ({count_str})\u2026"]
+        title = f"Edit links for {requirement['id']}{title_suffix}\nsetting: links"
+        return title, labels, options, None, "\x1b[48;5;25m"
 
     labels = [label for label, _ in STATUS_ORDER]
     options = [style_status_label(label) for label in labels]
@@ -932,6 +941,8 @@ def focused_target_interactive_loop(
                 str(requirement.get("status") or ""),
                 new_flagged=(selected_value == "true"),
             )
+        elif current_entry_field == "links":
+            changed = prompt_for_links_flow(path, requirement, id_prefixes=id_prefixes)
         else:
             new_status = selected_value or str(requirement.get("status") or "")
             blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
@@ -1297,6 +1308,18 @@ def interactive_update_loop(
                     include_status_emojis=include_status_emojis,
                     include_priority_summary=include_priority_summary,
                 )
+            elif current_entry_field == "links":
+                changed = prompt_for_links_flow(
+                    selected_path,
+                    selected_criterion,
+                    id_prefixes=id_prefixes,
+                )
+                process_file(
+                    selected_path,
+                    check_only=False,
+                    include_status_emojis=include_status_emojis,
+                    include_priority_summary=include_priority_summary,
+                )
             else:
                 new_status = selected_value or str(selected_criterion.get("status") or "")
                 blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
@@ -1520,6 +1543,8 @@ def filtered_interactive_loop(
                 str(requirement.get("status") or ""),
                 new_flagged=(selected_value == "true"),
             )
+        elif current_entry_field == "links":
+            changed = prompt_for_links_flow(path, requirement, id_prefixes=id_prefixes)
         else:
             new_status = selected_value or str(requirement.get("status") or "")
             blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
@@ -1726,6 +1751,8 @@ def filtered_priority_interactive_loop(
                 str(requirement.get("status") or ""),
                 new_flagged=(selected_value == "true"),
             )
+        elif current_entry_field == "links":
+            changed = prompt_for_links_flow(path, requirement, id_prefixes=id_prefixes)
         else:
             new_status = selected_value or str(requirement.get("status") or "")
             blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
@@ -1847,6 +1874,8 @@ def lookup_criterion_interactive(
                 str(requirement.get("status") or ""),
                 new_flagged=(selected_value == "true"),
             )
+        elif current_entry_field == "links":
+            changed = prompt_for_links_flow(path, requirement, id_prefixes=id_prefixes)
         else:
             new_status = selected_value or str(requirement.get("status") or "")
             blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
