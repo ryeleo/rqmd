@@ -11,6 +11,7 @@ This module provides:
 from __future__ import annotations
 
 import shutil
+import signal
 import sys
 import unicodedata
 
@@ -33,6 +34,7 @@ from .constants import (
 )
 
 _SCREEN_WRITE_ENABLED = False
+_RESIZE_SIGNAL_PENDING = False
 
 
 def set_screen_write_enabled(enabled: bool) -> None:
@@ -44,6 +46,20 @@ def set_screen_write_enabled(enabled: bool) -> None:
 def get_screen_write_enabled() -> bool:
     """Return whether full-screen redraw behavior is enabled."""
     return _SCREEN_WRITE_ENABLED
+
+
+def _mark_resize_pending(_signum: int, _frame: object) -> None:
+    """Signal handler that marks terminal resize as pending."""
+    global _RESIZE_SIGNAL_PENDING
+    _RESIZE_SIGNAL_PENDING = True
+
+
+def consume_resize_pending() -> bool:
+    """Return and clear pending terminal-resize marker."""
+    global _RESIZE_SIGNAL_PENDING
+    pending = _RESIZE_SIGNAL_PENDING
+    _RESIZE_SIGNAL_PENDING = False
+    return pending
 
 
 def visible_length(text: str) -> int:
@@ -222,109 +238,121 @@ def select_from_menu(
 
     page_size = MENU_PAGE_SIZE
     page = 0
+    is_tty = sys.stdout.isatty()
+    previous_resize_handler: object | None = None
 
-    while True:
-        total_pages = (len(options) + page_size - 1) // page_size
-        start = page * page_size
-        page_items = options[start:start + page_size]
-        term_width = shutil.get_terminal_size(fallback=(120, 24)).columns
+    if is_tty and hasattr(signal, "SIGWINCH"):
+        previous_resize_handler = signal.signal(signal.SIGWINCH, _mark_resize_pending)
 
-        if _SCREEN_WRITE_ENABLED and sys.stdout.isatty():
-            # Full-screen redraw mode: clear screen and return cursor to home.
-            click.echo("\x1b[2J\x1b[H", nl=False)
+    try:
+        while True:
+            total_pages = (len(options) + page_size - 1) // page_size
+            start = page * page_size
+            page_items = options[start:start + page_size]
+            term_width = shutil.get_terminal_size(fallback=(120, 24)).columns
 
-        click.echo("")
-        click.echo(title)
-        if show_page_indicator and total_pages > 1:
-            click.echo(f"Page {page + 1}/{total_pages}")
-        for idx, option in enumerate(page_items):
-            left = f"  {idx + 1}) {option}"
-            global_idx = start + idx
-            if option_right_labels and global_idx < len(option_right_labels):
-                right = click.style(option_right_labels[global_idx], dim=True)
-                pad = term_width - visible_length(left) - visible_length(right)
-                if pad >= 2:
-                    line = f"{left}{' ' * pad}{right}"
+            _ = consume_resize_pending()
+
+            if _SCREEN_WRITE_ENABLED and is_tty:
+                # Full-screen redraw mode: clear screen and return cursor to home.
+                click.echo("\x1b[2J\x1b[H", nl=False)
+
+            click.echo("")
+            click.echo(title)
+            if show_page_indicator and total_pages > 1:
+                click.echo(f"Page {page + 1}/{total_pages}")
+            for idx, option in enumerate(page_items):
+                left = f"  {idx + 1}) {option}"
+                global_idx = start + idx
+                if option_right_labels and global_idx < len(option_right_labels):
+                    right = click.style(option_right_labels[global_idx], dim=True)
+                    pad = term_width - visible_length(left) - visible_length(right)
+                    if pad >= 2:
+                        line = f"{left}{' ' * pad}{right}"
+                    else:
+                        line = left
+                elif repeat_choice_right:
+                    right = click.style(f"[{idx + 1}]", dim=True)
+                    pad = term_width - visible_length(left) - visible_length(right)
+                    if pad >= 2:
+                        line = f"{left}{' ' * pad}{right}"
+                    else:
+                        line = left
                 else:
                     line = left
-            elif repeat_choice_right:
-                right = click.style(f"[{idx + 1}]", dim=True)
-                pad = term_width - visible_length(left) - visible_length(right)
-                if pad >= 2:
-                    line = f"{left}{' ' * pad}{right}"
+
+                if selected_option_index is not None and global_idx == selected_option_index and selected_option_bg:
+                    line = apply_background_preserving_styles(line, selected_option_bg)
+                elif zebra and (idx % 2 == 1):
+                    line = apply_background_preserving_styles(
+                        line, zebra_bg if zebra_bg is not None else ZEBRA_BG
+                    )
+
+                click.echo(line)
+
+            if footer_legend is not None:
+                keys_line = footer_legend
+            else:
+                if allow_paging_nav:
+                    keys_line = (
+                        f"keys: 1-9 select | {MENU_PREV}=prev | {MENU_NEXT}=next | {MENU_UP}=up | {MENU_QUIT}=quit"
+                    )
                 else:
-                    line = left
-            else:
-                line = left
+                    keys_line = f"keys: 1-9 select | {MENU_UP}=up | {MENU_QUIT}=quit"
+                if extra_key:
+                    extra_help = extra_key_help if extra_key_help else "action"
+                    keys_line = f"{keys_line} | {extra_key}={extra_help}"
+                if extra_keys:
+                    for key, ret in extra_keys.items():
+                        help_text = (extra_keys_help or {}).get(key, ret)
+                        keys_line = f"{keys_line} | {key}={help_text}"
+            click.echo(keys_line)
+            click.echo("choice: ", nl=False)
+            raw_choice = click.getchar()
+            choice = raw_choice.strip()
+            click.echo(choice)
 
-            if selected_option_index is not None and global_idx == selected_option_index and selected_option_bg:
-                line = apply_background_preserving_styles(line, selected_option_bg)
-            elif zebra and (idx % 2 == 1):
-                line = apply_background_preserving_styles(
-                    line, zebra_bg if zebra_bg is not None else ZEBRA_BG
-                )
+            if not choice:
+                continue
+            if choice == "\x03":
+                raise click.Abort()
+            if choice.lower() == MENU_QUIT:
+                return None
+            if choice.lower() == MENU_UP:
+                return "up"
+            if extra_key and choice == extra_key:
+                return extra_key_return
+            if extra_key and choice.lower() == extra_key.lower():
+                return extra_key_return
+            if extra_keys and choice in extra_keys:
+                return extra_keys[choice]
+            if extra_keys and choice.lower() in extra_keys:
+                return extra_keys[choice.lower()]
 
-            click.echo(line)
-
-        if footer_legend is not None:
-            keys_line = footer_legend
-        else:
-            if allow_paging_nav:
-                keys_line = (
-                    f"keys: 1-9 select | {MENU_PREV}=prev | {MENU_NEXT}=next | {MENU_UP}=up | {MENU_QUIT}=quit"
-                )
-            else:
-                keys_line = f"keys: 1-9 select | {MENU_UP}=up | {MENU_QUIT}=quit"
-            if extra_key:
-                extra_help = extra_key_help if extra_key_help else "action"
-                keys_line = f"{keys_line} | {extra_key}={extra_help}"
-            if extra_keys:
-                for key, ret in extra_keys.items():
-                    help_text = (extra_keys_help or {}).get(key, ret)
-                    keys_line = f"{keys_line} | {key}={help_text}"
-        click.echo(keys_line)
-        click.echo("choice: ", nl=False)
-        raw_choice = click.getchar()
-        choice = raw_choice.strip()
-        click.echo(choice)
-
-        if not choice:
-            continue
-        if choice == "\x03":
-            raise click.Abort()
-        if choice.lower() == MENU_QUIT:
-            return None
-        if choice.lower() == MENU_UP:
-            return "up"
-        if extra_key and choice == extra_key:
-            return extra_key_return
-        if extra_key and choice.lower() == extra_key.lower():
-            return extra_key_return
-        if extra_keys and choice in extra_keys:
-            return extra_keys[choice]
-        if extra_keys and choice.lower() in extra_keys:
-            return extra_keys[choice.lower()]
-
-        if allow_paging_nav and choice.lower() == MENU_NEXT:
-            # Shift+N acts as reverse paging (previous page).
-            if choice.isupper():
-                if page > 0:
-                    page -= 1
-            elif page < total_pages - 1:
-                page += 1
-            continue
-        if allow_paging_nav and choice.lower() == MENU_PREV:
-            # Shift+P acts as reverse paging (next page).
-            if choice.isupper():
-                if page < total_pages - 1:
+            if allow_paging_nav and choice.lower() == MENU_NEXT:
+                # Shift+N acts as reverse paging (previous page).
+                if choice.isupper():
+                    if page > 0:
+                        page -= 1
+                elif page < total_pages - 1:
                     page += 1
-            elif page > 0:
-                page -= 1
-            continue
+                continue
+            if allow_paging_nav and choice.lower() == MENU_PREV:
+                # Shift+P acts as reverse paging (next page).
+                if choice.isupper():
+                    if page < total_pages - 1:
+                        page += 1
+                elif page > 0:
+                    page -= 1
+                continue
 
-        if choice.isdigit():
-            local_index = int(choice) - 1
-            if 0 <= local_index < len(page_items):
-                return start + local_index
+            if choice.isdigit():
+                local_index = int(choice) - 1
+                if 0 <= local_index < len(page_items):
+                    return start + local_index
 
-        click.echo("Invalid input. Use number or navigation keys.")
+            click.echo("Invalid input. Use number or navigation keys.")
+    finally:
+        consume_resize_pending()
+        if is_tty and hasattr(signal, "SIGWINCH") and previous_resize_handler is not None:
+            signal.signal(signal.SIGWINCH, previous_resize_handler)

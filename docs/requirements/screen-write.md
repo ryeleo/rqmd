@@ -3,7 +3,7 @@
 Scope: interactive menus, paginated views, and terminal rendering behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 7🔧 0✅ 0⛔ 1🗑️
+Summary: 2💡 8🔧 0✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UI-001: Screen-write rendering mode
@@ -59,7 +59,7 @@ Summary: 3💡 7🔧 0✅ 0⛔ 1🗑️
 - So that colors remain legible after mode switches or terminal resize; include a fallback to disable colorized redraw if contrast rules fail.
 
 ### RQMD-UI-008: Terminal resize handling
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟢 P3 - Low
 - As a rqmd user when the terminal is resized
 - I want rqmd to handle SIGWINCH gracefully and reflow the current view into the new dimensions without losing selection state or corrupting the scrollback buffer.
