@@ -6,10 +6,9 @@ import json
 from pathlib import Path
 
 from click.testing import CliRunner
+
 from rqmd.ai_cli import main as ai_main
 from rqmd.history import HistoryManager
-
-
 DOMAIN_V1 = """\
 # Demo Requirements
 

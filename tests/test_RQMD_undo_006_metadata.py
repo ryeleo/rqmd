@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 from click.testing import CliRunner
-
 from rqmd.cli import main as rqmd_main
 from rqmd.history import HistoryManager
 
