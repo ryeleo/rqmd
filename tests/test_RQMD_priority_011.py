@@ -6,15 +6,11 @@ from pathlib import Path
 import pytest
 import yaml
 from click.testing import CliRunner
-
 from rqmd.cli import main
 from rqmd.config import load_priorities_file
-from rqmd.priority_model import (
-    PRIORITY_ORDER,
-    configure_priority_catalog,
-    normalize_priority_input,
-    style_priority_label,
-)
+from rqmd.priority_model import (PRIORITY_ORDER, configure_priority_catalog,
+                                 normalize_priority_input,
+                                 style_priority_label)
 
 
 @pytest.fixture(autouse=True)

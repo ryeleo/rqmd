@@ -6,11 +6,13 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-
 from rqmd import cli
 from rqmd.config import load_config, load_statuses_file, validate_config
-from rqmd.status_model import (_STATUS_COLORS, configure_status_catalog,
-                               style_status_label)
+from rqmd.status_model import (
+    _STATUS_COLORS,
+    configure_status_catalog,
+    style_status_label,
+)
 
 
 def test_RQMD_portability_006_load_config_from_rqmd_json(tmp_path: Path) -> None:
