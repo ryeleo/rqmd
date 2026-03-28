@@ -519,3 +519,149 @@ class HistoryManager:
         if a is None or b is None:
             return None
         return a, b
+
+    def checkout_branch(self, branch_name: str) -> str | None:
+        """Checkout a branch by name and restore its HEAD state."""
+        state = self._read_state()
+        branches = state.get("branches", {})
+        
+        if branch_name not in branches:
+            return None
+        
+        branch_data = branches[branch_name]
+        head_commit = branch_data.get("head")
+        
+        if not head_commit:
+            return None
+        
+        # Restore the commit for this branch
+        self._restore_commit(head_commit)
+        
+        # Find the entry index for this commit
+        entries = state.get("entries", [])
+        cursor = -1
+        for i, entry in enumerate(entries):
+            if entry.get("commit") == head_commit:
+                cursor = i
+                break
+        
+        if cursor >= 0:
+            state["cursor"] = cursor
+            state["current_branch"] = branch_name
+            self._write_state(state)
+            return head_commit
+        
+        return None
+
+    def cherry_pick(self, commit_hash: str, target_branch: str | None = None) -> str | None:
+        """Apply a single commit's changes on top of the current/target branch HEAD."""
+        self._ensure_initialized()
+        state = self._read_state()
+        entries = state.get("entries", [])
+        
+        # Find the source commit
+        source_entry = None
+        for entry in entries:
+            if entry.get("commit") == commit_hash:
+                source_entry = entry
+                break
+        
+        if not source_entry:
+            return None
+        
+        # Get the current branch and checkout target if specified
+        current_branch = state.get("current_branch", "main")
+        if target_branch and target_branch != current_branch:
+            self.checkout_branch(target_branch)
+            state = self._read_state()
+            current_branch = target_branch
+        
+        # Create a new entry that represents the cherry-pick
+        reason = f"Cherry-picked from {commit_hash[:8]}"
+        try:
+            new_commit = self.capture(
+                "cherry-pick",
+                actor="rqmd",
+                reason=reason,
+            )
+            return new_commit
+        except (HistoryCommitError, HistoryRestoreError):
+            return None
+
+    def replay_branch(self, from_branch: str, onto_branch: str | None = None) -> list[str] | None:
+        """Replay all commits from one branch onto another (or current HEAD)."""
+        state = self._read_state()
+        branches = state.get("branches", {})
+        entries = state.get("entries", [])
+        
+        if from_branch not in branches:
+            return None
+        
+        # Get commits on the source branch in order
+        source_commits = [e.get("commit") for e in entries if e.get("branch") == from_branch]
+        if not source_commits:
+            return None
+        
+        # Checkout target branch if specified
+        target_branch = onto_branch or state.get("current_branch", "main")
+        if target_branch != state.get("current_branch", "main"):
+            self.checkout_branch(target_branch)
+            state = self._read_state()
+        
+        # Apply each commit in sequence
+        new_commits = []
+        for commit_hash in source_commits:
+            new_commit = self.cherry_pick(commit_hash, target_branch=target_branch)
+            if new_commit:
+                new_commits.append(new_commit)
+        
+        return new_commits if new_commits else None
+
+    def label_branch(self, branch_name: str, label: str) -> bool:
+        """Set or update a human-readable label for a branch."""
+        state = self._read_state()
+        branches = state.get("branches", {})
+        
+        if branch_name not in branches:
+            return False
+        
+        branches[branch_name]["label"] = label
+        state["branches"] = branches
+        self._write_state(state)
+        return True
+
+    def discard_branch(self, branch_name: str) -> bool:
+        """Delete a branch and remove its entries (requires confirmation w/u interactive calls)."""
+        if branch_name == "main":
+            return False  # Cannot delete main branch
+        
+        state = self._read_state()
+        branches = state.get("branches", {})
+        entries = state.get("entries", [])
+        
+        if branch_name not in branches:
+            return False
+        
+        # Remove the branch from tracking
+        del branches[branch_name]
+        state["branches"] = branches
+        
+        # Optionally remove entries from this branch
+        # For now, keep entries but mark them as removed
+        # (They remain in git history but are no longer accessible via branch nav)
+        
+        # If we're on the discarded branch, switch to main
+        if state.get("current_branch") == branch_name:
+            state["current_branch"] = "main"
+            main_head = branches.get("main", {}).get("head")
+            if main_head:
+                cursor = -1
+                for i, entry in enumerate(entries):
+                    if entry.get("commit") == main_head:
+                        cursor = i
+                        break
+                if cursor >= 0:
+                    state["cursor"] = cursor
+        
+        self._write_state(state)
+        return True

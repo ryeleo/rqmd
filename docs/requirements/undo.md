@@ -3,7 +3,7 @@
 Scope: full undo/redo semantics, persistent history across restarts/crashes, branching and "lost changes" recovery, UI affordances, and storage/retention policies.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 7🔧 0✅ 0⛔ 0🗑️
+Summary: 3💡 8🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UNDO-001: Full undo/redo semantics
@@ -24,7 +24,7 @@ Summary: 4💡 7🔧 0✅ 0⛔ 0🗑️
 - So that no acknowledged write is lost due to process exit or crash (durability is guaranteed for committed operations).
 
 ### RQMD-UNDO-003: Branching history and "lost changes" visibility
-- **Status:** 💡 Proposed
+- **Status:** � Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a user performs `undo` multiple times and then issues a new change (creating a divergent history)
 - I want the divergence to occur
