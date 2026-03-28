@@ -89,6 +89,7 @@ from .config import (
     load_config,
     load_priorities_file,
     load_statuses_file,
+    load_user_config,
     validate_config,
 )
 from .constants import (
@@ -592,6 +593,12 @@ def shell_complete_target_tokens(
     help="Open interactive file/requirement/status flow after summary table.",
 )
 @click.option(
+    "--screen-write/--no-screen-write",
+    "screen_write",
+    default=None,
+    help="Enable or disable full-screen redraw mode in interactive menus (default: enabled when TTY).",
+)
+@click.option(
     "-u",
     "--filesystem-order",
     "unsorted",
@@ -897,6 +904,7 @@ def main(
     verbose: bool,
     emoji_columns: bool,
     interactive: bool,
+    screen_write: bool | None,
     unsorted: bool,
     set_requirement_id: str | None,
     set_status: str | None,
@@ -990,6 +998,26 @@ def main(
         sort_strategy = config["sort_strategy"]
     if state_dir == "system-temp" and "state_dir" in config:
         state_dir = config["state_dir"]
+
+    # Resolve screen-write mode precedence: CLI > project config > user config > TTY default.
+    user_config = load_user_config()
+
+    def _coerce_bool(value: object) -> bool | None:
+        return value if isinstance(value, bool) else None
+
+    if screen_write is not None:
+        screen_write_enabled = bool(screen_write)
+    else:
+        project_screen_write = _coerce_bool(config.get("screen_write"))
+        user_screen_write = _coerce_bool(user_config.get("screen_write"))
+        if project_screen_write is not None:
+            screen_write_enabled = project_screen_write
+        elif user_screen_write is not None:
+            screen_write_enabled = user_screen_write
+        else:
+            screen_write_enabled = sys.stdout.isatty()
+
+    menus_mod.set_screen_write_enabled(screen_write_enabled)
 
     # Resolve interactive zebra striping color from theme detection.
     from .theme import detect_theme, resolve_zebra_bg

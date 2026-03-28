@@ -32,6 +32,19 @@ from .constants import (
     ZEBRA_BG,
 )
 
+_SCREEN_WRITE_ENABLED = False
+
+
+def set_screen_write_enabled(enabled: bool) -> None:
+    """Enable or disable full-screen redraw behavior for interactive menus."""
+    global _SCREEN_WRITE_ENABLED
+    _SCREEN_WRITE_ENABLED = bool(enabled)
+
+
+def get_screen_write_enabled() -> bool:
+    """Return whether full-screen redraw behavior is enabled."""
+    return _SCREEN_WRITE_ENABLED
+
 
 def visible_length(text: str) -> int:
     """Calculate the visible display width of a string, accounting for ANSI codes and wide characters.
@@ -198,6 +211,10 @@ def select_from_menu(
         start = page * page_size
         page_items = options[start:start + page_size]
         term_width = shutil.get_terminal_size(fallback=(120, 24)).columns
+
+        if _SCREEN_WRITE_ENABLED and sys.stdout.isatty():
+            # Full-screen redraw mode: clear screen and return cursor to home.
+            click.echo("\x1b[2J\x1b[H", nl=False)
 
         click.echo("")
         click.echo(title)

@@ -297,6 +297,7 @@ def validate_config(config: dict[str, Any]) -> None:
         "id_prefix",
         "sort_strategy",
         "state_dir",
+        "screen_write",
         # Unified config can also carry rollup definitions consumed elsewhere.
         "rollup_map",
         "rollup_equations",
@@ -319,3 +320,5 @@ def validate_config(config: dict[str, Any]) -> None:
         raise ValueError("Config key 'sort_strategy' must be a string")
     if "state_dir" in config and not isinstance(config["state_dir"], str):
         raise ValueError("Config key 'state_dir' must be a string")
+    if "screen_write" in config and not isinstance(config["screen_write"], bool):
+        raise ValueError("Config key 'screen_write' must be a boolean")

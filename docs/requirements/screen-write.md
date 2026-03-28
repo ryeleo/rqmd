@@ -3,7 +3,7 @@
 Scope: interactive menus, paginated views, and terminal rendering behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 10💡 0🔧 0✅ 0⛔ 1🗑️
+Summary: 9💡 1🔧 0✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UI-001: Screen-write rendering mode
@@ -15,7 +15,7 @@ Summary: 10💡 0🔧 0✅ 0⛔ 1🗑️
 - So that the interactive experience avoids confusing scrollback artifacts and preserves layout across refreshes.
 
 ### RQMD-UI-002: Explicit `--screen-write` toggle and config precedence
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟢 P3 - Low
 - As a rqmd user when launching the tool
 - I want a CLI flag `--screen-write` and a configuration option `screen_write: true|false` in project/user config

@@ -62,9 +62,16 @@ def test_RQMD_portability_006_validate_config_allows_known_keys(tmp_path: Path) 
         "id_prefix": "AC",
         "sort_strategy": "status-focus",
         "state_dir": ".rqmd/state",
+        "screen_write": True,
     }
     # Should not raise
     validate_config(config)
+
+
+def test_RQMD_portability_006_validate_config_type_checks_screen_write() -> None:
+    config = {"screen_write": "yes"}
+    with pytest.raises(ValueError, match="screen_write.*must be a boolean"):
+        validate_config(config)
 
 
 def test_RQMD_portability_006_validate_config_rejects_unknown_keys(tmp_path: Path) -> None:
