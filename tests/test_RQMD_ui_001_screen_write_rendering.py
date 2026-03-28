@@ -9,10 +9,9 @@ Verify that full-screen ANSI redraw behavior works correctly:
 
 import io
 import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
-
 from rqmd import menus as menus_mod
 
 

@@ -8,10 +8,9 @@ or when the terminal lacks ANSI capability.
 
 import io
 import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
-
 from rqmd import menus as menus_mod
 
 
