@@ -12,9 +12,15 @@ from __future__ import annotations
 
 import click
 
-from .constants import (ANSI_ESCAPE_PATTERN, ANSI_RESET, NON_ALNUM_PATTERN,
-                        NON_ALNUM_PREFIX_PATTERN, PRIORITY_ALIASES,
-                        PRIORITY_ORDER, PRIORITY_PARSE_ALIASES)
+from .constants import (
+    ANSI_ESCAPE_PATTERN,
+    ANSI_RESET,
+    NON_ALNUM_PATTERN,
+    NON_ALNUM_PREFIX_PATTERN,
+    PRIORITY_ALIASES,
+    PRIORITY_ORDER,
+    PRIORITY_PARSE_ALIASES,
+)
 
 _DEFAULT_PRIORITY_ORDER = list(PRIORITY_ORDER)
 _DEFAULT_PRIORITY_ALIASES: dict[str, str] = dict(PRIORITY_ALIASES)

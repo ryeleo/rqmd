@@ -9,8 +9,8 @@ This module provides:
 
 from __future__ import annotations
 
-import shutil
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -22,9 +22,10 @@ except ImportError:
     sys.exit(1)
 
 from .constants import DEFAULT_ID_PREFIXES, LINK_ITEM_PATTERN, LINKS_HEADER_PATTERN
-from .req_parser import extract_requirement_block, find_requirement_by_id
 from .markdown_io import scope_and_body_from_file
 from .priority_model import coerce_priority_label
+from .req_parser import extract_requirement_block, find_requirement_by_id
+from .req_parser import extract_requirement_block, find_requirement_by_id
 from .status_model import normalize_status_input
 from .summary import process_file
 

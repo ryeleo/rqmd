@@ -15,13 +15,21 @@ import re
 from functools import lru_cache
 from pathlib import Path
 
-from .constants import (BLOCKED_REASON_PATTERN, DEFAULT_ID_PREFIXES,
-                        DEPRECATED_REASON_PATTERN, FLAGGED_PATTERN,
-                        GENERIC_REQUIREMENT_HEADER_PATTERN,
-                        H2_SUBSECTION_PATTERN, ID_PREFIX_PATTERN,
-                        LINK_ITEM_PATTERN, LINKS_HEADER_PATTERN,
-                        MARKDOWN_LINK_PATTERN, PRIORITY_PATTERN,
-                        REQUIREMENTS_INDEX_NAME, STATUS_PATTERN)
+from .constants import (
+    BLOCKED_REASON_PATTERN,
+    DEFAULT_ID_PREFIXES,
+    DEPRECATED_REASON_PATTERN,
+    FLAGGED_PATTERN,
+    GENERIC_REQUIREMENT_HEADER_PATTERN,
+    H2_SUBSECTION_PATTERN,
+    ID_PREFIX_PATTERN,
+    LINK_ITEM_PATTERN,
+    LINKS_HEADER_PATTERN,
+    MARKDOWN_LINK_PATTERN,
+    PRIORITY_PATTERN,
+    REQUIREMENTS_INDEX_NAME,
+    STATUS_PATTERN,
+)
 from .priority_model import coerce_priority_label
 from .status_model import coerce_status_label
 
