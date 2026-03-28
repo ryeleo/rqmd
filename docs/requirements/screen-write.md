@@ -3,7 +3,7 @@
 Scope: interactive menus, paginated views, and terminal rendering behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 7💡 3🔧 0✅ 0⛔ 1🗑️
+Summary: 4💡 6🔧 0✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UI-001: Screen-write rendering mode
@@ -30,7 +30,7 @@ Summary: 7💡 3🔧 0✅ 0⛔ 1🗑️
 - So that scripts, CI, and terminals without `clear`/ANSI support remain functional and deterministic.
 
 ### RQMD-UI-004: Minimal-diff redraw semantics
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟢 P3 - Low
 - As a rqmd developer working on performance
 - I want the screen-write implementation to support minimal-diff updates (only redraw changed regions when feasible)
@@ -38,14 +38,14 @@ Summary: 7💡 3🔧 0✅ 0⛔ 1🗑️
 - Implementation note: implement a simple row-diff strategy first, with fallbacks to full `clear` + re-render when diffing is disabled or not supported.
 
 ### RQMD-UI-005: Pagination and stable cursor semantics
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟢 P3 - Low
 - As a rqmd user navigating pages or lists
 - I want the UI to maintain a stable cursor/selection position across page changes and re-renders
 - So that pressing `n`, `p`, `s`, or `d` results in predictable focus and selection, and the visible window always centers around the active selection where appropriate.
 
 ### RQMD-UI-006: Footer legend and transient notifications area
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟢 P3 - Low
 - As a rqmd user in interactive mode
 - I want a reserved footer region for the standardized legend and short transient messages (e.g., detection source, errors)

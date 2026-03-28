@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added full-screen ANSI redraw behavior for interactive menus when `--screen-write` is enabled or configured; includes clear + home cursor escapes on each render and pagination for snappy, stable visual updates without scrollback artifacts (RQMD-UI-001).
 - Added `--screen-write/--no-screen-write` with `screen_write` config support and precedence resolution (CLI > project config > user config > TTY default) for interactive rendering mode selection (RQMD-UI-002).
 - Added automatic fallback to scrolling/append-style output for non-TTY environments (scripts, CI, piped output, file redirects); screen-write mode respects `sys.stdout.isatty()` check to ensure no ANSI escapes in non-interactive contexts (RQMD-UI-003).
+- Added reserved footer region for standardized legend and transient notification messages in interactive menus; `footer_legend` parameter allows custom key-mapping displays (e.g., `d=[asc|dsc]`) that reliably persist across renders and pagination without shifting menu content (RQMD-UI-006).
+- Added stable cursor/selection position maintenance across pagination and re-renders in interactive menus; `selected_option_index` parameter with optional `selected_option_bg` highlighting ensures predictable focus across n/p key navigation and page transitions (RQMD-UI-005).
 
 ### Changed
 
