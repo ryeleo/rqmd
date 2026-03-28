@@ -3,7 +3,7 @@
 Scope: full undo/redo semantics, persistent history across restarts/crashes, branching and "lost changes" recovery, UI affordances, and storage/retention policies.
 
 <!-- acceptance-status-summary:start -->
-Summary: 9💡 2🔧 0✅ 0⛔ 0🗑️
+Summary: 8💡 3🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UNDO-001: Full undo/redo semantics
@@ -81,7 +81,7 @@ Summary: 9💡 2🔧 0✅ 0⛔ 0🗑️
 - So that defaults are conservative (retain 90 days or last 1000 entries) with project and user overrides.
 
 ### RQMD-UNDO-009: Programmatic API and automation
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when CI/automation users may need to inspect or replay history non-interactively
 - I want automation to invoke history APIs
