@@ -4,19 +4,13 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from rqmd.req_parser import parse_requirements
 from rqmd.status_update import (
     _add_link_to_file,
     _remove_link_from_file,
     prompt_for_links_flow,
 )
-from rqmd.workflows import _build_requirement_field_menu, ENTRY_FIELDS
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+from rqmd.workflows import ENTRY_FIELDS, _build_requirement_field_menu
 
 def _make_req_file(tmp_path: Path, body: str) -> Path:
     p = tmp_path / "domain.md"

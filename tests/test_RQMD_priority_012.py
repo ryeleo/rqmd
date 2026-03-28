@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 from click.testing import CliRunner
-
 from rqmd.req_parser import parse_domain_priority_metadata
 
 
