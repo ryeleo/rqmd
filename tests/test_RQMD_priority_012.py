@@ -5,7 +5,7 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from src.rqmd.req_parser import parse_domain_priority_metadata
+from rqmd.req_parser import parse_domain_priority_metadata
 
 
 class TestParseDomainPriorityMetadata:
@@ -92,7 +92,7 @@ class TestParseDomainPriorityMetadata:
 
 class TestDomainPriorityInExport:
     def test_domain_priority_in_ai_export(self, tmp_path: Path):
-        from src.rqmd.ai_cli import main as ai_main
+        from rqmd.ai_cli import main as ai_main
 
         req_dir = tmp_path / "docs" / "requirements"
         req_dir.mkdir(parents=True)
@@ -115,7 +115,7 @@ class TestDomainPriorityInExport:
         assert file_entry["domain_priority"] == "🟠 P1 - High"
 
     def test_no_domain_priority_absent_from_export(self, tmp_path: Path):
-        from src.rqmd.ai_cli import main as ai_main
+        from rqmd.ai_cli import main as ai_main
 
         req_dir = tmp_path / "docs" / "requirements"
         req_dir.mkdir(parents=True)
@@ -137,7 +137,7 @@ class TestDomainPriorityInExport:
         assert "domain_priority" not in file_entry
 
     def test_sub_section_priorities_in_export(self, tmp_path: Path):
-        from src.rqmd.ai_cli import main as ai_main
+        from rqmd.ai_cli import main as ai_main
 
         req_dir = tmp_path / "docs" / "requirements"
         req_dir.mkdir(parents=True)

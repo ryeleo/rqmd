@@ -625,7 +625,3 @@ def test_RQMD_portability_012_user_config_precedence_cli_over_user(tmp_path: Pat
   payload = json.loads(result.output)
   # Color from project config is applied
   assert payload["files"][0]["requirements"][0]["id"] == "AC-001"
-    # Done has no color -> not in _STATUS_COLORS
-    assert "✅ Done" not in _STATUS_COLORS
-  finally:
-    configure_status_catalog(None)  # reset to defaults

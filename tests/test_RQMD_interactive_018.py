@@ -3,7 +3,7 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from src.rqmd.status_update import print_criterion_panel
+from rqmd.status_update import print_criterion_panel
 
 _TERM_SIZE = MagicMock(columns=120)
 
@@ -14,8 +14,8 @@ def _capture_panel(domain_file, requirement, repo_root):
     def fake_echo(msg="", **kwargs):
         output_lines.append(str(msg))
 
-    with patch("src.rqmd.status_update.click.echo", side_effect=fake_echo):
-        with patch("src.rqmd.status_update.shutil.get_terminal_size",
+    with patch("rqmd.status_update.click.echo", side_effect=fake_echo):
+        with patch("rqmd.status_update.shutil.get_terminal_size",
                    return_value=_TERM_SIZE):
             print_criterion_panel(domain_file, requirement, repo_root)
 
