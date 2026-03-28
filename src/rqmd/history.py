@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+HISTORY_ROOT_RELATIVE = Path(".rqmd/history")
 HISTORY_REPO_RELATIVE = HISTORY_ROOT_RELATIVE / "rqmd-history"
 STATE_FILE_RELATIVE = HISTORY_ROOT_RELATIVE / "state.json"
 CATALOG_DIRNAME = "catalog"
@@ -72,10 +73,12 @@ class HistoryManager:
 
     def _default_state(self) -> dict[str, Any]:
         return {
-            "version": "1.0",
+            "version": "2.0",
             "requirements_dir": self.requirements_dir.as_posix(),
             "entries": [],
             "cursor": -1,
+            "branches": {"main": {"head": None, "label": "Main timeline"}},
+            "current_branch": "main",
         }
 
     def _write_state(self, state: dict[str, Any]) -> None:
@@ -288,9 +291,25 @@ class HistoryManager:
         state = self._read_state()
         entries = list(state.get("entries", []))
         cursor = int(state.get("cursor", -1))
-        if cursor < len(entries) - 1:
+        
+        # Detect divergence: if cursor < len(entries)-1, we're branching from an old point
+        diverging = cursor < len(entries) - 1
+        parent_commit: str | None = None
+        branch_point_commit: str | None = None
+        new_branch: str | None = None
+        
+        if diverging:
+            # Save the old branch head before truncating
+            if entries:
+                branch_point_commit = str(entries[cursor]["commit"])
+                parent_commit = str(entries[cursor]["commit"])
             entries = entries[: cursor + 1]
-
+            # Generate new branch name
+            timestamp_label = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+            new_branch = f"recovery-{timestamp_label}"
+        else:
+            parent_commit = str(entries[cursor]["commit"]) if entries else None
+        
         snapshot_files = self._replace_catalog_snapshot()
         entry_path = self.repo_dir / "entry.json"
         entry_payload = {
@@ -306,19 +325,33 @@ class HistoryManager:
         self._git("commit", "--allow-empty", "-m", self._build_commit_message(command, actor, reason, snapshot_files))
         commit_hash = self._git("rev-parse", "HEAD").stdout.strip()
 
-        entries.append(
-            {
-                "commit": commit_hash,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "command": command,
-                "actor": actor,
-                "reason": reason,
-                "files": snapshot_files,
-            }
-        )
+        new_entry: dict[str, Any] = {
+            "commit": commit_hash,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "command": command,
+            "actor": actor,
+            "reason": reason,
+            "files": snapshot_files,
+            "parent_commit": parent_commit,
+            "branch": "main" if not new_branch else new_branch,
+            "branch_point": branch_point_commit,
+        }
+        entries.append(new_entry)
         state["entries"] = entries
         state["cursor"] = len(entries) - 1
         state["requirements_dir"] = self.requirements_dir.as_posix()
+        state.setdefault("branches", {})
+        state.setdefault("current_branch", "main")
+        
+        # Track branch heads in state
+        if new_branch:
+            state["branches"][new_branch] = {"head": commit_hash, "label": f"Alternate timeline starting at {timestamp_label}"}
+            state["current_branch"] = new_branch
+        else:
+            current_branch = state.get("current_branch", "main")
+            state["branches"][current_branch]["head"] = commit_hash
+        
+        state.setdefault("version", "2.0")
         self._write_state(state)
         return commit_hash
 
@@ -351,3 +384,55 @@ class HistoryManager:
         state["cursor"] = cursor
         self._write_state(state)
         return commit_hash
+
+    def get_timeline_graph(self) -> dict[str, Any]:
+        """Reconstruct the DAG of history entries with branch information."""
+        state = self._read_state()
+        entries = state.get("entries", [])
+        branches = state.get("branches", {})
+        cursor = int(state.get("cursor", -1))
+        current_branch = state.get("current_branch", "main")
+        
+        # Build nodes indexed by commit hash
+        nodes: dict[str, dict[str, Any]] = {}
+        for index, entry in enumerate(entries):
+            commit = str(entry.get("commit", ""))
+            nodes[commit] = {
+                "entry_index": index,
+                "commit": commit,
+                "timestamp": entry.get("timestamp"),
+                "command": entry.get("command"),
+                "actor": entry.get("actor"),
+                "reason": entry.get("reason"),
+                "branch": entry.get("branch", "main"),
+                "parent_commit": entry.get("parent_commit"),
+                "branch_point": entry.get("branch_point"),
+                "is_current_head": index == cursor,
+            }
+        
+        return {
+            "nodes": nodes,
+            "branches": branches,
+            "current_branch": current_branch,
+            "cursor": cursor,
+            "entries_count": len(entries),
+        }
+
+    def get_branches(self) -> dict[str, Any]:
+        """Return a summary of all tracked branches."""
+        state = self._read_state()
+        branches = state.get("branches", {})
+        current_branch = state.get("current_branch", "main")
+        entries = state.get("entries", [])
+        
+        branches_info: dict[str, dict[str, Any]] = {}
+        for branch_name, branch_data in branches.items():
+            head_commit = branch_data.get("head")
+            entries_on_branch = [e for e in entries if e.get("branch") == branch_name]
+            branches_info[branch_name] = {
+                "label": branch_data.get("label", branch_name),
+                "head": head_commit,
+                "entry_count": len(entries_on_branch),
+                "is_current": branch_name == current_branch,
+            }
+        return branches_info

@@ -3,7 +3,7 @@
 Scope: branch-aware temporal navigation, historical inspection, detached point-in-time views, replay from past states, and timeline-oriented UX for requirement catalogs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 8💡 2🔧 0✅ 0⛔ 0🗑️
+Summary: 7💡 3🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-TIME-001: Point-in-time catalog browsing
@@ -15,7 +15,7 @@ Summary: 8💡 2🔧 0✅ 0⛔ 0🗑️
 - So that the user can inspect files, requirement statuses, reasons, and summaries exactly as recorded for that historical point.
 
 ### RQMD-TIME-002: Branch-aware historical timeline
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when history may diverge into multiple branches after undo, replay, or alternate edits
 - I want rqmd to render timeline history

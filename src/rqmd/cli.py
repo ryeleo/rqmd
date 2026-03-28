@@ -77,104 +77,53 @@ except ImportError:
 
 from . import menus as menus_mod
 from . import workflows as workflows_mod
-from .batch_inputs import (
-    parse_batch_update_csv,
-    parse_batch_update_file,
-    parse_batch_update_jsonl,
-    parse_set_entry,
-    parse_set_flagged_entry,
-    parse_set_priority_entry,
-)
-from .config import (
-    load_config,
-    load_priorities_file,
-    load_statuses_file,
-    load_user_config,
-    validate_config,
-)
-from .constants import (
-    DEFAULT_ID_PREFIXES,
-    DEFAULT_REQUIREMENTS_DIR,
-    ID_PREFIX_PATTERN,
-    JSON_SCHEMA_VERSION,
-    STATUS_ORDER,
-    STATUS_PATTERN,
-    SUMMARY_END,
-    SUMMARY_START,
-)
+from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
+                           parse_batch_update_jsonl, parse_set_entry,
+                           parse_set_flagged_entry, parse_set_priority_entry)
+from .config import (load_config, load_priorities_file, load_statuses_file,
+                     load_user_config, validate_config)
+from .constants import (DEFAULT_ID_PREFIXES, DEFAULT_REQUIREMENTS_DIR,
+                        ID_PREFIX_PATTERN, JSON_SCHEMA_VERSION, STATUS_ORDER,
+                        STATUS_PATTERN, SUMMARY_END, SUMMARY_START)
 from .history import HistoryManager, HistoryRestoreError
-from .markdown_io import (
-    auto_detect_requirements_dir,
-    check_files_writable,
-    check_index_sync,
-    discover_project_root,
-    display_name_from_h1,
-    format_path_display,
-    initialize_requirements_scaffold,
-    iter_domain_files,
-    iter_requirements_search_roots,
-    parse_index_links,
-    resolve_requirements_dir,
-    validate_files_readable,
-)
+from .markdown_io import (auto_detect_requirements_dir, check_files_writable,
+                          check_index_sync, discover_project_root,
+                          display_name_from_h1, format_path_display,
+                          initialize_requirements_scaffold, iter_domain_files,
+                          iter_requirements_search_roots, parse_index_links,
+                          resolve_requirements_dir, validate_files_readable)
 from .menus import select_from_menu
-from .priority_model import configure_priority_catalog, normalize_priority_input
-from .req_parser import (
-    collect_requirements_by_filters,
-    collect_requirements_by_flagged,
-    collect_requirements_by_links,
-    collect_requirements_by_priority,
-    collect_requirements_by_status,
-    collect_requirements_by_sub_domain,
-    find_requirement_by_id,
-    normalize_id_prefixes,
-    parse_requirements,
-    resolve_id_prefixes,
-)
+from .priority_model import (configure_priority_catalog,
+                             normalize_priority_input)
+from .req_parser import (collect_requirements_by_filters,
+                         collect_requirements_by_flagged,
+                         collect_requirements_by_links,
+                         collect_requirements_by_priority,
+                         collect_requirements_by_status,
+                         collect_requirements_by_sub_domain,
+                         find_requirement_by_id, normalize_id_prefixes,
+                         parse_requirements, resolve_id_prefixes)
 from .rollup_config import compute_rollup_column_values, resolve_rollup_columns
-from .status_model import (
-    build_color_rollup_text,
-    configure_status_catalog,
-    normalize_status_input,
-    style_status_count,
-    style_status_label,
-)
-from .status_update import (
-    apply_status_change_by_id,
-    print_criterion_panel,
-    prompt_for_blocked_reason,
-    prompt_for_deprecated_reason,
-    update_criterion_status,
-)
-from .summary import (
-    UnknownStatusValueError,
-    build_summary_block,
-    build_summary_line,
-    build_summary_table,
-    collect_summary_rows,
-    count_statuses,
-    insert_or_replace_summary,
-    normalize_status_lines,
-    print_custom_rollup_table,
-    print_global_rollup_table,
-    print_summary_table,
-    process_file,
-)
-from .target_selection import (
-    complete_target_tokens,
-    parse_target_token_file,
-    resolve_target_tokens,
-)
-from .workflows import (
-    build_filtered_criteria_payload,
-    build_summary_payload,
-    build_targeted_criteria_payload,
-    print_criteria_list,
-    print_criteria_tree,
-)
-from .workflows import (
-    focused_target_interactive_loop as focused_target_interactive_loop_impl,
-)
+from .status_model import (build_color_rollup_text, configure_status_catalog,
+                           normalize_status_input, style_status_count,
+                           style_status_label)
+from .status_update import (apply_status_change_by_id, print_criterion_panel,
+                            prompt_for_blocked_reason,
+                            prompt_for_deprecated_reason,
+                            update_criterion_status)
+from .summary import (UnknownStatusValueError, build_summary_block,
+                      build_summary_line, build_summary_table,
+                      collect_summary_rows, count_statuses,
+                      insert_or_replace_summary, normalize_status_lines,
+                      print_custom_rollup_table, print_global_rollup_table,
+                      print_summary_table, process_file)
+from .target_selection import (complete_target_tokens, parse_target_token_file,
+                               resolve_target_tokens)
+from .workflows import (build_filtered_criteria_payload, build_summary_payload,
+                        build_targeted_criteria_payload)
+from .workflows import \
+    focused_target_interactive_loop as focused_target_interactive_loop_impl
+from .workflows import print_criteria_list, print_criteria_tree
 
 __all__ = [
     "SUMMARY_START",
@@ -638,15 +587,21 @@ def shell_complete_target_tokens(
     help="Non-interactive mode: reapply the next recorded catalog snapshot.",
 )
 @click.option(
-    "--dry-run",
+    "--timeline",
+    "show_timeline",
     is_flag=True,
-    help="Preview mutation changes without writing files (applies to --update/--update-file/--update-priority/--update-flagged/--seed-priorities).",
+    help="Display the history timeline showing branches and entry points (useful with --as-json for automation).",
 )
 @click.option(
     "--update-file",
     "set_file_input",
     type=str,
     help="Non-interactive batch mode: path to .jsonl/.csv/.tsv with rows containing requirement_id/requirement_id/id/req_id/r_id and status.",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Preview mutation changes without writing files (applies to --update/--update-file/--update-priority/--update-flagged/--seed-priorities).",
 )
 @click.option(
     "--rename-id-prefix",
@@ -924,6 +879,7 @@ def main(
     set_updates: tuple[str, ...],
     undo_last: bool,
     redo_last: bool,
+    show_timeline: bool,
     dry_run: bool,
     set_file_input: str | None,
     rename_id_prefix: str | None,
@@ -2118,10 +2074,11 @@ def main(
             + int(bool(set_requirement_id or set_status))
             + int(bool(undo_last))
             + int(bool(redo_last))
+            + int(bool(show_timeline))
         )
         if mode_count > 1:
             raise click.ClickException(
-                "Use exactly one non-interactive update mode: --undo, --redo, --update-file, --update ID=STATUS (repeatable), --update-priority ID=PRIORITY (repeatable), --update-flagged ID=true|false (repeatable), or --update-id with --update-status."
+                "Use exactly one non-interactive update mode: --undo, --redo, --timeline, --update-file, --update ID=STATUS (repeatable), --update-priority ID=PRIORITY (repeatable), --update-flagged ID=true|false (repeatable), or --update-id with --update-status."
             )
 
         if undo_last or redo_last:
@@ -2154,7 +2111,32 @@ def main(
                     click.echo(f"{verb} catalog to history commit {commit_hash}.")
             raise SystemExit(0)
 
-        update_requests: list[dict[str, object]] = []
+        if show_timeline:
+            history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
+            timeline_graph = history_manager.get_timeline_graph()
+            branches = history_manager.get_branches()
+            payload = {
+                "timeline": timeline_graph,
+                "branches": branches,
+            }
+            if json_output:
+                _emit_json_payload(payload)
+            else:
+                # Display timeline in human-readable format
+                click.echo("=== Timeline ===", err=False)
+                click.echo(f"Entries: {timeline_graph['entries_count']}", err=False)
+                click.echo(f"Current branch: {timeline_graph['current_branch']}", err=False)
+                click.echo(f"Current head: {timeline_graph['cursor']}", err=False)
+                click.echo("\n=== Branches ===", err=False)
+                for branch_name, branch_info in branches.items():
+                    marker = " (current)" if branch_info["is_current"] else ""
+                    click.echo(f"  {branch_name}: {branch_info['entry_count']} entries{marker}", err=False)
+                click.echo("\n=== Timeline Entries ===", err=False)
+                for commit, node in timeline_graph["nodes"].items():
+                    marker = " [HEAD]" if node["is_current_head"] else ""
+                    branch_label = f" ({node['branch']})" if node['branch'] != "main" else ""
+                    click.echo(f"  {node['entry_index']}: {node['command']}{branch_label}{marker}", err=False)
+            raise SystemExit(0)
         if set_updates:
             update_requests = [
                 {
