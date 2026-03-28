@@ -349,6 +349,7 @@ def _resolve_history_view(
     history_source = {
         "requested_ref": history_ref,
         "resolved_commit": resolved["commit"],
+        "stable_id": manager.build_stable_history_id(str(resolved["commit"])),
         "entry_index": resolved.get("entry_index"),
         "timestamp": resolved.get("timestamp"),
         "command": resolved.get("command"),
@@ -446,6 +447,7 @@ def _build_history_activity_payload(
     return {
         "entry": {
             "commit": resolved_entry.get("commit"),
+            "stable_id": manager.build_stable_history_id(str(resolved_entry.get("commit"))),
             "entry_index": entry_index,
             "timestamp": resolved_entry.get("timestamp"),
             "command": resolved_entry.get("command"),
@@ -457,11 +459,21 @@ def _build_history_activity_payload(
             "previous": {
                 "entry_index": entry_index - 1 if previous_entry is not None and entry_index is not None else None,
                 "commit": previous_entry.get("commit") if isinstance(previous_entry, dict) else None,
+                "stable_id": (
+                    manager.build_stable_history_id(str(previous_entry.get("commit")))
+                    if isinstance(previous_entry, dict) and previous_entry.get("commit")
+                    else None
+                ),
                 "timestamp": previous_entry.get("timestamp") if isinstance(previous_entry, dict) else None,
             },
             "next": {
                 "entry_index": entry_index + 1 if next_entry is not None and entry_index is not None else None,
                 "commit": next_entry.get("commit") if isinstance(next_entry, dict) else None,
+                "stable_id": (
+                    manager.build_stable_history_id(str(next_entry.get("commit")))
+                    if isinstance(next_entry, dict) and next_entry.get("commit")
+                    else None
+                ),
                 "timestamp": next_entry.get("timestamp") if isinstance(next_entry, dict) else None,
             },
         },
@@ -528,9 +540,11 @@ def _build_compare_payload(
                 unchanged_count += 1
 
     def _entry_summary(entry: dict[str, object]) -> dict[str, object]:
+        commit_value = str(entry.get("commit") or "")
         return {
             "entry_index": entry.get("entry_index"),
             "commit": entry.get("commit"),
+            "stable_id": manager.build_stable_history_id(commit_value) if commit_value else None,
             "timestamp": entry.get("timestamp"),
             "command": entry.get("command"),
             "reason": entry.get("reason"),
