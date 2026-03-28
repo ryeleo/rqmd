@@ -3,7 +3,7 @@
 Scope: full undo/redo semantics, persistent history across restarts/crashes, branching and "lost changes" recovery, UI affordances, and storage/retention policies.
 
 <!-- acceptance-status-summary:start -->
-Summary: 8💡 3🔧 0✅ 0⛔ 0🗑️
+Summary: 6💡 5🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UNDO-001: Full undo/redo semantics
@@ -16,7 +16,7 @@ Summary: 8💡 3🔧 0✅ 0⛔ 0🗑️
 - So that compound user actions (multi-file or multi-field updates performed by one command) are treated atomically for undo/redo.
 
 ### RQMD-UNDO-002: Persistent history across restarts and crashes
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when the application exits normally or crashes unexpectedly
 - I want to restart rqmd
@@ -88,7 +88,7 @@ Summary: 8💡 3🔧 0✅ 0⛔ 0🗑️
 - So that a machine-friendly interface is available (JSON output, programmatic commands) to list entries, export patches, and apply or revert specific entries.
 
 ### RQMD-UNDO-010: Tests and verification
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when the complexity of persistent undo and branching
 - I want to implement the system

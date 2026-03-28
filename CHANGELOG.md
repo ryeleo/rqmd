@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `rqmd --history` non-interactive history-log API output (text + JSON) including entry-indexed commits, stable IDs, branch metadata, head cursor, and undo/redo availability for automation flows (RQMD-UNDO-009).
 - Added `rqmd --undo` and `rqmd --redo` non-interactive catalog restoration commands backed by persistent snapshot history, including automatic baseline capture on the first rqmd mutation (RQMD-UNDO-001).
 - Added persistent hidden `.rqmd/history/rqmd-history` git-backed catalog snapshots plus on-disk cursor state (v2.0) with branch tracking for durable undo/redo recovery and branch-aware history across process restarts (RQMD-UNDO-005, RQMD-TIME-002).
+- Added restart-durability regression coverage for undo history persistence, validating that entries, cursor state, snapshot materialization, and undo/redo behavior survive `HistoryManager` reinitialization (RQMD-UNDO-002).
+- Added an undo verification matrix suite covering history log output, branch-aware timeline views, replay preview planning, and restart-based undo checks across multi-file divergent history fixtures (RQMD-UNDO-010).
 
 - Added `extract_blocking_id()` to `req_parser.py`; `blocking_id` and `blocked_reason` fields now appear in JSON exports from `rqmd` and `rqmd-ai` when a requirement is blocked by a linked or bare requirement ID (RQMD-CORE-022).
 - Added `parse_domain_priority_metadata()` to `req_parser.py`; `domain_priority` and `sub_section_priorities` fields now appear in JSON payloads when domain-level `**Priority:**` metadata is present (RQMD-PRIORITY-012).
@@ -57,6 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated requirement status to mark `RQMD-TIME-006` as Implemented (restore/replay/cherry-pick preview planning via `--history-action`).
 - Updated requirement status to mark `RQMD-TIME-010` as Implemented (temporal verification coverage matrix).
 - Updated requirement status to mark `RQMD-UNDO-009` as Implemented (programmatic history listing via `rqmd --history`).
+- Updated requirement status to mark `RQMD-UNDO-002` as Implemented (persistent history durability across restart/recovery flows).
+- Updated requirement status to mark `RQMD-UNDO-010` as Implemented (undo/history verification matrix coverage).
 
 - Switched requirements index layout from sibling requirements.md files to in-directory README.md files.
 - Updated rqmd auto-detection to use docs/requirements/README.md and requirements/README.md.
