@@ -1,4 +1,6 @@
-import subprocess, sys
+import subprocess
+import sys
+import sys
 
 # Get git status
 r = subprocess.run(['git', 'diff', '--name-only', 'HEAD'], 

@@ -182,6 +182,8 @@ print(f"\nWrote fixed file: {len(content)} chars")
 
 # Verify syntax
 import ast
+
+
 try:
     ast.parse(content)
     print("✓ Syntax OK!")
