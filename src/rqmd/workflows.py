@@ -597,6 +597,20 @@ def _prompt_for_history_entry_action(
             prune_now = choice == "G"
             stats = history_manager.get_storage_stats()
             prune_label = " with immediate prune" if prune_now else ""
+            save_label = click.confirm(
+                f"Save a named snapshot label for '{current_branch}' before history gc{prune_label}?",
+                default=False,
+                show_default=True,
+            )
+            if save_label:
+                label = click.prompt(
+                    f"Snapshot label for history branch '{current_branch}'",
+                    default=current_branch,
+                    show_default=True,
+                ).strip()
+                if label:
+                    history_manager.label_branch(current_branch, label)
+                    click.echo(f"Saved snapshot label '{label}' for history branch '{current_branch}'.")
             confirmed = click.confirm(
                 (
                     f"Run history garbage collection{prune_label}? "

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added interactive `l` and `x` history-browser actions for saving named branch labels and discarding alternate branches, including an explicit chance to save a snapshot label before destructive branch removal (progress toward RQMD-UNDO-007).
 - Added `rqmd --history-label-branch <name> --history-branch-label <label>` so automation can name alternate history branches without using the interactive browser (progress toward RQMD-UNDO-007).
 - Added `rqmd --history-discard-save-label <label>` so non-interactive branch discard flows can preserve a named snapshot label in the same command before branch navigation is removed (progress toward RQMD-UNDO-007).
+- Added `rqmd --history-gc-save-label <label>` plus matching interactive gc/prune save-label prompts so maintenance flows can preserve a named snapshot label before destructive history cleanup runs (progress toward RQMD-UNDO-007).
 - Added a pytest timeout guard (`timeout = 30`) plus a startup requirement for `pytest-timeout`, so interactive regressions fail fast instead of silently hanging when the timeout plugin is missing from the local test environment.
 - Updated local test and smoke-check commands to use `uv run --extra dev pytest ...`, matching the `pytest-timeout` requirement instead of relying on plain `uv run pytest`.
 - Added explicit selected-row arrow markers in interactive menus so the current status, priority, or flagged choice is obvious on first render even before any further navigation (RQMD-INTERACTIVE-006).

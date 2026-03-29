@@ -167,6 +167,8 @@ Inside the history browser, selecting an entry opens a detail view where you can
 - press `g` to run history gc with confirmation
 - press `G` to run history gc with immediate prune
 
+Both interactive gc actions can optionally save a human-readable label on the current history branch before maintenance runs.
+
 Long options also accept unique prefixes, so invocations such as `--proj`, `--docs`, and `--as-j` work when they resolve unambiguously.
 
 History operations available in non-interactive mode include:
@@ -177,6 +179,7 @@ History operations available in non-interactive mode include:
 - `uv run rqmd --redo`
 - `uv run rqmd --history-label-branch <branch-name> --history-branch-label <label>`
 - `uv run rqmd --history-discard-branch <branch-name> --history-discard-save-label <label> --force-yes`
+- `uv run rqmd --history-gc --history-gc-save-label <label> --force-yes`
 - `uv run rqmd --history-gc --force-yes`
 - `uv run rqmd --history-gc --history-prune-now --force-yes`
 - `uv run rqmd --history-checkout-branch <branch-name>`

@@ -179,6 +179,27 @@ def test_RQMD_undo_004_history_gc_requires_force_yes_non_interactive(tmp_path: P
     assert "requires confirmation" in result.output
 
 
+def test_RQMD_undo_004_history_gc_save_label_requires_history_gc(tmp_path: Path) -> None:
+    manager, _recovery_branch = _setup_divergent_history(tmp_path)
+    assert manager.get_branches()
+
+    runner = CliRunner()
+    result = runner.invoke(
+        rqmd_main,
+        [
+            "--project-root",
+            str(tmp_path),
+            "--docs-dir",
+            "docs/requirements",
+            "--history-gc-save-label",
+            "saved-snapshot",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "--history-gc-save-label requires --history-gc." in result.output
+
+
 def test_RQMD_undo_004_history_gc_succeeds_with_force_yes(tmp_path: Path) -> None:
     manager, _recovery_branch = _setup_divergent_history(tmp_path)
     before = manager.get_storage_stats()
@@ -207,3 +228,32 @@ def test_RQMD_undo_004_history_gc_succeeds_with_force_yes(tmp_path: Path) -> Non
     assert payload["before"]["count"] == before["count"]
     assert "count" in payload["after"]
     assert "packs" in payload["after"]
+
+
+def test_RQMD_undo_004_history_gc_can_save_label_first(tmp_path: Path) -> None:
+    manager, _recovery_branch = _setup_divergent_history(tmp_path)
+    before = manager.get_storage_stats()
+
+    runner = CliRunner()
+    result = runner.invoke(
+        rqmd_main,
+        [
+            "--project-root",
+            str(tmp_path),
+            "--docs-dir",
+            "docs/requirements",
+            "--history-gc",
+            "--history-gc-save-label",
+            "saved-snapshot",
+            "--force-yes",
+            "--as-json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["mode"] == "history-gc"
+    assert payload["saved_label"] == "saved-snapshot"
+    assert payload["ran"] is True
+    assert payload["cancelled"] is False
+    assert payload["before"]["count"] == before["count"]

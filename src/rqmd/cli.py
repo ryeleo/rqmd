@@ -903,6 +903,13 @@ def _filter_timeline_nodes(
     help="Run maintenance garbage collection on the hidden history repository (requires confirmation; use --force-yes for automation).",
 )
 @click.option(
+    "--history-gc-save-label",
+    "history_gc_save_label",
+    type=str,
+    default=None,
+    help="Optional label to save on the current history branch immediately before --history-gc runs.",
+)
+@click.option(
     "--history-prune-now",
     "history_prune_now",
     is_flag=True,
@@ -1286,6 +1293,7 @@ def main(
     history_label_branch: str | None,
     history_branch_label: str | None,
     history_gc: bool,
+    history_gc_save_label: str | None,
     history_prune_now: bool,
     history_checkout_branch: str | None,
     history_cherry_pick: str | None,
@@ -2501,6 +2509,8 @@ def main(
         )
     if history_discard_save_label and not history_discard_branch:
         raise click.ClickException("--history-discard-save-label requires --history-discard-branch.")
+    if history_gc_save_label and not history_gc:
+        raise click.ClickException("--history-gc-save-label requires --history-gc.")
     if history_label_branch and not history_branch_label:
         raise click.ClickException("--history-label-branch requires --history-branch-label.")
     if history_branch_label and not history_label_branch:
@@ -2584,6 +2594,7 @@ def main(
             history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
             confirmed = bool(confirm_yes)
             existing_stats = history_manager.get_storage_stats()
+            saved_label = None
             if not confirmed:
                 if not sys.stdin.isatty() or json_output:
                     raise click.ClickException(
@@ -2604,6 +2615,7 @@ def main(
                     "mode": "history-gc",
                     "ran": False,
                     "cancelled": True,
+                    "saved_label": None,
                     "prune_now": history_prune_now,
                     "before": existing_stats,
                     "after": existing_stats,
@@ -2614,11 +2626,26 @@ def main(
                     click.echo("History garbage collection cancelled.")
                 raise SystemExit(0)
 
+            if history_gc_save_label:
+                label_text = history_gc_save_label.strip()
+                if label_text:
+                    current_branch = next(
+                        (
+                            name
+                            for name, info in history_manager.get_branches().items()
+                            if bool(info.get("is_current"))
+                        ),
+                        "main",
+                    )
+                    history_manager.label_branch(current_branch, label_text)
+                    saved_label = label_text
+
             gc_result = history_manager.garbage_collect(prune_now=history_prune_now)
             payload = {
                 "mode": "history-gc",
                 "ran": True,
                 "cancelled": False,
+                "saved_label": saved_label,
                 **gc_result,
             }
             if json_output:
@@ -2626,8 +2653,10 @@ def main(
             else:
                 before = payload["before"]
                 after = payload["after"]
+                saved_text = f" after saving label '{saved_label}'" if saved_label else ""
                 click.echo(
-                    "History gc completed "
+                    "History gc completed"
+                    f"{saved_text} "
                     f"(loose objects: {before.get('count', 0)} -> {after.get('count', 0)}, "
                     f"packs: {before.get('packs', 0)} -> {after.get('packs', 0)})."
                 )

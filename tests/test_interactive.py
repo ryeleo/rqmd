@@ -1204,6 +1204,7 @@ def test_RQMD_interactive_021f_history_browser_replays_selected_branch(monkeypat
 @pytest.mark.timeout(5)
 def test_RQMD_interactive_021g_history_browser_runs_gc(monkeypatch) -> None:
     gc_calls: list[bool] = []
+    confirm_answers = iter([False, True])
 
     class StubHistoryManager:
         def get_branches(self):
@@ -1224,7 +1225,7 @@ def test_RQMD_interactive_021g_history_browser_runs_gc(monkeypatch) -> None:
             }
 
     monkeypatch.setattr(cli.click, "getchar", lambda: "g")
-    monkeypatch.setattr(cli.click, "confirm", lambda *args, **kwargs: True)
+    monkeypatch.setattr(cli.click, "confirm", lambda *args, **kwargs: next(confirm_answers))
 
     action = cli.workflows_mod._prompt_for_history_entry_action(
         {
@@ -1244,8 +1245,59 @@ def test_RQMD_interactive_021g_history_browser_runs_gc(monkeypatch) -> None:
 
 
 @pytest.mark.timeout(5)
+def test_RQMD_interactive_021g2_history_browser_saves_label_before_gc(monkeypatch) -> None:
+    gc_calls: list[bool] = []
+    label_calls: list[tuple[str, str]] = []
+    confirm_answers = iter([True, True])
+
+    class StubHistoryManager:
+        def get_branches(self):
+            return {
+                "main": {"is_current": True},
+                "recovery-branch": {"is_current": False},
+            }
+
+        def get_storage_stats(self):
+            return {"count": 4, "packs": 1}
+
+        def label_branch(self, branch_name: str, label: str):
+            label_calls.append((branch_name, label))
+            return True
+
+        def garbage_collect(self, prune_now: bool = False):
+            gc_calls.append(prune_now)
+            return {
+                "prune_now": prune_now,
+                "before": {"count": 4, "packs": 1},
+                "after": {"count": 1, "packs": 2},
+            }
+
+    monkeypatch.setattr(cli.click, "getchar", lambda: "g")
+    monkeypatch.setattr(cli.click, "confirm", lambda *args, **kwargs: next(confirm_answers))
+    monkeypatch.setattr(cli.click, "prompt", lambda *args, **kwargs: "saved-snapshot")
+
+    action = cli.workflows_mod._prompt_for_history_entry_action(
+        {
+            "entry_index": 2,
+            "command": "verified",
+            "branch": "recovery-branch",
+            "commit": "feedfacecafebeef",
+            "timestamp": "2026-03-29T00:00:00+00:00",
+            "files": ["docs/requirements/demo.md"],
+            "delta": {"additions": 1, "deletions": 1, "files_changed": 1},
+        },
+        StubHistoryManager(),
+    )
+
+    assert action == "refresh"
+    assert label_calls == [("main", "saved-snapshot")]
+    assert gc_calls == [False]
+
+
+@pytest.mark.timeout(5)
 def test_RQMD_interactive_021h_history_browser_runs_immediate_prune(monkeypatch) -> None:
     gc_calls: list[bool] = []
+    confirm_answers = iter([False, True])
 
     class StubHistoryManager:
         def get_branches(self):
@@ -1266,7 +1318,7 @@ def test_RQMD_interactive_021h_history_browser_runs_immediate_prune(monkeypatch)
             }
 
     monkeypatch.setattr(cli.click, "getchar", lambda: "G")
-    monkeypatch.setattr(cli.click, "confirm", lambda *args, **kwargs: True)
+    monkeypatch.setattr(cli.click, "confirm", lambda *args, **kwargs: next(confirm_answers))
 
     action = cli.workflows_mod._prompt_for_history_entry_action(
         {
@@ -1282,6 +1334,56 @@ def test_RQMD_interactive_021h_history_browser_runs_immediate_prune(monkeypatch)
     )
 
     assert action == "refresh"
+    assert gc_calls == [True]
+
+
+@pytest.mark.timeout(5)
+def test_RQMD_interactive_021h2_history_browser_saves_label_before_prune(monkeypatch) -> None:
+    gc_calls: list[bool] = []
+    label_calls: list[tuple[str, str]] = []
+    confirm_answers = iter([True, True])
+
+    class StubHistoryManager:
+        def get_branches(self):
+            return {
+                "main": {"is_current": True},
+                "recovery-branch": {"is_current": False},
+            }
+
+        def get_storage_stats(self):
+            return {"count": 7, "packs": 0}
+
+        def label_branch(self, branch_name: str, label: str):
+            label_calls.append((branch_name, label))
+            return True
+
+        def garbage_collect(self, prune_now: bool = False):
+            gc_calls.append(prune_now)
+            return {
+                "prune_now": prune_now,
+                "before": {"count": 7, "packs": 0},
+                "after": {"count": 0, "packs": 1},
+            }
+
+    monkeypatch.setattr(cli.click, "getchar", lambda: "G")
+    monkeypatch.setattr(cli.click, "confirm", lambda *args, **kwargs: next(confirm_answers))
+    monkeypatch.setattr(cli.click, "prompt", lambda *args, **kwargs: "saved-before-prune")
+
+    action = cli.workflows_mod._prompt_for_history_entry_action(
+        {
+            "entry_index": 3,
+            "command": "verified",
+            "branch": "recovery-branch",
+            "commit": "feedfacecafebeef",
+            "timestamp": "2026-03-29T00:00:00+00:00",
+            "files": ["docs/requirements/demo.md"],
+            "delta": {"additions": 1, "deletions": 1, "files_changed": 1},
+        },
+        StubHistoryManager(),
+    )
+
+    assert action == "refresh"
+    assert label_calls == [("main", "saved-before-prune")]
     assert gc_calls == [True]
 
 
