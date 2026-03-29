@@ -1,4 +1,11 @@
 
+## AI Workflow
+
+1. User does planning in brainstorm.md
+2. Then creates requirements from their brainstorm.md with hepl from AI agent.
+3. Then implements with help from AI agent, making sure to update requirements and tests as they go.
+≠
+
 ## Performance Improvements
 
 MAybe use Rust to reimplement this whole solution.
