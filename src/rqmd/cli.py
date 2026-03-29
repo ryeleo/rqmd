@@ -876,6 +876,13 @@ def _filter_timeline_nodes(
     help="Discard an alternate history branch by name (requires confirmation; use --force-yes for non-interactive automation).",
 )
 @click.option(
+    "--history-discard-save-label",
+    "history_discard_save_label",
+    type=str,
+    default=None,
+    help="Optional label to save on a branch immediately before --history-discard-branch removes it from navigation.",
+)
+@click.option(
     "--history-label-branch",
     "history_label_branch",
     type=str,
@@ -1275,6 +1282,7 @@ def main(
     show_timeline: bool,
     show_history: bool,
     history_discard_branch: str | None,
+    history_discard_save_label: str | None,
     history_label_branch: str | None,
     history_branch_label: str | None,
     history_gc: bool,
@@ -2491,6 +2499,8 @@ def main(
         raise click.ClickException(
             "--history-target-branch requires --history-cherry-pick or --history-replay-branch."
         )
+    if history_discard_save_label and not history_discard_branch:
+        raise click.ClickException("--history-discard-save-label requires --history-discard-branch.")
     if history_label_branch and not history_branch_label:
         raise click.ClickException("--history-label-branch requires --history-branch-label.")
     if history_branch_label and not history_label_branch:
@@ -2761,6 +2771,7 @@ def main(
                 payload = {
                     "mode": "history-discard-branch",
                     "branch": branch_name,
+                    "saved_label": None,
                     "discarded": False,
                     "cancelled": True,
                     "branches": history_manager.get_branches(),
@@ -2771,10 +2782,18 @@ def main(
                     click.echo("Branch discard cancelled.")
                 raise SystemExit(0)
 
+            saved_label = None
+            if history_discard_save_label:
+                label_text = history_discard_save_label.strip()
+                if label_text:
+                    history_manager.label_branch(branch_name, label_text)
+                    saved_label = label_text
+
             discarded = history_manager.discard_branch(branch_name)
             payload = {
                 "mode": "history-discard-branch",
                 "branch": branch_name,
+                "saved_label": saved_label,
                 "discarded": discarded,
                 "cancelled": False,
                 "branches": history_manager.get_branches(),
@@ -2783,7 +2802,12 @@ def main(
                 _emit_json_payload(payload)
             else:
                 if discarded:
-                    click.echo(f"Discarded history branch '{branch_name}'.")
+                    if saved_label:
+                        click.echo(
+                            f"Saved label '{saved_label}' and discarded history branch '{branch_name}'."
+                        )
+                    else:
+                        click.echo(f"Discarded history branch '{branch_name}'.")
                 else:
                     click.echo(f"No branch discarded for '{branch_name}'.")
             raise SystemExit(0)
