@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 4🔧 18✅ 0⛔ 4🗑️
+Summary: 3💡 4🔧 18✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -276,3 +276,33 @@ colors:
 - So that the user can add multiple links in a single interactive session before returning to the requirement view
 - So that existing links are displayed and the user can select one to remove or re-format it
 - So that this flow depends on the `**Links:**` field contract defined in RQMD-CORE-021 and does not introduce a separate link storage path.
+
+### RQMD-INTERACTIVE-023: Vim-style vertical navigation defaults
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when I navigate interactive menus primarily from the keyboard
+- I want `j` and `k` to be the default down/up navigation keys
+- So that rqmd aligns with Vim vertical motion expectations while keeping arrow-key support intact.
+- So that menu legends, prompts, walkthrough help text, and requirement navigation all show `j`/`k` instead of `n`/`p` as the primary single-key movement contract.
+- So that legacy `n`/`p` navigation aliases are removed rather than preserved as hidden compatibility shortcuts.
+- So that any old uses of `n`/`p` are either retired or repurposed only where they match familiar Vim semantics such as search result repeat (`n`/`N`).
+
+### RQMD-INTERACTIVE-024: Vim-style list motions and paging
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when interactive lists span many files, requirements, or history entries
+- I want rqmd to support common Vim movement primitives beyond one-row navigation
+- So that `gg` jumps to the first item and `G` jumps to the last item in the current list context.
+- So that `Ctrl-U` and `Ctrl-D` perform deterministic half-page navigation in paged menus and walkthroughs.
+- So that page-local selection, visible index rendering, and refresh behavior remain stable after these motions.
+- So that these motions work consistently across file menus, requirement menus, filtered walks, and history browsers rather than only in one interactive surface.
+
+### RQMD-INTERACTIVE-025: Vim-style search and repeat navigation
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when interactive menus become long enough that scanning visually is slow
+- I want in-session search motions that feel like Vim
+- So that `/` opens forward search and `?` opens reverse search for the current interactive list.
+- So that `n` repeats the last search in the same direction and `N` repeats it in the opposite direction.
+- So that matched items are surfaced predictably without losing the current list context, active filters, or sort order.
+- So that history browser, file selection, requirement selection, and focused walkthroughs all share the same search-repeat contract.
