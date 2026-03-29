@@ -12,7 +12,7 @@ Key requirements:
 - Navigation keys (down/up arrows and n/p aliases) don't lose selection state
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -85,6 +85,27 @@ class TestStableCursorPagination:
                         # Should render with selection background
                     except TypeError as e:
                         pytest.fail(f"selected_option_bg should work: {e}")
+
+    def test_RQMD_ui_005_selected_option_gets_arrow_marker(self):
+        """Verify the selected option is explicitly marked with an arrow on first render."""
+        options = ["First", "Second", "Third"]
+        rendered_lines: list[str] = []
+
+        def capture_echo(message="", *args, **kwargs):
+            if isinstance(message, str):
+                rendered_lines.append(message)
+
+        with patch("rqmd.menus.click.echo", side_effect=capture_echo):
+            with patch("sys.stdout.isatty", return_value=False):
+                with patch("click.getchar", return_value="q"):
+                    menus_mod.select_from_menu(
+                        "Menu",
+                        options,
+                        selected_option_index=1,
+                    )
+
+        assert any(line.startswith("→ 2) Second") for line in rendered_lines)
+        assert any(line.startswith("  1) First") for line in rendered_lines)
 
     def test_RQMD_ui_005_selection_consistency_with_paging(self):
         """Verify selection index remains meaningful across page transitions."""

@@ -14,7 +14,6 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
 from click.testing import CliRunner
 from rqmd import cli
 from rqmd.theme import _probe_gnome, _probe_macos, detect_theme
@@ -239,7 +238,7 @@ class TestScreenWritePrecedence:
         assert result.exit_code in (0, 1)
         reset_render.assert_called_once_with()
         set_sw.assert_called_with(False)
-                        set_sw_forced.assert_any_call(True)
+        set_sw_forced.assert_any_call(True)
 
     def test_project_config_screen_write_used_when_cli_omitted(self, tmp_path: Path):
         repo = self._make_repo(tmp_path, '{"screen_write": false}')
@@ -260,7 +259,7 @@ class TestScreenWritePrecedence:
         assert result.exit_code in (0, 1)
         reset_render.assert_called_once_with()
         set_sw.assert_called_with(False)
-                        set_sw_forced.assert_any_call(False)
+        set_sw_forced.assert_any_call(False)
 
     def test_non_tty_default_used_when_no_cli_or_config(self, tmp_path: Path):
         repo = self._make_repo(tmp_path)

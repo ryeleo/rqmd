@@ -2747,6 +2747,45 @@ Scope: demo.
     assert payload["files"][0]["requirements"][0]["id"] == "AC-DEMO-001"
 
 
+def test_RQMD_automation_019_unique_option_prefixes_are_accepted(tmp_path: Path) -> None:
+    """Unique long-option prefixes resolve before Click parsing and work with value prefixes."""
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: Target
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--proj",
+            str(repo),
+            "--docs",
+            "docs/requirements",
+            "--as-j",
+            "--no-wa",
+            "--no-ta",
+            "--status",
+            "prop",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-status"
+    assert payload["status"] == "💡 Proposed"
+    assert payload["total"] == 1
+
+
 # ─── RQMD-AUTOMATION-019/020: Option-name prefix abbreviation ────────────────
 
 

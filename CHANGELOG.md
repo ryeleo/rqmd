@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 
+- Added a pytest timeout guard (`timeout = 30`) plus a startup requirement for `pytest-timeout`, so interactive regressions fail fast instead of silently hanging when the timeout plugin is missing from the local test environment.
+- Updated local test and smoke-check commands to use `uv run --extra dev pytest ...`, matching the `pytest-timeout` requirement instead of relying on plain `uv run pytest`.
+- Added explicit selected-row arrow markers in interactive menus so the current status, priority, or flagged choice is obvious on first render even before any further navigation (RQMD-INTERACTIVE-006).
+- Added unique long-option prefix expansion in the top-level `rqmd` CLI wrapper, allowing unambiguous prefixes such as `--proj`, `--docs`, and `--as-j` while preserving deterministic ambiguity failures with candidate lists (RQMD-AUTOMATION-019).
+- Added `z=undo`, `y=redo`, and `h=history` shortcuts to requirement action menus, plus a paged interactive history browser that surfaces commit, branch, and diff-summary metadata from the existing snapshot log (progress toward RQMD-UNDO-007).
+- Added `rqmd --history-checkout-branch <name>` to restore the HEAD snapshot of a named alternate history branch through the main CLI, complementing the existing branch summaries in `--timeline` and branch-prune workflow in `--history-discard-branch` (progress toward RQMD-UNDO-007).
+- Added `rqmd --history-cherry-pick <ref>` and `rqmd --history-replay-branch <branch>` with optional `--history-target-branch`, exposing replay/apply history controls through the main CLI for branch recovery workflows without dropping into internal APIs (progress toward RQMD-UNDO-007).
+- Updated the interactive history selector to render a git-log-style one-line view with short commits, `HEAD -> branch` decorations, and date-ordered metadata so it reads more like `git log --graph --decorate --all --date-order --oneline` (progress toward RQMD-UNDO-007).
+- Added interactive entry actions inside the history browser detail view so a selected history record can drive branch checkout, commit cherry-pick, and branch replay directly from the UI, with explicit confirmation for replay/apply paths (progress toward RQMD-UNDO-007).
+- Added targeted pytest timeout markers to the interactive history and deep-paging regressions so accidental input loops fail quickly instead of hanging long local or agent-driven test runs.
+- Fixed stray indentation in the screen-write precedence tests and rewrote the new history-browser action regressions to use deterministic stubs, restoring a clean timeout-enabled pytest run across the interactive suite and full repository.
+
 - Added detached historical export browsing to `rqmd-ai` via `--history-ref`, allowing point-in-time inspection of prior requirement snapshots by history index or commit ref without mutating the current working tree (RQMD-TIME-001).
 - Added detached historical view safety guards for `rqmd-ai --history-ref`, explicitly rejecting `--write` and `--update` mutation paths while in historical export mode to preserve read-only detached behavior (RQMD-TIME-003).
 - Added branch-aware historical timeline in the history backend: automatically creates recovery branches when undoing and making divergent edits, with full DAG reconstruction and branch tracking in state metadata (RQMD-TIME-002).
@@ -61,6 +73,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added stable cursor/selection position maintenance across pagination and re-renders in interactive menus; `selected_option_index` parameter with optional `selected_option_bg` highlighting ensures predictable focus across n/p key navigation and page transitions (RQMD-UI-005).
 
 ### Changed
+
+- Updated the scratch QA checklist with a step-by-step undo/history UX walkthrough covering `h` history browsing, `z` undo, `y` redo, git-style history rows, branch divergence setup, and branch checkout verification.
+- Updated requirement status to mark `RQMD-AUTOMATION-019` as Implemented (unique option-name/value prefix abbreviations now supported in `rqmd`).
+- Updated human-readable `rqmd --history` output to include reason text and compact diff summaries (`+additions/-deletions`, changed-file count) for each entry, bringing the text mode closer to the existing JSON metadata surface (progress toward RQMD-UNDO-007).
 
 - Updated requirement status to mark `RQMD-TIME-005` as Implemented (compare historical points via `--compare-refs`).
 - Updated requirement status to mark `RQMD-TIME-003` as Implemented (detached historical view mode via `--history-ref`).

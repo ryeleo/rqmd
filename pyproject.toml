@@ -40,7 +40,8 @@ rqmd-ai = "rqmd.ai_cli:main"
 
 [project.optional-dependencies]
 dev = [
-  "pytest>=8.0.0"
+  "pytest>=8.0.0",
+  "pytest-timeout>=2.3.1"
 ]
 
 [tool.setuptools]
@@ -55,3 +56,5 @@ rqmd = ["init_docs/*.md"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+timeout = 30
+timeout_method = "thread"

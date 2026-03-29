@@ -16,6 +16,16 @@ Scope: demo requirements.
 """
 
 
+def pytest_configure(config: pytest.Config) -> None:
+    """Require pytest-timeout so interactive regressions cannot hang silently."""
+    plugin_manager = config.pluginmanager
+    if plugin_manager.hasplugin("timeout") or plugin_manager.hasplugin("pytest_timeout"):
+        return
+    raise pytest.UsageError(
+        "pytest-timeout is required for this test suite. Run 'uv run --extra dev pytest ...' or sync dev extras before executing pytest."
+    )
+
+
 @pytest.fixture
 def repo_with_domain_docs(tmp_path: Path) -> Path:
     """Create a test repo with a single domain file.

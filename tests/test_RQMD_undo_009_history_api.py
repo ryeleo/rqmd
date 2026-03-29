@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from click.testing import CliRunner
+
 from rqmd.cli import main as rqmd_main
 from rqmd.history import HistoryManager
 
@@ -81,6 +82,8 @@ def test_RQMD_undo_009_history_text_output(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.output
     assert "=== History ===" in result.output
     assert "[HEAD]" in result.output
+    assert "+" in result.output
+    assert "promotion" in result.output
 
 
 def test_RQMD_undo_009_history_conflicts_with_timeline_mode(tmp_path: Path) -> None:
@@ -101,3 +104,178 @@ def test_RQMD_undo_009_history_conflicts_with_timeline_mode(tmp_path: Path) -> N
 
     assert result.exit_code != 0
     assert "Use exactly one non-interactive update mode" in result.output
+
+
+def test_RQMD_undo_007_history_checkout_branch_cli(tmp_path: Path) -> None:
+    req_dir = tmp_path / "docs" / "requirements"
+    req_dir.mkdir(parents=True)
+    req_file = req_dir / "demo.md"
+    req_file.write_text(
+        """# Demo Requirements
+
+### RQMD-DEMO-001: Alpha
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    manager = HistoryManager(repo_root=tmp_path, requirements_dir="docs/requirements")
+    manager.capture(command="baseline", actor="test")
+
+    req_file.write_text(
+        """# Demo Requirements
+
+### RQMD-DEMO-001: Alpha
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+    manager.capture(command="implemented", actor="test")
+
+    manager.undo()
+    req_file.write_text(
+        """# Demo Requirements
+
+### RQMD-DEMO-001: Alpha
+- **Status:** ✅ Verified
+""",
+        encoding="utf-8",
+    )
+    manager.capture(command="verified", actor="test")
+
+    branches = manager.get_branches()
+    recovery_branch = next(name for name in branches if name.startswith("recovery-"))
+
+    runner = CliRunner()
+    result = runner.invoke(
+        rqmd_main,
+        [
+            "--project-root",
+            str(tmp_path),
+            "--docs-dir",
+            "docs/requirements",
+            "--history-checkout-branch",
+            recovery_branch,
+            "--as-json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["mode"] == "history-checkout-branch"
+    assert payload["branch"] == recovery_branch
+    assert payload["changed"] is True
+    assert payload["branches"][recovery_branch]["is_current"] is True
+
+
+def test_RQMD_undo_007_history_cherry_pick_cli(tmp_path: Path) -> None:
+    _setup_history(tmp_path)
+    manager = HistoryManager(repo_root=tmp_path, requirements_dir="docs/requirements")
+    entries = manager.list_entries()
+    source_commit = str(entries[0]["commit"])
+
+    runner = CliRunner()
+    result = runner.invoke(
+        rqmd_main,
+        [
+            "--project-root",
+            str(tmp_path),
+            "--docs-dir",
+            "docs/requirements",
+            "--history-cherry-pick",
+            source_commit,
+            "--as-json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["mode"] == "history-cherry-pick"
+    assert payload["source_commit"] == source_commit
+    assert payload["changed"] is True
+    assert payload["commit"] is not None
+
+
+def test_RQMD_undo_007_history_replay_branch_cli(tmp_path: Path) -> None:
+    req_dir = tmp_path / "docs" / "requirements"
+    req_dir.mkdir(parents=True)
+    req_file = req_dir / "demo.md"
+    req_file.write_text(
+        """# Demo Requirements
+
+### RQMD-DEMO-001: Alpha
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    manager = HistoryManager(repo_root=tmp_path, requirements_dir="docs/requirements")
+    manager.capture(command="baseline", actor="test")
+
+    req_file.write_text(
+        """# Demo Requirements
+
+### RQMD-DEMO-001: Alpha
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+    manager.capture(command="implemented", actor="test")
+
+    manager.undo()
+    req_file.write_text(
+        """# Demo Requirements
+
+### RQMD-DEMO-001: Alpha
+- **Status:** ✅ Verified
+""",
+        encoding="utf-8",
+    )
+    manager.capture(command="verified", actor="test")
+
+    branches = manager.get_branches()
+    recovery_branch = next(name for name in branches if name.startswith("recovery-"))
+
+    runner = CliRunner()
+    result = runner.invoke(
+        rqmd_main,
+        [
+            "--project-root",
+            str(tmp_path),
+            "--docs-dir",
+            "docs/requirements",
+            "--history-replay-branch",
+            recovery_branch,
+            "--history-target-branch",
+            "main",
+            "--as-json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["mode"] == "history-replay-branch"
+    assert payload["source_branch"] == recovery_branch
+    assert payload["target_branch"] == "main"
+    assert payload["changed"] is True
+    assert payload["replayed_count"] >= 1
+
+
+def test_RQMD_undo_007_history_target_branch_requires_replay_or_cherry_pick(tmp_path: Path) -> None:
+    _setup_history(tmp_path)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        rqmd_main,
+        [
+            "--project-root",
+            str(tmp_path),
+            "--docs-dir",
+            "docs/requirements",
+            "--history-target-branch",
+            "main",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "--history-target-branch requires --history-cherry-pick or --history-replay-branch." in result.output

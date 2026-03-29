@@ -153,6 +153,27 @@ Interactive file and requirement menus now support:
 - `s` to cycle sort columns
 - `d` to toggle ascending/descending
 - `r` to refresh/rescan while preserving the active sort
+- `z` to undo the last recorded history step from a requirement action menu
+- `y` to redo the next recorded history step from a requirement action menu
+- `h` to open the paged history browser from a requirement action menu
+
+Inside the history browser, selecting an entry opens a detail view where you can:
+
+- press `c` to checkout the selected entry's branch
+- press `p` to cherry-pick the selected commit onto the current branch
+- press `r` to replay the selected entry's branch onto the current branch
+
+Long options also accept unique prefixes, so invocations such as `--proj`, `--docs`, and `--as-j` work when they resolve unambiguously.
+
+History operations available in non-interactive mode include:
+
+- `uv run rqmd --history`
+- `uv run rqmd --timeline`
+- `uv run rqmd --undo`
+- `uv run rqmd --redo`
+- `uv run rqmd --history-checkout-branch <branch-name>`
+- `uv run rqmd --history-cherry-pick <entry-index-or-ref> [--history-target-branch <branch-name>]`
+- `uv run rqmd --history-replay-branch <branch-name> [--history-target-branch <branch-name>]`
 
 File lists now default to the `name` sort in descending order.
 
@@ -460,13 +481,13 @@ When no CLI map/config is passed, rqmd resolves roll-up mappings with this prece
 Run full pytest suite from this folder:
 
 ```bash
-uv run pytest
+uv run --extra dev pytest
 ```
 
 Run a specific test module:
 
 ```bash
-uv run pytest tests/test_core_engine.py
+uv run --extra dev pytest tests/test_core_engine.py
 ```
 
 One-command shell smoke check (no make required):

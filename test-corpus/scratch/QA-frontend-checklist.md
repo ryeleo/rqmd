@@ -78,16 +78,80 @@ Expected:
 
 ## Undo/History UI-adjacent Checks
 
-Create two edits and test branch behavior:
+Seed a small history chain and force one divergence:
 
 ```bash
 uv run rqmd --project-root test-corpus/scratch --docs-dir requirements --update REQ-PAG-231=implemented
 uv run rqmd --project-root test-corpus/scratch --docs-dir requirements --update REQ-PAG-232=verified
 uv run rqmd --project-root test-corpus/scratch --docs-dir requirements --undo
-uv run rqmd --project-root test-corpus/scratch --docs-dir requirements --update REQ-PAG-233=blocked
+uv run rqmd --project-root test-corpus/scratch --docs-dir requirements --update REQ-PAG-233=blocked --blocked-note "manual QA divergence check"
 uv run rqmd --project-root test-corpus/scratch --docs-dir requirements --history
 uv run rqmd --project-root test-corpus/scratch --docs-dir requirements --timeline
 ```
+
+### Step-by-step undo UX walkthrough
+
+1. Launch interactive mode against the scratch corpus:
+
+```bash
+uv run rqmd --project-root test-corpus/scratch --docs-dir requirements --screen-write
+```
+
+2. Open `requirements/page-24-edge-cases.md`, then open any of these requirements:
+	- `REQ-PAG-231`
+	- `REQ-PAG-232`
+	- `REQ-PAG-233`
+
+3. In the requirement action menu, confirm the footer shows:
+	- `z=undo`
+	- `y=redo`
+	- `h=history`
+
+4. Press `h` to open the history browser.
+
+5. In the history browser, confirm the list is git-like rather than a plain summary list:
+	- each row starts with `* <short-commit>`
+	- the current head row includes a decoration like `(HEAD -> main)`
+	- the command and reason appear in the one-line row
+	- the right side shows timestamp and diff summary like `+1/-0 1f`
+
+6. Select one history entry and confirm the detail pane shows:
+	- branch
+	- full commit
+	- timestamp
+	- reason
+	- diff totals
+	- changed files
+
+7. Return to the requirement action menu with `u`.
+
+8. Press `z` once.
+	Expected:
+	- the current catalog state moves to the previous history entry
+	- the requirement panel refreshes instead of leaving stale text onscreen
+	- if the undone change affected the currently open requirement, its status/metadata visibly changes
+
+9. Press `y` once.
+	Expected:
+	- the undone change is reapplied
+	- the requirement panel refreshes again
+	- the footer and current-row marker remain stable after the redraw
+
+10. Press `h` again after undo/redo and confirm the history browser still highlights the current head row.
+
+11. Repeat the same flow once with `--no-screen-write`.
+	 Expected:
+	 - the same keys work
+	 - output remains readable in append mode
+	 - no crashes or duplicated rows appear while moving between requirement panel and history browser
+
+### Expected outcomes
+
+- `--history` output shows reason text and compact diff summaries.
+- `--timeline` shows at least one `recovery-*` branch after the divergent blocked update.
+- Interactive history rows look like a familiar git one-line log view.
+- Undo and redo change the working catalog state, not just the displayed menu text.
+- Opening history after undo/redo reflects the new current head correctly.
 
 Confirmation guardrail check:
 
@@ -102,6 +166,17 @@ Expected:
 
 - First command requires explicit confirmation.
 - Forced command discards branch and returns `"discarded": true`.
+
+Optional branch-checkout follow-up:
+
+```bash
+uv run rqmd --project-root test-corpus/scratch --docs-dir requirements --history-checkout-branch <branch>
+```
+
+Expected:
+
+- The named branch becomes the current branch/head.
+- Re-running `--history` or reopening the interactive history browser shows the checked-out branch at head.
 
 Optional machine-readable spot checks (automation-oriented, not primary manual QA):
 
