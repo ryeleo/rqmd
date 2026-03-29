@@ -125,6 +125,110 @@ def test_RQMD_undo_007_history_prune_now_requires_history_gc(tmp_path: Path) -> 
     assert "--history-prune-now requires --history-gc." in result.output
 
 
+def test_RQMD_undo_007_history_label_branch_requires_label_value(tmp_path: Path) -> None:
+    _setup_history(tmp_path)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        rqmd_main,
+        [
+            "--project-root",
+            str(tmp_path),
+            "--docs-dir",
+            "docs/requirements",
+            "--history-label-branch",
+            "main",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "--history-label-branch requires --history-branch-label." in result.output
+
+
+def test_RQMD_undo_007_history_branch_label_requires_branch_mode(tmp_path: Path) -> None:
+    _setup_history(tmp_path)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        rqmd_main,
+        [
+            "--project-root",
+            str(tmp_path),
+            "--docs-dir",
+            "docs/requirements",
+            "--history-branch-label",
+            "named-snapshot",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "--history-branch-label requires --history-label-branch." in result.output
+
+
+def test_RQMD_undo_007_history_label_branch_cli(tmp_path: Path) -> None:
+    req_dir = tmp_path / "docs" / "requirements"
+    req_dir.mkdir(parents=True)
+    req_file = req_dir / "demo.md"
+    req_file.write_text(
+        """# Demo Requirements
+
+### RQMD-DEMO-001: Alpha
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    manager = HistoryManager(repo_root=tmp_path, requirements_dir="docs/requirements")
+    manager.capture(command="baseline", actor="test")
+
+    req_file.write_text(
+        """# Demo Requirements
+
+### RQMD-DEMO-001: Alpha
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+    manager.capture(command="implemented", actor="test")
+
+    manager.undo()
+    req_file.write_text(
+        """# Demo Requirements
+
+### RQMD-DEMO-001: Alpha
+- **Status:** ✅ Verified
+""",
+        encoding="utf-8",
+    )
+    manager.capture(command="verified", actor="test")
+
+    recovery_branch = next(name for name in manager.get_branches() if name.startswith("recovery-"))
+
+    runner = CliRunner()
+    result = runner.invoke(
+        rqmd_main,
+        [
+            "--project-root",
+            str(tmp_path),
+            "--docs-dir",
+            "docs/requirements",
+            "--history-label-branch",
+            recovery_branch,
+            "--history-branch-label",
+            "saved-snapshot",
+            "--as-json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["mode"] == "history-label-branch"
+    assert payload["branch"] == recovery_branch
+    assert payload["label"] == "saved-snapshot"
+    assert payload["updated"] is True
+    assert payload["branches"][recovery_branch]["label"] == "saved-snapshot"
+
+
 def test_RQMD_undo_007_history_checkout_branch_cli(tmp_path: Path) -> None:
     req_dir = tmp_path / "docs" / "requirements"
     req_dir.mkdir(parents=True)

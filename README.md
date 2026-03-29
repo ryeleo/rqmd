@@ -175,6 +175,7 @@ History operations available in non-interactive mode include:
 - `uv run rqmd --timeline`
 - `uv run rqmd --undo`
 - `uv run rqmd --redo`
+- `uv run rqmd --history-label-branch <branch-name> --history-branch-label <label>`
 - `uv run rqmd --history-gc --force-yes`
 - `uv run rqmd --history-gc --history-prune-now --force-yes`
 - `uv run rqmd --history-checkout-branch <branch-name>`

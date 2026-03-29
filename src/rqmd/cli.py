@@ -876,6 +876,20 @@ def _filter_timeline_nodes(
     help="Discard an alternate history branch by name (requires confirmation; use --force-yes for non-interactive automation).",
 )
 @click.option(
+    "--history-label-branch",
+    "history_label_branch",
+    type=str,
+    default=None,
+    help="Set or update a human-readable label for a named history branch.",
+)
+@click.option(
+    "--history-branch-label",
+    "history_branch_label",
+    type=str,
+    default=None,
+    help="Label text used with --history-label-branch.",
+)
+@click.option(
     "--history-gc",
     "history_gc",
     is_flag=True,
@@ -1261,6 +1275,8 @@ def main(
     show_timeline: bool,
     show_history: bool,
     history_discard_branch: str | None,
+    history_label_branch: str | None,
+    history_branch_label: str | None,
     history_gc: bool,
     history_prune_now: bool,
     history_checkout_branch: str | None,
@@ -2475,6 +2491,10 @@ def main(
         raise click.ClickException(
             "--history-target-branch requires --history-cherry-pick or --history-replay-branch."
         )
+    if history_label_branch and not history_branch_label:
+        raise click.ClickException("--history-label-branch requires --history-branch-label.")
+    if history_branch_label and not history_label_branch:
+        raise click.ClickException("--history-branch-label requires --history-label-branch.")
     if history_prune_now and not history_gc:
         raise click.ClickException("--history-prune-now requires --history-gc.")
 
@@ -2491,6 +2511,7 @@ def main(
         or show_timeline
         or show_history
         or history_discard_branch
+        or history_label_branch
         or history_gc
         or history_checkout_branch
         or history_cherry_pick
@@ -2513,6 +2534,7 @@ def main(
             + int(bool(show_timeline))
             + int(bool(show_history))
             + int(bool(history_discard_branch))
+            + int(bool(history_label_branch))
             + int(bool(history_gc))
             + int(bool(history_checkout_branch))
             + int(bool(history_cherry_pick))
@@ -2520,8 +2542,33 @@ def main(
         )
         if mode_count > 1:
             raise click.ClickException(
-                "Use exactly one non-interactive update mode: --undo, --redo, --timeline, --history, --history-discard-branch, --history-gc, --history-checkout-branch, --history-cherry-pick, --history-replay-branch, --update-file, --update ID=STATUS (repeatable), --update-priority ID=PRIORITY (repeatable), --update-flagged ID=true|false (repeatable), or --update-id with --update-status."
+                "Use exactly one non-interactive update mode: --undo, --redo, --timeline, --history, --history-discard-branch, --history-label-branch, --history-gc, --history-checkout-branch, --history-cherry-pick, --history-replay-branch, --update-file, --update ID=STATUS (repeatable), --update-priority ID=PRIORITY (repeatable), --update-flagged ID=true|false (repeatable), or --update-id with --update-status."
             )
+
+        if history_label_branch:
+            history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
+            branch_name = history_label_branch.strip()
+            label_text = str(history_branch_label or "").strip()
+            branches = history_manager.get_branches()
+            if branch_name not in branches:
+                raise click.ClickException(f"Unknown history branch: {history_label_branch!r}")
+
+            updated = history_manager.label_branch(branch_name, label_text)
+            payload = {
+                "mode": "history-label-branch",
+                "branch": branch_name,
+                "label": label_text,
+                "updated": updated,
+                "branches": history_manager.get_branches(),
+            }
+            if json_output:
+                _emit_json_payload(payload)
+            else:
+                if updated:
+                    click.echo(f"Labeled history branch '{branch_name}' as '{label_text}'.")
+                else:
+                    click.echo(f"No branch label updated for '{branch_name}'.")
+            raise SystemExit(0)
 
         if history_gc:
             history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
