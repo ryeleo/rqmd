@@ -3,12 +3,12 @@
 Scope: lorem ipsum pagination stress testing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 2🔧 2✅ 2⛔ 2🗑️
+Summary: 1💡 2🔧 2✅ 2⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 
 ### REQ-PAG-001: Lorem ipsum block 001
-- **Status:** 💡 Proposed
+- **Status:** 🗑️ Deprecated
 - Given lorem ipsum dolor sit amet
 - When consectetur adipiscing elit
 - Then sed do eiusmod tempor incididunt.

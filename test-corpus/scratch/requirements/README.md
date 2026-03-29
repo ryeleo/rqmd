@@ -27,3 +27,4 @@ Synthetic requirements corpus for pagination and navigation e2e testing.
 - [Page 21](page-21.md)
 - [Page 22](page-22.md)
 - [Page 23](page-23.md)
+- [Page 24 Edge Cases](page-24-edge-cases.md)

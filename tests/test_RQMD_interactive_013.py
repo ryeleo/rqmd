@@ -223,51 +223,85 @@ class TestScreenWritePrecedence:
         repo = self._make_repo(tmp_path, '{"screen_write": true}')
         runner = CliRunner()
         with patch("rqmd.cli.menus_mod.set_screen_write_enabled") as set_sw:
-            with patch("rqmd.cli.interactive_update_loop", return_value=0):
-                result = runner.invoke(
-                    cli.main,
-                    [
-                        "--project-root", str(repo),
-                        "--docs-dir", "docs/requirements",
-                        "--no-table",
-                        "--no-screen-write",
-                    ],
-                    catch_exceptions=False,
-                )
+            with patch("rqmd.cli.menus_mod.set_screen_write_forced") as set_sw_forced:
+                with patch("rqmd.cli.menus_mod.reset_render_mode_controller") as reset_render:
+                    with patch("rqmd.cli.interactive_update_loop", return_value=0):
+                        result = runner.invoke(
+                            cli.main,
+                            [
+                                "--project-root", str(repo),
+                                "--docs-dir", "docs/requirements",
+                                "--no-table",
+                                "--no-screen-write",
+                            ],
+                            catch_exceptions=False,
+                        )
         assert result.exit_code in (0, 1)
+        reset_render.assert_called_once_with()
         set_sw.assert_called_with(False)
+                        set_sw_forced.assert_any_call(True)
 
     def test_project_config_screen_write_used_when_cli_omitted(self, tmp_path: Path):
         repo = self._make_repo(tmp_path, '{"screen_write": false}')
         runner = CliRunner()
         with patch("rqmd.cli.menus_mod.set_screen_write_enabled") as set_sw:
-            with patch("rqmd.cli.interactive_update_loop", return_value=0):
-                result = runner.invoke(
-                    cli.main,
-                    [
-                        "--project-root", str(repo),
-                        "--docs-dir", "docs/requirements",
-                        "--no-table",
-                    ],
-                    catch_exceptions=False,
-                )
+            with patch("rqmd.cli.menus_mod.set_screen_write_forced") as set_sw_forced:
+                with patch("rqmd.cli.menus_mod.reset_render_mode_controller") as reset_render:
+                    with patch("rqmd.cli.interactive_update_loop", return_value=0):
+                        result = runner.invoke(
+                            cli.main,
+                            [
+                                "--project-root", str(repo),
+                                "--docs-dir", "docs/requirements",
+                                "--no-table",
+                            ],
+                            catch_exceptions=False,
+                        )
         assert result.exit_code in (0, 1)
+        reset_render.assert_called_once_with()
         set_sw.assert_called_with(False)
+                        set_sw_forced.assert_any_call(False)
 
     def test_non_tty_default_used_when_no_cli_or_config(self, tmp_path: Path):
         repo = self._make_repo(tmp_path)
         runner = CliRunner()
         with patch("rqmd.cli.menus_mod.set_screen_write_enabled") as set_sw:
-            with patch("rqmd.cli.interactive_update_loop", return_value=0):
-                result = runner.invoke(
-                    cli.main,
-                    [
-                        "--project-root", str(repo),
-                        "--docs-dir", "docs/requirements",
-                        "--no-table",
-                    ],
-                    catch_exceptions=False,
-                )
+            with patch("rqmd.cli.menus_mod.set_screen_write_forced") as set_sw_forced:
+                with patch("rqmd.cli.menus_mod.reset_render_mode_controller") as reset_render:
+                    with patch("rqmd.cli.interactive_update_loop", return_value=0):
+                        result = runner.invoke(
+                            cli.main,
+                            [
+                                "--project-root", str(repo),
+                                "--docs-dir", "docs/requirements",
+                                "--no-table",
+                            ],
+                            catch_exceptions=False,
+                        )
         assert result.exit_code in (0, 1)
         # CliRunner uses a non-TTY stream, so default falls back to disabled.
+        reset_render.assert_called_once_with()
         set_sw.assert_called_with(False)
+        set_sw_forced.assert_any_call(False)
+
+    def test_cli_screen_write_forces_screen_write_mode(self, tmp_path: Path):
+        repo = self._make_repo(tmp_path)
+        runner = CliRunner()
+        with patch("rqmd.cli.menus_mod.set_screen_write_enabled") as set_sw:
+            with patch("rqmd.cli.menus_mod.set_screen_write_forced") as set_sw_forced:
+                with patch("rqmd.cli.menus_mod.reset_render_mode_controller") as reset_render:
+                    with patch("rqmd.cli.interactive_update_loop", return_value=0):
+                        result = runner.invoke(
+                            cli.main,
+                            [
+                                "--project-root", str(repo),
+                                "--docs-dir", "docs/requirements",
+                                "--no-table",
+                                "--screen-write",
+                            ],
+                            catch_exceptions=False,
+                        )
+        assert result.exit_code in (0, 1)
+        reset_render.assert_called_once_with()
+        set_sw.assert_called_with(True)
+        set_sw_forced.assert_any_call(True)

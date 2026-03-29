@@ -23,28 +23,35 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (
-    ANSI_ESCAPE_PATTERN,
-    ANSI_RESET,
-    MENU_NEXT,
-    MENU_PAGE_SIZE,
-    MENU_PREV,
-    MENU_QUIT,
-    MENU_UP,
-    ZEBRA_BG,
-)
+from .constants import (ANSI_ESCAPE_PATTERN, ANSI_RESET, MENU_NEXT,
+                        MENU_PAGE_SIZE, MENU_PREV, MENU_QUIT, MENU_UP,
+                        ZEBRA_BG)
 from .render_heuristics import RenderModeController
 
 _SCREEN_WRITE_ENABLED = False
+_SCREEN_WRITE_FORCED = False
 _COLORIZED_REDRAW_ENABLED = True
 _RESIZE_SIGNAL_PENDING = False
 _RENDER_MODE_CONTROLLER = RenderModeController()
+_ARROW_UP_KEYS = ("\x1b[A", "\x1bOA")
+_ARROW_DOWN_KEYS = ("\x1b[B", "\x1bOB")
 
 
 def set_screen_write_enabled(enabled: bool) -> None:
     """Enable or disable full-screen redraw behavior for interactive menus."""
     global _SCREEN_WRITE_ENABLED
     _SCREEN_WRITE_ENABLED = bool(enabled)
+
+
+def set_screen_write_forced(forced: bool) -> None:
+    """Force screen-write behavior to bypass adaptive append fallback."""
+    global _SCREEN_WRITE_FORCED
+    _SCREEN_WRITE_FORCED = bool(forced)
+
+
+def get_screen_write_forced() -> bool:
+    """Return whether screen-write is currently forced."""
+    return _SCREEN_WRITE_FORCED
 
 
 def get_screen_write_enabled() -> bool:
@@ -98,6 +105,32 @@ def consume_resize_pending() -> bool:
     pending = _RESIZE_SIGNAL_PENDING
     _RESIZE_SIGNAL_PENDING = False
     return pending
+
+
+def _format_key_label(key: str) -> str:
+    if key in _ARROW_UP_KEYS:
+        return "↑"
+    if key in _ARROW_DOWN_KEYS:
+        return "↓"
+    return key
+
+
+def _resolve_arrow_navigation(
+    choice: str,
+    allow_paging_nav: bool,
+    extra_keys: dict[str, str] | None,
+) -> str | None:
+    if choice in _ARROW_DOWN_KEYS:
+        if extra_keys and "nav-next" in extra_keys.values():
+            return "nav-next"
+        if allow_paging_nav:
+            return MENU_NEXT
+    if choice in _ARROW_UP_KEYS:
+        if extra_keys and "nav-prev" in extra_keys.values():
+            return "nav-prev"
+        if allow_paging_nav:
+            return MENU_PREV
+    return None
 
 
 def visible_length(text: str) -> int:
@@ -256,7 +289,7 @@ def select_from_menu(
         repeat_choice_right: If True, allow repeated selection without exiting.
         zebra: If True, alternate row backgrounds (striping).
         show_page_indicator: If True, show (X/Y) page indicator.
-        allow_paging_nav: If True, enable n/p for next/prev page navigation.
+        allow_paging_nav: If True, enable down/up-arrow navigation for next/prev page navigation.
         extra_key: Single extra key to bind (e.g., 'r' for notes).
         extra_key_help: Help text for the extra key.
         extra_key_return: Value to return when extra key is pressed.
@@ -282,6 +315,9 @@ def select_from_menu(
     if is_tty and hasattr(signal, "SIGWINCH"):
         previous_resize_handler = signal.signal(signal.SIGWINCH, _mark_resize_pending)
 
+    if selected_option_index is not None and selected_option_index >= 0:
+        page = min(selected_option_index // page_size, max(0, (len(options) - 1) // page_size))
+
     try:
         while True:
             total_pages = (len(options) + page_size - 1) // page_size
@@ -292,7 +328,7 @@ def select_from_menu(
             _ = consume_resize_pending()
 
             effective_screen_write = _SCREEN_WRITE_ENABLED and is_tty
-            if effective_screen_write and _RENDER_MODE_CONTROLLER.mode == "append":
+            if effective_screen_write and (not _SCREEN_WRITE_FORCED) and _RENDER_MODE_CONTROLLER.mode == "append":
                 effective_screen_write = False
 
             if effective_screen_write:
@@ -339,26 +375,32 @@ def select_from_menu(
             else:
                 if allow_paging_nav:
                     keys_line = (
-                        f"keys: 1-9 select | {MENU_PREV}=prev | {MENU_NEXT}=next | {MENU_UP}=up | {MENU_QUIT}=quit"
+                        f"keys: 1-9 select | ↓/{MENU_NEXT}=next | ↑/{MENU_PREV}=prev | {MENU_UP}=up | {MENU_QUIT}=quit"
                     )
                 else:
                     keys_line = f"keys: 1-9 select | {MENU_UP}=up | {MENU_QUIT}=quit"
                 if extra_key:
                     extra_help = extra_key_help if extra_key_help else "action"
-                    keys_line = f"{keys_line} | {extra_key}={extra_help}"
+                    keys_line = f"{keys_line} | {_format_key_label(extra_key)}={extra_help}"
                 if extra_keys:
                     for key, ret in extra_keys.items():
                         help_text = (extra_keys_help or {}).get(key, ret)
-                        keys_line = f"{keys_line} | {key}={help_text}"
+                        keys_line = f"{keys_line} | {_format_key_label(key)}={help_text}"
             click.echo(keys_line)
             click.echo("choice: ", nl=False)
             raw_choice = click.getchar()
             choice = raw_choice.strip()
-            click.echo(choice)
+            click.echo(_format_key_label(choice))
+
+            arrow_navigation = _resolve_arrow_navigation(choice, allow_paging_nav, extra_keys)
+            if arrow_navigation in {"nav-next", "nav-prev"}:
+                return arrow_navigation
+            if arrow_navigation is not None:
+                choice = arrow_navigation
 
             if not choice:
                 render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
-                if _SCREEN_WRITE_ENABLED:
+                if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
                     _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
                 continue
             if choice == "\x03":
@@ -372,9 +414,15 @@ def select_from_menu(
             if extra_key and choice.lower() == extra_key.lower():
                 return extra_key_return
             if extra_keys and choice in extra_keys:
-                return extra_keys[choice]
+                mapped = extra_keys[choice]
+                if mapped == "refresh":
+                    return f"refresh:{page}"
+                return mapped
             if extra_keys and choice.lower() in extra_keys:
-                return extra_keys[choice.lower()]
+                mapped = extra_keys[choice.lower()]
+                if mapped == "refresh":
+                    return f"refresh:{page}"
+                return mapped
 
             if allow_paging_nav and choice.lower() == MENU_NEXT:
                 # Shift+N acts as reverse paging (previous page).
@@ -384,7 +432,7 @@ def select_from_menu(
                 elif page < total_pages - 1:
                     page += 1
                 render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
-                if _SCREEN_WRITE_ENABLED:
+                if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
                     _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
                 continue
             if allow_paging_nav and choice.lower() == MENU_PREV:
@@ -395,7 +443,7 @@ def select_from_menu(
                 elif page > 0:
                     page -= 1
                 render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
-                if _SCREEN_WRITE_ENABLED:
+                if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
                     _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
                 continue
 
@@ -406,7 +454,7 @@ def select_from_menu(
 
             click.echo("Invalid input. Use number or navigation keys.")
             render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
-            if _SCREEN_WRITE_ENABLED:
+            if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
                 _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
     finally:
         consume_resize_pending()

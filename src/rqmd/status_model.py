@@ -14,16 +14,9 @@ import difflib
 
 import click
 
-from .constants import (
-    ANSI_ESCAPE_PATTERN,
-    ANSI_RESET,
-    NON_ALNUM_PATTERN,
-    NON_ALNUM_PREFIX_PATTERN,
-    PROPOSED_FG,
-    STATUS_ALIASES,
-    STATUS_ORDER,
-    STATUS_PARSE_ALIASES,
-)
+from .constants import (ANSI_ESCAPE_PATTERN, ANSI_RESET, NON_ALNUM_PATTERN,
+                        NON_ALNUM_PREFIX_PATTERN, PROPOSED_FG, STATUS_ALIASES,
+                        STATUS_ORDER, STATUS_PARSE_ALIASES)
 
 _DEFAULT_STATUS_ORDER = list(STATUS_ORDER)
 _DEFAULT_STATUS_ALIASES = dict(STATUS_ALIASES)
@@ -389,8 +382,13 @@ def normalize_status_input(value: str) -> str:
 def build_color_rollup_text(counts: dict[str, int]) -> str:
     """Build a colored summary text showing status counts.
 
-    Summarizes proposed (blue), implemented (normal), verified (green),
+    Summarizes proposed (blue), in-progress/other (normal), verified (green),
     and blocked/deprecated (dim) counts in a single styled line.
+
+    This function is catalog-aware and does not assume built-in status labels.
+    It derives bucket members from configured STATUS_ORDER slugs, so custom
+    catalogs (for example Implemented7/Desktop-Verified/VR-Verified/Done)
+    still render safely without KeyError.
 
     Args:
         counts: Dictionary mapping status labels to counts.
@@ -398,10 +396,16 @@ def build_color_rollup_text(counts: dict[str, int]) -> str:
     Returns:
         A colored/styled summary string.
     """
-    blue = counts["💡 Proposed"]
-    normal = counts["🔧 Implemented"]
-    green = counts["✅ Verified"]
-    dimmed = counts["⛔ Blocked"] + counts["🗑️ Deprecated"]
+    labels_by_slug = {slug: label for label, slug in STATUS_ORDER}
+
+    blue = counts.get(labels_by_slug.get("proposed", ""), 0)
+    green = counts.get(labels_by_slug.get("verified", ""), 0)
+    blocked = counts.get(labels_by_slug.get("blocked", ""), 0)
+    deprecated = counts.get(labels_by_slug.get("deprecated", ""), 0)
+    dimmed = blocked + deprecated
+
+    total = sum(counts.get(label, 0) for label, _slug in STATUS_ORDER)
+    normal = max(0, total - blue - green - dimmed)
 
     blue_text = click.style(f"{blue:>3}", fg="bright_blue")
     normal_text = f"{normal:>3}"

@@ -3,7 +3,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import click
+import pytest
 from click.testing import CliRunner
+
 from rqmd import cli
 
 
@@ -184,6 +187,87 @@ Scope: demo.
     assert payload["error"]["source_file"] == "docs/requirements/demo.md"
     assert isinstance(payload["error"]["line"], int)
     assert payload["error"]["candidates"]
+
+
+def test_RQMD_portability_018_custom_status_catalog_startup_has_no_python_traceback(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "demo.md").write_text(
+        """# Demo Requirement
+
+Scope: demo.
+
+### AC-DEMO-001: Demo requirement
+- **Status:** 🔧 Implemented7
+""",
+        encoding="utf-8",
+    )
+
+    rqmd_dir = repo / ".rqmd"
+    rqmd_dir.mkdir(parents=True)
+    (rqmd_dir / "statuses.json").write_text(
+        json.dumps(
+            [
+                {"name": "Proposed", "shortcode": "proposed", "emoji": "💡"},
+                {"name": "Implemented7", "shortcode": "implemented7", "emoji": "🔧"},
+                {"name": "Desktop-Verified", "shortcode": "desktop-verified", "emoji": "💻"},
+                {"name": "VR-Verified", "shortcode": "vr-verified", "emoji": "🥽"},
+                {"name": "Done", "shortcode": "done", "emoji": "✅"},
+                {"name": "Blocked", "shortcode": "blocked", "emoji": "⛔"},
+                {"name": "Deprecated", "shortcode": "deprecated", "emoji": "🗑️"},
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(cli, "select_from_menu", lambda *args, **kwargs: None)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Traceback" not in result.output
+
+
+def test_RQMD_portability_019_top_level_unexpected_exception_shows_friendly_line(capsys) -> None:
+    @click.command(cls=cli.FriendlyTopLevelCommand)
+    @click.option("-v", "--detailed", "verbose", is_flag=True)
+    def boom(verbose: bool) -> None:
+        del verbose
+        raise RuntimeError("boom")
+
+    with pytest.raises(SystemExit) as exc_info:
+        boom.main(args=[], standalone_mode=True)
+
+    assert exc_info.value.code == 1
+    captured = capsys.readouterr()
+    assert "Unexpected internal error" in captured.err
+    assert "--detailed" in captured.err
+    assert "Traceback" not in captured.err
+
+
+def test_RQMD_portability_019_top_level_unexpected_exception_reraises_with_detailed() -> None:
+    @click.command(cls=cli.FriendlyTopLevelCommand)
+    @click.option("-v", "--detailed", "verbose", is_flag=True)
+    def boom(verbose: bool) -> None:
+        del verbose
+        raise RuntimeError("boom")
+
+    with pytest.raises(RuntimeError):
+        boom.main(args=["--detailed"], standalone_mode=True)
 
 
 def test_RQMD_portability_008a_auto_detects_requirements_dir_without_explicit_flag(tmp_path: Path) -> None:

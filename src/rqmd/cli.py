@@ -18,9 +18,9 @@ Interactive workflow highlights:
 - Select file, then requirement, then status.
 - Fast single-key input via click.getchar() for menu navigation.
 - Paging keys:
-    n = next page, p = previous page, u = up, q = quit.
+    ↓ = next page, ↑ = previous page, u = up, q = quit.
 - Requirement-level next/prev shortcuts at status menu:
-    n = next requirement, p = previous requirement (history-aware).
+    ↓ = next requirement, ↑ = previous requirement (history-aware).
 - Optional sort toggles (s) at file and requirement selection levels.
 - Optional blocked/deprecated reason prompts when setting those statuses.
 
@@ -170,6 +170,56 @@ _AMBIGUOUS_INPUT_PATTERN = re.compile(
     r"^Ambiguous (?P<field>[a-z_]+) input '(?P<input>.+)'\. Matches: (?P<matches>[^.]+)(?:\..*)?$",
     re.IGNORECASE,
 )
+
+
+def _detailed_flag_requested(args: list[str] | tuple[str, ...] | None) -> bool:
+    tokens = list(sys.argv[1:] if args is None else args)
+    for token in tokens:
+        if token == "--detailed":
+            return True
+        if token.startswith("--"):
+            continue
+        if token.startswith("-") and len(token) > 1 and "v" in token[1:]:
+            return True
+    return False
+
+
+class FriendlyTopLevelCommand(click.Command):
+    """Convert unexpected internal crashes into a friendly one-line CLI error.
+
+    Click already handles expected user-facing errors via ClickException. This
+    wrapper only catches truly unexpected exceptions in standalone CLI mode and
+    emits a concise guidance line unless --detailed/-v is requested.
+    """
+
+    def main(
+        self,
+        args: list[str] | tuple[str, ...] | None = None,
+        prog_name: str | None = None,
+        complete_var: str | None = None,
+        standalone_mode: bool = True,
+        windows_expand_args: bool = True,
+        **extra: object,
+    ) -> object:
+        try:
+            return super().main(
+                args=args,
+                prog_name=prog_name,
+                complete_var=complete_var,
+                standalone_mode=standalone_mode,
+                windows_expand_args=windows_expand_args,
+                **extra,
+            )
+        except Exception as exc:
+            if (not standalone_mode) or _detailed_flag_requested(args):
+                raise
+            message = str(exc).strip()
+            detail = f" ({message})" if message else ""
+            click.echo(
+                f"Error: Unexpected internal error{detail}. Re-run with --detailed to show a traceback.",
+                err=True,
+            )
+            raise SystemExit(1)
 
 
 def _build_json_ambiguity_payload(mode: str, message: str) -> dict[str, object] | None:
@@ -675,6 +725,7 @@ def _filter_timeline_nodes(
 
 
 @click.command(
+    cls=FriendlyTopLevelCommand,
     context_settings={"help_option_names": ["-h", "--help"]},
     help=__doc__,
 )
@@ -1224,7 +1275,10 @@ def main(
         else:
             screen_write_enabled = sys.stdout.isatty()
 
+    menus_mod.reset_render_mode_controller()
     menus_mod.set_screen_write_enabled(screen_write_enabled)
+    menus_mod.set_screen_write_forced(screen_write is not None)
+    ctx.call_on_close(lambda: menus_mod.set_screen_write_forced(False))
 
     # Resolve interactive zebra striping color from theme detection.
     from .theme import detect_theme, is_accessible_zebra_bg, resolve_zebra_bg
@@ -2781,10 +2835,6 @@ def main(
                 zebra_bg=zebra_bg,
             )
         )
-
-
-if __name__ == "__main__":
-    main()
 
 
 if __name__ == "__main__":

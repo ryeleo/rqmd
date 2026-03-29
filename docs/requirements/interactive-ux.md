@@ -29,26 +29,29 @@ Summary: 0💡 4🔧 18✅ 0⛔ 4🗑️
 - As a rqmd user when menu options exceed one page
 - I want to press next/prev page keys
 - So that menu page changes accordingly
+- So that down/up arrow keys are the primary next/prev navigation controls.
+- So that legacy `n`/`p` paging shortcuts remain available as compatibility aliases.
 - So that selection remains scoped to visible page indices.
 
 ### RQMD-INTERACTIVE-004: Requirement next/prev shortcuts
 - **Status:** ✅ Verified
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when the status menu for a requirement is open
-- I want to press `n` (next) or `p` (prev)
+- I want to press down arrow (next) or up arrow (prev)
 - So that focus moves across requirements in current ordering
 - So that history-aware navigation supports backtracking.
+- So that legacy `n`/`p` shortcuts remain available as compatibility aliases.
 - So that `N` (Shift+N) is treated as reverse navigation for terminals where uppercase shortcuts are easier to reach.
 
 ### RQMD-INTERACTIVE-004A: Next/prev stack semantics
 - **Status:** ✅ Verified
 - **Priority:** 🟠 P1 - High
-- As a rqmd user when users navigate requirements using `n` and `p`
+- As a rqmd user when users navigate requirements using arrow keys or legacy `n`/`p` aliases
 - I want to move forward and backward across requirements
 - So that rqmd preserves a history stack semantics for backtracking
 - So that `p` returns to the previously visited requirement context.
 - So that filtered walkthroughs support `g` (beginning) and `G` (end) jump shortcuts.
-- So that reaching the end of a filtered walkthrough with `n` keeps the session open and displays a clear "no more <target> requirements" message.
+- So that reaching the end of a filtered walkthrough with next-navigation keeps the session open and displays a clear "no more <target> requirements" message.
 
 ### RQMD-INTERACTIVE-005: Sort toggles
 - **Status:** 🗑️ Deprecated

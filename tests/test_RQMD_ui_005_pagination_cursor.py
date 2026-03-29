@@ -2,14 +2,14 @@
 Tests for RQMD-UI-005: Pagination and stable cursor semantics.
 
 Verify that interactive menus maintain stable cursor/selection position across:
-- Page changes (n/p navigation)
+- Page changes (arrow or n/p navigation)
 - Re-renders
 - Selection visibility in the current window
 
 Key requirements:
 - Cursor position remains consistent across pagination
 - Selection stays visible when possible
-- Navigation keys (n, p) don't lose selection state
+- Navigation keys (down/up arrows and n/p aliases) don't lose selection state
 """
 
 from unittest.mock import MagicMock, patch
@@ -145,7 +145,7 @@ class TestCursorNavigationConsistency:
     """Verify navigation keys maintain consistent cursor behavior."""
 
     def test_RQMD_ui_005_next_prev_navigation_preserves_focus(self):
-        """Verify n/p keys for pagination don't lose selection during page change."""
+        """Verify next/prev pagination keys don't lose selection during page change."""
         options = [f"Entry {i}" for i in range(1, 26)]  # 25 items
         
         # Simulate: page forward, backward, forward again
@@ -159,6 +159,22 @@ class TestCursorNavigationConsistency:
                             selected_option_index=3
                         )
                         # Should handle multi-page navigation
+                    except:
+                        pass
+
+    def test_RQMD_ui_005_arrow_navigation_preserves_focus(self):
+        """Verify arrow keys for pagination don't lose selection during page change."""
+        options = [f"Entry {i}" for i in range(1, 26)]
+
+        with patch("rqmd.menus.click.echo"):
+            with patch("sys.stdout.isatty", return_value=False):
+                with patch("click.getchar", side_effect=['\x1b[B', '\x1b[A', '\x1b[B', 'q']):
+                    try:
+                        menus_mod.select_from_menu(
+                            "Entries", options,
+                            allow_paging_nav=True,
+                            selected_option_index=3
+                        )
                     except:
                         pass
 

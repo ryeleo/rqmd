@@ -14,7 +14,7 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
+from .constants import (DEFAULT_ID_PREFIXES, MENU_PAGE_SIZE, MENU_REFRESH,
                         MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT,
                         PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN)
 from .markdown_io import (display_name_from_h1, format_path_display,
@@ -105,7 +105,7 @@ SORT_STRATEGY_NAMES = tuple(sorted(SORT_STRATEGY_SPECS.keys()))
 
 FILE_SORT_COLUMNS: list[tuple[str, str]] = [
     ("name", "name"),
-    ("priority", "Pri"),
+    ("priority", "priority"),
     ("proposed", "P"),
     ("implemented", "I"),
     ("verified", "Ver"),
@@ -203,7 +203,7 @@ def _right_align_text(left: str, right: str) -> str:
 
 def _build_file_stats_header(active_key: str, ascending: bool, emoji_columns: bool = False) -> str:
     labels = {
-        "priority": "Pri",
+        "priority": "priority",
         "proposed": "💡" if emoji_columns else "P",
         "implemented": "🔧" if emoji_columns else "I",
         "verified": "✅" if emoji_columns else "Ver",
@@ -218,7 +218,7 @@ def _build_file_stats_header(active_key: str, ascending: bool, emoji_columns: bo
 
     return " | ".join(
         [
-            cell("priority", 7),
+            cell("priority", 12),
             cell("proposed", 5),
             cell("implemented", 5),
             cell("verified", 5),
@@ -245,15 +245,15 @@ def _build_file_sort_title(
 
 
 def _build_criterion_sort_title(base_title: str, active_key: str | None, ascending: bool) -> str:
-    priority_indicator = _sort_indicator(ascending) if active_key == "priority" else " "
-    priority_label = click.style(
-        f"priority {priority_indicator}",
-        bold=(active_key == "priority"),
-    )
     status_indicator = _sort_indicator(ascending) if active_key == "status" else " "
     status_label = click.style(
         f"status {status_indicator}",
         bold=(active_key == "status"),
+    )
+    priority_indicator = _sort_indicator(ascending) if active_key == "priority" else " "
+    priority_label = click.style(
+        f"priority {priority_indicator}",
+        bold=(active_key == "priority"),
     )
     title_indicator = _sort_indicator(ascending) if active_key == "title" else " "
     title_label = click.style(
@@ -266,8 +266,31 @@ def _build_criterion_sort_title(base_title: str, active_key: str | None, ascendi
         bold=(active_key == "id"),
     )
 
-    left = f"sort: {priority_label} | {status_label} | {title_label}"
+    left = f"sort: {status_label} | {priority_label} | {title_label}"
     return f"{base_title}\n{_right_align_text(left, id_label)}"
+
+
+def _build_file_rollup_text(path: Path, status_counts: dict[str, int]) -> str:
+    priority_counts = count_priorities(path.read_text(encoding="utf-8"))
+    priority_cell = " ".join(
+        f"{priority_counts[label]}{label.split(' ', 1)[0]}"
+        for label, _slug in PRIORITY_ORDER
+    )
+    return (
+        f"{click.style(priority_cell, dim=True)} | "
+        f"{build_color_rollup_text(status_counts)}"
+    )
+
+
+def _refresh_index_from_choice(choice: str) -> int | None:
+    if not isinstance(choice, str):
+        return None
+    if not choice.startswith("refresh:"):
+        return None
+    raw = choice.split(":", 1)[1].strip()
+    if not raw.isdigit():
+        return None
+    return int(raw) * MENU_PAGE_SIZE
 
 
 def get_sort_strategy_spec(name: str) -> dict[str, object]:
@@ -292,9 +315,16 @@ def get_sort_strategy_spec(name: str) -> dict[str, object]:
 def _build_sort_footer(ascending: bool) -> str:
     direction = "asc" if ascending else "dsc"
     return (
-        f"keys: 1-9 select | n=next | p=prev | u=up | "
+        f"keys: 1-9 select | ↓/n=next | ↑/p=prev | u=up | "
         f"{MENU_TOGGLE_SORT}=sort | S=sort-back | {MENU_TOGGLE_DIRECTION}=[{direction}] | {MENU_REFRESH}=rfrsh | q=quit"
     )
+
+
+def _build_requirement_action_footer(allow_nav: bool) -> str:
+    base = "keys: 1-9 select | u=up | t=toggle | q=quit"
+    if not allow_nav:
+        return base
+    return "keys: 1-9 select | ↓/n=next | ↑/p=prev | g=begin | G=end | u=up | t=toggle | q=quit"
 
 
 def _file_sort_value(counts: dict[str, int], sort_key: str) -> int | str:
@@ -499,6 +529,7 @@ def _prompt_for_requirement_action(
         extra_keys_help=extra_keys_help,
         selected_option_index=selected_index,
         selected_option_bg=selected_bg,
+        footer_legend=_build_requirement_action_footer(allow_nav),
     )
     if choice is None:
         return "quit", None
@@ -1026,13 +1057,14 @@ def interactive_update_loop(
     if include_status_emojis is None:
         include_status_emojis = infer_include_status_emojis(domain_files)
     strategy = get_sort_strategy_spec(sort_strategy)
-    file_columns = list(strategy["file_columns"])
-    criterion_columns = list(strategy["criterion_columns"])
+    file_columns = list(FILE_SORT_COLUMNS)
+    criterion_columns = list(CRITERION_SORT_COLUMNS)
     current_file_sort_key = str(strategy["file_default_key"])
     current_file_sort_ascending = bool(strategy["file_default_ascending"])
     ordered_paths = [path.resolve() for path in domain_files]
     force_rescan = True
     pending_initial_file = initial_file_path.resolve() if isinstance(initial_file_path, Path) else None
+    file_menu_selected_index = 0
 
     while True:
         if force_rescan:
@@ -1064,8 +1096,8 @@ def interactive_update_loop(
             file_rows.append((path, counts, label))
 
         file_options = [
-            right_align_menu_suffix(label, build_color_rollup_text(counts), index_width=1)
-            for _, counts, label in file_rows
+            right_align_menu_suffix(label, _build_file_rollup_text(path, counts), index_width=1)
+            for path, counts, label in file_rows
         ]
 
         selected_path: Path | None = None
@@ -1095,6 +1127,7 @@ def interactive_update_loop(
                     MENU_REFRESH: "refresh",
                 },
                 footer_legend=_build_sort_footer(current_file_sort_ascending),
+                selected_option_index=file_menu_selected_index,
             )
             if file_choice is None:
                 return 0
@@ -1124,11 +1157,15 @@ def interactive_update_loop(
                 force_rescan = True
                 click.echo(f"Select file direction: {'asc' if current_file_sort_ascending else 'dsc'}")
                 continue
-            if file_choice == "refresh":
+            if isinstance(file_choice, str) and file_choice.startswith("refresh"):
+                refresh_index = _refresh_index_from_choice(file_choice)
+                if refresh_index is not None and file_rows:
+                    file_menu_selected_index = min(max(refresh_index, 0), len(file_rows) - 1)
                 force_rescan = True
                 click.echo("Select file refreshed.")
                 continue
 
+            file_menu_selected_index = int(file_choice)
             selected_path = file_rows[int(file_choice)][0]
 
         criterion_default_key = strategy["criterion_default_key"]
@@ -1138,6 +1175,7 @@ def interactive_update_loop(
         history: list[int] = []
         history_pos = -1
         criterion_index: int | None = None
+        criterion_menu_selected_index = 0
         current_entry_field = "priority" if priority_mode else "status"
 
         while True:
@@ -1153,7 +1191,7 @@ def interactive_update_loop(
                 criterion_right_labels = [str(c["id"]) for c in requirements]
                 criterion_options = [
                     style_status_line(str(c["status"]), truncate_text(
-                        f"{status_emoji(str(c['status']))} {c['title']}",
+                        f"{str(c.get('priority') or '⚪').split(' ', 1)[0]} {status_emoji(str(c['status']))} {c['title']}",
                         max(8, term_width - 5 - visible_length(str(c["id"])) - 2),
                     ))
                     for c in requirements
@@ -1179,6 +1217,7 @@ def interactive_update_loop(
                         "g": "jump-sub",
                     },
                     footer_legend=_build_sort_footer(current_criterion_sort_ascending),
+                    selected_option_index=criterion_menu_selected_index,
                 )
                 if criterion_choice is None:
                     return 0
@@ -1207,7 +1246,10 @@ def interactive_update_loop(
                     current_criterion_sort_ascending = not current_criterion_sort_ascending
                     click.echo(f"Requirement direction: {'asc' if current_criterion_sort_ascending else 'dsc'}")
                     continue
-                if criterion_choice == "refresh":
+                if isinstance(criterion_choice, str) and criterion_choice.startswith("refresh"):
+                    refresh_index = _refresh_index_from_choice(criterion_choice)
+                    if refresh_index is not None and requirements:
+                        criterion_menu_selected_index = min(max(refresh_index, 0), len(requirements) - 1)
                     click.echo("Requirement list refreshed.")
                     continue
                 if criterion_choice == "jump-subsection":
@@ -1239,6 +1281,7 @@ def interactive_update_loop(
                     continue
 
                 criterion_index = int(criterion_choice)
+                criterion_menu_selected_index = criterion_index
                 del history[history_pos + 1:]
                 history.append(criterion_index)
                 history_pos = len(history) - 1
@@ -1882,6 +1925,36 @@ def lookup_criterion_interactive(
         else:
             new_status = selected_value or str(requirement.get("status") or "")
             blocked_reason = prompt_for_blocked_reason() if "Blocked" in new_status else None
+            deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
+
+            changed = update_criterion_status(
+                path,
+                requirement,
+                new_status,
+                blocked_reason=blocked_reason,
+                deprecated_reason=deprecated_reason,
+            )
+        process_file(
+            path,
+            check_only=False,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
+        )
+
+        if changed:
+            click.echo(f"Updated {requirement['id']} -> {selected_value}")
+        else:
+            click.echo(f"No change for {requirement['id']} ({selected_value})")
+
+        _, table_rows = collect_summary_rows(
+            domain_files,
+            check_only=True,
+            display_name_fn=display_name_from_h1,
+            include_status_emojis=include_status_emojis,
+            include_priority_summary=include_priority_summary,
+        )
+        print_summary_table(table_rows, emoji_columns=emoji_columns)
+        return 0
             deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
 
             changed = update_criterion_status(

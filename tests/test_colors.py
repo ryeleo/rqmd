@@ -32,3 +32,31 @@ def test_RQMD_interactive_006b_color_rollup_contains_bucket_styling() -> None:
 
     assert "|" in rollup
     assert "\x1b[" in rollup
+
+
+def test_RQMD_interactive_006c_color_rollup_supports_custom_status_catalog_without_keyerror() -> None:
+    custom_catalog = [
+        {"name": "Proposed", "shortcode": "proposed", "emoji": "💡"},
+        {"name": "Implemented7", "shortcode": "implemented7", "emoji": "🔧"},
+        {"name": "Desktop-Verified", "shortcode": "desktop-verified", "emoji": "💻"},
+        {"name": "VR-Verified", "shortcode": "vr-verified", "emoji": "🥽"},
+        {"name": "Done", "shortcode": "done", "emoji": "✅"},
+        {"name": "Blocked", "shortcode": "blocked", "emoji": "⛔"},
+        {"name": "Deprecated", "shortcode": "deprecated", "emoji": "🗑️"},
+    ]
+
+    cli.configure_status_catalog(custom_catalog)
+    try:
+        counts = {label: 0 for label, _ in cli.STATUS_ORDER}
+        counts["💡 Proposed"] = 2
+        counts["🔧 Implemented7"] = 8
+        counts["💻 Desktop-Verified"] = 1
+        counts["🥽 VR-Verified"] = 1
+        counts["✅ Done"] = 3
+        counts["⛔ Blocked"] = 1
+
+        rollup = cli.build_color_rollup_text(counts)
+        assert "|" in rollup
+        assert "\x1b[" in rollup
+    finally:
+        cli.configure_status_catalog(None)

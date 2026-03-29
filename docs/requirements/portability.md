@@ -3,7 +3,7 @@
 Scope: cross-project operation, path configuration, and repo-agnostic behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 6🔧 10✅ 0⛔ 1🗑️
+Summary: 0💡 7🔧 10✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PORTABILITY-001: Configurable repo root
@@ -163,3 +163,14 @@ Summary: 0💡 6🔧 10✅ 0⛔ 1🗑️
 - So that output recommends concrete remediation paths (status catalog config update, alias mapping, or one-time migration command)
 - So that check/filter/list modes can optionally continue in a read-only degraded mode while still surfacing unknown values deterministically
 - So that automation JSON errors include a machine-readable error type for unknown status values.
+
+### RQMD-PORTABILITY-018: User-facing errors without Python tracebacks
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when project docs or status catalogs contain incompatible values
+- I want rqmd to fail with a user-facing CLI error
+- So that rqmd prints actionable diagnostics and remediation guidance without raw Python stack traces in normal CLI usage
+- So that interactive startup paths are protected against catalog-assumption crashes (for example custom status catalogs missing built-in labels)
+- So that unexpected uncaught internal exceptions are converted into a single friendly CLI error line by default.
+- So that `--detailed` can still be used to surface a full traceback for debugging when needed.
+- So that regression coverage verifies compatibility failures are reported through stable error contracts instead of uncaught exceptions.
