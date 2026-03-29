@@ -12,6 +12,7 @@ import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from rqmd import menus as menus_mod
 
 
@@ -161,6 +162,26 @@ class TestScreenWriteInteractiveLoops:
         output = output_buffer.getvalue()
         assert "\x1b[2J\x1b[H" in output
         menus_mod.set_screen_write_enabled(False)  # Reset
+
+    def test_RQMD_ui_001_forced_screen_write_overrides_append_mode(self):
+        """Verify forced screen-write ignores adaptive append fallback."""
+        options = ["Option 1", "Option 2"]
+        menus_mod.set_screen_write_enabled(True)
+        menus_mod.set_screen_write_forced(True)
+        menus_mod._RENDER_MODE_CONTROLLER.mode = "append"
+
+        output_buffer = io.StringIO()
+        with patch("sys.stdout", output_buffer):
+            with patch("sys.stdout.isatty", return_value=True):
+                with patch("click.getchar", return_value="q"):
+                    menus_mod.select_from_menu("Forced", options, allow_paging_nav=False)
+
+        output = output_buffer.getvalue()
+        assert "\x1b[2J\x1b[H" in output
+
+        menus_mod.set_screen_write_forced(False)
+        menus_mod.set_screen_write_enabled(False)
+        menus_mod.reset_render_mode_controller()
 
 
 if __name__ == "__main__":

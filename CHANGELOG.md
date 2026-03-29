@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added UI-009 adaptive performance heuristics with a dedicated render-mode controller using smoothed latency windows (median/p95), hysteresis thresholds, and cooldown-based anti-thrashing transitions between `screen-write` and `append` rendering modes, including regression tests for sustained-latency degrade/recover behavior (RQMD-UI-009).
 - Added UNDO-003 branching history support with automatic recovery branch creation on divergence, new `HistoryManager` methods (`checkout_branch`, `cherry_pick`, `replay_branch`, `label_branch`, `discard_branch`, `get_branches`), branch head tracking in state metadata, and comprehensive regression tests for branch navigation, preservation of alternate timelines, and replay workflows (RQMD-UNDO-003).
 - Added `rqmd --history-discard-branch <name>` as a dedicated non-interactive history mode for pruning alternate branches, with explicit confirmation enforcement (`--force-yes`) for automation-safe destructive operations and JSON/text result payloads (RQMD-UNDO-004).
+- Added scratch frontend QA assets under `test-corpus/scratch/`: a new mixed-metadata edge-case corpus page (`requirements/page-24-edge-cases.md`) and a task-oriented manual validation guide (`QA-frontend-checklist.md`) for interactive rendering, resize behavior, filters, and history/confirmation smoke checks.
+- Added portability hardening for user-facing compatibility failures to avoid raw Python traceback output in normal CLI flows, including catalog-safe roll-up rendering with custom status taxonomies and regression coverage for interactive startup behavior (RQMD-PORTABILITY-018).
 
 - Added `extract_blocking_id()` to `req_parser.py`; `blocking_id` and `blocked_reason` fields now appear in JSON exports from `rqmd` and `rqmd-ai` when a requirement is blocked by a linked or bare requirement ID (RQMD-CORE-022).
 - Added `parse_domain_priority_metadata()` to `req_parser.py`; `domain_priority` and `sub_section_priorities` fields now appear in JSON payloads when domain-level `**Priority:**` metadata is present (RQMD-PRIORITY-012).
@@ -78,6 +80,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated requirement status to mark `RQMD-UI-008` as Implemented (SIGWINCH resize reflow handling in interactive screen-write flows).
 - Updated requirement status to mark `RQMD-UI-007` as Implemented (contrast-preserving redraw validation with safe color fallback).
 - Updated requirement status to mark `RQMD-UI-009` as Implemented (smoothed latency heuristics with hysteresis and cooldown mode-transition guardrails).
+- Updated interactive refresh flow to preserve current pagination context in file/requirement menus by carrying page metadata through refresh events instead of resetting to page 1.
+- Updated interactive sort cycling behavior to follow a deterministic left-to-right ring aligned with visible sort columns.
+- Updated file/requirement selection rendering to surface priority visuals directly in list rows and sortable header columns (explicit `priority` column label and per-row priority emoji markers).
+- Updated scratch frontend checklist to prioritize manual interactive/tree QA commands and move JSON-heavy checks into optional automation spot checks.
+- Updated requirement status to mark `RQMD-PORTABILITY-018` as Implemented (user-facing compatibility errors without uncaught Python stack traces in normal CLI use).
+- Updated the CLI entrypoint safety behavior so unexpected uncaught internal exceptions render as a single friendly error line by default, while `-v/--detailed` preserves traceback re-raise behavior for debugging.
+- Updated interactive navigation to make down/up arrow keys the primary next/prev controls in paged menus and requirement walkthroughs, while preserving `n`/`p` as compatibility aliases.
+- Fixed a `--screen-write` regression where adaptive render-mode fallback could override an explicit CLI request; explicit `--screen-write` now forces full-screen redraw for that run, and render-mode state is reset at CLI startup.
 
 - Switched requirements index layout from sibling requirements.md files to in-directory README.md files.
 - Updated rqmd auto-detection to use docs/requirements/README.md and requirements/README.md.

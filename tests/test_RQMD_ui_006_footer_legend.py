@@ -15,6 +15,7 @@ import io
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from rqmd import menus as menus_mod
 
 
@@ -292,7 +293,7 @@ class TestFooterIntegration:
     def test_RQMD_ui_006_footer_legend_with_paging(self):
         """Verify footer legend works correctly when paging through menu items."""
         options = [f"Item {i}" for i in range(1, 21)]
-        legend = "p/n=page | q=quit"
+        legend = "↑/p prev | ↓/n next | q=quit"
         
         # Verify feature is accepted and works with paging
         with patch("rqmd.menus.click.echo"):
