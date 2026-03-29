@@ -105,3 +105,54 @@ def test_RQMD_undo_004_history_discard_branch_succeeds_with_force_yes(tmp_path: 
     assert payload["discarded"] is True
     assert payload["cancelled"] is False
     assert recovery_branch not in payload["branches"]
+
+
+def test_RQMD_undo_004_history_gc_requires_force_yes_non_interactive(tmp_path: Path) -> None:
+    manager, _recovery_branch = _setup_divergent_history(tmp_path)
+    assert manager.get_storage_stats()["count"] >= 1
+
+    runner = CliRunner()
+    result = runner.invoke(
+        rqmd_main,
+        [
+            "--project-root",
+            str(tmp_path),
+            "--docs-dir",
+            "docs/requirements",
+            "--history-gc",
+            "--as-json",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "requires confirmation" in result.output
+
+
+def test_RQMD_undo_004_history_gc_succeeds_with_force_yes(tmp_path: Path) -> None:
+    manager, _recovery_branch = _setup_divergent_history(tmp_path)
+    before = manager.get_storage_stats()
+
+    runner = CliRunner()
+    result = runner.invoke(
+        rqmd_main,
+        [
+            "--project-root",
+            str(tmp_path),
+            "--docs-dir",
+            "docs/requirements",
+            "--history-gc",
+            "--history-prune-now",
+            "--force-yes",
+            "--as-json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["mode"] == "history-gc"
+    assert payload["ran"] is True
+    assert payload["cancelled"] is False
+    assert payload["prune_now"] is True
+    assert payload["before"]["count"] == before["count"]
+    assert "count" in payload["after"]
+    assert "packs" in payload["after"]

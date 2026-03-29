@@ -482,7 +482,7 @@ def _prompt_for_history_entry_action(
             )
         )
         click.echo(
-            "keys: Enter/u=back | c=checkout-branch | p=cherry-pick-commit | r=replay-entry-branch | q=quit"
+            "keys: Enter/u=back | c=checkout-branch | p=cherry-pick-commit | r=replay-entry-branch | g=gc | G=prune-now | q=quit"
         )
         click.echo("choice: ", nl=False)
         raw_choice = click.getchar()
@@ -544,8 +544,35 @@ def _prompt_for_history_entry_action(
                     f"Replayed {len(replayed_commits)} history commit(s) from '{entry_branch}' onto '{current_branch}'."
                 )
             return "refresh"
+        if choice in {"g", "G"}:
+            prune_now = choice == "G"
+            stats = history_manager.get_storage_stats()
+            prune_label = " with immediate prune" if prune_now else ""
+            confirmed = click.confirm(
+                (
+                    f"Run history garbage collection{prune_label}? "
+                    f"Current loose objects: {stats.get('count', 0)}, packs: {stats.get('packs', 0)}."
+                ),
+                default=False,
+                show_default=True,
+            )
+            if not confirmed:
+                click.echo("History garbage collection cancelled.")
+                continue
+            gc_result = history_manager.garbage_collect(prune_now=prune_now)
+            before = gc_result.get("before") if isinstance(gc_result, dict) else {}
+            after = gc_result.get("after") if isinstance(gc_result, dict) else {}
+            before_count = before.get("count", 0) if isinstance(before, dict) else 0
+            after_count = after.get("count", 0) if isinstance(after, dict) else 0
+            before_packs = before.get("packs", 0) if isinstance(before, dict) else 0
+            after_packs = after.get("packs", 0) if isinstance(after, dict) else 0
+            click.echo(
+                "History gc completed "
+                f"(loose objects: {before_count} -> {after_count}, packs: {before_packs} -> {after_packs})."
+            )
+            return "refresh"
 
-        click.echo("Invalid input. Use Enter/u/c/p/r/q.")
+        click.echo("Invalid input. Use Enter/u/c/p/r/g/G/q.")
 
 
 def _show_history_browser(

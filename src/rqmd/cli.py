@@ -876,6 +876,18 @@ def _filter_timeline_nodes(
     help="Discard an alternate history branch by name (requires confirmation; use --force-yes for non-interactive automation).",
 )
 @click.option(
+    "--history-gc",
+    "history_gc",
+    is_flag=True,
+    help="Run maintenance garbage collection on the hidden history repository (requires confirmation; use --force-yes for automation).",
+)
+@click.option(
+    "--history-prune-now",
+    "history_prune_now",
+    is_flag=True,
+    help="Used with --history-gc to expire reflogs and prune immediately instead of using Git's default grace period.",
+)
+@click.option(
     "--history-checkout-branch",
     "history_checkout_branch",
     type=str,
@@ -1249,6 +1261,8 @@ def main(
     show_timeline: bool,
     show_history: bool,
     history_discard_branch: str | None,
+    history_gc: bool,
+    history_prune_now: bool,
     history_checkout_branch: str | None,
     history_cherry_pick: str | None,
     history_replay_branch: str | None,
@@ -2461,6 +2475,8 @@ def main(
         raise click.ClickException(
             "--history-target-branch requires --history-cherry-pick or --history-replay-branch."
         )
+    if history_prune_now and not history_gc:
+        raise click.ClickException("--history-prune-now requires --history-gc.")
 
     non_interactive_requested = bool(
         set_requirement_id
@@ -2475,6 +2491,7 @@ def main(
         or show_timeline
         or show_history
         or history_discard_branch
+        or history_gc
         or history_checkout_branch
         or history_cherry_pick
         or history_replay_branch
@@ -2496,14 +2513,68 @@ def main(
             + int(bool(show_timeline))
             + int(bool(show_history))
             + int(bool(history_discard_branch))
+            + int(bool(history_gc))
             + int(bool(history_checkout_branch))
             + int(bool(history_cherry_pick))
             + int(bool(history_replay_branch))
         )
         if mode_count > 1:
             raise click.ClickException(
-                "Use exactly one non-interactive update mode: --undo, --redo, --timeline, --history, --history-discard-branch, --history-checkout-branch, --history-cherry-pick, --history-replay-branch, --update-file, --update ID=STATUS (repeatable), --update-priority ID=PRIORITY (repeatable), --update-flagged ID=true|false (repeatable), or --update-id with --update-status."
+                "Use exactly one non-interactive update mode: --undo, --redo, --timeline, --history, --history-discard-branch, --history-gc, --history-checkout-branch, --history-cherry-pick, --history-replay-branch, --update-file, --update ID=STATUS (repeatable), --update-priority ID=PRIORITY (repeatable), --update-flagged ID=true|false (repeatable), or --update-id with --update-status."
             )
+
+        if history_gc:
+            history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
+            confirmed = bool(confirm_yes)
+            existing_stats = history_manager.get_storage_stats()
+            if not confirmed:
+                if not sys.stdin.isatty() or json_output:
+                    raise click.ClickException(
+                        "History garbage collection requires confirmation. Re-run with --force-yes."
+                    )
+                prune_label = " with immediate prune" if history_prune_now else ""
+                confirmed = click.confirm(
+                    (
+                        f"Run history garbage collection{prune_label}? "
+                        "This may permanently remove expired reflog objects from .rqmd/history/rqmd-history."
+                    ),
+                    default=False,
+                    show_default=True,
+                )
+
+            if not confirmed:
+                payload = {
+                    "mode": "history-gc",
+                    "ran": False,
+                    "cancelled": True,
+                    "prune_now": history_prune_now,
+                    "before": existing_stats,
+                    "after": existing_stats,
+                }
+                if json_output:
+                    _emit_json_payload(payload)
+                else:
+                    click.echo("History garbage collection cancelled.")
+                raise SystemExit(0)
+
+            gc_result = history_manager.garbage_collect(prune_now=history_prune_now)
+            payload = {
+                "mode": "history-gc",
+                "ran": True,
+                "cancelled": False,
+                **gc_result,
+            }
+            if json_output:
+                _emit_json_payload(payload)
+            else:
+                before = payload["before"]
+                after = payload["after"]
+                click.echo(
+                    "History gc completed "
+                    f"(loose objects: {before.get('count', 0)} -> {after.get('count', 0)}, "
+                    f"packs: {before.get('packs', 0)} -> {after.get('packs', 0)})."
+                )
+            raise SystemExit(0)
 
         if history_cherry_pick:
             history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)

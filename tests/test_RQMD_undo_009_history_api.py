@@ -106,6 +106,25 @@ def test_RQMD_undo_009_history_conflicts_with_timeline_mode(tmp_path: Path) -> N
     assert "Use exactly one non-interactive update mode" in result.output
 
 
+def test_RQMD_undo_007_history_prune_now_requires_history_gc(tmp_path: Path) -> None:
+    _setup_history(tmp_path)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        rqmd_main,
+        [
+            "--project-root",
+            str(tmp_path),
+            "--docs-dir",
+            "docs/requirements",
+            "--history-prune-now",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "--history-prune-now requires --history-gc." in result.output
+
+
 def test_RQMD_undo_007_history_checkout_branch_cli(tmp_path: Path) -> None:
     req_dir = tmp_path / "docs" / "requirements"
     req_dir.mkdir(parents=True)

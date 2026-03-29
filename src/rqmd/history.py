@@ -494,6 +494,35 @@ class HistoryManager:
             }
         return branches_info
 
+    def get_storage_stats(self) -> dict[str, int]:
+        """Return lightweight git object-store statistics for the hidden history repo."""
+        self._ensure_initialized()
+        result = self._git("count-objects", "-v")
+        stats: dict[str, int] = {}
+        for line in result.stdout.splitlines():
+            if ":" not in line:
+                continue
+            key, raw_value = line.split(":", 1)
+            value = raw_value.strip()
+            if value.isdigit():
+                stats[key.strip().replace("-", "_")] = int(value)
+        return stats
+
+    def garbage_collect(self, prune_now: bool = False) -> dict[str, Any]:
+        """Run git garbage collection for the hidden history repository."""
+        before = self.get_storage_stats()
+        if prune_now:
+            self._git("reflog", "expire", "--expire=now", "--all")
+            self._git("gc", "--prune=now")
+        else:
+            self._git("gc")
+        after = self.get_storage_stats()
+        return {
+            "prune_now": prune_now,
+            "before": before,
+            "after": after,
+        }
+
     def resolve_two_refs(
         self, ref_a: str, ref_b: str
     ) -> tuple[dict[str, Any], dict[str, Any]] | None:

@@ -162,6 +162,8 @@ Inside the history browser, selecting an entry opens a detail view where you can
 - press `c` to checkout the selected entry's branch
 - press `p` to cherry-pick the selected commit onto the current branch
 - press `r` to replay the selected entry's branch onto the current branch
+- press `g` to run history gc with confirmation
+- press `G` to run history gc with immediate prune
 
 Long options also accept unique prefixes, so invocations such as `--proj`, `--docs`, and `--as-j` work when they resolve unambiguously.
 
@@ -171,9 +173,13 @@ History operations available in non-interactive mode include:
 - `uv run rqmd --timeline`
 - `uv run rqmd --undo`
 - `uv run rqmd --redo`
+- `uv run rqmd --history-gc --force-yes`
+- `uv run rqmd --history-gc --history-prune-now --force-yes`
 - `uv run rqmd --history-checkout-branch <branch-name>`
 - `uv run rqmd --history-cherry-pick <entry-index-or-ref> [--history-target-branch <branch-name>]`
 - `uv run rqmd --history-replay-branch <branch-name> [--history-target-branch <branch-name>]`
+
+`--history-gc` requires explicit confirmation because it runs maintenance against the hidden `.rqmd/history/rqmd-history` repository. Add `--history-prune-now` to expire reflogs and prune immediately instead of using Git's default grace period.
 
 File lists now default to the `name` sort in descending order.
 
