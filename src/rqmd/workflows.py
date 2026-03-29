@@ -318,7 +318,7 @@ def get_sort_strategy_spec(name: str) -> dict[str, object]:
 def _build_sort_footer(ascending: bool) -> str:
     direction = "asc" if ascending else "dsc"
     return (
-        f"keys: 1-9 select | ↓/n=next | ↑/p=prev | u=up | "
+        f"keys: 1-9 select | ↓/j=next | ↑/k=prev | u=up | "
         f"{MENU_TOGGLE_SORT}=sort | S=sort-back | {MENU_TOGGLE_DIRECTION}=[{direction}] | {MENU_REFRESH}=rfrsh | q=quit"
     )
 
@@ -327,7 +327,7 @@ def _build_requirement_action_footer(allow_nav: bool) -> str:
     base = "keys: 1-9 select | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
     if not allow_nav:
         return base
-    return "keys: 1-9 select | ↓/n=next | ↑/p=prev | g=begin | G=end | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
+    return "keys: 1-9 select | ↓/j=next | ↑/k=prev | g=begin | G=end | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
 
 
 def _infer_requirements_dir(repo_root: Path, domain_files: list[Path]) -> Path:
@@ -659,7 +659,7 @@ def _show_history_browser(
             allow_paging_nav=True,
             option_right_labels=[_history_entry_right_label(entry) for entry in display_entries],
             selected_option_index=selected_index,
-            footer_legend="keys: 1-9 select | ↓/n=next | ↑/p=prev | u=up | q=quit",
+            footer_legend="keys: 1-9 select | ↓/j=next | ↑/k=prev | u=up | q=quit",
             prefix_text=prefix_text,
         )
         if choice is None or choice == "up":
@@ -889,8 +889,8 @@ def _prompt_for_requirement_action(
     extra_keys.update({"z": "undo", "y": "redo", "h": "history"})
     extra_keys_help.update({"z": "undo", "y": "redo", "h": "history"})
     if allow_nav:
-        extra_keys.update({"n": "nav-next", "p": "nav-prev", "N": "nav-prev", "g": "nav-first", "G": "nav-last"})
-        extra_keys_help.update({"n": "next", "p": "prev", "N": "prev", "g": "begin", "G": "end"})
+        extra_keys.update({"j": "nav-next", "k": "nav-prev", "g": "nav-first", "G": "nav-last"})
+        extra_keys_help.update({"j": "next", "k": "prev", "g": "begin", "G": "end"})
 
     choice = select_from_menu_fn(
         title,

@@ -2,14 +2,14 @@
 Tests for RQMD-UI-005: Pagination and stable cursor semantics.
 
 Verify that interactive menus maintain stable cursor/selection position across:
-- Page changes (arrow or n/p navigation)
+- Page changes (arrow or j/k navigation)
 - Re-renders
 - Selection visibility in the current window
 
 Key requirements:
 - Cursor position remains consistent across pagination
 - Selection stays visible when possible
-- Navigation keys (down/up arrows and n/p aliases) don't lose selection state
+- Navigation keys (down/up arrows and j/k aliases) don't lose selection state
 """
 
 from unittest.mock import patch
@@ -121,7 +121,7 @@ class TestStableCursorPagination:
         # Simulate: page 1 with selection, then navigate to page 2
         with patch("rqmd.menus.click.echo", side_effect=capture_echo):
             with patch("sys.stdout.isatty", return_value=False):
-                with patch("click.getchar", side_effect=['n', 'q']):  # Next page, quit
+                with patch("click.getchar", side_effect=['j', 'q']):  # Next page, quit
                     try:
                         result = menus_mod.select_from_menu(
                             "Large Menu", options,
@@ -172,7 +172,7 @@ class TestCursorNavigationConsistency:
         # Simulate: page forward, backward, forward again
         with patch("rqmd.menus.click.echo"):
             with patch("sys.stdout.isatty", return_value=False):
-                with patch("click.getchar", side_effect=['n', 'p', 'n', 'q']):
+                with patch("click.getchar", side_effect=['j', 'k', 'j', 'q']):
                     try:
                         result = menus_mod.select_from_menu(
                             "Entries", options,
@@ -203,7 +203,7 @@ class TestCursorNavigationConsistency:
         """Verify selection state doesn't reset during page changes."""
         options = [f"Item {i:03d}" for i in range(200)]  # 200 items
         
-        navigation_sequence = ['n', 'n', 'p', 'q']  # Forth, forth, back, quit
+        navigation_sequence = ['j', 'j', 'k', 'q']  # Forth, forth, back, quit
         
         with patch("rqmd.menus.click.echo"):
             with patch("sys.stdout.isatty", return_value=False):
@@ -352,7 +352,7 @@ class TestPaginationWithSelection:
         
         with patch("rqmd.menus.click.echo"):
             with patch("sys.stdout.isatty", return_value=False):
-                with patch("click.getchar", side_effect=['n', 'q']):
+                with patch("click.getchar", side_effect=['j', 'q']):
                     try:
                         result = menus_mod.select_from_menu(
                             "Items", options,
@@ -368,7 +368,7 @@ class TestPaginationWithSelection:
         
         with patch("rqmd.menus.click.echo"):
             with patch("sys.stdout.isatty", return_value=False):
-                with patch("click.getchar", side_effect=['n', 'n', 'p', 'q']):
+                with patch("click.getchar", side_effect=['j', 'j', 'k', 'q']):
                     try:
                         result = menus_mod.select_from_menu(
                             "Entries", options,
@@ -385,7 +385,7 @@ class TestPaginationWithSelection:
         for boundary_index in [0, 4]:  # First and last
             with patch("rqmd.menus.click.echo"):
                 with patch("sys.stdout.isatty", return_value=False):
-                    with patch("click.getchar", side_effect=['n', 'q'] if boundary_index < 4 else ['p', 'q']):
+                    with patch("click.getchar", side_effect=['j', 'q'] if boundary_index < 4 else ['k', 'q']):
                         try:
                             menus_mod.select_from_menu(
                                 "Boundary", options,

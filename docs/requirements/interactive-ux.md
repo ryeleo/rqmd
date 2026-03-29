@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 4🔧 18✅ 0⛔ 4🗑️
+Summary: 2💡 5🔧 18✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -30,7 +30,7 @@ Summary: 3💡 4🔧 18✅ 0⛔ 4🗑️
 - I want to press next/prev page keys
 - So that menu page changes accordingly
 - So that down/up arrow keys are the primary next/prev navigation controls.
-- So that legacy `n`/`p` paging shortcuts remain available as compatibility aliases.
+- So that Vim-style `j`/`k` paging shortcuts remain available alongside arrow-key navigation.
 - So that selection remains scoped to visible page indices.
 
 ### RQMD-INTERACTIVE-004: Requirement next/prev shortcuts
@@ -40,16 +40,15 @@ Summary: 3💡 4🔧 18✅ 0⛔ 4🗑️
 - I want to press down arrow (next) or up arrow (prev)
 - So that focus moves across requirements in current ordering
 - So that history-aware navigation supports backtracking.
-- So that legacy `n`/`p` shortcuts remain available as compatibility aliases.
-- So that `N` (Shift+N) is treated as reverse navigation for terminals where uppercase shortcuts are easier to reach.
+- So that Vim-style `j`/`k` shortcuts remain available alongside arrow-key navigation.
 
 ### RQMD-INTERACTIVE-004A: Next/prev stack semantics
 - **Status:** ✅ Verified
 - **Priority:** 🟠 P1 - High
-- As a rqmd user when users navigate requirements using arrow keys or legacy `n`/`p` aliases
+- As a rqmd user when users navigate requirements using arrow keys or `j`/`k` aliases
 - I want to move forward and backward across requirements
 - So that rqmd preserves a history stack semantics for backtracking
-- So that `p` returns to the previously visited requirement context.
+- So that `k` returns to the previously visited requirement context.
 - So that filtered walkthroughs support `g` (beginning) and `G` (end) jump shortcuts.
 - So that reaching the end of a filtered walkthrough with next-navigation keeps the session open and displays a clear "no more <target> requirements" message.
 
@@ -146,7 +145,7 @@ Summary: 3💡 4🔧 18✅ 0⛔ 4🗑️
 - As a rqmd user when I only want to work a specific subset of requirements
 - I want to provide an explicit target list at CLI (via positional args or `--targets-file`) and launch a focused interactive walk
 - So that the workflow behaves similarly to `--status` navigation but uses user-provided membership instead of status-based filtering.
-- So that `n`/`p` traversal, resume behavior, and update flows work consistently within the explicit list scope.
+- So that `j`/`k` traversal, resume behavior, and update flows work consistently within the explicit list scope.
 - So that target lists can mix requirement IDs and domain identifiers (filename, stem, or display name), where domain tokens expand deterministically into that domain's requirements.
 - So that positional arguments and `--targets-file` use the same token parser, expansion rules, ordering semantics, duplicate handling, and validation behavior.
 - So that missing/invalid tokens are reported clearly before entering the walk.
@@ -278,7 +277,7 @@ colors:
 - So that this flow depends on the `**Links:**` field contract defined in RQMD-CORE-021 and does not introduce a separate link storage path.
 
 ### RQMD-INTERACTIVE-023: Vim-style vertical navigation defaults
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when I navigate interactive menus primarily from the keyboard
 - I want `j` and `k` to be the default down/up navigation keys

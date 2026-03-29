@@ -290,7 +290,7 @@ def select_from_menu(
         repeat_choice_right: If True, allow repeated selection without exiting.
         zebra: If True, alternate row backgrounds (striping).
         show_page_indicator: If True, show (X/Y) page indicator.
-        allow_paging_nav: If True, enable down/up-arrow navigation for next/prev page navigation.
+        allow_paging_nav: If True, enable down/up-arrow and j/k navigation for next/prev page navigation.
         extra_key: Single extra key to bind (e.g., 'r' for notes).
         extra_key_help: Help text for the extra key.
         extra_key_return: Value to return when extra key is pressed.
@@ -430,22 +430,14 @@ def select_from_menu(
                 return mapped
 
             if allow_paging_nav and choice.lower() == MENU_NEXT:
-                # Shift+N acts as reverse paging (previous page).
-                if choice.isupper():
-                    if page > 0:
-                        page -= 1
-                elif page < total_pages - 1:
+                if page < total_pages - 1:
                     page += 1
                 render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
                 if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
                     _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
                 continue
             if allow_paging_nav and choice.lower() == MENU_PREV:
-                # Shift+P acts as reverse paging (next page).
-                if choice.isupper():
-                    if page < total_pages - 1:
-                        page += 1
-                elif page > 0:
+                if page > 0:
                     page -= 1
                 render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
                 if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
