@@ -1285,6 +1285,84 @@ def test_RQMD_interactive_021h_history_browser_runs_immediate_prune(monkeypatch)
     assert gc_calls == [True]
 
 
+@pytest.mark.timeout(5)
+def test_RQMD_interactive_021i_history_browser_labels_selected_branch(monkeypatch) -> None:
+    label_calls: list[tuple[str, str]] = []
+
+    class StubHistoryManager:
+        def get_branches(self):
+            return {
+                "main": {"is_current": True},
+                "recovery-branch": {"is_current": False},
+            }
+
+        def label_branch(self, branch_name: str, label: str):
+            label_calls.append((branch_name, label))
+            return True
+
+    monkeypatch.setattr(cli.click, "getchar", lambda: "l")
+    monkeypatch.setattr(cli.click, "prompt", lambda *args, **kwargs: "saved-snapshot")
+
+    action = cli.workflows_mod._prompt_for_history_entry_action(
+        {
+            "entry_index": 4,
+            "command": "verified",
+            "branch": "recovery-branch",
+            "commit": "feedfacecafebeef",
+            "timestamp": "2026-03-29T00:00:00+00:00",
+            "files": ["docs/requirements/demo.md"],
+            "delta": {"additions": 1, "deletions": 1, "files_changed": 1},
+        },
+        StubHistoryManager(),
+    )
+
+    assert action == "refresh"
+    assert label_calls == [("recovery-branch", "saved-snapshot")]
+
+
+@pytest.mark.timeout(5)
+def test_RQMD_interactive_021j_history_browser_discards_branch_after_optional_label(monkeypatch) -> None:
+    label_calls: list[tuple[str, str]] = []
+    discard_calls: list[str] = []
+    confirm_answers = iter([True, True])
+
+    class StubHistoryManager:
+        def get_branches(self):
+            return {
+                "main": {"is_current": True},
+                "recovery-branch": {"is_current": False},
+            }
+
+        def label_branch(self, branch_name: str, label: str):
+            label_calls.append((branch_name, label))
+            return True
+
+        def discard_branch(self, branch_name: str):
+            discard_calls.append(branch_name)
+            return True
+
+    monkeypatch.setattr(cli.click, "getchar", lambda: "x")
+    monkeypatch.setattr(cli.click, "confirm", lambda *args, **kwargs: next(confirm_answers))
+    monkeypatch.setattr(cli.click, "prompt", lambda *args, **kwargs: "keep-for-reference")
+
+    action = cli.workflows_mod._prompt_for_history_entry_action(
+        {
+            "entry_index": 5,
+            "command": "verified",
+            "branch": "recovery-branch",
+            "commit": "feedfacecafebeef",
+            "timestamp": "2026-03-29T00:00:00+00:00",
+            "files": ["docs/requirements/demo.md"],
+            "delta": {"additions": 1, "deletions": 1, "files_changed": 1},
+        },
+        StubHistoryManager(),
+    )
+
+    assert action == "refresh"
+    assert label_calls == [("recovery-branch", "keep-for-reference")]
+    assert discard_calls == ["recovery-branch"]
+
+
 def test_RQMD_interactive_020_shell_completion_suggests_subsection_domain_and_id(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"

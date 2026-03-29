@@ -160,6 +160,8 @@ Interactive file and requirement menus now support:
 Inside the history browser, selecting an entry opens a detail view where you can:
 
 - press `c` to checkout the selected entry's branch
+- press `l` to save a human-readable label for the selected entry's branch
+- press `x` to discard the selected entry's alternate branch, with an option to save a label first
 - press `p` to cherry-pick the selected commit onto the current branch
 - press `r` to replay the selected entry's branch onto the current branch
 - press `g` to run history gc with confirmation

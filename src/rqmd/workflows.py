@@ -482,7 +482,7 @@ def _prompt_for_history_entry_action(
             )
         )
         click.echo(
-            "keys: Enter/u=back | c=checkout-branch | p=cherry-pick-commit | r=replay-entry-branch | g=gc | G=prune-now | q=quit"
+            "keys: Enter/u=back | c=checkout-branch | l=label-branch | x=discard-branch | p=cherry-pick-commit | r=replay-entry-branch | g=gc | G=prune-now | q=quit"
         )
         click.echo("choice: ", nl=False)
         raw_choice = click.getchar()
@@ -504,6 +504,55 @@ def _prompt_for_history_entry_action(
                 click.echo(f"No checkout performed for history branch '{entry_branch}'.")
             else:
                 click.echo(f"Checked out history branch '{entry_branch}' at {checked_out}.")
+            return "refresh"
+        if choice.lower() == "l":
+            label = click.prompt(
+                f"Label for history branch '{entry_branch}'",
+                default=entry_branch,
+                show_default=True,
+            ).strip()
+            if not label:
+                click.echo("Branch labeling cancelled.")
+                continue
+            if not history_manager.label_branch(entry_branch, label):
+                click.echo(f"No label updated for history branch '{entry_branch}'.")
+            else:
+                click.echo(f"Labeled history branch '{entry_branch}' as '{label}'.")
+            return "refresh"
+        if choice.lower() == "x":
+            if entry_branch == "main":
+                click.echo("Main history branch cannot be discarded.")
+                continue
+            save_label = click.confirm(
+                f"Save a named snapshot label for '{entry_branch}' before discarding it?",
+                default=False,
+                show_default=True,
+            )
+            if save_label:
+                label = click.prompt(
+                    f"Snapshot label for history branch '{entry_branch}'",
+                    default=entry_branch,
+                    show_default=True,
+                ).strip()
+                if label:
+                    history_manager.label_branch(entry_branch, label)
+                    click.echo(f"Saved snapshot label '{label}' for history branch '{entry_branch}'.")
+            confirmed = click.confirm(
+                (
+                    f"Discard history branch '{entry_branch}'? "
+                    "This removes branch navigation for that alternate timeline."
+                ),
+                default=False,
+                show_default=True,
+            )
+            if not confirmed:
+                click.echo("Branch discard cancelled.")
+                continue
+            discarded = history_manager.discard_branch(entry_branch)
+            if discarded:
+                click.echo(f"Discarded history branch '{entry_branch}'.")
+            else:
+                click.echo(f"No branch discarded for '{entry_branch}'.")
             return "refresh"
         if choice.lower() == "p":
             confirmed = click.confirm(
@@ -572,7 +621,7 @@ def _prompt_for_history_entry_action(
             )
             return "refresh"
 
-        click.echo("Invalid input. Use Enter/u/c/p/r/g/G/q.")
+        click.echo("Invalid input. Use Enter/u/c/l/x/p/r/g/G/q.")
 
 
 def _show_history_browser(
