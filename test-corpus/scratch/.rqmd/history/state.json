@@ -1,0 +1,351 @@
+{
+  "version": "2.0",
+  "requirements_dir": "requirements",
+  "entries": [
+    {
+      "commit": "474ff30ddf39970cd9752d0d6974ccd1e6d67ace",
+      "timestamp": "2026-03-29T03:28:59.566269+00:00",
+      "command": "baseline",
+      "actor": "rqmd",
+      "reason": "Initial snapshot before first rqmd mutation.",
+      "files": [
+        "requirements/README.md",
+        "requirements/page-01.md",
+        "requirements/page-02.md",
+        "requirements/page-03.md",
+        "requirements/page-04.md",
+        "requirements/page-05.md",
+        "requirements/page-06.md",
+        "requirements/page-07.md",
+        "requirements/page-08.md",
+        "requirements/page-09.md",
+        "requirements/page-10.md",
+        "requirements/page-11.md",
+        "requirements/page-12.md",
+        "requirements/page-13.md",
+        "requirements/page-14.md",
+        "requirements/page-15.md",
+        "requirements/page-16.md",
+        "requirements/page-17.md",
+        "requirements/page-18.md",
+        "requirements/page-19.md",
+        "requirements/page-20.md",
+        "requirements/page-21.md",
+        "requirements/page-22.md",
+        "requirements/page-23.md",
+        "requirements/page-24-edge-cases.md"
+      ],
+      "parent_commit": null,
+      "branch": "main",
+      "branch_point": null,
+      "delta": {
+        "files_changed": 25,
+        "additions": 1671,
+        "deletions": 0,
+        "files": [
+          {
+            "path": "requirements/README.md",
+            "additions": 30,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-01.md",
+            "additions": 68,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-02.md",
+            "additions": 68,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-03.md",
+            "additions": 68,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-04.md",
+            "additions": 68,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-05.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-06.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-07.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-08.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-09.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-10.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-11.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-12.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-13.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-14.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-15.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-16.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-17.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-18.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-19.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-20.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-21.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-22.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-23.md",
+            "additions": 67,
+            "deletions": 0,
+            "binary": false
+          },
+          {
+            "path": "requirements/page-24-edge-cases.md",
+            "additions": 96,
+            "deletions": 0,
+            "binary": false
+          }
+        ]
+      }
+    },
+    {
+      "commit": "883ec5cceaeaebfce8f72b9b929924fd4e7023bb",
+      "timestamp": "2026-03-29T03:28:59.680455+00:00",
+      "command": "set-status",
+      "actor": "rqmd",
+      "reason": "REQ-PAG-231 updated",
+      "files": [
+        "requirements/README.md",
+        "requirements/page-01.md",
+        "requirements/page-02.md",
+        "requirements/page-03.md",
+        "requirements/page-04.md",
+        "requirements/page-05.md",
+        "requirements/page-06.md",
+        "requirements/page-07.md",
+        "requirements/page-08.md",
+        "requirements/page-09.md",
+        "requirements/page-10.md",
+        "requirements/page-11.md",
+        "requirements/page-12.md",
+        "requirements/page-13.md",
+        "requirements/page-14.md",
+        "requirements/page-15.md",
+        "requirements/page-16.md",
+        "requirements/page-17.md",
+        "requirements/page-18.md",
+        "requirements/page-19.md",
+        "requirements/page-20.md",
+        "requirements/page-21.md",
+        "requirements/page-22.md",
+        "requirements/page-23.md",
+        "requirements/page-24-edge-cases.md"
+      ],
+      "parent_commit": "474ff30ddf39970cd9752d0d6974ccd1e6d67ace",
+      "branch": "main",
+      "branch_point": null,
+      "delta": {
+        "files_changed": 1,
+        "additions": 2,
+        "deletions": 2,
+        "files": [
+          {
+            "path": "requirements/page-24-edge-cases.md",
+            "additions": 2,
+            "deletions": 2,
+            "binary": false
+          }
+        ]
+      }
+    },
+    {
+      "commit": "3af96d57847151a4271b558dbc7cf4a49f4a95e3",
+      "timestamp": "2026-03-29T03:37:28.610900+00:00",
+      "command": "set-status",
+      "actor": "rqmd",
+      "reason": "REQ-PAG-231 updated",
+      "files": [
+        "requirements/README.md",
+        "requirements/page-01.md",
+        "requirements/page-02.md",
+        "requirements/page-03.md",
+        "requirements/page-04.md",
+        "requirements/page-05.md",
+        "requirements/page-06.md",
+        "requirements/page-07.md",
+        "requirements/page-08.md",
+        "requirements/page-09.md",
+        "requirements/page-10.md",
+        "requirements/page-11.md",
+        "requirements/page-12.md",
+        "requirements/page-13.md",
+        "requirements/page-14.md",
+        "requirements/page-15.md",
+        "requirements/page-16.md",
+        "requirements/page-17.md",
+        "requirements/page-18.md",
+        "requirements/page-19.md",
+        "requirements/page-20.md",
+        "requirements/page-21.md",
+        "requirements/page-22.md",
+        "requirements/page-23.md",
+        "requirements/page-24-edge-cases.md"
+      ],
+      "parent_commit": "883ec5cceaeaebfce8f72b9b929924fd4e7023bb",
+      "branch": "main",
+      "branch_point": null,
+      "delta": {
+        "files_changed": 0,
+        "additions": 0,
+        "deletions": 0,
+        "files": []
+      }
+    },
+    {
+      "commit": "e665930f59cb62e0e3eea3181cc085ced7061add",
+      "timestamp": "2026-03-29T03:37:34.273527+00:00",
+      "command": "set-status",
+      "actor": "rqmd",
+      "reason": "REQ-PAG-232 updated",
+      "files": [
+        "requirements/README.md",
+        "requirements/page-01.md",
+        "requirements/page-02.md",
+        "requirements/page-03.md",
+        "requirements/page-04.md",
+        "requirements/page-05.md",
+        "requirements/page-06.md",
+        "requirements/page-07.md",
+        "requirements/page-08.md",
+        "requirements/page-09.md",
+        "requirements/page-10.md",
+        "requirements/page-11.md",
+        "requirements/page-12.md",
+        "requirements/page-13.md",
+        "requirements/page-14.md",
+        "requirements/page-15.md",
+        "requirements/page-16.md",
+        "requirements/page-17.md",
+        "requirements/page-18.md",
+        "requirements/page-19.md",
+        "requirements/page-20.md",
+        "requirements/page-21.md",
+        "requirements/page-22.md",
+        "requirements/page-23.md",
+        "requirements/page-24-edge-cases.md"
+      ],
+      "parent_commit": "3af96d57847151a4271b558dbc7cf4a49f4a95e3",
+      "branch": "main",
+      "branch_point": null,
+      "delta": {
+        "files_changed": 1,
+        "additions": 2,
+        "deletions": 2,
+        "files": [
+          {
+            "path": "requirements/page-24-edge-cases.md",
+            "additions": 2,
+            "deletions": 2,
+            "binary": false
+          }
+        ]
+      }
+    }
+  ],
+  "cursor": 2,
+  "branches": {
+    "main": {
+      "head": "e665930f59cb62e0e3eea3181cc085ced7061add",
+      "label": "Main timeline"
+    }
+  },
+  "current_branch": "main"
+}

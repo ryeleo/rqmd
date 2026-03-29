@@ -6,6 +6,7 @@ import shutil
 from pathlib import Path
 
 import click
+import pytest
 from click.testing import CliRunner
 
 from rqmd import cli, menus
@@ -1044,6 +1045,162 @@ def test_RQMD_interactive_021b_requirement_menu_receives_panel_prefix() -> None:
     assert captured["prefix_text"] == "\nPANEL BODY\n=========="
 
 
+def test_RQMD_interactive_021c_requirement_menu_exposes_history_shortcuts() -> None:
+    captured: dict[str, object] = {}
+
+    def fake_select(title, options, **kwargs):
+        captured["extra_keys"] = kwargs.get("extra_keys")
+        captured["footer_legend"] = kwargs.get("footer_legend")
+        return "history"
+
+    requirement = {
+        "id": "RQMD-UNDO-007",
+        "title": "History controls",
+        "status": "🔧 Implemented",
+    }
+
+    result = cli.workflows_mod._prompt_for_requirement_action(
+        requirement,
+        "status",
+        fake_select,
+    )
+
+    assert result == ("history", None)
+    assert captured["extra_keys"]["z"] == "undo"
+    assert captured["extra_keys"]["y"] == "redo"
+    assert captured["extra_keys"]["h"] == "history"
+    assert "z=undo" in captured["footer_legend"]
+    assert "y=redo" in captured["footer_legend"]
+    assert "h=history" in captured["footer_legend"]
+
+
+def test_RQMD_interactive_021d_history_browser_uses_paged_menu(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    requirements_dir = repo / "docs" / "requirements"
+    requirements_dir.mkdir(parents=True)
+    domain_file = requirements_dir / "demo.md"
+    domain_file.write_text(
+        """# Demo Requirements
+
+### RQMD-DEMO-001: Alpha
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    history_manager = cli.HistoryManager(repo_root=repo, requirements_dir="docs/requirements")
+    history_manager.capture(command="baseline", actor="test")
+    domain_file.write_text(
+        """# Demo Requirements
+
+### RQMD-DEMO-001: Alpha
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+    history_manager.capture(command="set-status", actor="test", reason="Implemented")
+
+    captured: dict[str, object] = {}
+
+    def fake_select(title, options, **kwargs):
+        captured["title"] = title
+        captured["options"] = list(options)
+        captured["right_labels"] = list(kwargs.get("option_right_labels") or [])
+        captured["selected_option_index"] = kwargs.get("selected_option_index")
+        captured["footer_legend"] = kwargs.get("footer_legend")
+        return "up"
+
+    cli.workflows_mod._show_history_browser(
+        repo,
+        [domain_file],
+        select_from_menu_fn=fake_select,
+    )
+
+    assert captured["title"] == "History entries"
+    assert len(captured["options"]) == 2
+    assert captured["options"][0].startswith("* ")
+    assert "(HEAD -> main)" in captured["options"][0]
+    assert "set-status: Implemented" in captured["options"][0]
+    assert captured["right_labels"][0][:10].count("-") == 2
+    assert "+" in captured["right_labels"][0]
+    assert captured["selected_option_index"] == 0
+    assert "↓/n=next" in captured["footer_legend"]
+
+
+@pytest.mark.timeout(5)
+def test_RQMD_interactive_021e_history_browser_cherry_picks_selected_entry(monkeypatch) -> None:
+    cherry_pick_calls: list[tuple[str, str | None]] = []
+
+    class StubHistoryManager:
+        def get_branches(self):
+            return {
+                "main": {"is_current": True},
+                "recovery-branch": {"is_current": False},
+            }
+
+        def cherry_pick(self, commit_hash: str, target_branch: str | None = None):
+            cherry_pick_calls.append((commit_hash, target_branch))
+            return "deadbeefcafebabe"
+
+    monkeypatch.setattr(cli.click, "getchar", lambda: "p")
+    monkeypatch.setattr(cli.click, "confirm", lambda *args, **kwargs: True)
+
+    action = cli.workflows_mod._prompt_for_history_entry_action(
+        {
+            "entry_index": 1,
+            "command": "implemented",
+            "branch": "recovery-branch",
+            "commit": "abc12345deadbeef",
+            "timestamp": "2026-03-29T00:00:00+00:00",
+            "files": ["docs/requirements/demo.md"],
+            "delta": {"additions": 1, "deletions": 0, "files_changed": 1},
+        },
+        StubHistoryManager(),
+    )
+
+    assert action == "refresh"
+    assert len(cherry_pick_calls) == 1
+    assert cherry_pick_calls[0][0] == "abc12345deadbeef"
+    assert cherry_pick_calls[0][1] == "main"
+
+
+@pytest.mark.timeout(5)
+def test_RQMD_interactive_021f_history_browser_replays_selected_branch(monkeypatch) -> None:
+    replay_calls: list[tuple[str, str | None]] = []
+
+    class StubHistoryManager:
+        def get_branches(self):
+            return {
+                "main": {"is_current": True},
+                "recovery-branch": {"is_current": False},
+            }
+
+        def replay_branch(self, from_branch: str, onto_branch: str | None = None):
+            replay_calls.append((from_branch, onto_branch))
+            return ["feedfacecafebeef"]
+
+    monkeypatch.setattr(cli.click, "getchar", lambda: "r")
+    monkeypatch.setattr(cli.click, "confirm", lambda *args, **kwargs: True)
+
+    action = cli.workflows_mod._prompt_for_history_entry_action(
+        {
+            "entry_index": 2,
+            "command": "verified",
+            "branch": "recovery-branch",
+            "commit": "feedfacecafebeef",
+            "timestamp": "2026-03-29T00:00:00+00:00",
+            "files": ["docs/requirements/demo.md"],
+            "delta": {"additions": 1, "deletions": 1, "files_changed": 1},
+        },
+        StubHistoryManager(),
+    )
+
+    assert action == "refresh"
+    assert len(replay_calls) == 1
+    assert replay_calls[0][0] == "recovery-branch"
+    assert replay_calls[0][1] == "main"
+
+
 def test_RQMD_interactive_020_shell_completion_suggests_subsection_domain_and_id(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"
@@ -1446,6 +1603,7 @@ def test_RQMD_interactive_001b_default_auto_detect_reaches_interactive(monkeypat
     assert "Auto-selected requirement docs: docs/requirements/README.md" in result.output
 
 
+@pytest.mark.timeout(10)
 def test_RQMD_interactive_010_deep_paging_and_status_updates_with_scratch(monkeypatch) -> None:
     repo_root = Path(__file__).resolve().parents[1]
     scratch_root = repo_root / ".scratch" / "test-interactive-deep"

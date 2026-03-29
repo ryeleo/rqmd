@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import sys
 import tempfile
+from datetime import datetime
 from pathlib import Path
 
 try:
@@ -17,6 +19,7 @@ except ImportError:
 from .constants import (DEFAULT_ID_PREFIXES, MENU_PAGE_SIZE, MENU_REFRESH,
                         MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT,
                         PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN)
+from .history import HistoryManager
 from .markdown_io import (display_name_from_h1, format_path_display,
                           iter_domain_files, scope_and_body_from_file)
 from .menus import (right_align_menu_suffix, select_from_menu, truncate_text,
@@ -321,10 +324,286 @@ def _build_sort_footer(ascending: bool) -> str:
 
 
 def _build_requirement_action_footer(allow_nav: bool) -> str:
-    base = "keys: 1-9 select | u=up | t=toggle | q=quit"
+    base = "keys: 1-9 select | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
     if not allow_nav:
         return base
-    return "keys: 1-9 select | ↓/n=next | ↑/p=prev | g=begin | G=end | u=up | t=toggle | q=quit"
+    return "keys: 1-9 select | ↓/n=next | ↑/p=prev | g=begin | G=end | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
+
+
+def _infer_requirements_dir(repo_root: Path, domain_files: list[Path]) -> Path:
+    if not domain_files:
+        return Path("docs/requirements")
+    common_parent = Path(os.path.commonpath([str(path.parent) for path in domain_files])).resolve()
+    try:
+        return common_parent.relative_to(repo_root)
+    except ValueError:
+        return common_parent
+
+
+def _history_entry_menu_row(entry: dict[str, object]) -> str:
+    return _history_entry_git_like_row(entry)
+
+
+def _format_history_timestamp(timestamp_raw: str | None) -> str:
+    if not timestamp_raw:
+        return "-"
+    try:
+        normalized = timestamp_raw.replace("Z", "+00:00")
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError:
+        return timestamp_raw
+    return parsed.strftime("%Y-%m-%d %H:%M")
+
+
+def _build_history_decorations(
+    branches: dict[str, dict[str, object]],
+    current_branch: str,
+) -> dict[str, str]:
+    commit_to_labels: dict[str, list[str]] = {}
+    for branch_name, branch_info in branches.items():
+        head_commit = str(branch_info.get("head") or "")
+        if not head_commit:
+            continue
+        labels = commit_to_labels.setdefault(head_commit, [])
+        if branch_name == current_branch:
+            labels.append(f"HEAD -> {branch_name}")
+        else:
+            labels.append(branch_name)
+
+    decorations: dict[str, str] = {}
+    for commit, labels in commit_to_labels.items():
+        decorations[commit] = f" ({', '.join(labels)})" if labels else ""
+    return decorations
+
+
+def _history_entry_git_like_row(entry: dict[str, object]) -> str:
+    command = str(entry.get("command") or "unknown")
+    reason = str(entry.get("reason") or "").strip()
+    commit = str(entry.get("commit") or "")[:8] or "--------"
+    decorations = str(entry.get("git_decorations") or "")
+    if reason:
+        summary = f"{command}: {reason}"
+    else:
+        summary = command
+    return truncate_text(f"* {commit}{decorations} {summary}", 72)
+
+
+def _history_entry_right_label(entry: dict[str, object]) -> str:
+    delta = entry.get("delta") if isinstance(entry.get("delta"), dict) else {}
+    additions = int(delta.get("additions", 0)) if isinstance(delta, dict) else 0
+    deletions = int(delta.get("deletions", 0)) if isinstance(delta, dict) else 0
+    files_changed = int(delta.get("files_changed", 0)) if isinstance(delta, dict) else 0
+    timestamp = _format_history_timestamp(str(entry.get("timestamp") or ""))
+    return f"{timestamp} +{additions}/-{deletions} {files_changed}f"
+
+
+def _history_entry_detail_text(entry: dict[str, object]) -> str:
+    delta = entry.get("delta") if isinstance(entry.get("delta"), dict) else {}
+    additions = int(delta.get("additions", 0)) if isinstance(delta, dict) else 0
+    deletions = int(delta.get("deletions", 0)) if isinstance(delta, dict) else 0
+    files_changed = int(delta.get("files_changed", 0)) if isinstance(delta, dict) else 0
+    reason = str(entry.get("reason") or "").strip() or "-"
+    files = list(entry.get("files") or [])
+    files_text = ", ".join(files[:3]) if files else "-"
+    if len(files) > 3:
+        files_text += ", ..."
+    return "\n".join(
+        [
+            "",
+            click.style(f"History #{entry.get('entry_index', '?')}: {entry.get('command', 'unknown')}", bold=True),
+            f"Branch: {entry.get('branch', 'main')}",
+            f"Commit: {entry.get('commit', '-')}",
+            f"Timestamp: {entry.get('timestamp', '-')}",
+            f"Reason: {reason}",
+            f"Delta: +{additions} / -{deletions} across {files_changed} file(s)",
+            f"Files: {files_text}",
+        ]
+    )
+
+
+def _current_history_branch_name(history_manager: HistoryManager) -> str:
+    branches = history_manager.get_branches()
+    return next(
+        (name for name, info in branches.items() if bool(info.get("is_current"))),
+        "main",
+    )
+
+
+def _build_history_browser_state(
+    history_manager: HistoryManager,
+) -> tuple[list[dict[str, object]], int | None, str, str]:
+    entries = [dict(entry, entry_index=index) for index, entry in enumerate(history_manager.list_entries())]
+    display_entries = list(reversed(entries))
+    current_head = history_manager.get_current_head()
+    selected_index = next(
+        (
+            index
+            for index, entry in enumerate(display_entries)
+            if str(entry.get("commit") or "") == str(current_head or "")
+        ),
+        None,
+    )
+
+    branches = history_manager.get_branches()
+    current_branch = next(
+        (name for name, info in branches.items() if bool(info.get("is_current"))),
+        "main",
+    )
+    decorations = _build_history_decorations(branches, current_branch)
+    for entry in display_entries:
+        entry["git_decorations"] = decorations.get(str(entry.get("commit") or ""), "")
+
+    prefix_text = (
+        "\n"
+        + click.style("History browser (git-style)", bold=True)
+        + "\n"
+        + click.style(
+            f"branch={current_branch} | entries={len(entries)} | can_undo={str(history_manager.can_undo()).lower()} | can_redo={str(history_manager.can_redo()).lower()}",
+            dim=True,
+        )
+    )
+    return display_entries, selected_index, prefix_text, current_branch
+
+
+def _prompt_for_history_entry_action(
+    entry: dict[str, object],
+    history_manager: HistoryManager,
+) -> str:
+    entry_branch = str(entry.get("branch") or "main")
+    current_branch = _current_history_branch_name(history_manager)
+    commit_hash = str(entry.get("commit") or "")
+
+    while True:
+        click.echo(_history_entry_detail_text(entry))
+        click.echo(
+            click.style(
+                f"Current branch: {current_branch} | entry branch: {entry_branch}",
+                dim=True,
+            )
+        )
+        click.echo(
+            "keys: Enter/u=back | c=checkout-branch | p=cherry-pick-commit | r=replay-entry-branch | q=quit"
+        )
+        click.echo("choice: ", nl=False)
+        raw_choice = click.getchar()
+        choice = raw_choice.strip()
+        click.echo(choice if choice else "Enter")
+
+        if not choice or choice.lower() == "u":
+            return "back"
+        if choice == "\x03":
+            raise click.Abort()
+        if choice.lower() == "q":
+            return "quit"
+        if choice.lower() == "c":
+            if entry_branch == current_branch:
+                click.echo(f"History branch '{entry_branch}' is already checked out.")
+                continue
+            checked_out = history_manager.checkout_branch(entry_branch)
+            if checked_out is None:
+                click.echo(f"No checkout performed for history branch '{entry_branch}'.")
+            else:
+                click.echo(f"Checked out history branch '{entry_branch}' at {checked_out}.")
+            return "refresh"
+        if choice.lower() == "p":
+            confirmed = click.confirm(
+                f"Cherry-pick {commit_hash[:8] or commit_hash} onto '{current_branch}'?",
+                default=False,
+                show_default=True,
+            )
+            if not confirmed:
+                click.echo("Cherry-pick cancelled.")
+                continue
+            new_commit = history_manager.cherry_pick(commit_hash, target_branch=current_branch)
+            if new_commit is None:
+                click.echo(f"No cherry-pick applied for history commit {commit_hash}.")
+            else:
+                click.echo(
+                    f"Cherry-picked history commit {commit_hash[:8]} onto '{current_branch}' as {new_commit}."
+                )
+            return "refresh"
+        if choice.lower() == "r":
+            if entry_branch == current_branch:
+                click.echo(
+                    f"History entry is already on the current branch '{current_branch}'; replay skipped."
+                )
+                continue
+            confirmed = click.confirm(
+                f"Replay branch '{entry_branch}' onto '{current_branch}'?",
+                default=False,
+                show_default=True,
+            )
+            if not confirmed:
+                click.echo("Branch replay cancelled.")
+                continue
+            replayed_commits = history_manager.replay_branch(entry_branch, onto_branch=current_branch)
+            if not replayed_commits:
+                click.echo(f"No replay applied from history branch '{entry_branch}'.")
+            else:
+                click.echo(
+                    f"Replayed {len(replayed_commits)} history commit(s) from '{entry_branch}' onto '{current_branch}'."
+                )
+            return "refresh"
+
+        click.echo("Invalid input. Use Enter/u/c/p/r/q.")
+
+
+def _show_history_browser(
+    repo_root: Path,
+    domain_files: list[Path],
+    select_from_menu_fn=select_from_menu,
+) -> None:
+    history_manager = HistoryManager(
+        repo_root=repo_root,
+        requirements_dir=_infer_requirements_dir(repo_root, domain_files),
+    )
+    if not history_manager.list_entries():
+        click.echo("No history entries recorded yet.")
+        return
+
+    while True:
+        display_entries, selected_index, prefix_text, _current_branch = _build_history_browser_state(history_manager)
+        choice = select_from_menu_fn(
+            "History entries",
+            [_history_entry_menu_row(entry) for entry in display_entries],
+            allow_paging_nav=True,
+            option_right_labels=[_history_entry_right_label(entry) for entry in display_entries],
+            selected_option_index=selected_index,
+            footer_legend="keys: 1-9 select | ↓/n=next | ↑/p=prev | u=up | q=quit",
+            prefix_text=prefix_text,
+        )
+        if choice is None or choice == "up":
+            return
+
+        entry = display_entries[int(choice)]
+        action = _prompt_for_history_entry_action(entry, history_manager)
+        if action == "quit":
+            return
+
+
+def _handle_requirement_history_action(
+    action: str,
+    repo_root: Path,
+    domain_files: list[Path],
+    select_from_menu_fn=select_from_menu,
+) -> bool:
+    if action == "history":
+        _show_history_browser(repo_root, domain_files, select_from_menu_fn=select_from_menu_fn)
+        return True
+    if action not in {"undo", "redo"}:
+        return False
+
+    history_manager = HistoryManager(
+        repo_root=repo_root,
+        requirements_dir=_infer_requirements_dir(repo_root, domain_files),
+    )
+    commit_hash = history_manager.undo() if action == "undo" else history_manager.redo()
+    if commit_hash is None:
+        click.echo(f"No {action} history available.")
+    else:
+        verb = "Undid" if action == "undo" else "Redid"
+        click.echo(f"{verb} catalog to history commit {commit_hash}.")
+    return True
 
 
 def _file_sort_value(counts: dict[str, int], sort_key: str) -> int | str:
@@ -517,6 +796,8 @@ def _prompt_for_requirement_action(
     )
     extra_keys = {"t": "toggle-field"}
     extra_keys_help = {"t": "toggle"}
+    extra_keys.update({"z": "undo", "y": "redo", "h": "history"})
+    extra_keys_help.update({"z": "undo", "y": "redo", "h": "history"})
     if allow_nav:
         extra_keys.update({"n": "nav-next", "p": "nav-prev", "N": "nav-prev", "g": "nav-first", "G": "nav-last"})
         extra_keys_help.update({"n": "next", "p": "prev", "N": "prev", "g": "begin", "G": "end"})
@@ -535,7 +816,7 @@ def _prompt_for_requirement_action(
     )
     if choice is None:
         return "quit", None
-    if isinstance(choice, str) and choice in {"up", "nav-prev", "nav-next", "nav-first", "nav-last", "toggle-field"}:
+    if isinstance(choice, str) and choice in {"up", "nav-prev", "nav-next", "nav-first", "nav-last", "toggle-field", "undo", "redo", "history"}:
         return choice, None
     return "apply", labels[int(choice)]
 
@@ -955,6 +1236,14 @@ def focused_target_interactive_loop(
             current_entry_field = _next_entry_field(current_entry_field)
             save_current(flat_list, index)
             continue
+        if _handle_requirement_history_action(
+            action,
+            repo_root,
+            domain_files,
+            select_from_menu_fn=select_from_menu_fn,
+        ):
+            save_current(flat_list, index)
+            continue
         if action == "nav-prev":
             if index > 0:
                 index -= 1
@@ -1334,6 +1623,13 @@ def interactive_update_loop(
             if action == "toggle-field":
                 current_entry_field = _next_entry_field(current_entry_field)
                 continue
+            if _handle_requirement_history_action(
+                action,
+                repo_root,
+                domain_files,
+                select_from_menu_fn=select_from_menu_fn,
+            ):
+                continue
             if action == "nav-prev":
                 if history_pos > 0:
                     history_pos -= 1
@@ -1583,6 +1879,14 @@ def filtered_interactive_loop(
             current_entry_field = _next_entry_field(current_entry_field)
             save_current(flat_list, index)
             continue
+        if _handle_requirement_history_action(
+            action,
+            repo_root,
+            domain_files,
+            select_from_menu_fn=select_from_menu_fn,
+        ):
+            save_current(flat_list, index)
+            continue
         if action == "nav-prev":
             if index > 0:
                 index -= 1
@@ -1797,6 +2101,14 @@ def filtered_priority_interactive_loop(
             current_entry_field = _next_entry_field(current_entry_field)
             save_current(flat_list, index)
             continue
+        if _handle_requirement_history_action(
+            action,
+            repo_root,
+            domain_files,
+            select_from_menu_fn=select_from_menu_fn,
+        ):
+            save_current(flat_list, index)
+            continue
         if action == "nav-prev":
             if index > 0:
                 index -= 1
@@ -1950,6 +2262,13 @@ def lookup_criterion_interactive(
         if action == "toggle-field":
             current_entry_field = _next_entry_field(current_entry_field)
             continue
+        if _handle_requirement_history_action(
+            action,
+            repo_root,
+            domain_files,
+            select_from_menu_fn=select_from_menu_fn,
+        ):
+            continue
 
         if current_entry_field == "priority":
             changed = update_criterion_status(
@@ -2000,15 +2319,6 @@ def lookup_criterion_interactive(
         )
         print_summary_table(table_rows, emoji_columns=emoji_columns)
         return 0
-            deprecated_reason = prompt_for_deprecated_reason() if "Deprecated" in new_status else None
-
-            changed = update_criterion_status(
-                path,
-                requirement,
-                new_status,
-                blocked_reason=blocked_reason,
-                deprecated_reason=deprecated_reason,
-            )
         process_file(
             path,
             check_only=False,

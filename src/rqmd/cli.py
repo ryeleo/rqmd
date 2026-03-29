@@ -184,6 +184,60 @@ def _detailed_flag_requested(args: list[str] | tuple[str, ...] | None) -> bool:
     return False
 
 
+def _collect_long_option_names(command: click.Command) -> list[str]:
+    option_names: set[str] = set()
+    for param in command.params:
+        if not isinstance(param, click.Option):
+            continue
+        for opt in (*param.opts, *param.secondary_opts):
+            if opt.startswith("--"):
+                option_names.add(opt)
+    return sorted(option_names)
+
+
+def _expand_unique_long_option_prefixes(
+    command: click.Command,
+    args: list[str] | tuple[str, ...] | None,
+) -> list[str] | None:
+    if args is None:
+        return None
+
+    option_names = _collect_long_option_names(command)
+    expanded: list[str] = []
+    passthrough = False
+
+    for token in args:
+        if passthrough:
+            expanded.append(token)
+            continue
+        if token == "--":
+            passthrough = True
+            expanded.append(token)
+            continue
+        if not token.startswith("--") or token == "---":
+            expanded.append(token)
+            continue
+
+        option_token, separator, option_value = token.partition("=")
+        if option_token in option_names:
+            expanded.append(token)
+            continue
+
+        matches = [candidate for candidate in option_names if candidate.startswith(option_token)]
+        if not matches:
+            expanded.append(token)
+            continue
+        if len(matches) > 1:
+            raise click.UsageError(
+                f"Ambiguous option prefix '{option_token}'. Matches: {', '.join(matches)}."
+            )
+
+        resolved = matches[0]
+        expanded.append(f"{resolved}{separator}{option_value}" if separator else resolved)
+
+    return expanded
+
+
 class FriendlyTopLevelCommand(click.Command):
     """Convert unexpected internal crashes into a friendly one-line CLI error.
 
@@ -202,14 +256,22 @@ class FriendlyTopLevelCommand(click.Command):
         **extra: object,
     ) -> object:
         try:
+            expanded_args = _expand_unique_long_option_prefixes(self, args)
             return super().main(
-                args=args,
+                args=expanded_args,
                 prog_name=prog_name,
                 complete_var=complete_var,
                 standalone_mode=standalone_mode,
                 windows_expand_args=windows_expand_args,
                 **extra,
             )
+        except click.ClickException as exc:
+            if not standalone_mode:
+                raise
+            exc.show()
+            raise SystemExit(exc.exit_code)
+        except click.Abort:
+            raise
         except Exception as exc:
             if (not standalone_mode) or _detailed_flag_requested(args):
                 raise
@@ -814,6 +876,34 @@ def _filter_timeline_nodes(
     help="Discard an alternate history branch by name (requires confirmation; use --force-yes for non-interactive automation).",
 )
 @click.option(
+    "--history-checkout-branch",
+    "history_checkout_branch",
+    type=str,
+    default=None,
+    help="Checkout a named history branch and restore its HEAD snapshot into the working catalog.",
+)
+@click.option(
+    "--history-cherry-pick",
+    "history_cherry_pick",
+    type=str,
+    default=None,
+    help="Apply a single history entry onto the current or target branch HEAD. Accepts entry index, commit hash/prefix, stable hid: id, or 'head'/'current'.",
+)
+@click.option(
+    "--history-replay-branch",
+    "history_replay_branch",
+    type=str,
+    default=None,
+    help="Replay every commit from a named alternate history branch onto the current or target branch HEAD.",
+)
+@click.option(
+    "--history-target-branch",
+    "history_target_branch",
+    type=str,
+    default=None,
+    help="Optional target branch for --history-cherry-pick or --history-replay-branch.",
+)
+@click.option(
     "--timeline-branch",
     "timeline_filter_branch",
     type=str,
@@ -1159,6 +1249,10 @@ def main(
     show_timeline: bool,
     show_history: bool,
     history_discard_branch: str | None,
+    history_checkout_branch: str | None,
+    history_cherry_pick: str | None,
+    history_replay_branch: str | None,
+    history_target_branch: str | None,
     timeline_filter_branch: str | None,
     timeline_filter_actor: str | None,
     timeline_filter_command: str | None,
@@ -2363,6 +2457,10 @@ def main(
     )
     if timeline_filter_requested and not show_timeline:
         raise click.ClickException("--timeline-* filters require --timeline.")
+    if history_target_branch and not (history_cherry_pick or history_replay_branch):
+        raise click.ClickException(
+            "--history-target-branch requires --history-cherry-pick or --history-replay-branch."
+        )
 
     non_interactive_requested = bool(
         set_requirement_id
@@ -2377,6 +2475,9 @@ def main(
         or show_timeline
         or show_history
         or history_discard_branch
+        or history_checkout_branch
+        or history_cherry_pick
+        or history_replay_branch
     )
     if non_interactive_requested and positional_domain_file and not set_file and not set_file_input:
         set_file = format_path_display(positional_domain_file, repo_root)
@@ -2395,11 +2496,125 @@ def main(
             + int(bool(show_timeline))
             + int(bool(show_history))
             + int(bool(history_discard_branch))
+            + int(bool(history_checkout_branch))
+            + int(bool(history_cherry_pick))
+            + int(bool(history_replay_branch))
         )
         if mode_count > 1:
             raise click.ClickException(
-                "Use exactly one non-interactive update mode: --undo, --redo, --timeline, --history, --history-discard-branch, --update-file, --update ID=STATUS (repeatable), --update-priority ID=PRIORITY (repeatable), --update-flagged ID=true|false (repeatable), or --update-id with --update-status."
+                "Use exactly one non-interactive update mode: --undo, --redo, --timeline, --history, --history-discard-branch, --history-checkout-branch, --history-cherry-pick, --history-replay-branch, --update-file, --update ID=STATUS (repeatable), --update-priority ID=PRIORITY (repeatable), --update-flagged ID=true|false (repeatable), or --update-id with --update-status."
             )
+
+        if history_cherry_pick:
+            history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
+            source_ref = history_cherry_pick.strip()
+            resolved_entry = history_manager.resolve_ref(source_ref)
+            if resolved_entry is None:
+                raise click.ClickException(f"Unknown history entry reference: {history_cherry_pick!r}")
+
+            target_branch = history_target_branch.strip() if history_target_branch else None
+            if target_branch:
+                branches = history_manager.get_branches()
+                if target_branch not in branches:
+                    raise click.ClickException(f"Unknown history branch: {history_target_branch!r}")
+
+            commit_hash = str(resolved_entry.get("commit") or "")
+            new_commit = history_manager.cherry_pick(commit_hash, target_branch=target_branch)
+            current_branches = history_manager.get_branches()
+            active_branch = next(
+                (
+                    name
+                    for name, branch in current_branches.items()
+                    if branch.get("is_current")
+                ),
+                "main",
+            )
+            payload = {
+                "mode": "history-cherry-pick",
+                "source_ref": source_ref,
+                "source_commit": commit_hash,
+                "source_entry_index": resolved_entry.get("entry_index"),
+                "target_branch": target_branch or active_branch,
+                "changed": new_commit is not None,
+                "commit": new_commit,
+                "branches": current_branches,
+            }
+            if json_output:
+                _emit_json_payload(payload)
+            else:
+                if new_commit is None:
+                    click.echo(f"No cherry-pick applied for history ref '{source_ref}'.")
+                else:
+                    branch_label = payload["target_branch"] or "current"
+                    click.echo(
+                        f"Cherry-picked history ref '{source_ref}' onto '{branch_label}' as {new_commit}."
+                    )
+            raise SystemExit(0)
+
+        if history_replay_branch:
+            history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
+            source_branch = history_replay_branch.strip()
+            branches = history_manager.get_branches()
+            if source_branch not in branches:
+                raise click.ClickException(f"Unknown history branch: {history_replay_branch!r}")
+
+            target_branch = history_target_branch.strip() if history_target_branch else None
+            if target_branch and target_branch not in branches:
+                raise click.ClickException(f"Unknown history branch: {history_target_branch!r}")
+
+            replayed_commits = history_manager.replay_branch(source_branch, onto_branch=target_branch)
+            current_branches = history_manager.get_branches()
+            active_branch = next(
+                (
+                    name
+                    for name, branch in current_branches.items()
+                    if branch.get("is_current")
+                ),
+                "main",
+            )
+            payload = {
+                "mode": "history-replay-branch",
+                "source_branch": source_branch,
+                "target_branch": target_branch or active_branch,
+                "changed": bool(replayed_commits),
+                "replayed_commits": replayed_commits or [],
+                "replayed_count": len(replayed_commits or []),
+                "branches": current_branches,
+            }
+            if json_output:
+                _emit_json_payload(payload)
+            else:
+                if not replayed_commits:
+                    click.echo(f"No replay applied from history branch '{source_branch}'.")
+                else:
+                    click.echo(
+                        f"Replayed {len(replayed_commits)} history commits from '{source_branch}' onto '{payload['target_branch']}'."
+                    )
+            raise SystemExit(0)
+
+        if history_checkout_branch:
+            history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
+            branch_name = history_checkout_branch.strip()
+            branches = history_manager.get_branches()
+            if branch_name not in branches:
+                raise click.ClickException(f"Unknown history branch: {history_checkout_branch!r}")
+
+            commit_hash = history_manager.checkout_branch(branch_name)
+            payload = {
+                "mode": "history-checkout-branch",
+                "branch": branch_name,
+                "changed": commit_hash is not None,
+                "commit": commit_hash,
+                "branches": history_manager.get_branches(),
+            }
+            if json_output:
+                _emit_json_payload(payload)
+            else:
+                if commit_hash is None:
+                    click.echo(f"No checkout performed for history branch '{branch_name}'.")
+                else:
+                    click.echo(f"Checked out history branch '{branch_name}' at {commit_hash}.")
+            raise SystemExit(0)
 
         if history_discard_branch:
             history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
@@ -2502,8 +2717,13 @@ def main(
                 click.echo(f"Cursor: {payload['cursor']}", err=False)
                 for item in entries_payload:
                     marker = " [HEAD]" if item["is_current_head"] else ""
+                    delta = item.get("delta") if isinstance(item.get("delta"), dict) else {}
+                    additions = int(delta.get("additions", 0)) if isinstance(delta, dict) else 0
+                    deletions = int(delta.get("deletions", 0)) if isinstance(delta, dict) else 0
+                    files_changed = int(delta.get("files_changed", 0)) if isinstance(delta, dict) else 0
+                    reason = f": {item['reason']}" if item.get("reason") else ""
                     click.echo(
-                        f"  {item['entry_index']}: {item['command']} ({item['branch']}) {item['commit']}{marker}",
+                        f"  {item['entry_index']}: {item['command']}{reason} ({item['branch']}) {item['commit']} +{additions}/-{deletions} {files_changed}f{marker}",
                         err=False,
                     )
             raise SystemExit(0)

@@ -7,8 +7,12 @@ This folder uses a pytest suite to validate implemented requirement behavior.
 From scripts/rqmd:
 
 ```bash
-uv run pytest -q
+uv run --extra dev pytest -q
 ```
+
+The test suite requires `pytest-timeout` and will abort immediately if the dev extras are not installed.
+If you prefer a synced environment, `uv sync --extra dev` also works before running pytest.
+Global pytest timeout is capped at `30` seconds, and a few interactive-heavy regressions use tighter per-test markers.
 
 One-command local smoke check:
 
@@ -19,7 +23,7 @@ bash scripts/local-smoke.sh
 ## Latest Local Result
 
 - 143 passed
-- Command: `uv run pytest -q`
+- Command: `uv run --extra dev pytest -q`
 
 ## Coverage Map
 

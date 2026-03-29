@@ -3,14 +3,14 @@
 Scope: frontend interaction edge cases and rendering stress scenarios.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 2🔧 2✅ 2⛔ 2🗑️
+Summary: 1💡 3🔧 2✅ 2⛔ 2🗑️
 <!-- acceptance-status-summary:end -->
 
 ## Query API
 This section intentionally includes long lines, links, and mixed metadata so manual UI QA can exercise truncation, scrolling, and redraw behavior.
 
 ### REQ-PAG-231: Very long requirement title to stress horizontal clipping behavior in interactive menus and preserve cursor visibility on redraw cycles
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
 - **Flagged:** true
 - **Links:**

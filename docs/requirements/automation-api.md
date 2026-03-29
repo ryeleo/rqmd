@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 23🔧 10✅ 0⛔ 0🗑️
+Summary: 0💡 24🔧 10✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -144,7 +144,7 @@ Summary: 1💡 23🔧 10✅ 0⛔ 0🗑️
 - So that migration steps are reliable in CI/CD workflows.
 
 ### RQMD-AUTOMATION-019: Unique-prefix argument/value abbreviations
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a CLI user
 - I want unique minimal prefixes for long option names and enumerated values to be accepted (for example, `--filt V` -> `--status Verified`)

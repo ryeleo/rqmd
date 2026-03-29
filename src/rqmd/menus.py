@@ -346,8 +346,9 @@ def select_from_menu(
             if show_page_indicator and total_pages > 1:
                 click.echo(f"Page {page + 1}/{total_pages}")
             for idx, option in enumerate(page_items):
-                left = f"  {idx + 1}) {option}"
                 global_idx = start + idx
+                selection_marker = "→" if selected_option_index is not None and global_idx == selected_option_index else " "
+                left = f"{selection_marker} {idx + 1}) {option}"
                 if option_right_labels and global_idx < len(option_right_labels):
                     right = click.style(option_right_labels[global_idx], dim=True)
                     pad = term_width - visible_length(left) - visible_length(right)

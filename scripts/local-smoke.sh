@@ -34,7 +34,7 @@ if [[ "$SKIP_INSTALL" != "true" ]]; then
 fi
 
 echo "[rqmd] Running pytest"
-"$UV_BIN" run pytest -q
+"$UV_BIN" run --extra dev pytest -q
 
 echo "[rqmd] Running acceptance summary check"
 "$UV_BIN" run rqmd --repo-root . --requirements-dir docs/requirements --check --no-interactive --no-summary-table

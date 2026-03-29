@@ -68,6 +68,7 @@ Summary: 0💡 4🔧 18✅ 0⛔ 4🗑️
 - As a rqmd user when status options are displayed for a requirement
 - I want the menu to render
 - So that current status row is highlighted
+- So that the current selection is explicitly marked with an arrow when the menu opens
 - So that highlight color aligns with status family.
 
 ### RQMD-INTERACTIVE-006A: Color semantics for status families
