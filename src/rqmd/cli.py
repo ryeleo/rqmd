@@ -78,55 +78,105 @@ except ImportError:
 
 from . import menus as menus_mod
 from . import workflows as workflows_mod
-from .batch_inputs import (parse_batch_update_csv, parse_batch_update_file,
-                           parse_batch_update_jsonl, parse_set_entry,
-                           parse_set_flagged_entry, parse_set_priority_entry)
-from .config import (load_config, load_priorities_file, load_statuses_file,
-                     load_user_config, validate_config)
-from .constants import (DEFAULT_ID_PREFIXES, DEFAULT_REQUIREMENTS_DIR,
-                        ID_PREFIX_PATTERN, JSON_SCHEMA_VERSION, STATUS_ORDER,
-                        STATUS_PATTERN, SUMMARY_END, SUMMARY_START)
-from .history import (HistoryManager, HistoryRestoreError,
-                      merge_retention_policies)
-from .markdown_io import (auto_detect_requirements_dir, check_files_writable,
-                          check_index_sync, discover_project_root,
-                          display_name_from_h1, format_path_display,
-                          initialize_requirements_scaffold, iter_domain_files,
-                          iter_requirements_search_roots, parse_index_links,
-                          resolve_requirements_dir, validate_files_readable)
+from .batch_inputs import (
+    parse_batch_update_csv,
+    parse_batch_update_file,
+    parse_batch_update_jsonl,
+    parse_set_entry,
+    parse_set_flagged_entry,
+    parse_set_priority_entry,
+)
+from .config import (
+    load_config,
+    load_priorities_file,
+    load_statuses_file,
+    load_user_config,
+    validate_config,
+)
+from .constants import (
+    DEFAULT_ID_PREFIXES,
+    DEFAULT_REQUIREMENTS_DIR,
+    ID_PREFIX_PATTERN,
+    JSON_SCHEMA_VERSION,
+    PRIORITY_ORDER,
+    STATUS_ORDER,
+    STATUS_PATTERN,
+    SUMMARY_END,
+    SUMMARY_START,
+)
+from .history import HistoryManager, HistoryRestoreError, merge_retention_policies
+from .markdown_io import (
+    auto_detect_requirements_dir,
+    check_files_writable,
+    check_index_sync,
+    discover_project_root,
+    display_name_from_h1,
+    format_path_display,
+    initialize_requirements_scaffold,
+    iter_domain_files,
+    iter_requirements_search_roots,
+    parse_index_links,
+    resolve_requirements_dir,
+    validate_files_readable,
+)
 from .menus import select_from_menu
-from .priority_model import (configure_priority_catalog,
-                             normalize_priority_input)
-from .req_parser import (collect_requirements_by_filters,
-                         collect_requirements_by_flagged,
-                         collect_requirements_by_links,
-                         collect_requirements_by_priority,
-                         collect_requirements_by_status,
-                         collect_requirements_by_sub_domain,
-                         find_requirement_by_id, normalize_id_prefixes,
-                         parse_requirements, resolve_id_prefixes)
+from .priority_model import configure_priority_catalog, normalize_priority_input
+from .req_parser import (
+    collect_requirements_by_filters,
+    collect_requirements_by_flagged,
+    collect_requirements_by_links,
+    collect_requirements_by_priority,
+    collect_requirements_by_status,
+    collect_requirements_by_sub_domain,
+    find_requirement_by_id,
+    normalize_id_prefixes,
+    parse_requirements,
+    resolve_id_prefixes,
+)
 from .rollup_config import compute_rollup_column_values, resolve_rollup_columns
-from .status_model import (build_color_rollup_text, configure_status_catalog,
-                           normalize_status_input, style_status_count,
-                           style_status_label)
-from .status_update import (apply_status_change_by_id, print_criterion_panel,
-                            prompt_for_blocked_reason,
-                            prompt_for_deprecated_reason,
-                            update_criterion_status)
-from .summary import (UnknownStatusValueError, build_summary_block,
-                      build_summary_line, build_summary_table,
-                      collect_summary_rows, count_statuses,
-                      insert_or_replace_summary, normalize_status_lines,
-                      print_custom_rollup_table, print_global_rollup_table,
-                      print_summary_table, process_file)
-from .target_selection import (complete_target_tokens, parse_target_token_file,
-                               resolve_target_tokens)
-from .workflows import (build_filtered_criteria_payload, build_summary_payload,
-                        build_targeted_criteria_payload)
-from .workflows import \
-    focused_target_interactive_loop as focused_target_interactive_loop_impl
-from .workflows import print_criteria_list, print_criteria_tree
-
+from .status_model import (
+    build_color_rollup_text,
+    configure_status_catalog,
+    normalize_status_input,
+    style_status_count,
+    style_status_label,
+)
+from .status_update import (
+    apply_status_change_by_id,
+    print_criterion_panel,
+    prompt_for_blocked_reason,
+    prompt_for_deprecated_reason,
+    update_criterion_status,
+)
+from .summary import (
+    UnknownStatusValueError,
+    build_summary_block,
+    build_summary_line,
+    build_summary_table,
+    collect_summary_rows,
+    count_statuses,
+    insert_or_replace_summary,
+    normalize_status_lines,
+    print_custom_rollup_table,
+    print_global_rollup_table,
+    print_summary_table,
+    process_file,
+)
+from .target_selection import (
+    complete_target_completion_candidates,
+    parse_target_token_file,
+    resolve_target_tokens,
+)
+from .workflows import (
+    build_filtered_criteria_payload,
+    build_summary_payload,
+    build_targeted_criteria_payload,
+    print_criteria_list,
+    print_criteria_tree,
+)
+from .workflows import (
+    focused_target_interactive_loop as focused_target_interactive_loop_impl,
+)
 __all__ = [
     "SUMMARY_START",
     "SUMMARY_END",
@@ -401,6 +451,167 @@ def _expand_filter_values(raw_values: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(values)
 
 
+def _extract_positional_filter_tokens(
+    raw_tokens: list[str] | tuple[str, ...],
+) -> tuple[tuple[str, ...], tuple[str, ...], list[str]]:
+    """Split positional tokens into status filters, priority filters, and remaining targets."""
+    status_filters: list[str] = []
+    priority_filters: list[str] = []
+    remaining: list[str] = []
+    seen_statuses: set[str] = set()
+    seen_priorities: set[str] = set()
+
+    for raw_token in raw_tokens:
+        token = str(raw_token).strip()
+        if not token:
+            continue
+
+        normalized_status: str | None = None
+        normalized_priority: str | None = None
+
+        try:
+            normalized_status = normalize_status_input(token)
+        except click.ClickException as exc:
+            if str(exc).startswith("Ambiguous status input"):
+                raise
+
+        try:
+            normalized_priority = normalize_priority_input(token)
+        except click.ClickException as exc:
+            if str(exc).startswith("Ambiguous priority input"):
+                raise
+
+        if normalized_status and normalized_priority:
+            raise click.ClickException(
+                "Ambiguous positional filter token "
+                f"'{token}'. Matches both status '{normalized_status}' and priority '{normalized_priority}'."
+            )
+
+        if normalized_status:
+            key = normalized_status.casefold()
+            if key not in seen_statuses:
+                seen_statuses.add(key)
+                status_filters.append(normalized_status)
+            continue
+
+        if normalized_priority:
+            key = normalized_priority.casefold()
+            if key not in seen_priorities:
+                seen_priorities.add(key)
+                priority_filters.append(normalized_priority)
+            continue
+
+        remaining.append(raw_token)
+
+    return tuple(status_filters), tuple(priority_filters), remaining
+
+
+def _collect_requirements_by_positional_filters(
+    domain_files: list[Path],
+    *,
+    status_filters: tuple[str, ...] = (),
+    priority_filters: tuple[str, ...] = (),
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+) -> dict[Path, list[dict[str, object]]]:
+    """Collect requirements using narrowing semantics for positional status/priority tokens."""
+    if not status_filters and not priority_filters:
+        return {}
+
+    status_set = set(status_filters)
+    priority_set = set(priority_filters)
+    result: dict[Path, list[dict[str, object]]] = {}
+
+    for path in domain_files:
+        matching: list[dict[str, object]] = []
+        for requirement in parse_requirements(path, id_prefixes=id_prefixes):
+            requirement_status = str(requirement.get("status") or "")
+            requirement_priority = str(requirement.get("priority") or "")
+            if status_set and requirement_status not in status_set:
+                continue
+            if priority_set and requirement_priority not in priority_set:
+                continue
+            matching.append(requirement)
+
+        if matching:
+            result[path] = matching
+
+    return result
+
+
+def _scope_selected_items_to_filtered_results(
+    selected_items: list[tuple[Path, dict[str, object]]],
+    criteria_by_file: dict[Path, list[dict[str, object]]],
+) -> list[tuple[Path, dict[str, object]]]:
+    allowed: set[tuple[str, str]] = set()
+    for path, requirements in criteria_by_file.items():
+        for requirement in requirements:
+            allowed.add((str(path.resolve()), str(requirement.get("id") or "")))
+
+    scoped: list[tuple[Path, dict[str, object]]] = []
+    for path, requirement in selected_items:
+        key = (str(path.resolve()), str(requirement.get("id") or ""))
+        if key in allowed:
+            scoped.append((path, requirement))
+    return scoped
+
+
+def _build_positional_filter_summary(
+    status_filters: tuple[str, ...],
+    priority_filters: tuple[str, ...],
+) -> tuple[dict[str, object], str, list[str]]:
+    summary: dict[str, object] = {
+        "status": list(status_filters),
+        "priority": list(priority_filters),
+        "logic": {
+            "across_families": "and",
+            "within_family": "or",
+        },
+    }
+    label_parts: list[str] = []
+    target_tokens: list[str] = []
+    if status_filters:
+        label_parts.append(f"status={'+'.join(status_filters)}")
+        target_tokens.extend(f"status:{value}" for value in status_filters)
+    if priority_filters:
+        label_parts.append(f"priority={'+'.join(priority_filters)}")
+        target_tokens.extend(f"priority:{value}" for value in priority_filters)
+    return summary, " & ".join(label_parts) if label_parts else "positional filters", target_tokens
+
+
+def _positional_status_completion_values() -> list[str]:
+    values: list[str] = []
+    seen: set[str] = set()
+    for label, _slug in STATUS_ORDER:
+        value = label.split(" ", 1)[1] if " " in label else label
+        key = value.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        values.append(value)
+    return values
+
+
+def _positional_priority_completion_values() -> list[str]:
+    values: list[str] = []
+    seen: set[str] = set()
+
+    def add(value: str) -> None:
+        key = value.casefold()
+        if not value or key in seen:
+            return
+        seen.add(key)
+        values.append(value)
+
+    for label, _slug in PRIORITY_ORDER:
+        display = label.split(" ", 1)[1] if " " in label else label
+        add(display)
+        add(display.split(" ", 1)[0])
+        if " - " in display:
+            _code, name = display.split(" - ", 1)
+            add(name)
+    return values
+
+
 def _parse_prefix_rename_spec(raw: str) -> tuple[str, str]:
     spec = str(raw).strip()
     if "=" not in spec:
@@ -630,15 +841,55 @@ def shell_complete_target_tokens(
         raw_prefixes = tuple(ctx.params.get("id_prefixes") or ())
         resolved_prefixes = resolve_id_prefixes(repo_root, str(resolved_criteria_dir), raw_prefixes)
         domain_files = iter_domain_files(repo_root, str(resolved_criteria_dir))
-        items = complete_target_tokens(repo_root, domain_files, resolved_prefixes, incomplete)
+        target_candidates = complete_target_completion_candidates(
+            repo_root,
+            domain_files,
+            resolved_prefixes,
+            incomplete,
+        )
     except Exception:
         return []
+
+    prefix = incomplete.casefold().strip()
+    filter_candidates: list[tuple[str, str]] = []
+    if not prefix:
+        filter_candidates.extend((value, "status filter") for value in _positional_status_completion_values())
+        filter_candidates.extend((value, "priority filter") for value in _positional_priority_completion_values())
+    else:
+        filter_candidates.extend(
+            (value, "status filter")
+            for value in _positional_status_completion_values()
+            if value.casefold().startswith(prefix)
+        )
+        filter_candidates.extend(
+            (value, "priority filter")
+            for value in _positional_priority_completion_values()
+            if value.casefold().startswith(prefix)
+        )
+
+    combined_items: list[tuple[str, str | None]] = []
+    seen_values: set[str] = set()
+
+    for value, kind in filter_candidates:
+        normalized = value.casefold()
+        if normalized in seen_values:
+            continue
+        seen_values.add(normalized)
+        combined_items.append((value, kind))
+
+    for item in target_candidates:
+        value = item["value"]
+        normalized = value.casefold()
+        if normalized in seen_values:
+            continue
+        seen_values.add(normalized)
+        combined_items.append((value, item["kind"]))
 
     completion_module = getattr(click, "shell_completion", None)
     completion_item = getattr(completion_module, "CompletionItem", None) if completion_module is not None else None
     if completion_item is None:
-        return items
-    return [completion_item(item) for item in items]
+        return [value for value, _kind in combined_items]
+    return [completion_item(value, help=kind) for value, kind in combined_items]
 
 
 def _parse_iso8601_filter(value: str, option_name: str) -> datetime:
@@ -1820,14 +2071,17 @@ def main(
         click.echo(f"Index is in sync: {format_path_display(index_path, repo_root)}")
         raise SystemExit(0)
 
-    explicit_target_tokens = list(targets)
+    positional_status_filters_raw, positional_priority_filters_raw, remaining_positional_tokens = _extract_positional_filter_tokens(targets)
+    positional_filter_mode = bool(positional_status_filters_raw or positional_priority_filters_raw)
+
+    explicit_target_tokens = list(remaining_positional_tokens)
     if filter_ids_file:
         explicit_target_tokens.extend(parse_target_token_file(repo_root, filter_ids_file))
 
     positional_domain_files: list[Path] = []
     if not filter_ids_file:
         seen_files: set[Path] = set()
-        for token in targets:
+        for token in remaining_positional_tokens:
             matched_path = resolve_positional_domain_file_token(repo_root, domain_files, token)
             if matched_path and matched_path not in seen_files:
                 positional_domain_files.append(matched_path)
@@ -1865,6 +2119,7 @@ def main(
         or rollup_mode
         or json_output
         or not interactive
+        or positional_filter_mode
     )
 
     # Preserve legacy single-ID lookup mode and prioritize explicit ID lookup over positional file hints.
@@ -1922,6 +2177,211 @@ def main(
 
     if positional_domain_file and has_non_lookup_mode:
         domain_files = [positional_domain_file]
+
+    if positional_filter_mode:
+        if filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain:
+            raise click.ClickException(
+                "Positional status/priority tokens cannot be combined with explicit --status/--priority or other --filter-* flags."
+            )
+        if check or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or rollup_mode:
+            raise click.ClickException(
+                "Positional status/priority filters cannot be combined with --verify-summaries, --totals, or mutation options."
+            )
+
+        criteria_by_file = _collect_requirements_by_positional_filters(
+            domain_files,
+            status_filters=positional_status_filters_raw,
+            priority_filters=positional_priority_filters_raw,
+            id_prefixes=id_prefixes,
+        )
+        filter_summary, filter_label, filter_target_tokens = _build_positional_filter_summary(
+            positional_status_filters_raw,
+            positional_priority_filters_raw,
+        )
+
+        if explicit_target_tokens:
+            selected_items = resolve_target_tokens(
+                repo_root,
+                domain_files,
+                explicit_target_tokens,
+                id_prefixes=id_prefixes,
+            )
+            selected_items = _scope_selected_items_to_filtered_results(selected_items, criteria_by_file)
+
+            if json_output:
+                payload = build_targeted_criteria_payload(
+                    repo_root,
+                    resolved_criteria_dir,
+                    selected_items,
+                    explicit_target_tokens,
+                    include_body=include_body,
+                    id_prefixes=id_prefixes,
+                )
+                payload["mode"] = "filter-positional-targets"
+                payload["filters"] = filter_summary
+                _emit_json_payload(payload)
+                raise SystemExit(0)
+
+            targeted_by_file: dict[Path, list[dict[str, object]]] = {}
+            for path, requirement in selected_items:
+                targeted_by_file.setdefault(path, []).append(requirement)
+
+            scoped_label = f"{filter_label} | targets={','.join(explicit_target_tokens)}"
+            if list_output:
+                print_criteria_list(repo_root, targeted_by_file, scoped_label, filter_label="positional")
+                raise SystemExit(0)
+
+            if tree or not interactive:
+                print_criteria_tree(repo_root, targeted_by_file, scoped_label, filter_label="positional")
+                raise SystemExit(0)
+
+            if not selected_items:
+                click.echo(f"No requirements found for {scoped_label}")
+                raise SystemExit(0)
+
+            if len(selected_items) == 1:
+                _single_path, single_requirement = selected_items[0]
+                raise SystemExit(
+                    lookup_criterion_interactive(
+                        repo_root,
+                        domain_files,
+                        requirement_id=str(single_requirement["id"]),
+                        emoji_columns=emoji_columns,
+                        id_prefixes=id_prefixes,
+                        include_status_emojis=include_status_emojis,
+                        priority_mode=priority_mode,
+                        include_priority_summary=show_priority_summary,
+                    )
+                )
+
+            raise SystemExit(
+                focused_target_interactive_loop(
+                    repo_root,
+                    domain_files,
+                    selected_items=selected_items,
+                    target_tokens=[*filter_target_tokens, *explicit_target_tokens],
+                    emoji_columns=emoji_columns,
+                    id_prefixes=id_prefixes,
+                    resume_filter=resume_filter,
+                    state_dir=state_dir,
+                    include_status_emojis=include_status_emojis,
+                    priority_mode=priority_mode,
+                    include_priority_summary=show_priority_summary,
+                )
+            )
+
+        if len(positional_status_filters_raw) == 1 and not positional_priority_filters_raw:
+            normalized_status = positional_status_filters_raw[0]
+            if json_output:
+                payload = build_filtered_criteria_payload(
+                    repo_root,
+                    resolved_criteria_dir,
+                    criteria_by_file,
+                    normalized_status,
+                    include_body=include_body,
+                    id_prefixes=id_prefixes,
+                )
+                _emit_json_payload(payload)
+                raise SystemExit(0)
+            if list_output:
+                print_criteria_list(repo_root, criteria_by_file, normalized_status, filter_label="status")
+                raise SystemExit(0)
+            if tree or not interactive:
+                print_criteria_tree(repo_root, criteria_by_file, normalized_status, filter_label="status")
+                raise SystemExit(0)
+            raise SystemExit(
+                filtered_interactive_loop(
+                    repo_root,
+                    domain_files,
+                    target_status=normalized_status,
+                    emoji_columns=emoji_columns,
+                    id_prefixes=id_prefixes,
+                    resume_filter=resume_filter,
+                    state_dir=state_dir,
+                    include_status_emojis=include_status_emojis,
+                    priority_mode=priority_mode,
+                    include_priority_summary=show_priority_summary,
+                )
+            )
+
+        if len(positional_priority_filters_raw) == 1 and not positional_status_filters_raw:
+            normalized_priority = positional_priority_filters_raw[0]
+            if json_output:
+                payload = build_filtered_criteria_payload(
+                    repo_root,
+                    resolved_criteria_dir,
+                    criteria_by_file,
+                    normalized_priority,
+                    include_body=include_body,
+                    id_prefixes=id_prefixes,
+                    filter_mode="filter-priority",
+                    filter_label="priority",
+                )
+                _emit_json_payload(payload)
+                raise SystemExit(0)
+            if list_output:
+                print_criteria_list(repo_root, criteria_by_file, normalized_priority, filter_label="priority")
+                raise SystemExit(0)
+            if tree or not interactive:
+                print_criteria_tree(repo_root, criteria_by_file, normalized_priority, filter_label="priority")
+                raise SystemExit(0)
+            raise SystemExit(
+                filtered_priority_interactive_loop(
+                    repo_root,
+                    domain_files,
+                    target_priority=normalized_priority,
+                    emoji_columns=emoji_columns,
+                    id_prefixes=id_prefixes,
+                    resume_filter=resume_filter,
+                    state_dir=state_dir,
+                    include_status_emojis=include_status_emojis,
+                    priority_mode=priority_mode,
+                    include_priority_summary=show_priority_summary,
+                )
+            )
+
+        if json_output:
+            payload = build_filtered_criteria_payload(
+                repo_root,
+                resolved_criteria_dir,
+                criteria_by_file,
+                filter_summary,
+                include_body=include_body,
+                id_prefixes=id_prefixes,
+                filter_mode="filter-positional",
+                filter_label="filters",
+            )
+            _emit_json_payload(payload)
+            raise SystemExit(0)
+
+        if list_output:
+            print_criteria_list(repo_root, criteria_by_file, filter_label, filter_label="positional")
+            raise SystemExit(0)
+
+        if tree or not interactive:
+            print_criteria_tree(repo_root, criteria_by_file, filter_label, filter_label="positional")
+            raise SystemExit(0)
+
+        selected_items: list[tuple[Path, dict[str, object]]] = []
+        for path in domain_files:
+            for requirement in criteria_by_file.get(path, []):
+                selected_items.append((path, requirement))
+
+        raise SystemExit(
+            focused_target_interactive_loop(
+                repo_root,
+                domain_files,
+                selected_items=selected_items,
+                target_tokens=filter_target_tokens,
+                emoji_columns=emoji_columns,
+                id_prefixes=id_prefixes,
+                resume_filter=resume_filter,
+                state_dir=state_dir,
+                include_status_emojis=include_status_emojis,
+                priority_mode=priority_mode,
+                include_priority_summary=show_priority_summary,
+            )
+        )
 
     if explicit_target_tokens:
         if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or rollup_mode:

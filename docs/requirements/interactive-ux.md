@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 8🔧 18✅ 0⛔ 4🗑️
+Summary: 0💡 9🔧 18✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -318,3 +318,13 @@ colors:
 - So that this invalid-key help toggle remains deterministic, does not trigger destructive actions, and does not silently consume valid command keys that belong to the current menu context.
 - So that opening and closing help does not discard the current menu context, selection, sort state, or active search position.
 - So that shared menus and workflow-specific prompts converge on a consistent compact-footer-plus-help pattern instead of each surface inventing its own long legend.
+
+### RQMD-INTERACTIVE-027: Positional status and priority filter walk
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when I run rqmd with positional status and/or priority tokens instead of explicit filter flags
+- I want rqmd to open the same focused interactive walk that explicit `--status` and `--priority` filters would produce
+- So that commands such as `rqmd P1 Proposed` or `rqmd Prop P1` immediately start a walk over the matching requirements instead of opening the generic file menu.
+- So that when both positional status and priority filter tokens are present, the resulting walk narrows to requirements that satisfy each filter family rather than broadening across them.
+- So that the resulting interactive session preserves the same navigation, resume, summary-refresh, and filtered-context behavior already defined for explicit status/priority walks.
+- So that the UI clearly surfaces which positional filters were resolved before the user begins editing requirements.

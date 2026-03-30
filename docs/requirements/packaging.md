@@ -3,7 +3,7 @@
 Scope: package layout, installability, module entrypoints, and publication readiness.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 1🔧 9✅ 0⛔ 0🗑️
+Summary: 0💡 2🔧 9✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PACKAGING-001: src-layout package structure
@@ -86,3 +86,13 @@ Summary: 0💡 1🔧 9✅ 0⛔ 0🗑️
 - So that users can enable completion using standard shell-init patterns without hand-maintaining completion scripts.
 - So that dynamic completion can query rqmd for current domain/requirement tokens at completion time and stay in sync with repository docs.
 - So that packaging/README instructions include copy-paste-safe activation commands and troubleshooting notes for completion cache refresh.
+
+### RQMD-PACKAGING-011: Shell completion for positional filter tokens
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when shell completion is enabled and I type positional tokens instead of explicit filter flags
+- I want completion candidates for status and priority filter values to appear alongside requirement IDs, domain identifiers, and subsection names
+- So that workflows such as `rqmd Pro<TAB>` or `rqmd P1 core<TAB>` remain discoverable and fast without requiring me to remember whether a token is accepted positionally.
+- So that completion ordering and display make it clear when a suggestion is a status filter, priority filter, requirement ID, domain token, or subsection token.
+- So that the completion engine respects the same precedence and ambiguity rules defined for positional filter-token parsing rather than suggesting tokens that would later resolve differently at execution time.
+- So that completion remains deterministic when a token prefix could match both a positional filter value and a domain or subsection name.

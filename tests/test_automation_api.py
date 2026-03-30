@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-
 from rqmd import cli
 from rqmd.constants import JSON_SCHEMA_VERSION
 
@@ -2056,6 +2055,113 @@ def test_RQMD_automation_027b_positional_target_tree_rejects_invalid_token(repo_
 
     assert result.exit_code != 0
     assert "Unrecognized target tokens" in result.output
+
+
+def test_RQMD_automation_035_positional_status_and_priority_filters_narrow_results(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: Proposed P1
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+
+### AC-DEMO-002: Proposed P2
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+
+### AC-DEMO-003: Implemented P1
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "P1",
+            "Prop",
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-positional"
+    assert payload["filters"]["status"] == ["💡 Proposed"]
+    assert payload["filters"]["priority"] == ["🟠 P1 - High"]
+    assert payload["filters"]["logic"] == {"across_families": "and", "within_family": "or"}
+    assert payload["total"] == 1
+    assert payload["files"][0]["requirements"][0]["id"] == "AC-DEMO-001"
+
+
+def test_RQMD_automation_035b_positional_filters_scope_remaining_targets(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "core-engine.md").write_text(
+        """# Core Engine Requirements
+
+Scope: core-engine.
+
+### AC-CORE-001: Core priority one
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+
+### AC-CORE-002: Core priority two
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+""",
+        encoding="utf-8",
+    )
+    (domain / "api.md").write_text(
+        """# API Requirements
+
+Scope: api.
+
+### AC-API-001: API priority one
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "P1",
+            "core",
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--as-json",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "filter-positional-targets"
+    assert payload["filters"]["priority"] == ["🟠 P1 - High"]
+    assert payload["targets"] == ["core"]
+    assert payload["total"] == 1
+    assert [file_entry["path"] for file_entry in payload["files"]] == ["docs/requirements/core-engine.md"]
+    assert payload["files"][0]["requirements"][0]["id"] == "AC-CORE-001"
 
 
 def test_RQMD_automation_025_set_flagged_and_json_mode(repo_with_domain_docs: Path) -> None:

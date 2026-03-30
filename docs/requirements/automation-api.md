@@ -3,7 +3,7 @@
 Scope: non-interactive updates, machine-friendly batch operations, and CI-friendly check behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 24🔧 10✅ 0⛔ 0🗑️
+Summary: 0💡 25🔧 10✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AUTOMATION-001: Check-only mode
@@ -293,3 +293,19 @@ Summary: 0💡 24🔧 10✅ 0⛔ 0🗑️
 - So that `--flagged` and `--no-flag` are mutually exclusive in a single invocation with clear validation errors
 - So that `--no-flag` works with `--as-tree`, `--as-list`, `--as-json`, and interactive focused walk modes
 - So that `--no-flag` composes with other filters using the same OR-across-flags, AND-within-flag semantics.
+
+### RQMD-AUTOMATION-035: Positional filter-token precedence and flexible matching
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when I invoke rqmd with bare positional tokens such as `P1 Proposed` or `Prop P1`
+- I want rqmd to recognize status and priority filter tokens positionally before attempting requirement-ID or domain-token resolution
+- So that fast ad hoc filter launches do not require explicit `--status` or `--priority` flags.
+- So that positional filter-token resolution accepts the same minimal differentiable matching, aliases, shortcodes, and case-insensitive normalization already supported for explicit `--status` and `--priority` values.
+- So that token order is irrelevant for mixed positional filters (`rqmd P1 Proposed` and `rqmd Prop P1` resolve identically).
+- So that if a positional token could resolve both as a filter value and as a requirement/domain token, the filter interpretation wins deterministically.
+- So that ambiguous positional filter tokens fail with the same candidate-list error contract used by existing ambiguous value-prefix handling.
+- So that requirement IDs, domain identifiers, and subsection tokens continue to support minimal deterministic matching after positional filter tokens are resolved, rather than requiring exact full strings.
+- So that mixed positional input can still combine filter tokens with target tokens deterministically, with a documented precedence order of: status/priority filter tokens first, then exact-or-minimally-matching requirement IDs, then exact-or-minimally-matching domain identifiers and subsection tokens.
+- So that mixed invocations such as `rqmd P1 core-engine`, `rqmd Proposed api`, or `rqmd Prop P1 core` are interpreted as filter-plus-target workflows rather than as alternate ID/domain-only lookups.
+- So that when a mixed invocation contains both positional filters and target tokens, rqmd first resolves the filters, then scopes the resulting requirement set by the remaining target tokens, and only then decides whether to launch a focused walk, tree/list output, or direct single-requirement action.
+- So that mixed positional status and priority filters narrow results across filter families, allowing `rqmd P1 Proposed` to return only requirements that match both `P1` and `Proposed`.
