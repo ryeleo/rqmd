@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 
+- Added positional status/priority filter tokens with filter-first precedence over requirement/domain lookup, deterministic prefix matching for IDs and domains, mixed filter-plus-target scoping such as `rqmd P1 core-engine`, and shell completion entries for positional filter values alongside IDs, domains, and subsection tokens (RQMD-AUTOMATION-035, RQMD-INTERACTIVE-027, RQMD-PACKAGING-011).
 - Added policy-aware history retention defaults and config overrides (`history_retention.retain_last`, `retain_days`, `max_size_kib`), and wired `rqmd --history-gc` to trim persisted history state before pack/prune maintenance while reporting the active policy in `--history` and `--history-gc` outputs (RQMD-UNDO-008).
 - Added `rqmd --history-gc` with optional `--history-prune-now`, plus explicit confirmation and JSON/text reporting for safe maintenance of the hidden `rqmd-history` repository (progress toward RQMD-UNDO-007).
 - Added interactive `g` and `G` history-browser actions for confirmed history gc and immediate-prune maintenance from the entry detail view (progress toward RQMD-UNDO-007).

@@ -8,7 +8,6 @@ from pathlib import Path
 import click
 import pytest
 from click.testing import CliRunner
-
 from rqmd import cli, menus
 
 
@@ -1622,6 +1621,81 @@ Scope: demo.
     items_id = cli.shell_complete_target_tokens(ctx, param=None, incomplete="ac-demo")
     values_id = [item.value if hasattr(item, "value") else str(item) for item in items_id]
     assert "AC-DEMO-001" in values_id
+
+
+def test_RQMD_interactive_020b_shell_completion_includes_positional_filter_tokens(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "core-engine.md").write_text(
+        """# Core Engine Requirements
+
+Scope: core-engine.
+
+### AC-CORE-001: First
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+""",
+        encoding="utf-8",
+    )
+
+    ctx = click.Context(cli.main)
+    ctx.params = {
+        "repo_root": repo,
+        "requirements_dir": "docs/requirements",
+        "id_prefixes": (),
+    }
+
+    items = cli.shell_complete_target_tokens(ctx, param=None, incomplete="p")
+    values = [item.value if hasattr(item, "value") else str(item) for item in items]
+
+    assert "Proposed" in values
+    assert "P1" in values
+
+
+def test_RQMD_interactive_027_positional_status_filter_launches_filtered_walk(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: First
+- **Status:** 💡 Proposed
+
+### AC-DEMO-002: Second
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    called: dict[str, object] = {}
+
+    def fake_filtered(repo_root, domain_files, target_status, emoji_columns, id_prefixes, resume_filter, state_dir, include_status_emojis, priority_mode, include_priority_summary):
+        called["status"] = target_status
+        called["domain_files"] = [path.name for path in domain_files]
+        return 0
+
+    monkeypatch.setattr(cli, "filtered_interactive_loop", fake_filtered)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "Prop",
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert called["status"] == "💡 Proposed"
+    assert called["domain_files"] == ["demo.md"]
 
 
 def test_RQMD_interactive_filtered_walk_resumes_position_across_runs(tmp_path: Path) -> None:

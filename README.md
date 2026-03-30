@@ -94,7 +94,7 @@ uv run python -m rqmd --help
 ## Shell completion
 
 rqmd uses Click dynamic completion and supports shell activation without maintaining static completion files.
-Completion candidates stay in sync with live requirement docs, including positional target tokens (domain names, requirement IDs, and subsection names).
+Completion candidates stay in sync with live requirement docs, including positional target tokens (domain names, requirement IDs, and subsection names) plus positional status/priority filter values such as `Proposed` and `P1`.
 
 zsh activation (add to `~/.zshrc`):
 
@@ -248,6 +248,15 @@ Batch updates can include `priority` fields, or combine `status` and `priority` 
 {"id":"AC-EXAMPLE-001","priority":"p0"}
 {"id":"AC-EXAMPLE-002","status":"implemented","priority":"medium"}
 ```
+
+Use positional filters for fast narrowing without explicit flags:
+
+```bash
+uv run rqmd P1 Proposed --as-json --no-walk --no-table
+uv run rqmd Proposed core-engine
+```
+
+When positional status and priority filters are combined, rqmd narrows across both families, so `rqmd P1 Proposed` returns only proposed P1 requirements. Remaining positional tokens are then resolved as requirement IDs, domain tokens, or subsection tokens.
 
 Interactive entry panels can start in priority mode:
 
