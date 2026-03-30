@@ -12,3 +12,14 @@ Operational notes:
 - Re-run is idempotent.
 - Existing files are preserved unless `--overwrite-existing` is used.
 - Skills improve workflow discovery and slash-command reuse, but they do not bypass terminal or tool approval prompts.
+
+Installed workflow skills:
+- `/rqmd-brainstorm`
+- `/rqmd-triage`
+- `/rqmd-export-context`
+- `/rqmd-implement`
+- `/rqmd-status-maintenance`
+- `/rqmd-doc-sync`
+- `/rqmd-history`
+- `/rqmd-bundle`
+- `/rqmd-verify`

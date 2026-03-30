@@ -1,6 +1,16 @@
+## UX updates
+
+"setting: priority"  column should still be left aligned within itself, even if it is the right column.
+
+Also, the zebra striping to show which status is selected should be seperate from zebra striping to show which prioirty is currently selected! (Same logic where color of priority determines color of zebra stripe please!)
+
+Also, could we attempt to render markdown a bit using terminal? At least bold? Can H2 be very large? Can H3 be large but not too large? Maybe use ascii art for H2? Maybe use bold for H3?
+
 ## User Story based??
 
 Hmm... we should add support/documentation for changing "Requirment Domains" to "User Stories" I think. And mayb
+Add a companion requirement for shell completion so positional filter tokens complete alongside IDs and domains.
+Start implementing the parser for this proposal.
 
 
 ## AI Workflow

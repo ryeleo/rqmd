@@ -15,7 +15,7 @@ AI workflow defaults:
 - Apply only after review with `--write`.
 - For implementation work, use `rqmd-ai --workflow-mode implement` and take the highest-priority 1-3 proposed requirements at a time.
 - After each implementation batch, make sure rqmd runs, summaries verify, tests pass, and priorities are re-checked before continuing.
-- Prefer the installed Copilot skills for repeatable workflows: `/rqmd-brainstorm`, `/rqmd-implement`, and `/rqmd-verify`.
+- Prefer the installed Copilot skills for repeatable workflows such as `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, and `/rqmd-verify`.
 - Skills improve workflow discovery and reuse, but they do not bypass terminal/tool approval prompts.
 
 Useful commands:

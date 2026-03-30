@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 
-- Added installable Copilot workflow skills for `/rqmd-brainstorm`, `/rqmd-implement`, and `/rqmd-verify`, and updated the agent bundle/docs to ship those skills while explicitly documenting that skills do not bypass tool approval prompts.
+- Added installable Copilot workflow skills for brainstorm planning, backlog triage, focused context export, implementation, status/priority maintenance, doc sync, history inspection, bundle management, and verification, and updated the agent bundle/docs to ship those skills while explicitly documenting that skills do not bypass tool approval prompts.
 - Added an optional `speedups` extra powered by `orjson`, and wired rqmd/rqmd-ai JSON export plus audit-log serialization through a native-acceleration helper with a pure-Python fallback (RQMD-CORE-025).
 - Added `reqmd` and `reqmd-ai` as pre-release console-script aliases while keeping `rqmd` and `rqmd-ai` as the canonical command names, and documented the manual PyPI-check plus compatibility-window plan for any future rename decision (RQMD-PACKAGING-012).
 - Added `rqmd-ai --workflow-mode brainstorm` as a read-only planning surface that parses brainstorm markdown into ranked requirement suggestions with recommended target docs, suggested IDs, canonical proposed status, and inferred priorities (RQMD-AI-014).

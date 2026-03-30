@@ -14,4 +14,4 @@ Execution contract:
 - Keep README and automation docs aligned with shipped behavior.
 - Verify rqmd runs, then run targeted tests, then full tests before completion.
 - Update CHANGELOG.md under [Unreleased] for every shipped change.
-- Prefer the installed rqmd skills when the task matches a known workflow: `/rqmd-brainstorm`, `/rqmd-implement`, `/rqmd-verify`.
+- Prefer the installed rqmd skills when the task matches a known workflow: `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, `/rqmd-verify`.

@@ -30,13 +30,21 @@ from .batch_inputs import parse_set_entry
 from .constants import JSON_SCHEMA_VERSION
 from .history import HistoryManager
 from .json_speedups import dumps_json
-from .markdown_io import (discover_project_root, format_path_display,
-                          iter_domain_files, resolve_requirements_dir,
-                          validate_files_readable)
-from .req_parser import (extract_blocking_id,
-                         extract_requirement_block_with_lines,
-                         normalize_id_prefixes, parse_domain_priority_metadata,
-                         parse_requirements, resolve_id_prefixes)
+from .markdown_io import (
+    discover_project_root,
+    format_path_display,
+    iter_domain_files,
+    resolve_requirements_dir,
+    validate_files_readable,
+)
+from .req_parser import (
+    extract_blocking_id,
+    extract_requirement_block_with_lines,
+    normalize_id_prefixes,
+    parse_domain_priority_metadata,
+    parse_requirements,
+    resolve_id_prefixes,
+)
 from .status_model import normalize_status_input
 from .status_update import apply_status_change_by_id
 
@@ -187,6 +195,48 @@ Constraints:
 - Keep the output read-only until requirement/doc changes are reviewed.
 - Skills improve workflow discovery; shell and tool approvals may still be required.
 """,
+    ".github/skills/rqmd-triage/SKILL.md": """---
+name: rqmd-triage
+description: Review, rank, and select the next rqmd backlog slice from tracked requirements. Use for proposal triage, next-batch selection, backlog grooming, and deciding which 1-3 requirements should move next.
+argument-hint: Describe the backlog area, status filter, or requirement domain you want to triage.
+user-invocable: true
+---
+
+Use this skill when tracked requirements already exist and you need to decide what to work next.
+
+Workflow:
+- Export the current proposal queue with `uv run rqmd-ai --as-json --dump-status proposed`.
+- Narrow to a domain or requirement with `--dump-file`, `--dump-id`, or targeted rqmd filters when the backlog is broad.
+- Rank candidates by priority, blocking relationships, and implementation batch size.
+- Pick the highest-value 1-3 items for the next implementation slice.
+- Re-check remaining priorities after each shipped batch so the queue stays accurate.
+
+Constraints:
+- Prefer tracked requirement proposals over scratch notes once backlog entries already exist.
+- Keep selection logic explicit so future agents can understand why a batch was chosen.
+- Skills improve workflow discovery; shell and tool approvals may still be required.
+""",
+    ".github/skills/rqmd-export-context/SKILL.md": """---
+name: rqmd-export-context
+description: Export focused rqmd and rqmd-ai context for prompts, reviews, and automation handoffs. Use for requirement slices by status, ID, file, or bounded domain markdown when an agent needs only the relevant context.
+argument-hint: Describe which requirement slice or document context you need to export.
+user-invocable: true
+---
+
+Use this skill when an agent needs precise context instead of the full repository.
+
+Workflow:
+- Start with `uv run rqmd-ai --as-json` for baseline guidance when needed.
+- Export targeted slices with `uv run rqmd-ai --as-json --dump-status proposed`, `--dump-id <ID>`, or `--dump-file <domain>.md`.
+- Include richer requirement text with `--include-requirement-body` when the body drives implementation.
+- Include bounded domain rationale with `--include-domain-markdown --max-domain-markdown-chars <N>` when architecture notes matter.
+- Prefer the smallest payload that still preserves stable IDs and requirement meaning.
+
+Constraints:
+- Keep exported context scoped and machine-readable by default.
+- Avoid dumping whole domains when an ID- or status-level slice is enough.
+- Skills improve workflow discovery; shell and tool approvals may still be required.
+""",
     ".github/skills/rqmd-implement/SKILL.md": """---
 name: rqmd-implement
 description: Implement the highest-priority proposed rqmd requirements in small validated batches. Use for multi-file code changes that must stay synchronized with docs/requirements, README, tests, and CHANGELOG entries.
@@ -206,6 +256,90 @@ Workflow:
 Constraints:
 - Keep changes focused and avoid broad unrelated refactors.
 - Re-check remaining priorities before starting another batch.
+- Skills improve workflow discovery; shell and tool approvals may still be required.
+""",
+    ".github/skills/rqmd-status-maintenance/SKILL.md": """---
+name: rqmd-status-maintenance
+description: Safely update requirement statuses, priorities, and focused worklists with rqmd and rqmd-ai. Use for planned status transitions, priority triage, filter-driven maintenance, and guarded requirement doc mutations.
+argument-hint: Describe the requirement IDs, desired status or priority updates, and whether you want preview-only or apply mode.
+user-invocable: true
+---
+
+Use this skill when the task is primarily about requirement metadata rather than product code.
+
+Workflow:
+- Preview requirement changes first with `uv run rqmd-ai --as-json --update ID=STATUS`.
+- Apply only after review with `uv run rqmd-ai --as-json --write --update ID=STATUS`.
+- Use `uv run rqmd --update-priority ID=p1` or repeated `--update-priority` flags for priority maintenance.
+- Use rqmd filters such as `--status`, `--priority`, `--flagged`, `--has-link`, or positional tokens to build focused maintenance worklists.
+- Re-run summary verification after any requirement mutation.
+
+Constraints:
+- Keep status and priority changes aligned with the actual code and test state.
+- Prefer machine-readable preview/apply flows for multi-update maintenance.
+- Skills improve workflow discovery; shell and tool approvals may still be required.
+""",
+    ".github/skills/rqmd-doc-sync/SKILL.md": """---
+name: rqmd-doc-sync
+description: Synchronize rqmd requirement docs, summaries, README guidance, and changelog entries after behavior changes. Use when shipped behavior, requirement status, or workflow guidance changed and repo docs must stay coherent.
+argument-hint: Describe what changed and which docs or requirement files may now be out of sync.
+user-invocable: true
+---
+
+Use this skill when code changes are done but documentation and requirement state may have drifted.
+
+Workflow:
+- Update the affected requirement docs in `docs/requirements/*.md`.
+- Keep `docs/requirements/README.md`, top-level `README.md`, and `CHANGELOG.md` aligned with shipped behavior.
+- If work changed AI workflows or onboarding, update `.github/copilot-instructions.md` and any installed bundle text as needed.
+- Re-run `uv run rqmd --verify-summaries --no-walk --no-table`.
+- Call out any remaining drift or docs that still need manual judgment.
+
+Constraints:
+- Treat requirement markdown as product surface, not optional notes.
+- Prefer small doc updates tied directly to shipped behavior.
+- Skills improve workflow discovery; shell and tool approvals may still be required.
+""",
+    ".github/skills/rqmd-history/SKILL.md": """---
+name: rqmd-history
+description: Inspect rqmd history, timeline, detached snapshots, comparisons, and replay previews. Use for undo/redo investigation, time-travel debugging, historical diffs, and planning restore or replay actions without mutating the current worktree.
+argument-hint: Describe the history question, refs, or time window you want to inspect.
+user-invocable: true
+---
+
+Use this skill when the important question is when a requirement changed, what changed between snapshots, or how to recover prior state.
+
+Workflow:
+- Use `uv run rqmd --history` or `uv run rqmd --timeline` for high-level history inspection.
+- Use `uv run rqmd-ai --as-json --history-ref <ref> --dump-status proposed` or another targeted export for detached point-in-time reads.
+- Use `uv run rqmd-ai --as-json --compare-refs A..B` for structured historical diffs.
+- Use `uv run rqmd-ai --as-json --history-report --history-ref <ref>` or `--compare-refs A..B` for report-oriented output.
+- Use `uv run rqmd-ai --as-json --history-action restore:<ref>` or `replay:<A..B>` for read-only recovery planning before any write path.
+
+Constraints:
+- Keep historical exploration read-only unless the user explicitly wants a recovery action.
+- Prefer stable `hid:<commit>` identifiers when persisting references across conversations.
+- Skills improve workflow discovery; shell and tool approvals may still be required.
+""",
+    ".github/skills/rqmd-bundle/SKILL.md": """---
+name: rqmd-bundle
+description: Install, refresh, and explain the rqmd AI agent and skill bundle for a workspace. Use for onboarding repositories, previewing bundle changes, preserving customized files, and clarifying how skills relate to approval prompts.
+argument-hint: Describe whether you want a dry-run preview, minimal/full install, overwrite behavior, or bundle customization.
+user-invocable: true
+---
+
+Use this skill when the work is about Copilot instructions, agents, skills, or bundle installation rather than the application itself.
+
+Workflow:
+- Preview bundle changes with `uv run rqmd-ai --as-json --install-agent-bundle --bundle-preset minimal --dry-run`.
+- Install the standard bundle with `uv run rqmd-ai --as-json --install-agent-bundle --bundle-preset full`.
+- Use `--overwrite-existing` only when intentional replacement of workspace customization is desired.
+- Keep generated bundle text and checked-in workspace copies aligned if the repository ships its own bundle source.
+- Explain clearly that skills improve workflow discovery and slash-command reuse, but they do not bypass terminal or tool approval prompts.
+
+Constraints:
+- Preserve existing customized files unless overwrite is explicitly requested.
+- Keep bundle changes consistent between installed templates and the repository copies that generate them.
 - Skills improve workflow discovery; shell and tool approvals may still be required.
 """,
     ".github/skills/rqmd-verify/SKILL.md": """---
