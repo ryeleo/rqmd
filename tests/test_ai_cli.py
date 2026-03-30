@@ -450,9 +450,12 @@ def test_RQMD_AI_012_install_bundle_dry_run_preview(tmp_path: Path) -> None:
     assert payload["mode"] == "install-agent-bundle"
     assert payload["dry_run"] is True
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 2
+    assert payload["changed_count"] == 5
     assert ".github/copilot-instructions.md" in payload["created_files"]
     assert ".github/agents/core.agent.md" in payload["created_files"]
+    assert ".github/skills/rqmd-brainstorm/SKILL.md" in payload["created_files"]
+    assert ".github/skills/rqmd-implement/SKILL.md" in payload["created_files"]
+    assert ".github/skills/rqmd-verify/SKILL.md" in payload["created_files"]
     assert not (repo / ".github" / "copilot-instructions.md").exists()
 
 
@@ -479,7 +482,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     )
     assert first.exit_code == 0
     first_payload = json.loads(first.output)
-    assert first_payload["changed_count"] == 4
+    assert first_payload["changed_count"] == 7
     assert (repo / ".github" / "copilot-instructions.md").exists()
 
     second = runner.invoke(
@@ -499,7 +502,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     second_payload = json.loads(second.output)
     _assert_schema_version(second_payload)
     assert second_payload["changed_count"] == 0
-    assert len(second_payload["skipped_existing"]) == 4
+    assert len(second_payload["skipped_existing"]) == 7
 
     custom = repo / ".github" / "copilot-instructions.md"
     custom.write_text("# custom\n", encoding="utf-8")
@@ -541,7 +544,7 @@ def test_RQMD_AI_012_install_bundle_without_requirements_docs(tmp_path: Path) ->
     payload = json.loads(result.output)
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
-    assert payload["changed_count"] == 2
+    assert payload["changed_count"] == 5
 
 
 def test_RQMD_TIME_001_export_context_from_history_entry(tmp_path: Path) -> None:
