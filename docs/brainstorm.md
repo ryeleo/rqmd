@@ -1,10 +1,26 @@
+## User Story based??
+
+Hmm... we should add support/documentation for changing "Requirment Domains" to "User Stories" I think. And mayb
+
 
 ## AI Workflow
 
+Update AI to have two primary worker skills:
+
+### Brainstorm
+
 1. User does planning in brainstorm.md
 2. Then creates requirements from their brainstorm.md with hepl from AI agent.
-3. Then implements with help from AI agent, making sure to update requirements and tests as they go.
-≠
+
+### Implement
+
+1. AI agent, making sure to update requirements and tests as they go.
+2. After implementing a feature make sure:
+    1. The tool itself runs
+    2. All tests pass
+    3. Changlog is updated
+    4. Requirements are updated (using `rqmd --update...` or directly editing the markdown files)
+
 
 ## Performance Improvements
 

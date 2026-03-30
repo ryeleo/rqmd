@@ -86,7 +86,8 @@ from .config import (load_config, load_priorities_file, load_statuses_file,
 from .constants import (DEFAULT_ID_PREFIXES, DEFAULT_REQUIREMENTS_DIR,
                         ID_PREFIX_PATTERN, JSON_SCHEMA_VERSION, STATUS_ORDER,
                         STATUS_PATTERN, SUMMARY_END, SUMMARY_START)
-from .history import HistoryManager, HistoryRestoreError, merge_retention_policies
+from .history import (HistoryManager, HistoryRestoreError,
+                      merge_retention_policies)
 from .markdown_io import (auto_detect_requirements_dir, check_files_writable,
                           check_index_sync, discover_project_root,
                           display_name_from_h1, format_path_display,
