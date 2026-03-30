@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 7🔧 18✅ 0⛔ 4🗑️
+Summary: 0💡 8🔧 18✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -261,7 +261,6 @@ colors:
 	done: green
 	blocked: red
 	deprecated: grey
-```
 
 ### RQMD-INTERACTIVE-022: Interactive link entry with URL-to-hyperlink auto-formatting
 - **Status:** 🔧 Implemented
@@ -305,3 +304,17 @@ colors:
 - So that `n` repeats the last search in the same direction and `N` repeats it in the opposite direction.
 - So that matched items are surfaced predictably without losing the current list context, active filters, or sort order.
 - So that history browser, file selection, requirement selection, and focused walkthroughs all share the same search-repeat contract.
+
+### RQMD-INTERACTIVE-026: Compact footer with full help menu
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a rqmd user when interactive menus accumulate many shortcuts and modes
+- I want the default interface to stay visually uncluttered while still exposing a complete help menu
+- So that the main footer can emphasize only the highest-frequency keys instead of listing every command at once.
+- So that a dedicated help surface can show all available bindings, meanings, and context-specific actions without truncation or visual overload.
+- So that the app can present a classic Vim-style `:` affordance when the interactive session first opens, hinting that deeper command/help discovery is available without forcing a long default legend.
+- So that discoverability remains high for advanced features such as sort cycling, refresh, history, paging, and search even when they are not all shown in the default footer.
+- So that pressing an otherwise invalid or unmapped key can toggle the help surface open as a playful discovery shortcut, and pressing another invalid/unmapped key while help is open can close it again.
+- So that this invalid-key help toggle remains deterministic, does not trigger destructive actions, and does not silently consume valid command keys that belong to the current menu context.
+- So that opening and closing help does not discard the current menu context, selection, sort state, or active search position.
+- So that shared menus and workflow-specific prompts converge on a consistent compact-footer-plus-help pattern instead of each surface inventing its own long legend.

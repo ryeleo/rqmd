@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `rqmd --history-discard-save-label <label>` so non-interactive branch discard flows can preserve a named snapshot label in the same command before branch navigation is removed (progress toward RQMD-UNDO-007).
 - Added `rqmd --history-gc-save-label <label>` plus matching interactive gc/prune save-label prompts so maintenance flows can preserve a named snapshot label before destructive history cleanup runs (progress toward RQMD-UNDO-007).
 - Added proposed Vim-alignment requirements covering `j`/`k` vertical navigation defaults, richer Vim-style motions (`gg`, `G`, `Ctrl-U`, `Ctrl-D`), and `/`/`?` search with `n`/`N` repeat semantics in interactive mode.
+- Added compact interactive footers with `:=help`, plus a shared help overlay that opens on `:` and toggles on invalid keys so full keymaps stay discoverable without long inline legends (RQMD-INTERACTIVE-026).
 - Added a pytest timeout guard (`timeout = 30`) plus a startup requirement for `pytest-timeout`, so interactive regressions fail fast instead of silently hanging when the timeout plugin is missing from the local test environment.
 - Updated local test and smoke-check commands to use `uv run --extra dev pytest ...`, matching the `pytest-timeout` requirement instead of relying on plain `uv run pytest`.
 - Added explicit selected-row arrow markers in interactive menus so the current status, priority, or flagged choice is obvious on first render even before any further navigation (RQMD-INTERACTIVE-006).
@@ -115,6 +116,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated requirement status to mark `RQMD-INTERACTIVE-024` as Implemented (Vim-style list motions and paging).
 - Updated interactive menus to add shared Vim-style list search motions: `/` and `?` search the current list, while `n` and `N` repeat the last search in the same or opposite direction without disturbing sort/filter context.
 - Updated requirement status to mark `RQMD-INTERACTIVE-025` as Implemented (Vim-style search and repeat navigation).
+- Updated requirement status to mark `RQMD-INTERACTIVE-026` as Implemented (compact footer with full help menu).
 - Clarified the requirement action footer so `j/k/g/G` are labeled as outer requirement traversal (`next-ac`, `prev-ac`, `first-ac`, `last-ac`) rather than implying that the status action prompt participates in the shared searchable list contract.
 - Fixed a `--screen-write` regression where adaptive render-mode fallback could override an explicit CLI request; explicit `--screen-write` now forces full-screen redraw for that run, and render-mode state is reset at CLI startup.
 - Fixed interactive requirement-action rendering so full requirement panels remain visible during status/priority/flagged/link prompts under screen-write redraws, restoring the colored rule, source/domain notes, and requirement body instead of dropping to a terse menu-only prompt.

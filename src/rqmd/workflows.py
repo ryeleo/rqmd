@@ -323,11 +323,25 @@ def _build_sort_footer(ascending: bool) -> str:
     )
 
 
+def _build_sort_compact_footer() -> str:
+    return "keys: 1-9 select | ↓/j=next | ↑/k=prev | :=help | u=up | q=quit"
+
+
 def _build_requirement_action_footer(allow_nav: bool) -> str:
     base = "keys: 1-9 select | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
     if not allow_nav:
         return base
     return "keys: 1-9 select | ↓/j=next-ac | ↑/k=prev-ac | gg=first-ac | G=last-ac | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
+
+
+def _build_requirement_action_compact_footer(allow_nav: bool) -> str:
+    if not allow_nav:
+        return "keys: 1-9 select | :=help | u=up | q=quit"
+    return "keys: 1-9 select | ↓/j=next-ac | ↑/k=prev-ac | :=help | u=up | q=quit"
+
+
+def _build_history_browser_compact_footer() -> str:
+    return "keys: 1-9 select | ↓/j=next | ↑/k=prev | :=help | u=up | q=quit"
 
 
 def _infer_requirements_dir(repo_root: Path, domain_files: list[Path]) -> Path:
@@ -660,6 +674,7 @@ def _show_history_browser(
             option_right_labels=[_history_entry_right_label(entry) for entry in display_entries],
             selected_option_index=selected_index,
             footer_legend="keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | q=quit",
+            compact_footer=_build_history_browser_compact_footer(),
             prefix_text=prefix_text,
         )
         if choice is None or choice == "up":
@@ -902,6 +917,7 @@ def _prompt_for_requirement_action(
         selected_option_index=selected_index,
         selected_option_bg=selected_bg,
         footer_legend=_build_requirement_action_footer(allow_nav),
+        compact_footer=_build_requirement_action_compact_footer(allow_nav),
         prefix_text=panel_text,
     )
     if choice is None:
@@ -1528,6 +1544,7 @@ def interactive_update_loop(
                     MENU_REFRESH: "refresh",
                 },
                 footer_legend=_build_sort_footer(current_file_sort_ascending),
+                compact_footer=_build_sort_compact_footer(),
                 selected_option_index=file_menu_selected_index,
                 initial_window_start=file_menu_window_start,
             )
@@ -1622,6 +1639,7 @@ def interactive_update_loop(
                         "g": "jump-sub",
                     },
                     footer_legend=_build_sort_footer(current_criterion_sort_ascending),
+                    compact_footer=_build_sort_compact_footer(),
                     selected_option_index=criterion_menu_selected_index,
                     initial_window_start=criterion_menu_window_start,
                 )

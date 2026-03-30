@@ -49,8 +49,34 @@ def test_RQMD_interactive_003c_menu_legend_uses_up_not_back(monkeypatch, capsys)
     output = capsys.readouterr().out
 
     assert result is None
+    assert ":=help" in output
     assert "u=up" in output
     assert "back" not in output.lower()
+
+
+def test_RQMD_interactive_003d_colon_opens_help_overlay(monkeypatch, capsys) -> None:
+    keys = iter([":", "q"])
+    monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
+
+    result = cli.select_from_menu("Pick", ["A", "B"])
+    output = capsys.readouterr().out
+
+    assert result is None
+    assert "Help" in output
+    assert "gg=first" in output
+    assert "Press : or any invalid key to close help." in output
+
+
+def test_RQMD_interactive_003e_invalid_key_toggles_help(monkeypatch, capsys) -> None:
+    keys = iter(["!", "@", "q"])
+    monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
+
+    result = cli.select_from_menu("Pick", ["A", "B"])
+    output = capsys.readouterr().out
+
+    assert result is None
+    assert output.count("Help") == 1
+    assert "Press : or any invalid key to close help." in output
 
 
 def test_RQMD_interactive_004_nav_shortcuts(monkeypatch) -> None:
@@ -193,6 +219,7 @@ def test_RQMD_sorting_006_default_file_menu_uses_name_sort_desc(monkeypatch, tmp
             captured["title"] = title
             captured["options"] = list(options)
             captured["legend"] = kwargs.get("footer_legend")
+            captured["compact_footer"] = kwargs.get("compact_footer")
         return None
 
     monkeypatch.setattr(cli, "select_from_menu", fake_select)
@@ -218,6 +245,7 @@ def test_RQMD_sorting_006_default_file_menu_uses_name_sort_desc(monkeypatch, tmp
     title_plain = re.sub(r"\x1b\[[0-9;]*m", "", str(captured["title"]))
     assert re.search(r"priority\s+\|\s+P\s+\|\s+I\s+\|\s+Ver\s+\|\s+Blk/Dep", title_plain)
     assert captured["legend"] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | s=sort | S=sort-back | d=[dsc] | r=rfrsh | q=quit"
+    assert captured["compact_footer"] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | :=help | u=up | q=quit"
 
 
 def test_RQMD_sorting_006b_emoji_columns_affect_select_file_header(monkeypatch, tmp_path: Path) -> None:
@@ -1103,6 +1131,7 @@ def test_RQMD_interactive_021c_requirement_menu_exposes_history_shortcuts() -> N
     def fake_select(title, options, **kwargs):
         captured["extra_keys"] = kwargs.get("extra_keys")
         captured["footer_legend"] = kwargs.get("footer_legend")
+        captured["compact_footer"] = kwargs.get("compact_footer")
         return "history"
 
     requirement = {
@@ -1127,6 +1156,7 @@ def test_RQMD_interactive_021c_requirement_menu_exposes_history_shortcuts() -> N
     assert "next-ac" in captured["footer_legend"]
     assert "first-ac" in captured["footer_legend"]
     assert "/=fwd" not in captured["footer_legend"]
+    assert captured["compact_footer"] == "keys: 1-9 select | ↓/j=next-ac | ↑/k=prev-ac | :=help | u=up | q=quit"
 
 
 def test_RQMD_interactive_021d_history_browser_uses_paged_menu(tmp_path: Path) -> None:
@@ -1163,6 +1193,7 @@ def test_RQMD_interactive_021d_history_browser_uses_paged_menu(tmp_path: Path) -
         captured["right_labels"] = list(kwargs.get("option_right_labels") or [])
         captured["selected_option_index"] = kwargs.get("selected_option_index")
         captured["footer_legend"] = kwargs.get("footer_legend")
+        captured["compact_footer"] = kwargs.get("compact_footer")
         return "up"
 
     cli.workflows_mod._show_history_browser(
@@ -1183,6 +1214,7 @@ def test_RQMD_interactive_021d_history_browser_uses_paged_menu(tmp_path: Path) -
     assert "^U/^D=half" in captured["footer_legend"]
     assert "/=fwd" in captured["footer_legend"]
     assert "n/N=next" in captured["footer_legend"]
+    assert captured["compact_footer"] == "keys: 1-9 select | ↓/j=next | ↑/k=prev | :=help | u=up | q=quit"
 
 
 @pytest.mark.timeout(5)

@@ -13,6 +13,7 @@ from __future__ import annotations
 import shutil
 import signal
 import sys
+import textwrap
 import time
 import unicodedata
 
@@ -37,6 +38,7 @@ _ARROW_UP_KEYS = ("\x1b[A", "\x1bOA")
 _ARROW_DOWN_KEYS = ("\x1b[B", "\x1bOB")
 _CTRL_U = "\x15"
 _CTRL_D = "\x04"
+_HELP_TOGGLE_KEY = ":"
 
 
 def set_screen_write_enabled(enabled: bool) -> None:
@@ -165,6 +167,70 @@ def _find_search_match(
             return current_index
 
     return None
+
+
+def _build_default_help_legend(
+    *,
+    allow_paging_nav: bool,
+    extra_key: str | None,
+    extra_key_help: str,
+    extra_keys: dict[str, str] | None,
+    extra_keys_help: dict[str, str] | None,
+) -> str:
+    if allow_paging_nav:
+        keys_line = (
+            f"keys: 1-9 select | ↓/{MENU_NEXT}=next | ↑/{MENU_PREV}=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | {MENU_UP}=up | {MENU_QUIT}=quit"
+        )
+    else:
+        keys_line = f"keys: 1-9 select | {MENU_UP}=up | {MENU_QUIT}=quit"
+    if extra_key:
+        extra_help = extra_key_help if extra_key_help else "action"
+        keys_line = f"{keys_line} | {_format_key_label(extra_key)}={extra_help}"
+    if extra_keys:
+        for key, ret in extra_keys.items():
+            help_text = (extra_keys_help or {}).get(key, ret)
+            keys_line = f"{keys_line} | {_format_key_label(key)}={help_text}"
+    return keys_line
+
+
+def _build_default_compact_footer(*, allow_paging_nav: bool) -> str:
+    keys = ["keys: 1-9 select"]
+    if allow_paging_nav:
+        keys.append(f"↓/{MENU_NEXT}=next")
+        keys.append(f"↑/{MENU_PREV}=prev")
+    keys.append(f"{_HELP_TOGGLE_KEY}=help")
+    keys.append(f"{MENU_UP}=up")
+    keys.append(f"{MENU_QUIT}=quit")
+    return " | ".join(keys)
+
+
+def _wrap_help_legend(legend: str, width: int) -> list[str]:
+    if not legend:
+        return []
+
+    tokens = [token.strip() for token in legend.split("|")]
+    lines: list[str] = []
+    current_tokens: list[str] = []
+    max_width = max(24, width - 2)
+
+    for token in tokens:
+        candidate_tokens = current_tokens + [token]
+        candidate = " | ".join(candidate_tokens)
+        if current_tokens and visible_length(candidate) > max_width:
+            lines.append(" | ".join(current_tokens))
+            current_tokens = [token]
+            continue
+        if visible_length(token) > max_width:
+            if current_tokens:
+                lines.append(" | ".join(current_tokens))
+                current_tokens = []
+            lines.extend(textwrap.wrap(token, width=max_width, break_long_words=False, break_on_hyphens=False))
+            continue
+        current_tokens = candidate_tokens
+
+    if current_tokens:
+        lines.append(" | ".join(current_tokens))
+    return lines
 
 
 def visible_length(text: str) -> int:
@@ -315,6 +381,8 @@ def select_from_menu(
     initial_window_start: int | None = None,
     selected_option_bg: str | None = None,
     footer_legend: str | None = None,
+    compact_footer: str | None = None,
+    help_legend: str | None = None,
     prefix_text: str | None = None,
 ) -> int | str | None:
     """Interactive menu selection with single-key navigation and paging.
@@ -335,7 +403,9 @@ def select_from_menu(
         selected_option_index: Initial selected option index.
         initial_window_start: Optional initial top-of-window global index.
         selected_option_bg: Background ANSI code for selected option.
-        footer_legend: Optional legend text displayed at menu footer.
+        footer_legend: Optional legend text displayed at menu footer, or full help legend when compact_footer is provided.
+        compact_footer: Optional compact footer shown during normal menu rendering.
+        help_legend: Optional full help legend shown when help is toggled open.
         prefix_text: Optional text block rendered above the menu title on each redraw.
 
     Returns:
@@ -352,8 +422,24 @@ def select_from_menu(
     current_selected_index = selected_option_index if selected_option_index is not None and 0 <= selected_option_index < len(options) else None
     last_search_query: str | None = None
     last_search_forward = True
+    help_visible = False
     is_tty = sys.stdout.isatty()
     previous_resize_handler: object | None = None
+
+    default_help_legend = _build_default_help_legend(
+        allow_paging_nav=allow_paging_nav,
+        extra_key=extra_key,
+        extra_key_help=extra_key_help,
+        extra_keys=extra_keys,
+        extra_keys_help=extra_keys_help,
+    )
+    resolved_help_legend = help_legend if help_legend is not None else footer_legend if compact_footer is not None else default_help_legend
+    resolved_compact_footer = compact_footer
+    if resolved_compact_footer is None:
+        if footer_legend is not None:
+            resolved_compact_footer = footer_legend
+        else:
+            resolved_compact_footer = _build_default_compact_footer(allow_paging_nav=allow_paging_nav)
 
     if is_tty and hasattr(signal, "SIGWINCH"):
         previous_resize_handler = signal.signal(signal.SIGWINCH, _mark_resize_pending)
@@ -420,27 +506,23 @@ def select_from_menu(
 
                 click.echo(line)
 
-            if footer_legend is not None:
-                keys_line = footer_legend
-            else:
-                if allow_paging_nav:
-                    keys_line = (
-                        f"keys: 1-9 select | ↓/{MENU_NEXT}=next | ↑/{MENU_PREV}=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | {MENU_UP}=up | {MENU_QUIT}=quit"
-                    )
-                else:
-                    keys_line = f"keys: 1-9 select | {MENU_UP}=up | {MENU_QUIT}=quit"
-                if extra_key:
-                    extra_help = extra_key_help if extra_key_help else "action"
-                    keys_line = f"{keys_line} | {_format_key_label(extra_key)}={extra_help}"
-                if extra_keys:
-                    for key, ret in extra_keys.items():
-                        help_text = (extra_keys_help or {}).get(key, ret)
-                        keys_line = f"{keys_line} | {_format_key_label(key)}={help_text}"
-            click.echo(keys_line)
+            if help_visible:
+                click.echo(click.style("Help", bold=True))
+                for help_line in _wrap_help_legend(resolved_help_legend, term_width):
+                    click.echo(help_line)
+                click.echo(click.style("Press : or any invalid key to close help.", dim=True))
+            click.echo(resolved_compact_footer)
             click.echo("choice: ", nl=False)
             raw_choice = click.getchar()
             choice = raw_choice.strip()
             click.echo(_format_key_label(choice))
+
+            if choice == _HELP_TOGGLE_KEY:
+                help_visible = not help_visible
+                render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
+                if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
+                    _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
+                continue
 
             if allow_paging_nav and choice == "g":
                 click.echo("choice: ", nl=False)
@@ -460,7 +542,7 @@ def select_from_menu(
                     if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
                         _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
                     continue
-                click.echo("Invalid input. Use number or navigation keys.")
+                help_visible = not help_visible
                 render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
                 if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
                     _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
@@ -601,7 +683,7 @@ def select_from_menu(
                 if 0 <= local_index < len(page_items):
                     return start + local_index
 
-            click.echo("Invalid input. Use number or navigation keys.")
+            help_visible = not help_visible
             render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
             if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
                 _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)

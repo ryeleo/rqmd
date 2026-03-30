@@ -22,6 +22,53 @@ from rqmd import menus as menus_mod
 class TestFooterLegendRegion:
     """Verify dedicated footer legend region behavior."""
 
+    def test_RQMD_ui_006_compact_footer_and_help_overlay(self):
+        options = ["A", "B", "C"]
+
+        echo_calls = []
+
+        def capture_echo(msg="", *args, **kwargs):
+            if isinstance(msg, str):
+                echo_calls.append(msg)
+
+        with patch("rqmd.menus.click.echo", side_effect=capture_echo):
+            with patch("sys.stdout.isatty", return_value=False):
+                with patch("click.getchar", side_effect=[':', 'q']):
+                    menus_mod.select_from_menu(
+                        "Test",
+                        options,
+                        compact_footer="keys: 1-9 select | :=help | q=quit",
+                        footer_legend="keys: 1-9 select | gg=first | G=last | q=quit",
+                    )
+
+        output = "".join(echo_calls)
+        assert "keys: 1-9 select | :=help | q=quit" in output
+        assert "Help" in output
+        assert "gg=first" in output
+
+    def test_RQMD_ui_006_invalid_key_toggles_help_overlay(self):
+        options = ["A", "B"]
+
+        echo_calls = []
+
+        def capture_echo(msg="", *args, **kwargs):
+            if isinstance(msg, str):
+                echo_calls.append(msg)
+
+        with patch("rqmd.menus.click.echo", side_effect=capture_echo):
+            with patch("sys.stdout.isatty", return_value=False):
+                with patch("click.getchar", side_effect=['!', '@', 'q']):
+                    menus_mod.select_from_menu(
+                        "Test",
+                        options,
+                        compact_footer="keys: 1-9 select | :=help | q=quit",
+                        footer_legend="keys: 1-9 select | gg=first | G=last | q=quit",
+                    )
+
+        output = "".join(echo_calls)
+        assert output.count("Help") == 1
+        assert "Press : or any invalid key to close help." in output
+
     def test_RQMD_ui_006_footer_legend_parameter_accepted(self):
         """Verify select_from_menu accepts and uses footer_legend parameter."""
         options = ["A", "B", "C"]
