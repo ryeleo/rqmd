@@ -97,6 +97,8 @@ Summary: 0💡 9🔧 18✅ 0⛔ 4🗑️
 - So that summary table refreshes with updated counts.
 - So that status-first entry panels can also assign priority directly with `!`, `@`, `#`, and `$` for `P0` through `P3` without toggling away from the status panel.
 - So that the status-first view renders those priority choices as a clearly aligned second column, with the currently assigned priority visibly marked even while status remains the active selection.
+- So that the priority preview column stays left-aligned within its own fixed-width block, rather than jittering by priority-label length.
+- So that the active status highlight and the current-priority highlight render independently, allowing users to see both selections at once.
 - So that those direct priority shortcuts also auto-advance to the next requirement, while `k` still makes it easy to step back and set status afterward if needed.
 
 ### RQMD-INTERACTIVE-008: Optional reason prompts

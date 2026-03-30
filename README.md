@@ -266,7 +266,7 @@ uv run rqmd --focus-priority
 
 Within an entry panel, press `t` to cycle status, priority, and flagged editing.
 
-When the entry panel is on status, rqmd also shows a right-hand priority column so the current priority and available `!`/`@`/`#`/`$` shortcuts stay visible while you review statuses. Those shortcuts set `P0` through `P3` immediately and then advance to the next requirement, so the default status-first flow still works for priority triage.
+When the entry panel is on status, rqmd also shows a right-hand priority column so the current priority and available `!`/`@`/`#`/`$` shortcuts stay visible while you review statuses. That column is rendered as its own aligned block, and its current-priority highlight remains separate from the active status-row highlight so both states stay readable at once. Those shortcuts set `P0` through `P3` immediately and then advance to the next requirement, so the default status-first flow still works for priority triage.
 
 Regenerate summary blocks with priority aggregates included:
 

@@ -163,7 +163,7 @@ def sync_readme_from_domains(repo_root: Path, criteria_dir: str = "docs/requirem
     summaries = extract_domain_summaries(repo_root, criteria_dir)
     
     if not summaries:
-        return False, "No requirement domains found"
+        return False, "No requirement documents found"
     
     section = generate_readme_section(summaries)
     modified = update_readme_section(readme_path, section)

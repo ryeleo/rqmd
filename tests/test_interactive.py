@@ -8,6 +8,7 @@ from pathlib import Path
 import click
 import pytest
 from click.testing import CliRunner
+
 from rqmd import cli, menus
 
 
@@ -1198,7 +1199,7 @@ def test_RQMD_interactive_021ca_status_menu_exposes_priority_shortcuts() -> None
     assert "!=p0" in captured["footer_legend"]
     assert "@=p1" in captured["footer_legend"]
     assert captured["compact_footer"] == "keys: 1-9 select | !=p0..$=p3 | ↓/j=next-ac | ↑/k=prev-ac | :=help | u=up | q=quit"
-    right_labels_plain = [re.sub(r"\x1b\[[0-9;]*m", "", item) for item in captured["right_labels"]]
+    right_labels_plain = [re.sub(r"\x1b\[[0-9;]*m", "", item).rstrip() for item in captured["right_labels"]]
     assert right_labels_plain == [
         "  !) 🔴 P0 - Critical",
         "  @) 🟠 P1 - High",
@@ -1206,6 +1207,39 @@ def test_RQMD_interactive_021ca_status_menu_exposes_priority_shortcuts() -> None
         "  $) 🟢 P3 - Low",
         "",
     ]
+    widths = [menus.visible_length(item) for item in captured["right_labels"] if item]
+    assert len(set(widths)) == 1
+    assert "\x1b[48;5;178m" in captured["right_labels"][2]
+
+
+def test_RQMD_interactive_021cc_split_status_and_priority_highlights(monkeypatch, capsys) -> None:
+    keys = iter(["q"])
+    monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
+    rendered_lines: list[str] = []
+
+    def capture_echo(message="", *args, **kwargs):
+        if isinstance(message, str):
+            rendered_lines.append(message)
+
+    monkeypatch.setattr(menus.click, "echo", capture_echo)
+
+    result = menus.select_from_menu(
+        "Status",
+        ["💡 Proposed", "🔧 Implemented"],
+        allow_paging_nav=False,
+        option_right_labels=[
+            "  !) \x1b[31m🔴 P0 - Critical\x1b[0m",
+            "→ @) \x1b[43m🟠 P1 - High\x1b[0m",
+        ],
+        selected_option_index=0,
+        selected_option_bg="\x1b[48;5;27m",
+        separate_right_label_background=True,
+    )
+    rendered = "\n".join(rendered_lines)
+
+    assert result is None
+    assert "\x1b[48;5;27m→ 1) 💡 Proposed\x1b[0m" in rendered
+    assert "→ @) \x1b[43m🟠 P1 - High\x1b[0m" in rendered
 
 
 def test_RQMD_interactive_021cb_priority_shortcut_advances_to_next_requirement(tmp_path: Path) -> None:

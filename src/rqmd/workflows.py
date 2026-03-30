@@ -16,25 +16,57 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
-                        MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT,
-                        PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN)
+from .constants import (
+    DEFAULT_ID_PREFIXES,
+    MENU_REFRESH,
+    MENU_TOGGLE_DIRECTION,
+    MENU_TOGGLE_SORT,
+    PRIORITY_ORDER,
+    STATUS_ORDER,
+    STATUS_PATTERN,
+)
 from .history import HistoryManager
-from .markdown_io import (display_name_from_h1, format_path_display,
-                          iter_domain_files, scope_and_body_from_file)
-from .menus import (right_align_menu_suffix, select_from_menu, truncate_text,
-                    visible_length)
+from .markdown_io import (
+    display_name_from_h1,
+    format_path_display,
+    iter_domain_files,
+    scope_and_body_from_file,
+)
+from .menus import (
+    apply_background_preserving_styles,
+    right_align_menu_suffix,
+    select_from_menu,
+    truncate_text,
+    visible_length,
+)
 from .priority_model import coerce_priority_label, style_priority_label
-from .req_parser import (collect_sub_sections,
-                         extract_requirement_block_with_lines,
-                         find_requirement_by_id, normalize_sub_domain_name,
-                         parse_requirements)
-from .status_model import (build_color_rollup_text, status_emoji,
-                           style_status_label, style_status_line)
-from .status_update import (format_criterion_panel, prompt_for_blocked_reason,
-                            prompt_for_deprecated_reason,
-                            prompt_for_links_flow, update_criterion_status)
-from .summary import (collect_summary_rows, count_priorities, count_statuses,
+from .req_parser import (
+    collect_sub_sections,
+    extract_requirement_block_with_lines,
+    find_requirement_by_id,
+    normalize_sub_domain_name,
+    parse_requirements,
+)
+from .status_model import (
+    build_color_rollup_text,
+    status_emoji,
+    style_status_label,
+    style_status_line,
+)
+from .status_update import (
+    format_criterion_panel,
+    prompt_for_blocked_reason,
+    prompt_for_deprecated_reason,
+    prompt_for_links_flow,
+    update_criterion_status,
+)
+from .summary import (
+    collect_summary_rows,
+    count_priorities,
+    count_statuses,
+    print_summary_table,
+    process_file,
+)
                       print_summary_table, process_file)
 
 SORT_STRATEGY_SPECS: dict[str, dict[str, object]] = {
@@ -873,21 +905,39 @@ def _resolve_action_entry_field(current_entry_field: str, action: str) -> str:
 def _build_status_priority_preview(
     requirement: dict[str, object],
 ) -> tuple[str, list[str]]:
-    title = _right_align_text("setting: status", "setting: priority")
     current_priority = coerce_priority_label(str(requirement.get("priority") or ""))
     if current_priority == "unset":
         current_priority = ""
-    right_labels: list[str] = []
+    raw_right_labels: list[tuple[str, bool, str]] = []
 
     for index, _status in enumerate(STATUS_ORDER):
         if index >= len(PRIORITY_ORDER) or index >= len(PRIORITY_SHORTCUT_KEYS):
-            right_labels.append("")
+            raw_right_labels.append(("", False, ""))
             continue
 
         priority_label = PRIORITY_ORDER[index][0]
-        marker = "→" if priority_label == current_priority else " "
+        is_current = priority_label == current_priority
+        marker = "→" if is_current else " "
         shortcut = PRIORITY_SHORTCUT_KEYS[index]
-        right_labels.append(f"{marker} {shortcut}) {style_priority_label(priority_label)}")
+        raw_right_labels.append(
+            (f"{marker} {shortcut}) {style_priority_label(priority_label)}", is_current, priority_label)
+        )
+
+    column_width = max(
+        [visible_length("setting: priority")] + [visible_length(label) for label, _is_current, _priority_label in raw_right_labels]
+    )
+    term_width = shutil.get_terminal_size(fallback=(120, 24)).columns
+    left_title = "setting: status"
+    right_title = f"{'setting: priority'}{' ' * max(0, column_width - visible_length('setting: priority'))}"
+    spacer = max(2, term_width - visible_length(left_title) - column_width)
+    title = f"{left_title}{' ' * spacer}{right_title}"
+
+    right_labels: list[str] = []
+    for label, is_current, priority_label in raw_right_labels:
+        padded = f"{label}{' ' * max(0, column_width - visible_length(label))}" if label else ""
+        if is_current and padded:
+            padded = apply_background_preserving_styles(padded, _priority_highlight_bg(priority_label))
+        right_labels.append(padded)
 
     return title, right_labels
 
@@ -984,6 +1034,7 @@ def _prompt_for_requirement_action(
         selected_option_index=selected_index,
         selected_option_bg=selected_bg,
         option_right_labels=option_right_labels,
+        separate_right_label_background=include_priority_shortcuts,
         footer_legend=_build_requirement_action_footer(allow_nav, include_priority_shortcuts=include_priority_shortcuts),
         compact_footer=_build_requirement_action_compact_footer(allow_nav, include_priority_shortcuts=include_priority_shortcuts),
         prefix_text=panel_text,

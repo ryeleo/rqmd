@@ -3,9 +3,11 @@
 from pathlib import Path
 
 import pytest
-
-from rqmd.readme_gen import (extract_domain_summaries, generate_readme_section,
-                             sync_readme_from_domains)
+from rqmd.readme_gen import (
+    extract_domain_summaries,
+    generate_readme_section,
+    sync_readme_from_domains,
+)
 
 
 def test_RQMD_core_024_extract_domain_summaries(tmp_path: Path):
@@ -82,6 +84,7 @@ Content here.
     # No requirement docs exist, so this should handle gracefully
     result = sync_readme_from_domains(tmp_path, "docs/requirements")
     assert result[0] is not None  # Should return a result tuple
+    assert result[1] == "No requirement documents found"
 
 
 def test_RQMD_portability_019_generated_scaffold_supports_user_story_terminology(tmp_path: Path) -> None:

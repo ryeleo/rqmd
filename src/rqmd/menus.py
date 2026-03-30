@@ -24,9 +24,16 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (ANSI_ESCAPE_PATTERN, ANSI_RESET, MENU_NEXT,
-                        MENU_PAGE_SIZE, MENU_PREV, MENU_QUIT, MENU_UP,
-                        ZEBRA_BG)
+from .constants import (
+    ANSI_ESCAPE_PATTERN,
+    ANSI_RESET,
+    MENU_NEXT,
+    MENU_PAGE_SIZE,
+    MENU_PREV,
+    MENU_QUIT,
+    MENU_UP,
+    ZEBRA_BG,
+)
 from .render_heuristics import RenderModeController
 
 _SCREEN_WRITE_ENABLED = False
@@ -380,6 +387,7 @@ def select_from_menu(
     selected_option_index: int | None = None,
     initial_window_start: int | None = None,
     selected_option_bg: str | None = None,
+    separate_right_label_background: bool = False,
     footer_legend: str | None = None,
     compact_footer: str | None = None,
     help_legend: str | None = None,
@@ -403,6 +411,7 @@ def select_from_menu(
         selected_option_index: Initial selected option index.
         initial_window_start: Optional initial top-of-window global index.
         selected_option_bg: Background ANSI code for selected option.
+        separate_right_label_background: If True, render any right-hand label styling independently from the left option highlight.
         footer_legend: Optional legend text displayed at menu footer, or full help legend when compact_footer is provided.
         compact_footer: Optional compact footer shown during normal menu rendering.
         help_legend: Optional full help legend shown when help is toggled open.
@@ -480,10 +489,19 @@ def select_from_menu(
                 global_idx = start + idx
                 selection_marker = "→" if current_selected_index is not None and global_idx == current_selected_index else " "
                 left = f"{selection_marker} {idx + 1}) {option}"
+                rendered_split_highlight = False
                 if option_right_labels and global_idx < len(option_right_labels):
-                    right = click.style(option_right_labels[global_idx], dim=True)
+                    raw_right = option_right_labels[global_idx]
+                    right = raw_right if separate_right_label_background or ANSI_ESCAPE_PATTERN.search(raw_right) else click.style(raw_right, dim=True)
                     pad = term_width - visible_length(left) - visible_length(right)
                     if pad >= 2:
+                        if _COLORIZED_REDRAW_ENABLED and current_selected_index is not None and global_idx == current_selected_index and selected_option_bg:
+                            left = apply_background_preserving_styles(left, selected_option_bg)
+                        elif _COLORIZED_REDRAW_ENABLED and zebra and (idx % 2 == 1):
+                            left = apply_background_preserving_styles(
+                                left, zebra_bg if zebra_bg is not None else ZEBRA_BG
+                            )
+                        rendered_split_highlight = separate_right_label_background
                         line = f"{left}{' ' * pad}{right}"
                     else:
                         line = left
@@ -497,9 +515,9 @@ def select_from_menu(
                 else:
                     line = left
 
-                if _COLORIZED_REDRAW_ENABLED and current_selected_index is not None and global_idx == current_selected_index and selected_option_bg:
+                if (not rendered_split_highlight) and _COLORIZED_REDRAW_ENABLED and current_selected_index is not None and global_idx == current_selected_index and selected_option_bg:
                     line = apply_background_preserving_styles(line, selected_option_bg)
-                elif _COLORIZED_REDRAW_ENABLED and zebra and (idx % 2 == 1):
+                elif (not rendered_split_highlight) and _COLORIZED_REDRAW_ENABLED and zebra and (idx % 2 == 1):
                     line = apply_background_preserving_styles(
                         line, zebra_bg if zebra_bg is not None else ZEBRA_BG
                     )
