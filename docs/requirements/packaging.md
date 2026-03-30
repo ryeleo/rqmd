@@ -3,7 +3,7 @@
 Scope: package layout, installability, module entrypoints, and publication readiness.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 2🔧 9✅ 0⛔ 0🗑️
+Summary: 0💡 3🔧 9✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PACKAGING-001: src-layout package structure
@@ -98,9 +98,10 @@ Summary: 1💡 2🔧 9✅ 0⛔ 0🗑️
 - So that completion remains deterministic when a token prefix could match both a positional filter value and a domain or subsection name.
 
 ### RQMD-PACKAGING-012: Pre-release ReqMD rename and alias plan
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟢 P3 - Low
 - As a maintainer when deciding whether the project should be branded as `rqmd` or `reqmd` before broader release
 - I want packaging and entrypoint behavior to support an explicit rename/alias plan
 - So that the project can adopt `reqmd` branding or a dual-command transition without breaking existing installs, docs, or automation unexpectedly.
 - So that any rename decision includes PyPI package-name availability checks, console-script alias behavior, documentation updates, and a compatibility window for existing `rqmd` users.
+- So that the package can ship `reqmd` and `reqmd-ai` as pre-release console-script aliases while keeping `rqmd` and `rqmd-ai` as the canonical commands until a future rename decision is finalized.

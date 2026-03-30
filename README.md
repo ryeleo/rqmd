@@ -75,10 +75,19 @@ Install test dependencies:
 uv sync --extra dev
 ```
 
+Install optional native JSON acceleration:
+
+```bash
+uv sync --extra speedups
+```
+
+When `orjson` is installed through the `speedups` extra, rqmd and rqmd-ai use it for JSON export and audit-log serialization while preserving the existing JSON schema and a pure-Python fallback when the extra is absent.
+
 Then run:
 
 ```bash
 uv run rqmd --help
+uv run reqmd --help
 ```
 
 Module entrypoint:
@@ -86,6 +95,12 @@ Module entrypoint:
 ```bash
 uv run python -m rqmd --help
 ```
+
+Pre-release alias plan:
+
+- `rqmd` remains the canonical package name and primary command for now.
+- `reqmd` and `reqmd-ai` are shipped as compatibility aliases so teams can trial the shorter branding before any package rename decision.
+- Any future package-name rename should happen only after a manual PyPI availability check and a documented compatibility window for existing `rqmd` users.
 
 ## Shell completion
 

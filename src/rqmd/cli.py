@@ -62,7 +62,6 @@ Notes:
 
 from __future__ import annotations
 
-import json
 import re
 import readline  # noqa: F401 — activates arrow-key line editing in input()/click.prompt()
 import sys
@@ -105,6 +104,7 @@ from .constants import (
     SUMMARY_START,
 )
 from .history import HistoryManager, HistoryRestoreError, merge_retention_policies
+from .json_speedups import dumps_json
 from .markdown_io import (
     auto_detect_requirements_dir,
     check_files_writable,
@@ -362,7 +362,7 @@ def _with_schema_version(payload: dict[str, object]) -> dict[str, object]:
 
 
 def _emit_json_payload(payload: dict[str, object]) -> None:
-    click.echo(json.dumps(_with_schema_version(payload), ensure_ascii=False, indent=2))
+    click.echo(dumps_json(_with_schema_version(payload), indent=2))
 
 
 def _resolve_history_retention_policy(
