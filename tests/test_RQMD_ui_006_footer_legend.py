@@ -293,7 +293,7 @@ class TestFooterIntegration:
     def test_RQMD_ui_006_footer_legend_with_paging(self):
         """Verify footer legend works correctly when paging through menu items."""
         options = [f"Item {i}" for i in range(1, 21)]
-        legend = "↑/k prev | ↓/j next | gg first | G last | ^U/^D half | q=quit"
+        legend = "↑/k prev | ↓/j next | gg first | G last | ^U/^D half | /=fwd | ?=rev | n/N=next | q=quit"
         
         # Verify feature is accepted and works with paging
         with patch("rqmd.menus.click.echo"):

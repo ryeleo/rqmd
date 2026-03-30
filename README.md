@@ -153,6 +153,8 @@ Interactive file and requirement menus now support:
 - `j` and `k` for next/previous vertical movement alongside arrow keys
 - `gg` to jump to the first visible list position and `G` to jump to the last
 - `Ctrl-U` and `Ctrl-D` for deterministic half-page movement in paged menus
+- `/` and `?` to search forward or backward within the current interactive list
+- `n` and `N` to repeat the last list search in the same or opposite direction
 - `s` to cycle sort columns
 - `d` to toggle ascending/descending
 - `r` to refresh/rescan while preserving the active sort

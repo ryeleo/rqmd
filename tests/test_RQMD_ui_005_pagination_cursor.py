@@ -5,12 +5,14 @@ Verify that interactive menus maintain stable cursor/selection position across:
 - Page changes (arrow or j/k navigation)
 - Re-renders
 - Selection visibility in the current window
+- Vim-style in-list search and repeat motions
 
 Key requirements:
 - Cursor position remains consistent across pagination
 - Selection stays visible when possible
 - Navigation keys (down/up arrows and j/k aliases) don't lose selection state
 - Vim-style `gg`, `G`, `Ctrl-U`, and `Ctrl-D` motions preserve stable list windows
+- Vim-style `/`, `?`, `n`, and `N` motions preserve predictable search focus
 """
 
 from unittest.mock import patch
@@ -258,6 +260,34 @@ class TestCursorNavigationConsistency:
                     )
 
         assert result == 0
+
+    def test_RQMD_ui_005_forward_search_repeat_tracks_match(self):
+        options = [f"Entry {i}" for i in range(1, 10)] + ["Match Alpha", "Match Beta", "Entry 12"]
+
+        with patch("rqmd.menus.click.echo"):
+            with patch("sys.stdout.isatty", return_value=False):
+                with patch("click.prompt", return_value="match"):
+                    with patch("click.getchar", side_effect=['/', 'n', 'N', '1']):
+                        result = menus_mod.select_from_menu(
+                            "Entries", options,
+                            allow_paging_nav=True,
+                        )
+
+        assert result == 9
+
+    def test_RQMD_ui_005_reverse_search_wraps_to_last_match(self):
+        options = [f"Entry {i}" for i in range(1, 10)] + ["Entry 10", "Match Alpha", "Match Beta"]
+
+        with patch("rqmd.menus.click.echo"):
+            with patch("sys.stdout.isatty", return_value=False):
+                with patch("click.prompt", return_value="match"):
+                    with patch("click.getchar", side_effect=['?', '3']):
+                        result = menus_mod.select_from_menu(
+                            "Entries", options,
+                            allow_paging_nav=True,
+                        )
+
+        assert result == 11
 
     def test_RQMD_ui_005_centering_of_large_lists(self):
         """Verify visual window centers around selected item in large lists."""

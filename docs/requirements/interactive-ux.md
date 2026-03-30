@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 6🔧 18✅ 0⛔ 4🗑️
+Summary: 0💡 7🔧 18✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -297,7 +297,7 @@ colors:
 - So that these motions work consistently across file menus, requirement menus, filtered walks, and history browsers rather than only in one interactive surface.
 
 ### RQMD-INTERACTIVE-025: Vim-style search and repeat navigation
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when interactive menus become long enough that scanning visually is slow
 - I want in-session search motions that feel like Vim

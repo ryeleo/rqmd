@@ -113,6 +113,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated requirement status to mark `RQMD-INTERACTIVE-023` as Implemented (`j`/`k` Vim-style vertical navigation defaults).
 - Updated interactive menu navigation to add shared Vim-style list motions: `gg` jumps to the first list position, `G` jumps to the last, and `Ctrl-U`/`Ctrl-D` move by deterministic half-page steps while preserving refresh offset state.
 - Updated requirement status to mark `RQMD-INTERACTIVE-024` as Implemented (Vim-style list motions and paging).
+- Updated interactive menus to add shared Vim-style list search motions: `/` and `?` search the current list, while `n` and `N` repeat the last search in the same or opposite direction without disturbing sort/filter context.
+- Updated requirement status to mark `RQMD-INTERACTIVE-025` as Implemented (Vim-style search and repeat navigation).
 - Fixed a `--screen-write` regression where adaptive render-mode fallback could override an explicit CLI request; explicit `--screen-write` now forces full-screen redraw for that run, and render-mode state is reset at CLI startup.
 - Fixed interactive requirement-action rendering so full requirement panels remain visible during status/priority/flagged/link prompts under screen-write redraws, restoring the colored rule, source/domain notes, and requirement body instead of dropping to a terse menu-only prompt.
 

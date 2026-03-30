@@ -16,7 +16,7 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (DEFAULT_ID_PREFIXES, MENU_PAGE_SIZE, MENU_REFRESH,
+from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
                         MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT,
                         PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN)
 from .history import HistoryManager
@@ -318,7 +318,7 @@ def get_sort_strategy_spec(name: str) -> dict[str, object]:
 def _build_sort_footer(ascending: bool) -> str:
     direction = "asc" if ascending else "dsc"
     return (
-        f"keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | u=up | "
+        f"keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | "
         f"{MENU_TOGGLE_SORT}=sort | S=sort-back | {MENU_TOGGLE_DIRECTION}=[{direction}] | {MENU_REFRESH}=rfrsh | q=quit"
     )
 
@@ -659,7 +659,7 @@ def _show_history_browser(
             allow_paging_nav=True,
             option_right_labels=[_history_entry_right_label(entry) for entry in display_entries],
             selected_option_index=selected_index,
-            footer_legend="keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | u=up | q=quit",
+            footer_legend="keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | u=up | q=quit",
             prefix_text=prefix_text,
         )
         if choice is None or choice == "up":

@@ -139,6 +139,34 @@ def _resolve_arrow_navigation(
     return None
 
 
+def _normalize_search_text(text: str) -> str:
+    return ANSI_ESCAPE_PATTERN.sub("", text).casefold()
+
+
+def _find_search_match(
+    options: list[str],
+    query: str,
+    anchor_index: int,
+    *,
+    forward: bool,
+) -> int | None:
+    if not options:
+        return None
+
+    needle = query.casefold()
+    total = len(options)
+    start_index = anchor_index % total
+    step = 1 if forward else -1
+    current_index = start_index
+
+    for _ in range(total):
+        current_index = (current_index + step) % total
+        if needle in _normalize_search_text(options[current_index]):
+            return current_index
+
+    return None
+
+
 def visible_length(text: str) -> int:
     """Calculate the visible display width of a string, accounting for ANSI codes and wide characters.
 
@@ -321,6 +349,9 @@ def select_from_menu(
     max_window_start = max(0, len(options) - 1)
     last_page_start = max(0, ((len(options) - 1) // page_size) * page_size)
     window_start = 0
+    current_selected_index = selected_option_index if selected_option_index is not None and 0 <= selected_option_index < len(options) else None
+    last_search_query: str | None = None
+    last_search_forward = True
     is_tty = sys.stdout.isatty()
     previous_resize_handler: object | None = None
 
@@ -361,7 +392,7 @@ def select_from_menu(
                 click.echo(f"Page {current_page}/{total_pages}")
             for idx, option in enumerate(page_items):
                 global_idx = start + idx
-                selection_marker = "→" if selected_option_index is not None and global_idx == selected_option_index else " "
+                selection_marker = "→" if current_selected_index is not None and global_idx == current_selected_index else " "
                 left = f"{selection_marker} {idx + 1}) {option}"
                 if option_right_labels and global_idx < len(option_right_labels):
                     right = click.style(option_right_labels[global_idx], dim=True)
@@ -380,7 +411,7 @@ def select_from_menu(
                 else:
                     line = left
 
-                if _COLORIZED_REDRAW_ENABLED and selected_option_index is not None and global_idx == selected_option_index and selected_option_bg:
+                if _COLORIZED_REDRAW_ENABLED and current_selected_index is not None and global_idx == current_selected_index and selected_option_bg:
                     line = apply_background_preserving_styles(line, selected_option_bg)
                 elif _COLORIZED_REDRAW_ENABLED and zebra and (idx % 2 == 1):
                     line = apply_background_preserving_styles(
@@ -394,7 +425,7 @@ def select_from_menu(
             else:
                 if allow_paging_nav:
                     keys_line = (
-                        f"keys: 1-9 select | ↓/{MENU_NEXT}=next | ↑/{MENU_PREV}=prev | {MENU_UP}=up | {MENU_QUIT}=quit"
+                        f"keys: 1-9 select | ↓/{MENU_NEXT}=next | ↑/{MENU_PREV}=prev | gg=first | G=last | ^U/^D=half | /=fwd | ?=rev | n/N=next | {MENU_UP}=up | {MENU_QUIT}=quit"
                     )
                 else:
                     keys_line = f"keys: 1-9 select | {MENU_UP}=up | {MENU_QUIT}=quit"
@@ -466,6 +497,72 @@ def select_from_menu(
                 if mapped == "refresh":
                     return f"refresh:{window_start}"
                 return mapped
+
+            if allow_paging_nav and choice in {"/", "?"}:
+                search_query = click.prompt(
+                    f"search {choice}",
+                    default="",
+                    show_default=False,
+                ).strip()
+                if not search_query:
+                    render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
+                    if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
+                        _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
+                    continue
+
+                anchor_index = current_selected_index if current_selected_index is not None else min(window_start, len(options) - 1)
+                search_forward = choice == "/"
+                match_index = _find_search_match(
+                    options,
+                    search_query,
+                    anchor_index,
+                    forward=search_forward,
+                )
+                last_search_query = search_query
+                last_search_forward = search_forward
+                if match_index is None:
+                    click.echo(f"No matches for {search_query!r}.")
+                    render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
+                    if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
+                        _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
+                    continue
+
+                current_selected_index = match_index
+                window_start = min((match_index // page_size) * page_size, max_window_start)
+                render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
+                if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
+                    _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
+                continue
+
+            if allow_paging_nav and choice in {"n", "N"}:
+                if not last_search_query:
+                    click.echo("No active search.")
+                    render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
+                    if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
+                        _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
+                    continue
+
+                anchor_index = current_selected_index if current_selected_index is not None else min(window_start, len(options) - 1)
+                repeat_forward = last_search_forward if choice == "n" else not last_search_forward
+                match_index = _find_search_match(
+                    options,
+                    last_search_query,
+                    anchor_index,
+                    forward=repeat_forward,
+                )
+                if match_index is None:
+                    click.echo(f"No matches for {last_search_query!r}.")
+                    render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
+                    if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
+                        _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
+                    continue
+
+                current_selected_index = match_index
+                window_start = min((match_index // page_size) * page_size, max_window_start)
+                render_elapsed_ms = (time.perf_counter() - render_started) * 1000.0
+                if _SCREEN_WRITE_ENABLED and (not _SCREEN_WRITE_FORCED):
+                    _RENDER_MODE_CONTROLLER.observe(render_elapsed_ms)
+                continue
 
             if allow_paging_nav and choice == "G":
                 window_start = last_page_start
