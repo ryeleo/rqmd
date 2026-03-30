@@ -6,7 +6,6 @@ from pathlib import Path
 import click
 import pytest
 from click.testing import CliRunner
-
 from rqmd import cli
 
 
@@ -49,7 +48,7 @@ def test_RQMD_portability_003_default_conventions(monkeypatch, repo_with_domain_
         domain = cwd / "docs" / "requirements"
         domain.mkdir(parents=True)
         (domain / "README.md").write_text(
-            "# Requirements\n\n## Domain Documents\n\n- [Demo](demo.md)\n",
+            "# Requirements\n\n## Requirement Documents\n\n- [Demo](demo.md)\n",
             encoding="utf-8",
         )
         (domain / "demo.md").write_text(
@@ -91,7 +90,7 @@ def test_RQMD_portability_005_generic_project_assumptions(tmp_path: Path) -> Non
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
     (criteria_dir / "README.md").write_text(
-        "# Requirements\n\n## Domain Documents\n\n- [Generic](generic.md)\n",
+        "# Requirements\n\n## Requirement Documents\n\n- [Generic](generic.md)\n",
         encoding="utf-8",
     )
     (criteria_dir / "generic.md").write_text(
@@ -609,7 +608,6 @@ def test_RQMD_portability_009_nonexistent_criteria_dir_gives_not_found_error(tmp
 
 
 def test_RQMD_portability_009_unreadable_domain_file_gives_permission_error(tmp_path: Path) -> None:
-    import os
     import stat
 
     repo = tmp_path / "repo"

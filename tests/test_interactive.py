@@ -8,6 +8,7 @@ from pathlib import Path
 import click
 import pytest
 from click.testing import CliRunner
+
 from rqmd import cli, menus
 
 
@@ -1155,7 +1156,103 @@ def test_RQMD_interactive_021c_requirement_menu_exposes_history_shortcuts() -> N
     assert "next-ac" in captured["footer_legend"]
     assert "first-ac" in captured["footer_legend"]
     assert "/=fwd" not in captured["footer_legend"]
-    assert captured["compact_footer"] == "keys: 1-9 select | ↓/j=next-ac | ↑/k=prev-ac | :=help | u=up | q=quit"
+    assert captured["compact_footer"] == "keys: 1-9 select | !=p0..$=p3 | ↓/j=next-ac | ↑/k=prev-ac | :=help | u=up | q=quit"
+
+
+def test_RQMD_interactive_021ca_status_menu_exposes_priority_shortcuts() -> None:
+    captured: dict[str, object] = {}
+
+    def fake_select(title, options, **kwargs):
+        captured["extra_keys"] = kwargs.get("extra_keys")
+        captured["extra_keys_help"] = kwargs.get("extra_keys_help")
+        captured["footer_legend"] = kwargs.get("footer_legend")
+        captured["compact_footer"] = kwargs.get("compact_footer")
+        return "priority-shortcut:🟠 P1 - High"
+
+    requirement = {
+        "id": "RQMD-INTERACTIVE-007",
+        "title": "Status menu priority shortcuts",
+        "status": "💡 Proposed",
+        "priority": "🟡 Medium",
+    }
+
+    result = cli.workflows_mod._prompt_for_requirement_action(
+        requirement,
+        "status",
+        fake_select,
+    )
+
+    assert result == ("apply-priority", "🟠 P1 - High")
+    assert captured["extra_keys"]["!"] == "priority-shortcut:🔴 P0 - Critical"
+    assert captured["extra_keys"]["@"] == "priority-shortcut:🟠 P1 - High"
+    assert captured["extra_keys"]["#"] == "priority-shortcut:🟡 P2 - Medium"
+    assert captured["extra_keys"]["$"] == "priority-shortcut:🟢 P3 - Low"
+    assert captured["extra_keys_help"]["!"] == "critical"
+    assert captured["extra_keys_help"]["@"] == "high"
+    assert "!=p0" in captured["footer_legend"]
+    assert "@=p1" in captured["footer_legend"]
+    assert captured["compact_footer"] == "keys: 1-9 select | !=p0..$=p3 | ↓/j=next-ac | ↑/k=prev-ac | :=help | u=up | q=quit"
+
+
+def test_RQMD_interactive_021cb_priority_shortcut_advances_to_next_requirement(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    domain_file = criteria_dir / "demo.md"
+    domain_file.write_text(
+        """# Demo Requirements
+
+### AC-DEMO-001: First
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 Medium
+
+### AC-DEMO-002: Second
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 Medium
+""",
+        encoding="utf-8",
+    )
+
+    visits: list[str] = []
+    state = {"file_calls": 0, "requirement_calls": 0}
+
+    def fake_select(title, options, **kwargs):
+        if title.startswith("Select file"):
+            state["file_calls"] += 1
+            if state["file_calls"] == 1:
+                return 0
+            return None
+        if title.startswith("Select requirement in"):
+            state["requirement_calls"] += 1
+            if state["requirement_calls"] == 1:
+                return 0
+            return "up"
+        if title.startswith("Set status for "):
+            requirement_id = title.removeprefix("Set status for ").splitlines()[0]
+            visits.append(requirement_id)
+            if len(visits) == 1:
+                return "priority-shortcut:🟠 P1 - High"
+            return "up"
+        return None
+
+    result = cli.workflows_mod.interactive_update_loop(
+        repo_root=repo,
+        criteria_dir="docs/requirements",
+        domain_files=[domain_file],
+        emoji_columns=False,
+        sort_files=False,
+        id_prefixes=("AC",),
+        select_from_menu_fn=fake_select,
+        include_status_emojis=True,
+        priority_mode=False,
+        include_priority_summary=False,
+    )
+
+    updated_text = domain_file.read_text(encoding="utf-8")
+
+    assert result == 0
+    assert visits == ["AC-DEMO-002", "AC-DEMO-001"]
+    assert "### AC-DEMO-002: Second\n- **Status:** 💡 Proposed\n- **Priority:** 🟠 P1 - High" in updated_text
 
 
 def test_RQMD_interactive_021d_history_browser_uses_paged_menu(tmp_path: Path) -> None:

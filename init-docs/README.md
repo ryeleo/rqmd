@@ -23,7 +23,7 @@ Project links:
 
 ### Subsection Organization (Optional)
 
-Domain files can use **H2 headers** (`##`) to organize requirements into logical subsections. Subsections:
+Requirement docs can use **H2 headers** (`##`) to organize requirements into logical subsections. These docs may represent domains, user stories, feature areas, or any other project-specific grouping. Subsections:
 - Are optional — requirements without a containing H2 have no subsection assignment.
 - Help organize large requirement sets (e.g., "Query API", "Mutation API", "Authentication").
 - Can have optional body content between the H2 header and the first H3 requirement below it.
@@ -32,9 +32,9 @@ Domain files can use **H2 headers** (`##`) to organize requirements into logical
 ### File Organization
 
 - Keep this index at {{INDEX_DISPLAY}}.
-- Keep domain docs under {{CRITERIA_DIR_DISPLAY}}/.
-- Each markdown file represents a domain (e.g., `auth.md`, `payment.md`, `audit.md`).
-- Domain ID prefixes are auto-detected from requirement IDs; can override with `--id-prefix`.
+- Keep requirement docs under {{CRITERIA_DIR_DISPLAY}}/.
+- Each markdown file can represent a domain, user story, feature area, or any other team-defined requirement grouping (e.g., `auth.md`, `payment.md`, `audit.md`).
+- Requirement ID prefixes are auto-detected from requirement IDs; can override with `--id-prefix`.
 
 ### Status Workflow
 
@@ -114,7 +114,7 @@ Each file entry in filter/summary outputs includes:
 
 For detailed parser semantics, keep an extended `schema.md` in your repository if you need stricter local contracts.
 
-## Domain Documents
+## Requirement Documents
 
 ### Starter
 - [Starter]({{STARTER_DISPLAY}}) - bootstrap requirement for first-run setup

@@ -3,7 +3,7 @@
 Scope: cross-project operation, path configuration, and repo-agnostic behavior.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 7🔧 10✅ 0⛔ 1🗑️
+Summary: 0💡 8🔧 10✅ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PORTABILITY-001: Configurable repo root
@@ -174,3 +174,12 @@ Summary: 0💡 7🔧 10✅ 0⛔ 1🗑️
 - So that unexpected uncaught internal exceptions are converted into a single friendly CLI error line by default.
 - So that `--detailed` can still be used to surface a full traceback for debugging when needed.
 - So that regression coverage verifies compatibility failures are reported through stable error contracts instead of uncaught exceptions.
+
+### RQMD-PORTABILITY-019: Flexible requirement-doc terminology
+- **Status:** 🔧 Implemented
+- **Priority:** 🟡 P2 - Medium
+- As a rqmd user when my team thinks in user stories, feature areas, or other grouping concepts instead of "domains"
+- I want generated and documented requirement indexes to use terminology that allows those alternate mental models
+- So that scaffolded and synchronized README/index content refers to requirement documents rather than assuming every markdown file is a domain document.
+- So that the documentation explicitly states that each requirement markdown file may represent a domain, user story, feature area, or another project-specific grouping.
+- So that rqmd can remain internally stable even if teams choose different human-facing names for those grouping files.

@@ -266,6 +266,8 @@ uv run rqmd --focus-priority
 
 Within an entry panel, press `t` to cycle status, priority, and flagged editing.
 
+When the entry panel is on status, you can also assign priority without toggling fields: `!` sets `P0`, `@` sets `P1`, `#` sets `P2`, and `$` sets `P3`. Those priority shortcuts apply immediately and advance to the next requirement, so the default status-first flow still works for priority triage.
+
 Regenerate summary blocks with priority aggregates included:
 
 ```bash

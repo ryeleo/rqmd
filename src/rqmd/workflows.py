@@ -16,26 +16,56 @@ except ImportError:
     print("Install with: pip3 install click", file=sys.stderr)
     sys.exit(1)
 
-from .constants import (DEFAULT_ID_PREFIXES, MENU_REFRESH,
-                        MENU_TOGGLE_DIRECTION, MENU_TOGGLE_SORT,
-                        PRIORITY_ORDER, STATUS_ORDER, STATUS_PATTERN)
+from .constants import (
+    DEFAULT_ID_PREFIXES,
+    MENU_REFRESH,
+    MENU_TOGGLE_DIRECTION,
+    MENU_TOGGLE_SORT,
+    PRIORITY_ORDER,
+    STATUS_ORDER,
+    STATUS_PATTERN,
+)
 from .history import HistoryManager
-from .markdown_io import (display_name_from_h1, format_path_display,
-                          iter_domain_files, scope_and_body_from_file)
-from .menus import (right_align_menu_suffix, select_from_menu, truncate_text,
-                    visible_length)
+from .markdown_io import (
+    display_name_from_h1,
+    format_path_display,
+    iter_domain_files,
+    scope_and_body_from_file,
+)
+from .menus import (
+    right_align_menu_suffix,
+    select_from_menu,
+    truncate_text,
+    visible_length,
+)
 from .priority_model import style_priority_label
-from .req_parser import (collect_sub_sections,
-                         extract_requirement_block_with_lines,
-                         find_requirement_by_id, normalize_sub_domain_name,
-                         parse_requirements)
-from .status_model import (build_color_rollup_text, status_emoji,
-                           style_status_label, style_status_line)
-from .status_update import (format_criterion_panel, prompt_for_blocked_reason,
-                            prompt_for_deprecated_reason,
-                            prompt_for_links_flow, update_criterion_status)
-from .summary import (collect_summary_rows, count_priorities, count_statuses,
-                      print_summary_table, process_file)
+from .req_parser import (
+    collect_sub_sections,
+    extract_requirement_block_with_lines,
+    find_requirement_by_id,
+    normalize_sub_domain_name,
+    parse_requirements,
+)
+from .status_model import (
+    build_color_rollup_text,
+    status_emoji,
+    style_status_label,
+    style_status_line,
+)
+from .status_update import (
+    format_criterion_panel,
+    prompt_for_blocked_reason,
+    prompt_for_deprecated_reason,
+    prompt_for_links_flow,
+    update_criterion_status,
+)
+from .summary import (
+    collect_summary_rows,
+    count_priorities,
+    count_statuses,
+    print_summary_table,
+    process_file,
+)
 
 SORT_STRATEGY_SPECS: dict[str, dict[str, object]] = {
     "standard": {
@@ -327,17 +357,29 @@ def _build_sort_compact_footer() -> str:
     return "keys: 1-9 select | ↓/j=next | ↑/k=prev | :=help | u=up | q=quit"
 
 
-def _build_requirement_action_footer(allow_nav: bool) -> str:
-    base = "keys: 1-9 select | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
+def _build_requirement_action_footer(allow_nav: bool, include_priority_shortcuts: bool = False) -> str:
+    base = "keys: 1-9 select"
+    if include_priority_shortcuts:
+        base += " | !=p0 | @=p1 | #=p2 | $=p3"
+    base += " | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
     if not allow_nav:
         return base
-    return "keys: 1-9 select | ↓/j=next-ac | ↑/k=prev-ac | gg=first-ac | G=last-ac | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
+    nav = "keys: 1-9 select"
+    if include_priority_shortcuts:
+        nav += " | !=p0 | @=p1 | #=p2 | $=p3"
+    return nav + " | ↓/j=next-ac | ↑/k=prev-ac | gg=first-ac | G=last-ac | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
 
 
-def _build_requirement_action_compact_footer(allow_nav: bool) -> str:
+def _build_requirement_action_compact_footer(allow_nav: bool, include_priority_shortcuts: bool = False) -> str:
     if not allow_nav:
-        return "keys: 1-9 select | :=help | u=up | q=quit"
-    return "keys: 1-9 select | ↓/j=next-ac | ↑/k=prev-ac | :=help | u=up | q=quit"
+        base = "keys: 1-9 select"
+        if include_priority_shortcuts:
+            base += " | !=p0..$=p3"
+        return base + " | :=help | u=up | q=quit"
+    base = "keys: 1-9 select"
+    if include_priority_shortcuts:
+        base += " | !=p0..$=p3"
+    return base + " | ↓/j=next-ac | ↑/k=prev-ac | :=help | u=up | q=quit"
 
 
 def _build_history_browser_compact_footer() -> str:
@@ -821,6 +863,7 @@ def _priority_highlight_bg(priority: str) -> str:
 
 
 ENTRY_FIELDS = ("status", "priority", "flagged", "links")
+PRIORITY_SHORTCUT_KEYS = ("!", "@", "#", "$")
 
 
 def _next_entry_field(current: str) -> str:
@@ -829,6 +872,32 @@ def _next_entry_field(current: str) -> str:
     except ValueError:
         return ENTRY_FIELDS[0]
     return ENTRY_FIELDS[(current_index + 1) % len(ENTRY_FIELDS)]
+
+
+def _priority_shortcut_bindings() -> dict[str, str]:
+    bindings: dict[str, str] = {}
+    for index, key in enumerate(PRIORITY_SHORTCUT_KEYS):
+        if index >= len(PRIORITY_ORDER):
+            break
+        bindings[key] = PRIORITY_ORDER[index][0]
+    return bindings
+
+
+def _priority_shortcut_help_labels() -> dict[str, str]:
+    labels: dict[str, str] = {}
+    for key, label in _priority_shortcut_bindings().items():
+        plain_label = label.split(" ", 1)[1] if " " in label else label
+        if " - " in plain_label:
+            labels[key] = plain_label.split(" - ", 1)[1].lower()
+        else:
+            labels[key] = plain_label.lower()
+    return labels
+
+
+def _resolve_action_entry_field(current_entry_field: str, action: str) -> str:
+    if action == "apply-priority":
+        return "priority"
+    return current_entry_field
 
 
 def _build_requirement_field_menu(
@@ -899,10 +968,14 @@ def _prompt_for_requirement_action(
         active_field,
         title_suffix=title_suffix,
     )
+    include_priority_shortcuts = active_field == "status"
     extra_keys = {"t": "toggle-field"}
     extra_keys_help = {"t": "toggle"}
     extra_keys.update({"z": "undo", "y": "redo", "h": "history"})
     extra_keys_help.update({"z": "undo", "y": "redo", "h": "history"})
+    if include_priority_shortcuts:
+        extra_keys.update({key: f"priority-shortcut:{label}" for key, label in _priority_shortcut_bindings().items()})
+        extra_keys_help.update(_priority_shortcut_help_labels())
     if allow_nav:
         extra_keys.update({"j": "nav-next", "k": "nav-prev", "g": "nav-first", "G": "nav-last"})
         extra_keys_help.update({"j": "next-ac", "k": "prev-ac", "g": "first-ac", "G": "last-ac"})
@@ -916,14 +989,16 @@ def _prompt_for_requirement_action(
         extra_keys_help=extra_keys_help,
         selected_option_index=selected_index,
         selected_option_bg=selected_bg,
-        footer_legend=_build_requirement_action_footer(allow_nav),
-        compact_footer=_build_requirement_action_compact_footer(allow_nav),
+        footer_legend=_build_requirement_action_footer(allow_nav, include_priority_shortcuts=include_priority_shortcuts),
+        compact_footer=_build_requirement_action_compact_footer(allow_nav, include_priority_shortcuts=include_priority_shortcuts),
         prefix_text=panel_text,
     )
     if choice is None:
         return "quit", None
     if isinstance(choice, str) and choice in {"up", "nav-prev", "nav-next", "nav-first", "nav-last", "toggle-field", "undo", "redo", "history"}:
         return choice, None
+    if isinstance(choice, str) and choice.startswith("priority-shortcut:"):
+        return "apply-priority", choice.split(":", 1)[1]
     return "apply", labels[int(choice)]
 
 
@@ -1374,21 +1449,23 @@ def focused_target_interactive_loop(
             save_current(flat_list, index)
             continue
 
-        if current_entry_field == "priority":
+        target_entry_field = _resolve_action_entry_field(current_entry_field, action)
+
+        if target_entry_field == "priority":
             changed = update_criterion_status(
                 path,
                 requirement,
                 str(requirement.get("status") or ""),
                 new_priority=selected_value,
             )
-        elif current_entry_field == "flagged":
+        elif target_entry_field == "flagged":
             changed = update_criterion_status(
                 path,
                 requirement,
                 str(requirement.get("status") or ""),
                 new_flagged=(selected_value == "true"),
             )
-        elif current_entry_field == "links":
+        elif target_entry_field == "links":
             changed = prompt_for_links_flow(path, requirement, id_prefixes=id_prefixes)
         else:
             new_status = selected_value or str(requirement.get("status") or "")
@@ -1767,7 +1844,8 @@ def interactive_update_loop(
                 continue
 
             changed = False
-            if current_entry_field == "priority":
+            target_entry_field = _resolve_action_entry_field(current_entry_field, action)
+            if target_entry_field == "priority":
                 changed = update_criterion_status(
                     selected_path,
                     selected_criterion,
@@ -1780,7 +1858,7 @@ def interactive_update_loop(
                     include_status_emojis=include_status_emojis,
                     include_priority_summary=include_priority_summary,
                 )
-            elif current_entry_field == "flagged":
+            elif target_entry_field == "flagged":
                 changed = update_criterion_status(
                     selected_path,
                     selected_criterion,
@@ -1793,7 +1871,7 @@ def interactive_update_loop(
                     include_status_emojis=include_status_emojis,
                     include_priority_summary=include_priority_summary,
                 )
-            elif current_entry_field == "links":
+            elif target_entry_field == "links":
                 changed = prompt_for_links_flow(
                     selected_path,
                     selected_criterion,
@@ -2028,21 +2106,23 @@ def filtered_interactive_loop(
             save_current(flat_list, index)
             continue
 
-        if current_entry_field == "priority":
+        target_entry_field = _resolve_action_entry_field(current_entry_field, action)
+
+        if target_entry_field == "priority":
             changed = update_criterion_status(
                 path,
                 requirement,
                 str(requirement.get("status") or ""),
                 new_priority=selected_value,
             )
-        elif current_entry_field == "flagged":
+        elif target_entry_field == "flagged":
             changed = update_criterion_status(
                 path,
                 requirement,
                 str(requirement.get("status") or ""),
                 new_flagged=(selected_value == "true"),
             )
-        elif current_entry_field == "links":
+        elif target_entry_field == "links":
             changed = prompt_for_links_flow(path, requirement, id_prefixes=id_prefixes)
         else:
             new_status = selected_value or str(requirement.get("status") or "")
@@ -2078,7 +2158,7 @@ def filtered_interactive_loop(
         print_summary_table(table_rows, emoji_columns=emoji_columns)
 
         flat_after = build_flat_list()
-        if current_entry_field == "status" and changed and selected_value != target_status:
+        if target_entry_field == "status" and changed and selected_value != target_status:
             if not flat_after:
                 click.echo("All filtered requirements reviewed.")
                 return 0
@@ -2250,21 +2330,23 @@ def filtered_priority_interactive_loop(
             save_current(flat_list, index)
             continue
 
-        if current_entry_field == "priority":
+        target_entry_field = _resolve_action_entry_field(current_entry_field, action)
+
+        if target_entry_field == "priority":
             changed = update_criterion_status(
                 path,
                 requirement,
                 str(requirement.get("status") or ""),
                 new_priority=selected_value,
             )
-        elif current_entry_field == "flagged":
+        elif target_entry_field == "flagged":
             changed = update_criterion_status(
                 path,
                 requirement,
                 str(requirement.get("status") or ""),
                 new_flagged=(selected_value == "true"),
             )
-        elif current_entry_field == "links":
+        elif target_entry_field == "links":
             changed = prompt_for_links_flow(path, requirement, id_prefixes=id_prefixes)
         else:
             new_status = selected_value or str(requirement.get("status") or "")
@@ -2300,7 +2382,7 @@ def filtered_priority_interactive_loop(
         print_summary_table(table_rows, emoji_columns=emoji_columns)
 
         flat_after = build_flat_list()
-        if current_entry_field == "priority" and changed and selected_value != target_priority:
+        if target_entry_field == "priority" and changed and selected_value != target_priority:
             if not flat_after:
                 click.echo("All filtered requirements reviewed.")
                 return 0
@@ -2386,21 +2468,23 @@ def lookup_criterion_interactive(
         ):
             continue
 
-        if current_entry_field == "priority":
+        target_entry_field = _resolve_action_entry_field(current_entry_field, action)
+
+        if target_entry_field == "priority":
             changed = update_criterion_status(
                 path,
                 requirement,
                 str(requirement.get("status") or ""),
                 new_priority=selected_value,
             )
-        elif current_entry_field == "flagged":
+        elif target_entry_field == "flagged":
             changed = update_criterion_status(
                 path,
                 requirement,
                 str(requirement.get("status") or ""),
                 new_flagged=(selected_value == "true"),
             )
-        elif current_entry_field == "links":
+        elif target_entry_field == "links":
             changed = prompt_for_links_flow(path, requirement, id_prefixes=id_prefixes)
         else:
             new_status = selected_value or str(requirement.get("status") or "")

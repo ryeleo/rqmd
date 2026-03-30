@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 
+- Added terminology-neutral requirement document wording in scaffolded and generated indexes so teams can treat requirement markdown files as domains, user stories, feature areas, or other project-specific groupings without changing the parser contract (RQMD-PORTABILITY-019).
 - Added positional status/priority filter tokens with filter-first precedence over requirement/domain lookup, deterministic prefix matching for IDs and domains, mixed filter-plus-target scoping such as `rqmd P1 core-engine`, and shell completion entries for positional filter values alongside IDs, domains, and subsection tokens (RQMD-AUTOMATION-035, RQMD-INTERACTIVE-027, RQMD-PACKAGING-011).
 - Added policy-aware history retention defaults and config overrides (`history_retention.retain_last`, `retain_days`, `max_size_kib`), and wired `rqmd --history-gc` to trim persisted history state before pack/prune maintenance while reporting the active policy in `--history` and `--history-gc` outputs (RQMD-UNDO-008).
 - Added `rqmd --history-gc` with optional `--history-prune-now`, plus explicit confirmation and JSON/text reporting for safe maintenance of the hidden `rqmd-history` repository (progress toward RQMD-UNDO-007).
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `rqmd --history-gc-save-label <label>` plus matching interactive gc/prune save-label prompts so maintenance flows can preserve a named snapshot label before destructive history cleanup runs (progress toward RQMD-UNDO-007).
 - Added proposed Vim-alignment requirements covering `j`/`k` vertical navigation defaults, richer Vim-style motions (`gg`, `G`, `Ctrl-U`, `Ctrl-D`), and `/`/`?` search with `n`/`N` repeat semantics in interactive mode.
 - Added compact interactive footers with `:=help`, plus a shared help overlay that opens on `:` and toggles on invalid keys so full keymaps stay discoverable without long inline legends (RQMD-INTERACTIVE-026).
+- Added status-panel priority shortcuts in interactive requirement menus: `!`, `@`, `#`, and `$` now apply `P0` through `P3` directly from the default status view and then auto-advance to the next requirement without forcing a field toggle first (RQMD-INTERACTIVE-007).
 - Added a pytest timeout guard (`timeout = 30`) plus a startup requirement for `pytest-timeout`, so interactive regressions fail fast instead of silently hanging when the timeout plugin is missing from the local test environment.
 - Updated local test and smoke-check commands to use `uv run --extra dev pytest ...`, matching the `pytest-timeout` requirement instead of relying on plain `uv run pytest`.
 - Added explicit selected-row arrow markers in interactive menus so the current status, priority, or flagged choice is obvious on first render even before any further navigation (RQMD-INTERACTIVE-006).

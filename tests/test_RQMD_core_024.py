@@ -1,16 +1,15 @@
-"""Tests for RQMD-CORE-024: Generated top-level README from requirement domains."""
+"""Tests for RQMD-CORE-024: Generated top-level README from requirement docs."""
 
-import tempfile
 from pathlib import Path
 
 import pytest
-from rqmd.readme_gen import (
-    extract_domain_summaries,
-    generate_readme_section,
-    sync_readme_from_domains,
-)
+
+from rqmd.readme_gen import (extract_domain_summaries, generate_readme_section,
+                             sync_readme_from_domains)
+
 
 def test_RQMD_core_024_extract_domain_summaries(tmp_path: Path):
+
     """Test extracting summaries from domain files."""
     # Setup: Create minimal requirement files
     req_dir = tmp_path / "docs" / "requirements"
@@ -60,7 +59,7 @@ def test_RQMD_core_024_generate_readme_section():
     
     section = generate_readme_section(summaries)
     
-    assert "## Requirement Domains" in section
+    assert "## Requirement Documents" in section
     assert "Example Domain" in section
     assert "example.md" in section
     assert "3💡" in section
@@ -80,9 +79,23 @@ def test_RQMD_core_024_update_readme_section_new_file(tmp_path: Path):
 Content here.
 """)
     
-    # No domains exist, so this should handle gracefully
+    # No requirement docs exist, so this should handle gracefully
     result = sync_readme_from_domains(tmp_path, "docs/requirements")
     assert result[0] is not None  # Should return a result tuple
+
+
+def test_RQMD_portability_019_generated_scaffold_supports_user_story_terminology(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+
+    from rqmd.markdown_io import initialize_requirements_scaffold
+
+    created = initialize_requirements_scaffold(repo, "docs/requirements", starter_prefix="REQ")
+
+    assert created
+    index_text = (repo / "docs" / "requirements" / "README.md").read_text(encoding="utf-8")
+    assert "## Requirement Documents" in index_text
+    assert "domain, user story, feature area" in index_text
 
 
 def test_RQMD_core_024_idempotent_updates(tmp_path: Path):

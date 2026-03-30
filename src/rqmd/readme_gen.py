@@ -1,4 +1,4 @@
-"""Generate and maintain README sections from requirement domains.
+"""Generate and maintain README sections from requirement documents.
 
 This module provides functionality for RQMD-CORE-024:
 - Read domain files and extract status summary information
@@ -82,9 +82,9 @@ def generate_readme_section(summaries: list[DomainSummary]) -> str:
         Markdown text for README section
     """
     if not summaries:
-        return "No requirement domains found."
+        return "No requirement documents found."
     
-    lines = ["## Requirement Domains", ""]
+    lines = ["## Requirement Documents", ""]
     
     for summary in summaries:
         relative_path = summary.path.relative_to(summary.path.parent.parent)
@@ -168,5 +168,5 @@ def sync_readme_from_domains(repo_root: Path, criteria_dir: str = "docs/requirem
     section = generate_readme_section(summaries)
     modified = update_readme_section(readme_path, section)
     
-    message = f"README sync: {len(summaries)} domains, {'updated' if modified else 'no changes'}"
+    message = f"README sync: {len(summaries)} requirement docs, {'updated' if modified else 'no changes'}"
     return modified, message

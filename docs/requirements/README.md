@@ -22,7 +22,9 @@ Status workflow:
 - ❌ Cancelled
 - 🗑️ Deprecated
 
-## Domain Documents
+## Requirement Documents
+
+Each requirement document can represent a domain, user story, feature area, or another project-specific grouping. rqmd uses "domain" internally for some parser and API names, but the markdown contract itself is intentionally flexible.
 
 ### AC CLI
 - [Core Engine](core-engine.md) - parsing, normalization, summaries, requirements extraction

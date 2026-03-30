@@ -95,6 +95,8 @@ Summary: 0💡 9🔧 18✅ 0⛔ 4🗑️
 - I want the update to succeed
 - So that the interface advances to the next requirement
 - So that summary table refreshes with updated counts.
+- So that status-first entry panels can also assign priority directly with `!`, `@`, `#`, and `$` for `P0` through `P3` without toggling away from the status panel.
+- So that those direct priority shortcuts also auto-advance to the next requirement, while `k` still makes it easy to step back and set status afterward if needed.
 
 ### RQMD-INTERACTIVE-008: Optional reason prompts
 - **Status:** ✅ Verified
