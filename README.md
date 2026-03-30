@@ -384,6 +384,8 @@ uv run rqmd-ai --as-json --install-agent-bundle --bundle-preset full --overwrite
 
 Bundle installs are idempotent by default and preserve existing customized instruction files unless `--overwrite-existing` is explicitly passed.
 
+The installed bundle now includes Copilot skills for `/rqmd-brainstorm`, `/rqmd-implement`, and `/rqmd-verify` so teams can reuse the core planning, implementation, and verification loops without rewriting those instructions in every workspace. Those skills help with discovery and consistency, but they do not auto-approve terminal commands or bypass Copilot tool approval prompts.
+
 When apply mode runs, rqmd-ai appends a structured audit event to the local shared history backend at `.rqmd/history/rqmd-history/audit.jsonl`.
 
 Batch set from file:

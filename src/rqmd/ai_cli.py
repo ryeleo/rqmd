@@ -135,6 +135,8 @@ AI workflow defaults:
 - Apply only after review with `--write`.
 - For implementation work, use `rqmd-ai --workflow-mode implement` and take the highest-priority 1-3 proposed requirements at a time.
 - After each implementation batch, make sure rqmd runs, summaries verify, tests pass, and priorities are re-checked before continuing.
+- Prefer the installed Copilot skills for repeatable workflows: `/rqmd-brainstorm`, `/rqmd-implement`, and `/rqmd-verify`.
+- Skills improve workflow discovery and reuse, but they do not bypass terminal/tool approval prompts.
 
 Useful commands:
 - uv run rqmd-ai --as-json --workflow-mode implement
@@ -159,6 +161,73 @@ Execution contract:
 - Keep README and automation docs aligned with shipped behavior.
 - Verify rqmd runs, then run targeted tests, then full tests before completion.
 - Update CHANGELOG.md under [Unreleased] for every shipped change.
+- Prefer the installed rqmd skills when the task matches a known workflow: `/rqmd-brainstorm`, `/rqmd-implement`, `/rqmd-verify`.
+""",
+}
+
+_BUNDLE_SKILL_FILES: dict[str, str] = {
+    ".github/skills/rqmd-brainstorm/SKILL.md": """---
+name: rqmd-brainstorm
+description: Turn brainstorm notes or loose ideas into ranked rqmd requirement proposals before implementation. Use for docs/brainstorm.md review, backlog grooming, requirement planning, and mapping ideas into docs/requirements/*.md with suggested IDs, statuses, and priorities.
+argument-hint: Describe the brainstorm source and which requirement area it should likely affect.
+user-invocable: true
+---
+
+Use this skill when the work starts as notes instead of tracked requirements.
+
+Workflow:
+- Export planning guidance with `uv run rqmd-ai --as-json --workflow-mode brainstorm`.
+- Read the brainstorm source, usually `docs/brainstorm.md`.
+- Cross-check existing backlog with `uv run rqmd-ai --as-json --dump-status proposed`.
+- Convert viable ideas into tracked proposals with target requirement docs, suggested IDs, canonical `💡 Proposed` status, and priorities.
+- Update requirement docs, the requirements index, and `CHANGELOG.md` before code when the proposal changes shipped behavior or workflow.
+
+Constraints:
+- Do not skip requirement tracking and jump straight to code for net-new behavior.
+- Keep the output read-only until requirement/doc changes are reviewed.
+- Skills improve workflow discovery; shell and tool approvals may still be required.
+""",
+    ".github/skills/rqmd-implement/SKILL.md": """---
+name: rqmd-implement
+description: Implement the highest-priority proposed rqmd requirements in small validated batches. Use for multi-file code changes that must stay synchronized with docs/requirements, README, tests, and CHANGELOG entries.
+argument-hint: Describe the requirement IDs or behavior to implement and the expected validation scope.
+user-invocable: true
+---
+
+Use this skill when a requirement is ready to move from proposal into implementation.
+
+Workflow:
+- Start with `uv run rqmd-ai --as-json --workflow-mode implement`.
+- Review the current proposal queue with `uv run rqmd-ai --as-json --dump-status proposed`.
+- Take the highest-priority 1-3 proposed requirements for the next batch.
+- Update requirement docs, tests, README, and `CHANGELOG.md` as implementation details become concrete.
+- Verify the result with `uv run rqmd --verify-summaries --no-walk --no-table`, targeted tests, and then `uv run --extra dev pytest -q` before continuing.
+
+Constraints:
+- Keep changes focused and avoid broad unrelated refactors.
+- Re-check remaining priorities before starting another batch.
+- Skills improve workflow discovery; shell and tool approvals may still be required.
+""",
+    ".github/skills/rqmd-verify/SKILL.md": """---
+name: rqmd-verify
+description: Verify rqmd requirement/documentation sync and post-change validation. Use after edits to re-run summary verification, targeted tests, full tests, and any final requirement-status checks before completion.
+argument-hint: Describe what changed and whether you want targeted validation, a full verification pass, or both.
+user-invocable: true
+---
+
+Use this skill when changes are already in progress and you need a disciplined finish pass.
+
+Workflow:
+- Re-run requirement summary verification with `uv run rqmd --verify-summaries --no-walk --no-table`.
+- Run targeted tests for the touched area first.
+- Run the full test suite with `uv run --extra dev pytest -q`.
+- If work affected backlog state, re-check `uv run rqmd-ai --as-json --dump-status proposed` so priorities remain accurate.
+- Call out any residual risk, missing validation, or requirement/doc drift before finishing.
+
+Constraints:
+- Prefer deterministic validation commands.
+- Report clearly when validation could not be completed.
+- Skills improve workflow discovery; shell and tool approvals may still be required.
 """,
 }
 
@@ -184,12 +253,13 @@ This folder contains a standard AI agent bundle installed by:
 `rqmd-ai --install-agent-bundle`
 
 Presets:
-- minimal: `.github/copilot-instructions.md`, `.github/agents/core.agent.md`
+- minimal: `.github/copilot-instructions.md`, `.github/agents/core.agent.md`, and the rqmd workflow skills under `.github/skills/`
 - full: minimal + `.github/agents/Explore.agent.md` and this README
 
 Operational notes:
 - Re-run is idempotent.
 - Existing files are preserved unless `--overwrite-existing` is used.
+- Skills improve workflow discovery and slash-command reuse, but they do not bypass terminal or tool approval prompts.
 """,
 }
 
@@ -217,6 +287,7 @@ def _build_guide_payload(
 
 def _bundle_files_for_preset(preset: str) -> dict[str, str]:
     files = dict(_BUNDLE_MINIMAL_FILES)
+    files.update(_BUNDLE_SKILL_FILES)
     if preset == "full":
         files.update(_BUNDLE_FULL_FILES)
     return files
