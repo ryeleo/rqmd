@@ -177,6 +177,20 @@ Inside the history browser, selecting an entry opens a detail view where you can
 
 Both interactive gc actions can optionally save a human-readable label on the current history branch before maintenance runs.
 
+History retention now uses a conservative default policy of retaining the last 1000 entries or the last 90 days of history metadata before running pack/prune maintenance. You can override that policy in project or user config with a top-level `history_retention` object:
+
+```json
+{
+	"history_retention": {
+		"retain_last": 500,
+		"retain_days": 30,
+		"max_size_kib": 2048
+	}
+}
+```
+
+`retain_last` and `retain_days` decide which persisted history entries remain navigable after `--history-gc`; `max_size_kib` records when the hidden history repo has crossed a size threshold so maintenance reports can surface it alongside the pack/prune result.
+
 Long options also accept unique prefixes, so invocations such as `--proj`, `--docs`, and `--as-j` work when they resolve unambiguously.
 
 History operations available in non-interactive mode include:

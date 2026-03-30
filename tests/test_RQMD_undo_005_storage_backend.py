@@ -187,3 +187,74 @@ def test_RQMD_undo_001_cli_undo_json_noop_when_history_missing(tmp_path: Path) -
     assert payload["mode"] == "undo"
     assert payload["changed"] is False
     assert payload["commit"] is None
+
+
+def test_RQMD_undo_008_history_gc_applies_retain_last_policy(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain_dir = repo / "docs" / "requirements"
+    domain_dir.mkdir(parents=True)
+    domain_file = domain_dir / "demo.md"
+
+    manager = HistoryManager(repo_root=repo, requirements_dir="docs/requirements")
+    for status, command in [
+        ("💡 Proposed", "baseline"),
+        ("🔧 Implemented", "implemented"),
+        ("✅ Verified", "verified"),
+    ]:
+        _write_demo_domain(domain_file, status)
+        manager.capture(command)
+
+    result = manager.garbage_collect(
+        retention_policy={"retain_last": 2, "retain_days": None, "max_size_kib": None}
+    )
+
+    assert result["retention"]["applied"] is True
+    assert result["retention"]["entries_count"] == 3
+    assert result["retention"]["retained_entries_count"] == 2
+    assert result["retention"]["dropped_entries_count"] == 1
+    assert len(manager.list_entries()) == 2
+
+
+def test_RQMD_undo_008_history_output_includes_retention_summary(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    domain_dir = repo / "docs" / "requirements"
+    domain_dir.mkdir(parents=True)
+    _write_demo_domain(domain_dir / "demo.md")
+
+    (repo / ".rqmd.json").write_text(
+        json.dumps(
+            {
+                "history_retention": {
+                    "retain_last": 5,
+                    "retain_days": 30,
+                    "max_size_kib": 2048,
+                }
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    manager = HistoryManager(repo_root=repo, requirements_dir="docs/requirements")
+    manager.capture("baseline")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--history",
+            "--as-json",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["mode"] == "history-log"
+    assert payload["retention"]["policy"]["retain_last"] == 5
+    assert payload["retention"]["policy"]["retain_days"] == 30
+    assert payload["retention"]["policy"]["max_size_kib"] == 2048

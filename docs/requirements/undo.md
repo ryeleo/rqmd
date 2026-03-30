@@ -3,7 +3,7 @@
 Scope: full undo/redo semantics, persistent history across restarts/crashes, branching and "lost changes" recovery, UI affordances, and storage/retention policies.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 10🔧 0✅ 0⛔ 0🗑️
+Summary: 0💡 11🔧 0✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UNDO-001: Full undo/redo semantics
@@ -72,7 +72,7 @@ Summary: 1💡 10🔧 0✅ 0⛔ 0🗑️
 - So that interactive prompts clearly explain consequences and offer to save named snapshots before destructive operations.
 
 ### RQMD-UNDO-008: Size, retention, and compaction policy
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when history can grow indefinitely
 - I want storage to grow beyond configured thresholds

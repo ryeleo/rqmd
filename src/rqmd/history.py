@@ -7,7 +7,7 @@ import os
 import shutil
 import subprocess
 import tempfile
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +16,11 @@ HISTORY_REPO_RELATIVE = HISTORY_ROOT_RELATIVE / "rqmd-history"
 STATE_FILE_RELATIVE = HISTORY_ROOT_RELATIVE / "state.json"
 CATALOG_DIRNAME = "catalog"
 STABLE_HISTORY_ID_PREFIX = "hid:"
+DEFAULT_HISTORY_RETENTION_POLICY: dict[str, int | None] = {
+    "retain_last": 1000,
+    "retain_days": 90,
+    "max_size_kib": None,
+}
 
 
 class HistoryInitError(Exception):
@@ -28,6 +33,34 @@ class HistoryCommitError(Exception):
 
 class HistoryRestoreError(Exception):
     """Raised when a historical snapshot cannot be restored."""
+
+
+def normalize_retention_policy(raw_policy: dict[str, Any] | None = None) -> dict[str, int | None]:
+    """Normalize a history retention policy dictionary."""
+    normalized = dict(DEFAULT_HISTORY_RETENTION_POLICY)
+    if raw_policy is None:
+        return normalized
+
+    for key in DEFAULT_HISTORY_RETENTION_POLICY:
+        if key not in raw_policy:
+            continue
+        value = raw_policy[key]
+        if value is None:
+            normalized[key] = None
+            continue
+        if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+            raise ValueError(f"History retention policy '{key}' must be a positive integer or null")
+        normalized[key] = value
+    return normalized
+
+
+def merge_retention_policies(*policies: dict[str, Any] | None) -> dict[str, int | None]:
+    """Merge history retention policy layers from lowest to highest precedence."""
+    merged: dict[str, Any] = {}
+    for policy in policies:
+        if policy:
+            merged.update(policy)
+    return normalize_retention_policy(merged)
 
 
 class HistoryManager:
@@ -508,9 +541,199 @@ class HistoryManager:
                 stats[key.strip().replace("-", "_")] = int(value)
         return stats
 
-    def garbage_collect(self, prune_now: bool = False) -> dict[str, Any]:
+    def get_retention_plan(
+        self,
+        retention_policy: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Summarize which entries are retained by the active history policy."""
+        self._ensure_initialized()
+        state = self._read_state()
+        entries = list(state.get("entries", []))
+        branches = dict(state.get("branches", {}))
+        cursor = int(state.get("cursor", -1))
+        policy = normalize_retention_policy(retention_policy)
+        stats = self.get_storage_stats()
+        repo_size_kib = int(stats.get("size", 0)) + int(stats.get("size_pack", 0))
+
+        retain_last = policy.get("retain_last")
+        retain_days = policy.get("retain_days")
+        max_size_kib = policy.get("max_size_kib")
+
+        protected_commits: set[str] = set()
+        reasons_by_commit: dict[str, list[str]] = {}
+
+        def _protect(commit_hash: str | None, reason: str) -> None:
+            if not commit_hash:
+                return
+            protected_commits.add(commit_hash)
+            reasons_by_commit.setdefault(commit_hash, []).append(reason)
+
+        if retain_last is not None and retain_last > 0:
+            for entry in entries[-retain_last:]:
+                _protect(str(entry.get("commit") or ""), "retain_last")
+
+        cutoff_iso: str | None = None
+        if retain_days is not None:
+            cutoff_dt = datetime.now(timezone.utc) - timedelta(days=retain_days)
+            cutoff_iso = cutoff_dt.isoformat()
+            for entry in entries:
+                timestamp = str(entry.get("timestamp") or "")
+                if not timestamp:
+                    continue
+                try:
+                    entry_dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+                except ValueError:
+                    continue
+                if entry_dt >= cutoff_dt:
+                    _protect(str(entry.get("commit") or ""), "retain_days")
+
+        if 0 <= cursor < len(entries):
+            _protect(str(entries[cursor].get("commit") or ""), "current_cursor")
+
+        for branch_name, branch_data in branches.items():
+            _protect(str(branch_data.get("head") or ""), f"branch_head:{branch_name}")
+
+        if entries and not protected_commits:
+            _protect(str(entries[-1].get("commit") or ""), "latest_entry")
+
+        retained_entries: list[dict[str, Any]] = []
+        dropped_entries: list[dict[str, Any]] = []
+        for index, entry in enumerate(entries):
+            commit_hash = str(entry.get("commit") or "")
+            payload = {
+                "entry_index": index,
+                "commit": commit_hash,
+                "branch": entry.get("branch"),
+                "timestamp": entry.get("timestamp"),
+                "command": entry.get("command"),
+                "reasons": reasons_by_commit.get(commit_hash, []),
+            }
+            if commit_hash in protected_commits:
+                retained_entries.append(payload)
+            else:
+                dropped_entries.append(payload)
+
+        size_threshold_exceeded = bool(max_size_kib is not None and repo_size_kib > max_size_kib)
+        count_threshold_exceeded = bool(retain_last is not None and len(entries) > retain_last)
+        age_threshold_exceeded = bool(dropped_entries and retain_days is not None)
+
+        return {
+            "policy": policy,
+            "entries_count": len(entries),
+            "retained_entries_count": len(retained_entries),
+            "dropped_entries_count": len(dropped_entries),
+            "retained_entries": retained_entries,
+            "dropped_entries": dropped_entries,
+            "current_cursor": cursor,
+            "cutoff_timestamp": cutoff_iso,
+            "repo_size_kib": repo_size_kib,
+            "size_threshold_exceeded": size_threshold_exceeded,
+            "count_threshold_exceeded": count_threshold_exceeded,
+            "age_threshold_exceeded": age_threshold_exceeded,
+            "policy_triggered": bool(
+                size_threshold_exceeded or count_threshold_exceeded or age_threshold_exceeded
+            ),
+        }
+
+    def apply_retention_policy(
+        self,
+        retention_policy: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Trim persisted history state to the retained entry set for the active policy."""
+        self._ensure_initialized()
+        state = self._read_state()
+        entries = list(state.get("entries", []))
+        branches = dict(state.get("branches", {}))
+        current_branch = str(state.get("current_branch") or "main")
+
+        plan = self.get_retention_plan(retention_policy)
+        retained_commits = {str(item.get("commit") or "") for item in plan["retained_entries"]}
+        old_cursor = int(state.get("cursor", -1))
+        old_cursor_commit = None
+        if 0 <= old_cursor < len(entries):
+            old_cursor_commit = str(entries[old_cursor].get("commit") or "")
+
+        if len(retained_commits) == len(entries):
+            return {
+                **plan,
+                "applied": False,
+                "removed_branches": [],
+                "current_branch": current_branch,
+                "new_cursor": old_cursor,
+            }
+
+        new_entries: list[dict[str, Any]] = []
+        branch_latest_commit: dict[str, str] = {}
+        for entry in entries:
+            commit_hash = str(entry.get("commit") or "")
+            if commit_hash not in retained_commits:
+                continue
+            new_entry = dict(entry)
+            if str(new_entry.get("parent_commit") or "") not in retained_commits:
+                new_entry["parent_commit"] = None
+            if str(new_entry.get("branch_point") or "") not in retained_commits:
+                new_entry["branch_point"] = None
+            new_entries.append(new_entry)
+            branch_name = str(new_entry.get("branch") or "main")
+            branch_latest_commit[branch_name] = commit_hash
+
+        new_cursor = 0
+        if old_cursor_commit:
+            for index, entry in enumerate(new_entries):
+                if str(entry.get("commit") or "") == old_cursor_commit:
+                    new_cursor = index
+                    break
+            else:
+                new_cursor = max(0, len(new_entries) - 1)
+
+        removed_branches: list[str] = []
+        new_branches: dict[str, Any] = {}
+        for branch_name, branch_data in branches.items():
+            original_head = str(branch_data.get("head") or "")
+            replacement_head = ""
+            if original_head in retained_commits:
+                replacement_head = original_head
+            else:
+                replacement_head = branch_latest_commit.get(branch_name, "")
+
+            if replacement_head:
+                new_branches[branch_name] = {
+                    **branch_data,
+                    "head": replacement_head,
+                }
+            elif branch_name == "main" and new_entries:
+                new_branches[branch_name] = {
+                    **branch_data,
+                    "head": str(new_entries[new_cursor].get("commit") or ""),
+                }
+            else:
+                removed_branches.append(branch_name)
+
+        if current_branch not in new_branches:
+            current_branch = "main" if "main" in new_branches else next(iter(new_branches), "main")
+
+        state["entries"] = new_entries
+        state["cursor"] = new_cursor if new_entries else -1
+        state["branches"] = new_branches or {"main": {"head": None, "label": "Main timeline"}}
+        state["current_branch"] = current_branch
+        self._write_state(state)
+
+        return {
+            **plan,
+            "applied": True,
+            "removed_branches": removed_branches,
+            "current_branch": current_branch,
+            "new_cursor": state["cursor"],
+        }
+
+    def garbage_collect(
+        self,
+        prune_now: bool = False,
+        retention_policy: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """Run git garbage collection for the hidden history repository."""
         before = self.get_storage_stats()
+        retention_result = self.apply_retention_policy(retention_policy)
         if prune_now:
             self._git("reflog", "expire", "--expire=now", "--all")
             self._git("gc", "--prune=now")
@@ -521,6 +744,7 @@ class HistoryManager:
             "prune_now": prune_now,
             "before": before,
             "after": after,
+            "retention": retention_result,
         }
 
     def resolve_two_refs(

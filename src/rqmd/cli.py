@@ -86,7 +86,7 @@ from .config import (load_config, load_priorities_file, load_statuses_file,
 from .constants import (DEFAULT_ID_PREFIXES, DEFAULT_REQUIREMENTS_DIR,
                         ID_PREFIX_PATTERN, JSON_SCHEMA_VERSION, STATUS_ORDER,
                         STATUS_PATTERN, SUMMARY_END, SUMMARY_START)
-from .history import HistoryManager, HistoryRestoreError
+from .history import HistoryManager, HistoryRestoreError, merge_retention_policies
 from .markdown_io import (auto_detect_requirements_dir, check_files_writable,
                           check_index_sync, discover_project_root,
                           display_name_from_h1, format_path_display,
@@ -312,6 +312,16 @@ def _with_schema_version(payload: dict[str, object]) -> dict[str, object]:
 
 def _emit_json_payload(payload: dict[str, object]) -> None:
     click.echo(json.dumps(_with_schema_version(payload), ensure_ascii=False, indent=2))
+
+
+def _resolve_history_retention_policy(
+    project_config: dict[str, object],
+    user_config: dict[str, object],
+) -> dict[str, int | None]:
+    return merge_retention_policies(
+        user_config.get("history_retention") if isinstance(user_config.get("history_retention"), dict) else None,
+        project_config.get("history_retention") if isinstance(project_config.get("history_retention"), dict) else None,
+    )
 
 
 def _emit_json_ambiguity_error(mode: str, exc: click.ClickException) -> bool:
@@ -2592,6 +2602,7 @@ def main(
 
         if history_gc:
             history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
+            retention_policy = _resolve_history_retention_policy(config, user_config)
             confirmed = bool(confirm_yes)
             existing_stats = history_manager.get_storage_stats()
             saved_label = None
@@ -2640,7 +2651,10 @@ def main(
                     history_manager.label_branch(current_branch, label_text)
                     saved_label = label_text
 
-            gc_result = history_manager.garbage_collect(prune_now=history_prune_now)
+            gc_result = history_manager.garbage_collect(
+                prune_now=history_prune_now,
+                retention_policy=retention_policy,
+            )
             payload = {
                 "mode": "history-gc",
                 "ran": True,
@@ -2653,12 +2667,20 @@ def main(
             else:
                 before = payload["before"]
                 after = payload["after"]
+                retention = payload.get("retention") if isinstance(payload.get("retention"), dict) else {}
                 saved_text = f" after saving label '{saved_label}'" if saved_label else ""
+                retention_text = ""
+                if isinstance(retention, dict):
+                    retention_text = (
+                        f" retention: kept {retention.get('retained_entries_count', 0)}"
+                        f"/{retention.get('entries_count', 0)} entries"
+                    )
                 click.echo(
                     "History gc completed"
                     f"{saved_text} "
                     f"(loose objects: {before.get('count', 0)} -> {after.get('count', 0)}, "
                     f"packs: {before.get('packs', 0)} -> {after.get('packs', 0)})."
+                    f"{retention_text}"
                 )
             raise SystemExit(0)
 
@@ -2843,8 +2865,11 @@ def main(
 
         if show_history:
             history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
+            retention_policy = _resolve_history_retention_policy(config, user_config)
             entries = history_manager.list_entries()
             timeline_graph = history_manager.get_timeline_graph()
+            retention_plan = history_manager.get_retention_plan(retention_policy)
+            storage_stats = history_manager.get_storage_stats()
             cursor = int(timeline_graph.get("cursor", -1))
             current_branch = str(timeline_graph.get("current_branch") or "main")
 
@@ -2876,6 +2901,8 @@ def main(
                 "current_branch": current_branch,
                 "can_undo": history_manager.can_undo(),
                 "can_redo": history_manager.can_redo(),
+                "storage": storage_stats,
+                "retention": retention_plan,
                 "entries": entries_payload,
             }
 
@@ -2886,6 +2913,13 @@ def main(
                 click.echo(f"Entries: {payload['entries_count']}", err=False)
                 click.echo(f"Current branch: {payload['current_branch']}", err=False)
                 click.echo(f"Cursor: {payload['cursor']}", err=False)
+                click.echo(
+                    "Retention: "
+                    f"last {retention_plan['policy'].get('retain_last')} | "
+                    f"{retention_plan['policy'].get('retain_days')}d | "
+                    f"size {retention_plan['repo_size_kib']} KiB",
+                    err=False,
+                )
                 for item in entries_payload:
                     marker = " [HEAD]" if item["is_current_head"] else ""
                     delta = item.get("delta") if isinstance(item.get("delta"), dict) else {}

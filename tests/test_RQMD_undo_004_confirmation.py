@@ -257,3 +257,5 @@ def test_RQMD_undo_004_history_gc_can_save_label_first(tmp_path: Path) -> None:
     assert payload["ran"] is True
     assert payload["cancelled"] is False
     assert payload["before"]["count"] == before["count"]
+    assert payload["retention"]["policy"]["retain_last"] == 1000
+    assert payload["retention"]["policy"]["retain_days"] == 90

@@ -298,6 +298,7 @@ def validate_config(config: dict[str, Any]) -> None:
         "sort_strategy",
         "state_dir",
         "screen_write",
+        "history_retention",
         # Unified config can also carry rollup definitions consumed elsewhere.
         "rollup_map",
         "rollup_equations",
@@ -322,3 +323,18 @@ def validate_config(config: dict[str, Any]) -> None:
         raise ValueError("Config key 'state_dir' must be a string")
     if "screen_write" in config and not isinstance(config["screen_write"], bool):
         raise ValueError("Config key 'screen_write' must be a boolean")
+    if "history_retention" in config:
+        history_retention = config["history_retention"]
+        if not isinstance(history_retention, dict):
+            raise ValueError("Config key 'history_retention' must be an object")
+        allowed_retention_keys = {"retain_last", "retain_days", "max_size_kib"}
+        for key, value in history_retention.items():
+            if key not in allowed_retention_keys:
+                raise ValueError(
+                    "Config key 'history_retention' contains unknown key: "
+                    f"{key}. Allowed keys: {', '.join(sorted(allowed_retention_keys))}"
+                )
+            if value is not None and (not isinstance(value, int) or isinstance(value, bool) or value <= 0):
+                raise ValueError(
+                    f"Config key 'history_retention.{key}' must be a positive integer or null"
+                )
