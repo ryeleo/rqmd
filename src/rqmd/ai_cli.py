@@ -42,6 +42,62 @@ from .status_update import apply_status_change_by_id
 HISTORY_REPO_RELATIVE = Path(".rqmd") / "history" / "rqmd-history"
 AUDIT_LOG_RELATIVE = HISTORY_REPO_RELATIVE / "audit.jsonl"
 
+_WORKFLOW_GUIDES: dict[str, dict[str, object]] = {
+    "general": {
+        "summary": "Default read-only rqmd-ai workflow for context export, preview, and guarded apply.",
+        "workflow": [
+            "Export context with --dump-id/--dump-status/--dump-file.",
+            "Draft updates using --update ID=STATUS without --write to preview.",
+            "Apply only after review by adding --write.",
+        ],
+        "examples": [
+            "rqmd-ai --as-json --dump-status proposed",
+            "rqmd-ai --as-json --dump-id RQMD-CORE-001 --include-requirement-body",
+            "rqmd-ai --as-json --dump-file ai-cli.md --include-domain-markdown",
+            "rqmd-ai --as-json --dump-status proposed --history-ref 0",
+            "rqmd-ai --update RQMD-CORE-001=implemented",
+            "rqmd-ai --update RQMD-CORE-001=implemented --write",
+        ],
+    },
+    "brainstorm": {
+        "summary": "Turn loose planning notes into ranked requirement proposals before implementation starts.",
+        "workflow": [
+            "Start from raw planning notes such as docs/brainstorm.md or targeted requirement exports.",
+            "Promote brainstorm items into tracked requirement proposals with target docs, IDs, statuses, and priorities.",
+            "Keep the output read-only so requirement changes can be reviewed before any implementation work begins.",
+        ],
+        "examples": [
+            "rqmd-ai --as-json --workflow-mode brainstorm",
+            "rqmd-ai --as-json --dump-file ai-cli.md --include-domain-markdown",
+            "rqmd-ai --as-json --dump-status proposed",
+        ],
+    },
+    "implement": {
+        "summary": "Work highest-priority proposed requirements in small validated batches.",
+        "workflow": [
+            "Start by reviewing proposed requirements and choose the highest-priority 1-3 items for the next batch.",
+            "Update requirements, tests, and CHANGELOG entries as implementation details become concrete instead of deferring doc updates until the end.",
+            "Before taking the next batch, verify rqmd still runs, verify summaries, run the test suite, and re-check remaining proposal priorities.",
+        ],
+        "examples": [
+            "rqmd-ai --as-json --workflow-mode implement",
+            "rqmd-ai --as-json --dump-status proposed",
+            "rqmd --verify-summaries --no-walk --no-table",
+            "uv run --extra dev pytest -q",
+        ],
+        "batch_policy": {
+            "max_items": 3,
+            "selection_order": "highest-priority proposed first",
+        },
+        "validation_checks": [
+            "rqmd runs without startup errors",
+            "requirement summaries verify cleanly",
+            "full test suite passes",
+            "remaining proposal priorities are reviewed before continuing",
+        ],
+    },
+}
+
 _BUNDLE_MINIMAL_FILES: dict[str, str] = {
     ".github/copilot-instructions.md": """# rqmd AI Contributor Instructions
 
@@ -58,8 +114,11 @@ AI workflow defaults:
 - Start with read-only context export via rqmd-ai.
 - Propose updates before apply (`--update ...` without `--write`).
 - Apply only after review with `--write`.
+- For implementation work, use `rqmd-ai --workflow-mode implement` and take the highest-priority 1-3 proposed requirements at a time.
+- After each implementation batch, make sure rqmd runs, summaries verify, tests pass, and priorities are re-checked before continuing.
 
 Useful commands:
+- uv run rqmd-ai --as-json --workflow-mode implement
 - uv run rqmd-ai --as-json --dump-status proposed
 - uv run rqmd-ai --as-json --dump-id RQMD-CORE-001 --include-requirement-body
 - uv run rqmd-ai --as-json --update RQMD-CORE-001=implemented
@@ -76,9 +135,10 @@ You are the core implementation agent for this repository.
 
 Execution contract:
 - Make focused edits with minimal behavior drift.
+- Work highest-priority proposed requirements in small batches and re-check priorities between batches.
 - Keep docs/requirements status and summary blocks synchronized.
 - Keep README and automation docs aligned with shipped behavior.
-- Run targeted tests, then full tests before completion.
+- Verify rqmd runs, then run targeted tests, then full tests before completion.
 - Update CHANGELOG.md under [Unreleased] for every shipped change.
 """,
 }
@@ -115,25 +175,24 @@ Operational notes:
 }
 
 
-def _build_guide_payload(repo_root: Path, requirements_dir: Path, read_only: bool) -> dict[str, object]:
+def _build_guide_payload(
+    repo_root: Path,
+    requirements_dir: Path,
+    read_only: bool,
+    workflow_mode: str,
+) -> dict[str, object]:
+    guide = _WORKFLOW_GUIDES[workflow_mode]
     return {
         "mode": "guide",
+        "workflow_mode": workflow_mode,
         "read_only": read_only,
         "repo_root": str(repo_root),
         "requirements_dir": format_path_display(requirements_dir, repo_root),
-        "workflow": [
-            "Export context with --dump-id/--dump-status/--dump-file.",
-            "Draft updates using --update ID=STATUS without --write to preview.",
-            "Apply only after review by adding --write.",
-        ],
-        "examples": [
-            "rqmd-ai --as-json --dump-status proposed",
-            "rqmd-ai --as-json --dump-id RQMD-CORE-001 --include-requirement-body",
-            "rqmd-ai --as-json --dump-file ai-cli.md --include-domain-markdown",
-            "rqmd-ai --as-json --dump-status proposed --history-ref 0",
-            "rqmd-ai --update RQMD-CORE-001=implemented",
-            "rqmd-ai --update RQMD-CORE-001=implemented --write",
-        ],
+        "summary": guide["summary"],
+        "workflow": guide["workflow"],
+        "examples": guide["examples"],
+        "batch_policy": guide.get("batch_policy"),
+        "validation_checks": guide.get("validation_checks"),
     }
 
 
@@ -253,8 +312,19 @@ def _emit(payload: dict[str, object], json_output: bool) -> None:
     if isinstance(read_only, bool):
         click.echo(f"read-only: {'yes' if read_only else 'no'}")
     if mode == "guide":
+        workflow_mode = payload.get("workflow_mode")
+        if workflow_mode:
+            click.echo(f"workflow mode: {workflow_mode}")
+        summary = payload.get("summary")
+        if summary:
+            click.echo(str(summary))
         for item in payload.get("workflow", []):
             click.echo(f"- {item}")
+        validation_checks = payload.get("validation_checks")
+        if isinstance(validation_checks, list) and validation_checks:
+            click.echo("validation checks:")
+            for item in validation_checks:
+                click.echo(f"- {item}")
 
 
 def _emit_history_report(payload: dict[str, object], json_output: bool) -> None:
@@ -1064,6 +1134,14 @@ def _plan_or_apply_updates(
 @click.option("--as-json", "json_output", is_flag=True, help="Emit machine-readable JSON output.")
 @click.option("--show-guide", "guide", is_flag=True, help="Print onboarding guidance for rqmd-ai workflows.")
 @click.option(
+    "--workflow-mode",
+    "workflow_mode",
+    type=click.Choice(["general", "brainstorm", "implement"], case_sensitive=False),
+    default="general",
+    show_default=True,
+    help="Guide variant to emit for rqmd-ai workflow sequencing.",
+)
+@click.option(
     "--project-root",
     "repo_root",
     type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
@@ -1124,6 +1202,7 @@ def _plan_or_apply_updates(
 def main(
     json_output: bool,
     guide: bool,
+    workflow_mode: str,
     repo_root: Path,
     requirements_dir: str | None,
     id_prefixes: tuple[str, ...],
@@ -1146,6 +1225,7 @@ def main(
     dry_run: bool,
 ) -> None:
     repo_root = _resolve_repo_root(repo_root)
+    workflow_mode = workflow_mode.lower()
 
     if install_bundle:
         if guide or set_entries or export_ids or export_files or export_status or apply:
@@ -1169,13 +1249,13 @@ def main(
         raise click.ClickException(str(exc)) from exc
 
     if history_report:
-        if guide or apply or set_entries:
+        if guide or apply or set_entries or workflow_mode != "general":
             raise click.ClickException("--history-report is read-only and cannot be combined with --show-guide, --write, or --update.")
         if not history_ref and not compare_refs:
             raise click.ClickException("--history-report requires either --history-ref or --compare-refs.")
 
     if history_action:
-        if apply or set_entries or guide:
+        if apply or set_entries or guide or workflow_mode != "general":
             raise click.ClickException("--history-action is read-only and cannot be combined with --show-guide, --write, or --update.")
         if history_ref or compare_refs or history_report:
             raise click.ClickException("--history-action cannot be combined with --history-ref, --compare-refs, or --history-report.")
@@ -1189,7 +1269,7 @@ def main(
         return
 
     if compare_refs:
-        if apply or set_entries:
+        if apply or set_entries or workflow_mode != "general":
             raise click.ClickException("--compare-refs is read-only; it cannot be combined with --write or --update.")
         # Parse "A..B" or "A B" format
         raw = compare_refs.strip()
@@ -1235,6 +1315,10 @@ def main(
 
     if apply and not set_entries:
         raise click.ClickException("rqmd-ai --write requires at least one --update ID=STATUS update.")
+    if workflow_mode != "general" and (apply or set_entries or export_ids or export_files or export_status or history_ref):
+        raise click.ClickException(
+            "--workflow-mode brainstorm|implement is a guidance surface and cannot be combined with export, update, history, or apply options."
+        )
     if history_ref and apply:
         raise click.ClickException("--history-ref cannot be combined with --write.")
     if history_ref and set_entries:
@@ -1255,7 +1339,15 @@ def main(
     if guide:
         if history_tempdir is not None:
             history_tempdir.cleanup()
-        _emit(_build_guide_payload(repo_root, resolved_criteria_dir, read_only=(not apply)), json_output=json_output)
+        _emit(
+            _build_guide_payload(
+                repo_root,
+                resolved_criteria_dir,
+                read_only=(not apply),
+                workflow_mode=workflow_mode,
+            ),
+            json_output=json_output,
+        )
         return
 
     if set_entries:
@@ -1302,7 +1394,15 @@ def main(
 
     if history_tempdir is not None:
         history_tempdir.cleanup()
-    _emit(_build_guide_payload(repo_root, resolved_criteria_dir, read_only=True), json_output=json_output)
+    _emit(
+        _build_guide_payload(
+            repo_root,
+            resolved_criteria_dir,
+            read_only=True,
+            workflow_mode=workflow_mode,
+        ),
+        json_output=json_output,
+    )
 
 
 if __name__ == "__main__":

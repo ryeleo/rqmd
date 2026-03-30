@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 
+- Added explicit `rqmd-ai --workflow-mode` guidance variants for `general`, `brainstorm`, and `implement`, including a proposal-batch implement loop that tells agents to work the highest-priority 1-3 proposed requirements at a time and re-run rqmd/tests/priority checks between batches (RQMD-AI-015).
+- Added proposed requirement backlog entries for an AI brainstorm mode, proposal-batch implement mode, optional native acceleration hot paths, and a pre-release `ReqMD` rename/alias evaluation so those brainstorm items are now ranked in the tracked requirement set.
 - Added lightweight terminal markdown rendering in requirement panels so criterion headings and bold inline labels display cleanly during interactive review without changing the underlying line-oriented markdown contract.
 - Added explicit requirement-first AI workflow guidance to the README and AI CLI requirements, codifying the brainstorm -> requirements/docs -> preview -> apply -> verify loop for agent-assisted changes (RQMD-AI-013).
 - Added terminology-neutral requirement document wording in scaffolded and generated indexes so teams can treat requirement markdown files as domains, user stories, feature areas, or other project-specific groupings without changing the parser contract (RQMD-PORTABILITY-019).

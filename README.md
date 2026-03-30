@@ -336,7 +336,11 @@ Guidance mode:
 
 ```bash
 uv run rqmd-ai --as-json
+uv run rqmd-ai --as-json --workflow-mode brainstorm
+uv run rqmd-ai --as-json --workflow-mode implement
 ```
+
+`--workflow-mode brainstorm` emits requirement-first planning guidance for turning notes into ranked proposals. `--workflow-mode implement` emits the execution loop for working the highest-priority proposed 1-3 items at a time, then re-checking `rqmd`, summaries, tests, changelog, and remaining priorities before the next batch.
 
 Export context for prompts:
 

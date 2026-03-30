@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 10🔧 0✅ 0⛔ 3🗑️
+Summary: 1💡 11🔧 0✅ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -106,3 +106,20 @@ Summary: 0💡 10🔧 0✅ 0⛔ 3🗑️
 - I want rqmd-ai guidance and docs to prescribe a requirement-first workflow before code is applied
 - So that brainstorm ideas are promoted into tracked requirements, index updates, and changelog entries before implementation starts.
 - So that the recommended loop stays explicit: export focused context, update requirements/docs, preview the patch, apply only with explicit write mode, and run verification afterward.
+
+### RQMD-AI-014: Brainstorm-to-requirements planning mode
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a maintainer when early planning lives in `docs/brainstorm.md` or similar scratch notes
+- I want rqmd-ai to support a dedicated brainstorm workflow that turns raw notes into ranked requirement proposals
+- So that loose brainstorming can be promoted into concrete requirement entries before implementation begins.
+- So that the workflow can recommend target requirement documents, proposed IDs, statuses, and priorities without applying code changes.
+
+### RQMD-AI-015: Proposal-batch implementation mode
+- **Status:** 🔧 Implemented
+- **Priority:** 🔴 P0 - Critical
+- As a maintainer when asking an AI agent to execute backlog work
+- I want rqmd-ai guidance to define an explicit implement mode that works the highest-priority proposed requirements in small validated batches
+- So that the agent updates requirements, tests, and changelog entries as details become concrete rather than deferring documentation until the end.
+- So that each batch re-checks that `rqmd` still runs, the test suite passes, and the remaining proposal priorities are reviewed before continuing.
+- So that `rqmd-ai --workflow-mode implement` exposes this loop as an explicit read-only guide payload instead of burying it in generic onboarding text.

@@ -80,8 +80,65 @@ def test_RQMD_AI_001_and_002_default_guide_is_read_only_json(tmp_path: Path) -> 
     assert result.exit_code == 0
     payload = json.loads(result.output)
     assert payload["mode"] == "guide"
+    assert payload["workflow_mode"] == "general"
     assert payload["read_only"] is True
     _assert_schema_version(payload)
+
+
+def test_RQMD_AI_015_implement_workflow_mode_emits_batch_guidance_json(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--as-json",
+            "--workflow-mode",
+            "implement",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "guide"
+    assert payload["workflow_mode"] == "implement"
+    assert payload["batch_policy"]["max_items"] == 3
+    assert payload["batch_policy"]["selection_order"] == "highest-priority proposed first"
+    assert "full test suite passes" in payload["validation_checks"]
+    assert any("highest-priority 1-3 items" in step for step in payload["workflow"])
+    _assert_schema_version(payload)
+
+
+def test_RQMD_AI_015_workflow_mode_rejects_update_combinations(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--workflow-mode",
+            "implement",
+            "--update",
+            "RQMD-DEMO-001=verified",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "guidance surface" in result.output
 
 
 def test_RQMD_AI_004_export_context_filtered_by_status(tmp_path: Path) -> None:

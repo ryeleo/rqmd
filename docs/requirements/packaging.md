@@ -3,7 +3,7 @@
 Scope: package layout, installability, module entrypoints, and publication readiness.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 2🔧 9✅ 0⛔ 0🗑️
+Summary: 1💡 2🔧 9✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PACKAGING-001: src-layout package structure
@@ -96,3 +96,11 @@ Summary: 0💡 2🔧 9✅ 0⛔ 0🗑️
 - So that completion ordering and display make it clear when a suggestion is a status filter, priority filter, requirement ID, domain token, or subsection token.
 - So that the completion engine respects the same precedence and ambiguity rules defined for positional filter-token parsing rather than suggesting tokens that would later resolve differently at execution time.
 - So that completion remains deterministic when a token prefix could match both a positional filter value and a domain or subsection name.
+
+### RQMD-PACKAGING-012: Pre-release ReqMD rename and alias plan
+- **Status:** 💡 Proposed
+- **Priority:** 🟢 P3 - Low
+- As a maintainer when deciding whether the project should be branded as `rqmd` or `reqmd` before broader release
+- I want packaging and entrypoint behavior to support an explicit rename/alias plan
+- So that the project can adopt `reqmd` branding or a dual-command transition without breaking existing installs, docs, or automation unexpectedly.
+- So that any rename decision includes PyPI package-name availability checks, console-script alias behavior, documentation updates, and a compatibility window for existing `rqmd` users.
