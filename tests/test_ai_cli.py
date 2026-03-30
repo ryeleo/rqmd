@@ -141,6 +141,95 @@ def test_RQMD_AI_015_workflow_mode_rejects_update_combinations(tmp_path: Path) -
     assert "guidance surface" in result.output
 
 
+def test_RQMD_AI_014_brainstorm_mode_builds_ranked_proposals_from_note_file(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+    (criteria_dir / "ai-cli.md").write_text(
+        "# AI CLI Requirement\n\n"
+        "Scope: demo.\n\n"
+        "### RQMD-AI-001: Existing\n"
+        "- **Status:** 🔧 Implemented\n",
+        encoding="utf-8",
+    )
+    (criteria_dir / "core-engine.md").write_text(
+        "# Core Engine Requirement\n\n"
+        "Scope: demo.\n\n"
+        "### RQMD-CORE-001: Existing\n"
+        "- **Status:** 🔧 Implemented\n",
+        encoding="utf-8",
+    )
+    brainstorm = repo / "notes.md"
+    brainstorm.write_text(
+        "## AI Workflow\n\n"
+        "Brainstorm mode should promote notes into ranked requirement proposals.\n\n"
+        "## Performance Improvements\n\n"
+        "Maybe use Rust to accelerate parsing and JSON export.\n",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--as-json",
+            "--workflow-mode",
+            "brainstorm",
+            "--brainstorm-file",
+            str(brainstorm),
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "brainstorm-plan"
+    assert payload["workflow_mode"] == "brainstorm"
+    assert payload["source_file"] == "notes.md"
+    assert payload["total_proposals"] == 2
+    _assert_schema_version(payload)
+
+    first = payload["proposals"][0]
+    second = payload["proposals"][1]
+    assert first["rank"] == 1
+    assert first["proposal"]["status"] == "💡 Proposed"
+    assert first["proposal"]["priority"] == "🟠 P1 - High"
+    assert first["proposal"]["target_file"] == "docs/requirements/ai-cli.md"
+    assert first["proposal"]["suggested_id"] == "RQMD-AI-002"
+    assert second["proposal"]["target_file"] == "docs/requirements/core-engine.md"
+    assert second["proposal"]["suggested_id"] == "RQMD-CORE-002"
+    assert second["proposal"]["priority"] == "🟢 P3 - Low"
+
+
+def test_RQMD_AI_014_brainstorm_file_requires_brainstorm_mode(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+    brainstorm = repo / "notes.md"
+    brainstorm.write_text("## Notes\n", encoding="utf-8")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--brainstorm-file",
+            str(brainstorm),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "only be used with --workflow-mode brainstorm" in result.output
+
+
 def test_RQMD_AI_004_export_context_filtered_by_status(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"

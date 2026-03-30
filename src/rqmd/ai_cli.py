@@ -98,6 +98,24 @@ _WORKFLOW_GUIDES: dict[str, dict[str, object]] = {
     },
 }
 
+_BRAINSTORM_SECTION_TARGETS: tuple[tuple[tuple[str, ...], str], ...] = (
+    (("ai workflow", "agent", "skill"), "ai-cli.md"),
+    (("ux", "interactive", "ctrl + z"), "interactive-ux.md"),
+    (("screen write", "scroll"), "screen-write.md"),
+    (("priority",), "priority.md"),
+    (("filter", "schema version"), "automation-api.md"),
+    (("readme", "rename key", "external links", "blocking"), "core-engine.md"),
+    (("reqmd", "rename", "pypi"), "packaging.md"),
+    (("debug why rqmd fails", "desktop-verified", "user story"), "portability.md"),
+    (("performance", "rust", "native"), "core-engine.md"),
+)
+
+_BRAINSTORM_PRIORITY_HINTS: tuple[tuple[tuple[str, ...], str], ...] = (
+    (("critical", "p0", "must", "crash", "fails", "regression"), "🔴 P0 - Critical"),
+    (("implement", "workflow", "agent", "ai", "summary", "readme", "blocking"), "🟠 P1 - High"),
+    (("priority", "filter", "link", "schema", "user story", "screen"), "🟡 P2 - Medium"),
+)
+
 _BUNDLE_MINIMAL_FILES: dict[str, str] = {
     ".github/copilot-instructions.md": """# rqmd AI Contributor Instructions
 
@@ -201,6 +219,199 @@ def _bundle_files_for_preset(preset: str) -> dict[str, str]:
     if preset == "full":
         files.update(_BUNDLE_FULL_FILES)
     return files
+
+
+def _resolve_brainstorm_file(repo_root: Path, brainstorm_file: str | None) -> Path:
+    candidate = Path(brainstorm_file) if brainstorm_file else repo_root / "docs" / "brainstorm.md"
+    if not candidate.is_absolute():
+        candidate = (repo_root / candidate).resolve()
+    if not candidate.exists() or not candidate.is_file():
+        raise click.ClickException(f"Brainstorm file not found: {candidate}")
+    return candidate
+
+
+def _extract_brainstorm_blocks(brainstorm_path: Path) -> list[dict[str, str | None]]:
+    blocks: list[dict[str, str | None]] = []
+    current_section: str | None = None
+    current_subsection: str | None = None
+    paragraph_lines: list[str] = []
+    in_code_block = False
+
+    def flush_paragraph() -> None:
+        if not paragraph_lines:
+            return
+        text = " ".join(line.strip() for line in paragraph_lines if line.strip()).strip()
+        paragraph_lines.clear()
+        if not text or text == "##":
+            return
+        blocks.append(
+            {
+                "section": current_section,
+                "subsection": current_subsection,
+                "text": text,
+            }
+        )
+
+    for raw_line in brainstorm_path.read_text(encoding="utf-8").splitlines():
+        stripped = raw_line.strip()
+        if stripped.startswith("```"):
+            flush_paragraph()
+            in_code_block = not in_code_block
+            continue
+        if in_code_block:
+            continue
+        if stripped.startswith("## "):
+            flush_paragraph()
+            current_section = stripped[3:].strip()
+            current_subsection = None
+            continue
+        if stripped.startswith("### "):
+            flush_paragraph()
+            current_subsection = stripped[4:].strip()
+            continue
+        if not stripped:
+            flush_paragraph()
+            continue
+        if re.match(r"^[-*]\s+", stripped) or re.match(r"^\d+\.\s+", stripped):
+            flush_paragraph()
+            blocks.append(
+                {
+                    "section": current_section,
+                    "subsection": current_subsection,
+                    "text": re.sub(r"^(?:[-*]|\d+\.)\s+", "", stripped).strip(),
+                }
+            )
+            continue
+        paragraph_lines.append(stripped)
+
+    flush_paragraph()
+    return blocks
+
+
+def _suggest_priority_for_brainstorm(text: str, section: str | None, subsection: str | None) -> str:
+    haystack = " ".join(filter(None, [section, subsection, text])).casefold()
+    for tokens, priority in _BRAINSTORM_PRIORITY_HINTS:
+        if any(token in haystack for token in tokens):
+            return priority
+    return "🟢 P3 - Low"
+
+
+def _suggest_target_doc_for_brainstorm(
+    text: str,
+    section: str | None,
+    subsection: str | None,
+    domain_paths_by_name: dict[str, Path],
+) -> Path:
+    haystack = " ".join(filter(None, [section, subsection, text])).casefold()
+    for tokens, filename in _BRAINSTORM_SECTION_TARGETS:
+        if any(token in haystack for token in tokens):
+            target = domain_paths_by_name.get(filename)
+            if target is not None:
+                return target
+    fallback = domain_paths_by_name.get("ai-cli.md")
+    if fallback is None:
+        raise click.ClickException("Could not locate ai-cli.md while building brainstorm suggestions.")
+    return fallback
+
+
+def _proposal_title_from_text(text: str) -> str:
+    cleaned = re.sub(r"\s+", " ", text).strip()
+    if not cleaned:
+        return "Untitled brainstorm proposal"
+    head = re.split(r"[.!?]", cleaned, maxsplit=1)[0].strip()
+    words = head.split()
+    if len(words) > 10:
+        head = " ".join(words[:10]).rstrip(" ,;:")
+    return head[:96].rstrip(" ,;:")
+
+
+def _build_brainstorm_plan_payload(
+    repo_root: Path,
+    requirements_dir: Path,
+    domain_files: list[Path],
+    id_prefixes: tuple[str, ...],
+    brainstorm_path: Path,
+) -> dict[str, object]:
+    domain_paths_by_name = {path.name: path for path in domain_files}
+    next_id_by_path: dict[Path, tuple[str, int]] = {}
+
+    for path in domain_files:
+        prefix = "RQMD"
+        next_number = 1
+        requirements = parse_requirements(path, id_prefixes=id_prefixes)
+        for requirement in requirements:
+            req_id = str(requirement.get("id") or "")
+            match = re.match(r"^(?P<prefix>.+)-(?P<number>\d+)$", req_id)
+            if not match:
+                continue
+            prefix = match.group("prefix")
+            next_number = max(next_number, int(match.group("number")) + 1)
+        next_id_by_path[path] = (prefix, next_number)
+
+    proposals: list[dict[str, object]] = []
+    for block in _extract_brainstorm_blocks(brainstorm_path):
+        text = str(block.get("text") or "").strip()
+        if not text:
+            continue
+
+        target_path = _suggest_target_doc_for_brainstorm(
+            text=text,
+            section=str(block.get("section") or ""),
+            subsection=str(block.get("subsection") or ""),
+            domain_paths_by_name=domain_paths_by_name,
+        )
+        prefix, next_number = next_id_by_path[target_path]
+        suggested_id = f"{prefix}-{next_number:03d}"
+        next_id_by_path[target_path] = (prefix, next_number + 1)
+        priority = _suggest_priority_for_brainstorm(
+            text=text,
+            section=str(block.get("section") or ""),
+            subsection=str(block.get("subsection") or ""),
+        )
+
+        proposals.append(
+            {
+                "source": {
+                    "section": block.get("section"),
+                    "subsection": block.get("subsection"),
+                    "text": text,
+                },
+                "proposal": {
+                    "title": _proposal_title_from_text(text),
+                    "target_file": format_path_display(target_path, repo_root),
+                    "suggested_id": suggested_id,
+                    "status": "💡 Proposed",
+                    "priority": priority,
+                },
+            }
+        )
+
+    priority_order = {
+        "🔴 P0 - Critical": 0,
+        "🟠 P1 - High": 1,
+        "🟡 P2 - Medium": 2,
+        "🟢 P3 - Low": 3,
+    }
+    proposals.sort(
+        key=lambda item: (
+            priority_order.get(str(item["proposal"]["priority"]), 99),
+            str(item["proposal"]["target_file"]),
+            str(item["proposal"]["suggested_id"]),
+        )
+    )
+    for index, item in enumerate(proposals, start=1):
+        item["rank"] = index
+
+    return {
+        "mode": "brainstorm-plan",
+        "workflow_mode": "brainstorm",
+        "read_only": True,
+        "repo_root": str(repo_root),
+        "requirements_dir": format_path_display(requirements_dir, repo_root),
+        "source_file": format_path_display(brainstorm_path, repo_root),
+        "total_proposals": len(proposals),
+        "proposals": proposals,
+    }
 
 
 def _install_agent_bundle(
@@ -325,6 +536,17 @@ def _emit(payload: dict[str, object], json_output: bool) -> None:
             click.echo("validation checks:")
             for item in validation_checks:
                 click.echo(f"- {item}")
+        return
+    if mode == "brainstorm-plan":
+        click.echo(f"source file: {payload.get('source_file')}")
+        click.echo(f"total proposals: {payload.get('total_proposals')}")
+        for item in payload.get("proposals", []):
+            if not isinstance(item, dict):
+                continue
+            proposal = item.get("proposal") if isinstance(item.get("proposal"), dict) else {}
+            click.echo(
+                f"- #{item.get('rank')} {proposal.get('suggested_id')} [{proposal.get('priority')}] -> {proposal.get('target_file')}: {proposal.get('title')}"
+            )
 
 
 def _emit_history_report(payload: dict[str, object], json_output: bool) -> None:
@@ -1142,6 +1364,13 @@ def _plan_or_apply_updates(
     help="Guide variant to emit for rqmd-ai workflow sequencing.",
 )
 @click.option(
+    "--brainstorm-file",
+    "brainstorm_file",
+    type=str,
+    default=None,
+    help="Optional markdown note file used by --workflow-mode brainstorm. Defaults to docs/brainstorm.md under --project-root.",
+)
+@click.option(
     "--project-root",
     "repo_root",
     type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
@@ -1203,6 +1432,7 @@ def main(
     json_output: bool,
     guide: bool,
     workflow_mode: str,
+    brainstorm_file: str | None,
     repo_root: Path,
     requirements_dir: str | None,
     id_prefixes: tuple[str, ...],
@@ -1226,6 +1456,8 @@ def main(
 ) -> None:
     repo_root = _resolve_repo_root(repo_root)
     workflow_mode = workflow_mode.lower()
+    if brainstorm_file is not None and workflow_mode != "brainstorm":
+        raise click.ClickException("--brainstorm-file can only be used with --workflow-mode brainstorm.")
 
     if install_bundle:
         if guide or set_entries or export_ids or export_files or export_status or apply:
@@ -1334,6 +1566,20 @@ def main(
         _emit_history_report(payload, json_output=json_output)
         if history_tempdir is not None:
             history_tempdir.cleanup()
+        return
+
+    if workflow_mode == "brainstorm":
+        brainstorm_path = _resolve_brainstorm_file(repo_root, brainstorm_file)
+        payload = _build_brainstorm_plan_payload(
+            repo_root=repo_root,
+            requirements_dir=resolved_criteria_dir,
+            domain_files=domain_files,
+            id_prefixes=id_prefixes,
+            brainstorm_path=brainstorm_path,
+        )
+        if history_tempdir is not None:
+            history_tempdir.cleanup()
+        _emit(payload, json_output=json_output)
         return
 
     if guide:

@@ -342,6 +342,8 @@ uv run rqmd-ai --as-json --workflow-mode implement
 
 `--workflow-mode brainstorm` emits requirement-first planning guidance for turning notes into ranked proposals. `--workflow-mode implement` emits the execution loop for working the highest-priority proposed 1-3 items at a time, then re-checking `rqmd`, summaries, tests, changelog, and remaining priorities before the next batch.
 
+Brainstorm mode can read `docs/brainstorm.md` by default or a custom markdown note file via `--brainstorm-file`, then emit ranked read-only proposal suggestions with recommended target requirement docs, suggested IDs, canonical `💡 Proposed` status, and inferred priorities.
+
 Export context for prompts:
 
 ```bash

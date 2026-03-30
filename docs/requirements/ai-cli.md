@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 11🔧 0✅ 0⛔ 3🗑️
+Summary: 0💡 12🔧 0✅ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -108,12 +108,13 @@ Summary: 1💡 11🔧 0✅ 0⛔ 3🗑️
 - So that the recommended loop stays explicit: export focused context, update requirements/docs, preview the patch, apply only with explicit write mode, and run verification afterward.
 
 ### RQMD-AI-014: Brainstorm-to-requirements planning mode
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a maintainer when early planning lives in `docs/brainstorm.md` or similar scratch notes
 - I want rqmd-ai to support a dedicated brainstorm workflow that turns raw notes into ranked requirement proposals
 - So that loose brainstorming can be promoted into concrete requirement entries before implementation begins.
 - So that the workflow can recommend target requirement documents, proposed IDs, statuses, and priorities without applying code changes.
+- So that `rqmd-ai --workflow-mode brainstorm` reads `docs/brainstorm.md` by default and can also accept a custom markdown note file via `--brainstorm-file`.
 
 ### RQMD-AI-015: Proposal-batch implementation mode
 - **Status:** 🔧 Implemented
