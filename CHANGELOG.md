@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 
+- Added an optional `speedups` extra powered by `orjson`, and wired rqmd/rqmd-ai JSON export plus audit-log serialization through a native-acceleration helper with a pure-Python fallback (RQMD-CORE-025).
+- Added `reqmd` and `reqmd-ai` as pre-release console-script aliases while keeping `rqmd` and `rqmd-ai` as the canonical command names, and documented the manual PyPI-check plus compatibility-window plan for any future rename decision (RQMD-PACKAGING-012).
 - Added `rqmd-ai --workflow-mode brainstorm` as a read-only planning surface that parses brainstorm markdown into ranked requirement suggestions with recommended target docs, suggested IDs, canonical proposed status, and inferred priorities (RQMD-AI-014).
 - Added explicit `rqmd-ai --workflow-mode` guidance variants for `general`, `brainstorm`, and `implement`, including a proposal-batch implement loop that tells agents to work the highest-priority 1-3 proposed requirements at a time and re-run rqmd/tests/priority checks between batches (RQMD-AI-015).
 - Added proposed requirement backlog entries for an AI brainstorm mode, proposal-batch implement mode, optional native acceleration hot paths, and a pre-release `ReqMD` rename/alias evaluation so those brainstorm items are now ranked in the tracked requirement set.

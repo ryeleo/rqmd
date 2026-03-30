@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 8🔧 16✅ 0⛔ 0🗑️
+Summary: 0💡 9🔧 16✅ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -229,9 +229,10 @@ Summary: 1💡 8🔧 16✅ 0⛔ 0🗑️
 - So that README can be regenerated with separate CLI flag.
 
 ### RQMD-CORE-025: Optional native acceleration layer for parse/export hot paths
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟢 P3 - Low
 - As a rqmd maintainer when requirement sets become large enough that Python parsing or JSON export turns into a bottleneck
 - I want rqmd to support an optional native acceleration layer for hot paths such as parsing, indexing, and JSON contract generation
 - So that large repositories can get better throughput without replacing the existing Python CLI and interactive workflow surface.
 - So that any native layer preserves the existing markdown contract, JSON schema, and pure-Python fallback behavior when the accelerator is unavailable.
+- So that the initial shipped acceleration layer can focus on JSON export and audit-log serialization while remaining extensible for future parser/index speedups.

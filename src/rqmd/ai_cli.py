@@ -29,6 +29,7 @@ except ImportError:
 from .batch_inputs import parse_set_entry
 from .constants import JSON_SCHEMA_VERSION
 from .history import HistoryManager
+from .json_speedups import dumps_json
 from .markdown_io import (discover_project_root, format_path_display,
                           iter_domain_files, resolve_requirements_dir,
                           validate_files_readable)
@@ -514,7 +515,7 @@ def _emit(payload: dict[str, object], json_output: bool) -> None:
     if json_output:
         if "schema_version" not in payload:
             payload["schema_version"] = JSON_SCHEMA_VERSION
-        click.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+        click.echo(dumps_json(payload, indent=2))
         return
 
     mode = payload.get("mode", "unknown")
@@ -851,6 +852,7 @@ def _append_audit_record(repo_root: Path, record: dict[str, object]) -> str:
     audit_path = (repo_root / AUDIT_LOG_RELATIVE).resolve()
     audit_path.parent.mkdir(parents=True, exist_ok=True)
     line = json.dumps(record, ensure_ascii=False, sort_keys=True)
+    line = dumps_json(record, sort_keys=True)
     with audit_path.open("a", encoding="utf-8") as handle:
         handle.write(line)
         handle.write("\n")

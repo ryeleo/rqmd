@@ -36,12 +36,17 @@ Changelog = "https://github.com/example/rqmd/blob/main/CHANGELOG.md"
 
 [project.scripts]
 rqmd = "rqmd.cli:main"
+reqmd = "rqmd.cli:main"
 rqmd-ai = "rqmd.ai_cli:main"
+reqmd-ai = "rqmd.ai_cli:main"
 
 [project.optional-dependencies]
 dev = [
   "pytest>=8.0.0",
   "pytest-timeout>=2.3.1"
+]
+speedups = [
+  "orjson>=3.10.0"
 ]
 
 [tool.setuptools]
