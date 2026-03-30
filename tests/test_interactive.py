@@ -1124,6 +1124,9 @@ def test_RQMD_interactive_021c_requirement_menu_exposes_history_shortcuts() -> N
     assert "z=undo" in captured["footer_legend"]
     assert "y=redo" in captured["footer_legend"]
     assert "h=history" in captured["footer_legend"]
+    assert "next-ac" in captured["footer_legend"]
+    assert "first-ac" in captured["footer_legend"]
+    assert "/=fwd" not in captured["footer_legend"]
 
 
 def test_RQMD_interactive_021d_history_browser_uses_paged_menu(tmp_path: Path) -> None:

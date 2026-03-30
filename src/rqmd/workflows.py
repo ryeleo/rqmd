@@ -327,7 +327,7 @@ def _build_requirement_action_footer(allow_nav: bool) -> str:
     base = "keys: 1-9 select | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
     if not allow_nav:
         return base
-    return "keys: 1-9 select | ↓/j=next | ↑/k=prev | gg=begin | G=end | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
+    return "keys: 1-9 select | ↓/j=next-ac | ↑/k=prev-ac | gg=first-ac | G=last-ac | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
 
 
 def _infer_requirements_dir(repo_root: Path, domain_files: list[Path]) -> Path:
@@ -890,7 +890,7 @@ def _prompt_for_requirement_action(
     extra_keys_help.update({"z": "undo", "y": "redo", "h": "history"})
     if allow_nav:
         extra_keys.update({"j": "nav-next", "k": "nav-prev", "g": "nav-first", "G": "nav-last"})
-        extra_keys_help.update({"j": "next", "k": "prev", "g": "begin", "G": "end"})
+        extra_keys_help.update({"j": "next-ac", "k": "prev-ac", "g": "first-ac", "G": "last-ac"})
 
     choice = select_from_menu_fn(
         title,
