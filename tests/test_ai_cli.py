@@ -311,6 +311,12 @@ def test_RQMD_AI_014_brainstorm_mode_builds_ranked_proposals_from_note_file(tmp_
     assert payload["workflow_mode"] == "brainstorm"
     assert payload["source_file"] == "notes.md"
     assert payload["total_proposals"] == 2
+    assert payload["proposal_sort"]["priority_order"] == [
+        "🔴 P0 - Critical",
+        "🟠 P1 - High",
+        "🟡 P2 - Medium",
+        "🟢 P3 - Low",
+    ]
     _assert_schema_version(payload)
 
     first = payload["proposals"][0]
@@ -338,6 +344,79 @@ def test_RQMD_AI_bundle_skill_files_match_checked_in_workspace_copies() -> None:
         workspace_file = workspace_root / relative
         assert workspace_file.exists(), f"Missing workspace skill copy for {relative.as_posix()}"
         assert workspace_file.read_text(encoding="utf-8") == resource_file.read_text(encoding="utf-8")
+
+
+def test_RQMD_AI_014_brainstorm_skill_metadata_drives_title_limits() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    skill_path = repo_root / "src" / "rqmd" / "resources" / "bundle" / ".github" / "skills" / "rqmd-brainstorm" / "SKILL.md"
+    skill_text = skill_path.read_text(encoding="utf-8")
+    assert "max_words: 10" in skill_text
+    assert "max_chars: 96" in skill_text
+    assert "priority_source: runtime-catalog" in skill_text
+
+
+def test_RQMD_AI_014_brainstorm_mode_uses_runtime_priority_catalog(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+    (criteria_dir / "ai-cli.md").write_text(
+        "# AI CLI Requirement\n\n"
+        "Scope: demo.\n\n"
+        "### RQMD-AI-001: Existing\n"
+        "- **Status:** 🔧 Implemented\n",
+        encoding="utf-8",
+    )
+    (repo / ".rqmd").mkdir(parents=True)
+    (repo / ".rqmd" / "priorities.yml").write_text(
+        """
+- name: Urgent
+  shortcode: urgent
+  emoji: "!!"
+- name: Planned
+  shortcode: planned
+  emoji: "->"
+- name: Later
+  shortcode: later
+  emoji: ".."
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    brainstorm = repo / "notes.md"
+    brainstorm.write_text(
+        "## AI Workflow\n\n"
+        "Brainstorm mode should promote notes into ranked requirement proposals.\n\n"
+        "## Misc\n\n"
+        "Capture one softer follow-up.\n",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--json",
+            "--workflow-mode",
+            "brainstorm",
+            "--brainstorm-file",
+            str(brainstorm),
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["proposal_sort"]["priority_order"] == [
+        "!! Urgent",
+        "-> Planned",
+        ".. Later",
+    ]
+    assert payload["proposals"][0]["proposal"]["priority"] == "-> Planned"
+    assert payload["proposals"][1]["proposal"]["priority"] == ".. Later"
 
 
 def test_RQMD_AI_014_brainstorm_file_requires_brainstorm_mode(tmp_path: Path) -> None:

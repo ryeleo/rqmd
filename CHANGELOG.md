@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added bundle-aware default `rqmd-ai` guide output that embeds packaged skill and agent definitions from `resources/bundle` when no workspace bundle is installed, while suppressing those embedded definitions and reporting active local files once the rqmd bundle is present (RQMD-AI-016, RQMD-AI-017, RQMD-AI-018).
+- Added resource-backed brainstorm proposal title and ranking metadata so rqmd-ai brainstorm sorting/order guidance is no longer hard-coded in Python and can be tuned from the bundled skill definition.
 - Added duplicate requirement ID validation across rqmd and rqmd-ai plus a new `rqmd --next-id` allocator that emits the next sequential numeric ID for a single active namespace, using 3-digit minimum padding by default and continuing cleanly past `999` (RQMD-CORE-026, RQMD-CORE-027, RQMD-CORE-028).
 - Added installable Copilot workflow skills for brainstorm planning, backlog triage, focused context export, implementation, status/priority maintenance, doc sync, history inspection, bundle management, and verification, plus specialized full-preset agents for requirements, docs, history, and bundle maintenance; the bundle/docs now ship those workflows while explicitly documenting that skills and agents do not bypass tool approval prompts.
 - Added an optional `speedups` extra powered by `orjson`, and wired rqmd/rqmd-ai JSON export plus audit-log serialization through a native-acceleration helper with a pure-Python fallback (RQMD-CORE-025).

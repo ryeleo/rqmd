@@ -400,6 +400,8 @@ The installed bundle now includes Copilot skills for `/rqmd-brainstorm`, `/rqmd-
 
 The full bundle preset also installs specialized agents for requirement maintenance, docs sync, history investigation, and bundle maintenance so future agents can stay narrow and workflow-aware instead of overloading the single core agent with every repo-management task.
 
+Bundle workflows assume the core lifecycle states remain representable in your status catalog. Custom labels are fine, but if you want `rqmd-ai` guidance, examples, and installed skills to work well out of the box, keep lifecycle equivalents for `💡 Proposed`, `🔧 Implemented`, `✅ Verified`, `⛔ Blocked`, and `🗑️ Deprecated`.
+
 When apply mode runs, rqmd-ai appends a structured audit event to the local shared history backend at `.rqmd/history/rqmd-history/audit.jsonl`.
 
 Batch set from file:

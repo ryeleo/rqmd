@@ -30,12 +30,14 @@ except ImportError:
     sys.exit(1)
 
 from .batch_inputs import parse_set_entry
-from .constants import JSON_SCHEMA_VERSION
+from .config import load_config, load_priorities_file, validate_config
+from .constants import JSON_SCHEMA_VERSION, PRIORITY_ORDER
 from .history import HistoryManager
 from .json_speedups import dumps_json
 from .markdown_io import (discover_project_root, format_path_display,
                           iter_domain_files, resolve_requirements_dir,
                           validate_files_readable)
+from .priority_model import configure_priority_catalog
 from .req_parser import (extract_blocking_id,
                          extract_requirement_block_with_lines,
                          find_duplicate_requirement_ids, normalize_id_prefixes,
@@ -116,6 +118,20 @@ def _load_workflow_guide(workflow_mode: str) -> dict[str, object]:
     }
 
 
+def _load_runtime_priority_labels(repo_root: Path) -> tuple[str, ...]:
+    try:
+        config = load_config(repo_root)
+        validate_config(config)
+        standalone_priorities = load_priorities_file(repo_root, None)
+        effective_priorities = standalone_priorities if standalone_priorities is not None else config.get("priorities")
+        configure_priority_catalog(effective_priorities)
+        return tuple(label for label, _slug in PRIORITY_ORDER)
+    except ValueError as exc:
+        raise click.ClickException(f"Config error: {exc}") from exc
+    finally:
+        configure_priority_catalog(None)
+
+
 def _load_brainstorm_rules() -> dict[str, object]:
     relative_path, frontmatter = _load_skill_frontmatter("rqmd-brainstorm")
     metadata = frontmatter.get("metadata")
@@ -126,16 +142,34 @@ def _load_brainstorm_rules() -> dict[str, object]:
         )
 
     default_target_file = brainstorm.get("default_target_file")
-    default_priority = brainstorm.get("default_priority")
+    default_priority_rank = brainstorm.get("default_priority_rank")
+    proposal_title = brainstorm.get("proposal_title")
+    proposal_sort = brainstorm.get("proposal_sort")
     section_targets_raw = brainstorm.get("section_targets")
     priority_hints_raw = brainstorm.get("priority_hints")
-    if not isinstance(default_target_file, str) or not isinstance(default_priority, str):
+    if not isinstance(default_target_file, str) or not isinstance(default_priority_rank, int):
         raise click.ClickException(
             f"Bundle brainstorm metadata missing default target or priority in {relative_path}."
+        )
+    if not isinstance(proposal_title, dict) or not isinstance(proposal_sort, dict):
+        raise click.ClickException(
+            f"Bundle brainstorm metadata missing proposal title or sort configuration in {relative_path}."
         )
     if not isinstance(section_targets_raw, list) or not isinstance(priority_hints_raw, list):
         raise click.ClickException(
             f"Bundle brainstorm metadata missing section targets or priority hints in {relative_path}."
+        )
+
+    max_words = proposal_title.get("max_words")
+    max_chars = proposal_title.get("max_chars")
+    if not isinstance(max_words, int) or not isinstance(max_chars, int) or max_words <= 0 or max_chars <= 0:
+        raise click.ClickException(
+            f"Bundle brainstorm metadata has invalid proposal title configuration in {relative_path}."
+        )
+    priority_source = proposal_sort.get("priority_source")
+    if priority_source != "runtime-catalog":
+        raise click.ClickException(
+            f"Bundle brainstorm metadata has invalid proposal sort configuration in {relative_path}."
         )
 
     section_targets: list[tuple[tuple[str, ...], str]] = []
@@ -150,24 +184,41 @@ def _load_brainstorm_rules() -> dict[str, object]:
         if normalized_tokens:
             section_targets.append((normalized_tokens, target_file))
 
-    priority_hints: list[tuple[tuple[str, ...], str]] = []
+    priority_hints: list[tuple[tuple[str, ...], int]] = []
     for item in priority_hints_raw:
         if not isinstance(item, dict):
             raise click.ClickException(f"Invalid brainstorm priority hint entry in {relative_path}.")
         tokens = item.get("tokens")
-        priority = item.get("priority")
-        if not isinstance(tokens, list) or not isinstance(priority, str):
+        priority_rank = item.get("priority_rank")
+        if not isinstance(tokens, list) or not isinstance(priority_rank, int):
             raise click.ClickException(f"Invalid brainstorm priority hint entry in {relative_path}.")
         normalized_tokens = tuple(str(token).casefold() for token in tokens if str(token).strip())
         if normalized_tokens:
-            priority_hints.append((normalized_tokens, priority))
+            priority_hints.append((normalized_tokens, priority_rank))
 
     return {
         "default_target_file": default_target_file,
-        "default_priority": default_priority,
+        "default_priority_rank": default_priority_rank,
+        "proposal_title": {
+            "max_words": max_words,
+            "max_chars": max_chars,
+        },
+        "proposal_sort": {
+            "priority_source": priority_source,
+        },
         "section_targets": tuple(section_targets),
         "priority_hints": tuple(priority_hints),
     }
+
+
+def _priority_label_for_rank(priority_labels: tuple[str, ...], rank: int) -> str:
+    if not priority_labels:
+        raise click.ClickException("No priorities configured for brainstorm proposal generation.")
+    if rank < 0:
+        return priority_labels[max(len(priority_labels) + rank, 0)]
+    if rank >= len(priority_labels):
+        return priority_labels[-1]
+    return priority_labels[rank]
 
 
 def _bundle_definition_kind(relative_path: str) -> str | None:
@@ -352,13 +403,18 @@ def _extract_brainstorm_blocks(brainstorm_path: Path) -> list[dict[str, str | No
     return blocks
 
 
-def _suggest_priority_for_brainstorm(text: str, section: str | None, subsection: str | None) -> str:
+def _suggest_priority_for_brainstorm(
+    text: str,
+    section: str | None,
+    subsection: str | None,
+    priority_labels: tuple[str, ...],
+) -> str:
     rules = _load_brainstorm_rules()
     haystack = " ".join(filter(None, [section, subsection, text])).casefold()
-    for tokens, priority in rules["priority_hints"]:
+    for tokens, priority_rank in rules["priority_hints"]:
         if any(token in haystack for token in tokens):
-            return priority
-    return str(rules["default_priority"])
+            return _priority_label_for_rank(priority_labels, priority_rank)
+    return _priority_label_for_rank(priority_labels, int(rules["default_priority_rank"]))
 
 
 def _suggest_target_doc_for_brainstorm(
@@ -383,14 +439,18 @@ def _suggest_target_doc_for_brainstorm(
 
 
 def _proposal_title_from_text(text: str) -> str:
+    rules = _load_brainstorm_rules()
+    title_rules = rules["proposal_title"]
     cleaned = re.sub(r"\s+", " ", text).strip()
     if not cleaned:
         return "Untitled brainstorm proposal"
     head = re.split(r"[.!?]", cleaned, maxsplit=1)[0].strip()
     words = head.split()
-    if len(words) > 10:
-        head = " ".join(words[:10]).rstrip(" ,;:")
-    return head[:96].rstrip(" ,;:")
+    max_words = int(title_rules["max_words"])
+    max_chars = int(title_rules["max_chars"])
+    if len(words) > max_words:
+        head = " ".join(words[:max_words]).rstrip(" ,;:")
+    return head[:max_chars].rstrip(" ,;:")
 
 
 def _build_brainstorm_plan_payload(
@@ -400,6 +460,7 @@ def _build_brainstorm_plan_payload(
     id_prefixes: tuple[str, ...],
     brainstorm_path: Path,
 ) -> dict[str, object]:
+    runtime_priority_labels = _load_runtime_priority_labels(repo_root)
     domain_paths_by_name = {path.name: path for path in domain_files}
     next_id_by_path: dict[Path, tuple[str, int]] = {}
 
@@ -435,6 +496,7 @@ def _build_brainstorm_plan_payload(
             text=text,
             section=str(block.get("section") or ""),
             subsection=str(block.get("subsection") or ""),
+            priority_labels=runtime_priority_labels,
         )
 
         proposals.append(
@@ -454,11 +516,10 @@ def _build_brainstorm_plan_payload(
             }
         )
 
+    configured_priority_order = runtime_priority_labels
     priority_order = {
-        "🔴 P0 - Critical": 0,
-        "🟠 P1 - High": 1,
-        "🟡 P2 - Medium": 2,
-        "🟢 P3 - Low": 3,
+        priority: index
+        for index, priority in enumerate(configured_priority_order)
     }
     proposals.sort(
         key=lambda item: (
@@ -478,6 +539,9 @@ def _build_brainstorm_plan_payload(
         "requirements_dir": format_path_display(requirements_dir, repo_root),
         "source_file": format_path_display(brainstorm_path, repo_root),
         "total_proposals": len(proposals),
+        "proposal_sort": {
+            "priority_order": list(configured_priority_order),
+        },
         "proposals": proposals,
     }
 
