@@ -18,6 +18,12 @@ This allows us to treat rqmd as a sort of backlog that the user can easily reord
 
 A user should be able to easily move the REQ they are looking at to the top rank, or bottom rank. They should be able to move it up or down one rank easily.
 
+
+## Dedup IDs
+
+Add a dedicated duplicate-ID repair workflow so rqmd can help rename or reassign collisions instead of only reporting them. Do on startup automatically if needed.
+
+
 ## IDs
 
 What if we made IDs act like real IDs? Like just REQ-001 through REQ-999. That would provide a key metadata of when a requirement was created relative to all other requirements.
