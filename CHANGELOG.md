@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Changed rqmd and rqmd-ai docs, help text, and generated bundle guidance to prefer `--json` as the standard machine-readable output flag while keeping `--as-json` as a backward-compatible alias.
+- Changed `rqmd-ai install` to load bundle templates from packaged resource files under `src/rqmd/resources/bundle/` instead of embedding the bundle contents directly in code, so the shipped bundle can be edited as normal files and installed from package data.
 - Added policy-aware history retention defaults and config overrides (`history_retention.retain_last`, `retain_days`, `max_size_kib`), and wired `rqmd --history-gc` to trim persisted history state before pack/prune maintenance while reporting the active policy in `--history` and `--history-gc` outputs (RQMD-UNDO-008).
 - Added `rqmd --history-gc` with optional `--history-prune-now`, plus explicit confirmation and JSON/text reporting for safe maintenance of the hidden `rqmd-history` repository (progress toward RQMD-UNDO-007).
 - Added interactive `g` and `G` history-browser actions for confirmed history gc and immediate-prune maintenance from the entry detail view (progress toward RQMD-UNDO-007).

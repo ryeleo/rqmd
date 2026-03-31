@@ -56,7 +56,14 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-rqmd = ["init_docs/*.md"]
+rqmd = [
+  "init_docs/*.md",
+  "resources/bundle/minimal.txt",
+  "resources/bundle/full.txt",
+  "resources/bundle/.github/copilot-instructions.md",
+  "resources/bundle/.github/agents/*.md",
+  "resources/bundle/.github/skills/*/SKILL.md"
+]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

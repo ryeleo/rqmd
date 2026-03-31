@@ -11,6 +11,7 @@ This module provides:
 
 from __future__ import annotations
 
+import importlib.resources
 import json
 import re
 import sys
@@ -30,14 +31,22 @@ from .batch_inputs import parse_set_entry
 from .constants import JSON_SCHEMA_VERSION
 from .history import HistoryManager
 from .json_speedups import dumps_json
-from .markdown_io import (discover_project_root, format_path_display,
-                          iter_domain_files, resolve_requirements_dir,
-                          validate_files_readable)
-from .req_parser import (extract_blocking_id,
-                         extract_requirement_block_with_lines,
-                         find_duplicate_requirement_ids, normalize_id_prefixes,
-                         parse_domain_priority_metadata, parse_requirements,
-                         resolve_id_prefixes)
+from .markdown_io import (
+    discover_project_root,
+    format_path_display,
+    iter_domain_files,
+    resolve_requirements_dir,
+    validate_files_readable,
+)
+from .req_parser import (
+    extract_blocking_id,
+    extract_requirement_block_with_lines,
+    find_duplicate_requirement_ids,
+    normalize_id_prefixes,
+    parse_domain_priority_metadata,
+    parse_requirements,
+    resolve_id_prefixes,
+)
 from .status_model import normalize_status_input
 from .status_update import apply_status_change_by_id
 
@@ -118,371 +127,23 @@ _BRAINSTORM_PRIORITY_HINTS: tuple[tuple[tuple[str, ...], str], ...] = (
     (("priority", "filter", "link", "schema", "user story", "screen"), "🟡 P2 - Medium"),
 )
 
-_BUNDLE_MINIMAL_FILES: dict[str, str] = {
-    ".github/copilot-instructions.md": """# rqmd AI Contributor Instructions
+_BUNDLE_RESOURCE_ROOT = ("resources", "bundle")
 
-Purpose:
-- Keep requirement docs, summaries, and status lines synchronized.
-- Prefer machine-readable workflows (`--json`) for automation.
 
-Repository conventions:
-- Requirements index: docs/requirements/README.md
-- Domain docs: docs/requirements/*.md
-- Verify-only pass: uv run rqmd --verify-summaries --no-walk --no-table
+def _bundle_resource_base() -> object:
+    return importlib.resources.files("rqmd").joinpath(*_BUNDLE_RESOURCE_ROOT)
 
-AI workflow defaults:
-- Start with read-only context export via rqmd-ai.
-- Propose updates before apply (`--update ...` without `--write`).
-- Apply only after review with `--write`.
-- For implementation work, use `rqmd-ai --workflow-mode implement` and take the highest-priority 1-3 proposed requirements at a time.
-- After each implementation batch, make sure rqmd runs, summaries verify, tests pass, and priorities are re-checked before continuing.
-- Prefer the installed Copilot skills for repeatable workflows such as `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, and `/rqmd-verify`.
-- The standard bundle install includes specialized agents for exploration, requirements, docs sync, and history inspection. Use `--bundle-preset minimal` when you only want the lean bundle.
-- Skills improve workflow discovery and reuse, but they do not bypass terminal/tool approval prompts.
 
-Useful commands:
-- uv run rqmd-ai install --json
-- uv run rqmd-ai i --json --bundle-preset minimal --dry-run
-- uv run rqmd-ai --json --workflow-mode implement
-- uv run rqmd-ai --json --dump-status proposed
-- uv run rqmd-ai --json --dump-id RQMD-CORE-001 --include-requirement-body
-- uv run rqmd-ai --json --update RQMD-CORE-001=implemented
-- uv run rqmd-ai --json --write --update RQMD-CORE-001=implemented
-""",
-    ".github/agents/rqmd-dev.agent.md": """name: rqmd-dev
-description: "Primary implementation mode for rqmd repository tasks."
-tools: [read, search, edit, execute, todo, agent]
-agents: [rqmd-explore, rqmd-requirements, rqmd-docs, rqmd-history]
-argument-hint: "Describe the behavior change, affected files, and whether docs/requirements should be updated."
----
+def _read_bundle_manifest(preset: str) -> tuple[str, ...]:
+    manifest = _bundle_resource_base().joinpath(f"{preset}.txt")
+    lines = manifest.read_text(encoding="utf-8").splitlines()
+    entries = [line.strip() for line in lines if line.strip() and not line.lstrip().startswith("#")]
+    return tuple(entries)
 
-You are the primary implementation agent for this repository.
 
-Execution contract:
-- Make focused edits with minimal behavior drift.
-- Work highest-priority proposed requirements in small batches and re-check priorities between batches.
-- Keep docs/requirements status and summary blocks synchronized.
-- Keep README, Changelog, and all project MD docs aligned with shipped behavior.
-- Verify 'smoke tests' run (ask user to specify what a good smoke test is for their development efforts. Normally something like "build/run my app"), then run targeted tests, then full tests before completion.
-- Update CHANGELOG.md under [Unreleased] for every shipped change.
-- Prefer the installed rqmd skills when the task matches a known workflow: `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, `/rqmd-verify`.
-- Delegate narrowly scoped workflow work when helpful: `rqmd-requirements` for backlog/status/docs state, `rqmd-docs` for sync passes, and `rqmd-history` for time-travel and recovery planning.
-""",
-}
-
-_BUNDLE_SKILL_FILES: dict[str, str] = {
-    ".github/skills/rqmd-brainstorm/SKILL.md": """---
-name: rqmd-brainstorm
-description: Turn brainstorm notes or loose ideas into ranked rqmd requirement proposals before implementation. Use for docs/brainstorm.md review, backlog grooming, requirement planning, and mapping ideas into docs/requirements/*.md with suggested IDs, statuses, and priorities.
-argument-hint: Describe the brainstorm source and which requirement area it should likely affect.
-user-invocable: true
----
-
-Use this skill when the work starts as notes instead of tracked requirements.
-
-Workflow:
-- Export planning guidance with `uv run rqmd-ai --json --workflow-mode brainstorm`.
-- Read the brainstorm source, usually `docs/brainstorm.md`.
-- Cross-check existing backlog with `uv run rqmd-ai --json --dump-status proposed`.
-- Convert viable ideas into tracked proposals with target requirement docs, suggested IDs, canonical `💡 Proposed` status, and priorities.
-- Update requirement docs, the requirements index, and `CHANGELOG.md` before code when the proposal changes shipped behavior or workflow.
-
-Constraints:
-- Do not skip requirement tracking and jump straight to code for net-new behavior.
-- Keep the output read-only until requirement/doc changes are reviewed.
-- Skills improve workflow discovery; shell and tool approvals may still be required.
-""",
-    ".github/skills/rqmd-triage/SKILL.md": """---
-name: rqmd-triage
-description: Review, rank, and select the next rqmd backlog slice from tracked requirements. Use for proposal triage, next-batch selection, backlog grooming, and deciding which 1-3 requirements should move next.
-argument-hint: Describe the backlog area, status filter, or requirement domain you want to triage.
-user-invocable: true
----
-
-Use this skill when tracked requirements already exist and you need to decide what to work next.
-
-Workflow:
-- Export the current proposal queue with `uv run rqmd-ai --json --dump-status proposed`.
-- Narrow to a domain or requirement with `--dump-file`, `--dump-id`, or targeted rqmd filters when the backlog is broad.
-- Rank candidates by priority, blocking relationships, and implementation batch size.
-- Pick the highest-value 1-3 items for the next implementation slice.
-- Re-check remaining priorities after each shipped batch so the queue stays accurate.
-
-Constraints:
-- Prefer tracked requirement proposals over scratch notes once backlog entries already exist.
-- Keep selection logic explicit so future agents can understand why a batch was chosen.
-- Skills improve workflow discovery; shell and tool approvals may still be required.
-""",
-    ".github/skills/rqmd-export-context/SKILL.md": """---
-name: rqmd-export-context
-description: Export focused rqmd and rqmd-ai context for prompts, reviews, and automation handoffs. Use for requirement slices by status, ID, file, or bounded domain markdown when an agent needs only the relevant context.
-argument-hint: Describe which requirement slice or document context you need to export.
-user-invocable: true
----
-
-Use this skill when an agent needs precise context instead of the full repository.
-
-Workflow:
-- Start with `uv run rqmd-ai --json` for baseline guidance when needed.
-- Export targeted slices with `uv run rqmd-ai --json --dump-status proposed`, `--dump-id <ID>`, or `--dump-file <domain>.md`.
-- Include richer requirement text with `--include-requirement-body` when the body drives implementation.
-- Include bounded domain rationale with `--include-domain-markdown --max-domain-markdown-chars <N>` when architecture notes matter.
-- Prefer the smallest payload that still preserves stable IDs and requirement meaning.
-
-Constraints:
-- Keep exported context scoped and machine-readable by default.
-- Avoid dumping whole domains when an ID- or status-level slice is enough.
-- Skills improve workflow discovery; shell and tool approvals may still be required.
-""",
-    ".github/skills/rqmd-implement/SKILL.md": """---
-name: rqmd-implement
-description: Implement the highest-priority proposed rqmd requirements in small validated batches. Use for multi-file code changes that must stay synchronized with docs/requirements, README, tests, and CHANGELOG entries.
-argument-hint: Describe the requirement IDs or behavior to implement and the expected validation scope.
-user-invocable: true
----
-
-Use this skill when a requirement is ready to move from proposal into implementation.
-
-Workflow:
-- Start with `uv run rqmd-ai --json --workflow-mode implement`.
-- Review the current proposal queue with `uv run rqmd-ai --json --dump-status proposed`.
-- Take the highest-priority 1-3 proposed requirements for the next batch.
-- Update requirement docs, tests, README, and `CHANGELOG.md` as implementation details become concrete.
-- Verify the result with `uv run rqmd --verify-summaries --no-walk --no-table`, targeted tests, and then `uv run --extra dev pytest -q` before continuing.
-
-Constraints:
-- Keep changes focused and avoid broad unrelated refactors.
-- Re-check remaining priorities before starting another batch.
-- Skills improve workflow discovery; shell and tool approvals may still be required.
-""",
-    ".github/skills/rqmd-status-maintenance/SKILL.md": """---
-name: rqmd-status-maintenance
-description: Safely update requirement statuses, priorities, and focused worklists with rqmd and rqmd-ai. Use for planned status transitions, priority triage, filter-driven maintenance, and guarded requirement doc mutations.
-argument-hint: Describe the requirement IDs, desired status or priority updates, and whether you want preview-only or apply mode.
-user-invocable: true
----
-
-Use this skill when the task is primarily about requirement metadata rather than product code.
-
-Workflow:
-- Preview requirement changes first with `uv run rqmd-ai --json --update ID=STATUS`.
-- Apply only after review with `uv run rqmd-ai --json --write --update ID=STATUS`.
-- Use `uv run rqmd --update-priority ID=p1` or repeated `--update-priority` flags for priority maintenance.
-- Use rqmd filters such as `--status`, `--priority`, `--flagged`, `--has-link`, or positional tokens to build focused maintenance worklists.
-- Re-run summary verification after any requirement mutation.
-
-Constraints:
-- Keep status and priority changes aligned with the actual code and test state.
-- Prefer machine-readable preview/apply flows for multi-update maintenance.
-- Skills improve workflow discovery; shell and tool approvals may still be required.
-""",
-    ".github/skills/rqmd-doc-sync/SKILL.md": """---
-name: rqmd-doc-sync
-description: Synchronize rqmd requirement docs, summaries, README guidance, and changelog entries after behavior changes. Use when shipped behavior, requirement status, or workflow guidance changed and repo docs must stay coherent.
-argument-hint: Describe what changed and which docs or requirement files may now be out of sync.
-user-invocable: true
----
-
-Use this skill when code changes are done but documentation and requirement state may have drifted.
-
-Workflow:
-- Update the affected requirement docs in `docs/requirements/*.md`.
-- Keep `docs/requirements/README.md`, top-level `README.md`, and `CHANGELOG.md` aligned with shipped behavior.
-- If work changed AI workflows or onboarding, update `.github/copilot-instructions.md` and any installed bundle text as needed.
-- Re-run `uv run rqmd --verify-summaries --no-walk --no-table`.
-- Call out any remaining drift or docs that still need manual judgment.
-
-Constraints:
-- Treat requirement markdown as product surface, not optional notes.
-- Prefer small doc updates tied directly to shipped behavior.
-- Skills improve workflow discovery; shell and tool approvals may still be required.
-""",
-    ".github/skills/rqmd-history/SKILL.md": """---
-name: rqmd-history
-description: Inspect rqmd history, timeline, detached snapshots, comparisons, and replay previews. Use for undo/redo investigation, time-travel debugging, historical diffs, and planning restore or replay actions without mutating the current worktree.
-argument-hint: Describe the history question, refs, or time window you want to inspect.
-user-invocable: true
----
-
-Use this skill when the important question is when a requirement changed, what changed between snapshots, or how to recover prior state.
-
-Workflow:
-- Use `uv run rqmd --history` or `uv run rqmd --timeline` for high-level history inspection.
-- Use `uv run rqmd-ai --json --history-ref <ref> --dump-status proposed` or another targeted export for detached point-in-time reads.
-- Use `uv run rqmd-ai --json --compare-refs A..B` for structured historical diffs.
-- Use `uv run rqmd-ai --json --history-report --history-ref <ref>` or `--compare-refs A..B` for report-oriented output.
-- Use `uv run rqmd-ai --json --history-action restore:<ref>` or `replay:<A..B>` for read-only recovery planning before any write path.
-
-Constraints:
-- Keep historical exploration read-only unless the user explicitly wants a recovery action.
-- Prefer stable `hid:<commit>` identifiers when persisting references across conversations.
-- Skills improve workflow discovery; shell and tool approvals may still be required.
-""",
-    ".github/skills/rqmd-bundle/SKILL.md": """---
-name: rqmd-bundle
-description: Install, refresh, and explain the rqmd AI agent and skill bundle for a workspace. Use for onboarding repositories, previewing bundle changes, preserving customized files, and clarifying how skills relate to approval prompts.
-argument-hint: Describe whether you want a dry-run preview, minimal/full install, overwrite behavior, or bundle customization.
-user-invocable: true
----
-
-Use this skill when the work is about Copilot instructions, agents, skills, or bundle installation rather than the application itself.
-
-Workflow:
-- Preview bundle changes with `uv run rqmd-ai i --json --bundle-preset minimal --dry-run`.
-- Install the standard bundle with `uv run rqmd-ai install --json`.
-- Use `--overwrite-existing` only when intentional replacement of workspace customization is desired.
-- Keep generated bundle text and checked-in workspace copies aligned if the repository ships its own bundle source.
-- Explain clearly that skills improve workflow discovery and slash-command reuse, but they do not bypass terminal or tool approval prompts.
-
-Constraints:
-- Preserve existing customized files unless overwrite is explicitly requested.
-- Keep bundle changes consistent between installed templates and the repository copies that generate them.
-- Skills improve workflow discovery; shell and tool approvals may still be required.
-""",
-    ".github/skills/rqmd-verify/SKILL.md": """---
-name: rqmd-verify
-description: Verify rqmd requirement/documentation sync and post-change validation. Use after edits to re-run summary verification, targeted tests, full tests, and any final requirement-status checks before completion.
-argument-hint: Describe what changed and whether you want targeted validation, a full verification pass, or both.
-user-invocable: true
----
-
-Use this skill when changes are already in progress and you need a disciplined finish pass.
-
-Workflow:
-- Re-run requirement summary verification with `uv run rqmd --verify-summaries --no-walk --no-table`.
-- Run targeted tests for the touched area first.
-- Run the full test suite with `uv run --extra dev pytest -q`.
-- If work affected backlog state, re-check `uv run rqmd-ai --json --dump-status proposed` so priorities remain accurate.
-- Call out any residual risk, missing validation, or requirement/doc drift before finishing.
-
-Constraints:
-- Prefer deterministic validation commands.
-- Report clearly when validation could not be completed.
-- Skills improve workflow discovery; shell and tool approvals may still be required.
-""",
-}
-
-_BUNDLE_FULL_FILES: dict[str, str] = {
-    ".github/agents/rqmd-explore.agent.md": """name: rqmd-explore
-description: "Read-only exploration mode for locating files, symbols, tests, and requirement references."
-tools: [read, search, execute]
-agents: []
-argument-hint: "Describe what to find and desired thoroughness (quick/medium/thorough)."
----
-
-You are a read-only exploration agent.
-
-Guidelines:
-- Do not edit files.
-- Prefer fast searches and concise evidence collection.
-- Return file paths and line hints that unblock implementation quickly.
-- Prefer targeted rqmd exports and requirement references over broad repo dumps when the question is backlog- or doc-specific.
-- Call out nearby tests, docs, and requirement files that the implementation agent will likely need next.
-""",
-    ".github/agents/rqmd-requirements.agent.md": """name: rqmd-requirements
-description: "Requirement and backlog maintenance mode for rqmd-managed projects."
-tools: [read, search, edit, execute, todo, agent]
-agents: [rqmd-explore]
-argument-hint: "Describe the requirement IDs, backlog slice, or status/priority/doc updates you need."
----
-
-You are the requirement maintenance agent for rqmd-managed workspaces.
-
-Primary responsibilities:
-- Triage proposed requirements into the next concrete implementation batch.
-- Keep `docs/requirements/*.md` and the requirements index synchronized with current status and priority decisions.
-- Use machine-readable rqmd/rqmd-ai flows for previews, exports, and guarded apply paths.
-
-Execution contract:
-- Start from tracked requirements whenever they exist; do not treat brainstorm notes as the source of truth once requirements are recorded.
-- Prefer `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-status-maintenance`, and `/rqmd-doc-sync` when the task matches.
-- Keep status, priority, and summary changes consistent with the actual implementation and test state.
-- Re-run summary verification after requirement mutations and call out any backlog ambiguity clearly.
-""",
-    ".github/agents/rqmd-docs.agent.md": """name: rqmd-docs
-description: "Documentation synchronization mode for README, changelog, and requirement-doc updates."
-tools: [read, search, edit, execute, todo, agent]
-agents: [rqmd-explore]
-argument-hint: "Describe the behavior change and which docs may be stale or need alignment."
----
-
-You are the documentation synchronization agent for rqmd-managed workspaces.
-
-Primary responsibilities:
-- Keep `README.md`, `CHANGELOG.md`, `.github/copilot-instructions.md`, and `docs/requirements/*.md` aligned with shipped behavior.
-- Close requirement/doc drift after code changes, workflow changes, or bundle changes.
-- Preserve the repository's concise, requirement-first documentation style.
-
-Execution contract:
-- Prefer `/rqmd-doc-sync` and `/rqmd-verify` when those workflows cover the task directly.
-- Treat requirement markdown as product surface, not optional notes.
-- Avoid broad prose rewrites when a focused doc delta is sufficient.
-- Verify summary sync after touching requirement docs, and state clearly if any docs still require manual judgment.
-""",
-    ".github/agents/rqmd-history.agent.md": """name: rqmd-history
-description: "History and time-travel investigation mode for rqmd timeline, detached exports, and recovery planning."
-tools: [read, search, execute, todo, agent]
-agents: [rqmd-explore]
-argument-hint: "Describe the history question, refs, branch, or recovery path you need to inspect."
----
-
-You are the history investigation agent for rqmd-managed workspaces.
-
-Primary responsibilities:
-- Inspect `rqmd --history`, `rqmd --timeline`, and `rqmd-ai` detached history exports.
-- Compare requirement state across refs, explain what changed, and plan safe restore/replay/cherry-pick actions.
-- Keep recovery exploration read-only unless the user explicitly requests mutation.
-
-Execution contract:
-- Prefer `/rqmd-history` and `/rqmd-export-context` for detached snapshots, compare reports, and recovery previews.
-- Use stable `hid:<commit>` identifiers when carrying historical references across steps.
-- Surface exact commands, refs, and likely consequences before any recovery action is executed.
-- Escalate if the requested action would rewrite or discard state without explicit user intent.
-""",
-    ".github/agents/README.md": """# rqmd Agent Bundle
-
-This folder contains a standard AI agent bundle installed by:
-
-`rqmd-ai install`
-
-Legacy equivalent:
-
-`rqmd-ai --install-agent-bundle`
-
-Presets:
-- full (default): `.github/copilot-instructions.md`, `.github/agents/rqmd-dev.agent.md`, the rqmd workflow skills under `.github/skills/`, `.github/agents/rqmd-explore.agent.md`, `.github/agents/rqmd-requirements.agent.md`, `.github/agents/rqmd-docs.agent.md`, `.github/agents/rqmd-history.agent.md`, and this README
-- minimal: `.github/copilot-instructions.md`, `.github/agents/rqmd-dev.agent.md`, and the rqmd workflow skills under `.github/skills/`
-
-Operational notes:
-- Re-run is idempotent.
-- Existing files are preserved unless `--overwrite-existing` is used.
-- Skills improve workflow discovery and slash-command reuse, but they do not bypass terminal or tool approval prompts.
-- The rqmd source repository also keeps a repo-local `rqmd-bundle-maintainer` agent for maintaining the bundle itself; `rqmd-ai install` does not install that self-maintenance agent into target workspaces.
-
-Useful commands:
-- `rqmd-ai install`
-- `rqmd-ai i --bundle-preset minimal --dry-run`
-- `rqmd-ai --install-agent-bundle --bundle-preset minimal`
-
-Installed workflow skills:
-- `/rqmd-brainstorm`
-- `/rqmd-triage`
-- `/rqmd-export-context`
-- `/rqmd-implement`
-- `/rqmd-status-maintenance`
-- `/rqmd-doc-sync`
-- `/rqmd-history`
-- `/rqmd-bundle`
-- `/rqmd-verify`
-
-Installed agents in the full preset:
-- `rqmd-dev`: primary implementation and orchestration agent
-- `rqmd-explore`: read-only codebase and requirement discovery agent
-- `rqmd-requirements`: backlog, status, priority, and requirement-doc maintenance agent
-- `rqmd-docs`: README, changelog, and requirement-doc sync agent
-- `rqmd-history`: timeline, history-ref, compare-refs, and recovery-planning agent
-""",
-}
+def _read_bundle_resource_file(relative_path: str) -> str:
+    resource = _bundle_resource_base().joinpath(*relative_path.split("/"))
+    return resource.read_text(encoding="utf-8")
 
 
 def _build_guide_payload(
@@ -507,11 +168,10 @@ def _build_guide_payload(
 
 
 def _bundle_files_for_preset(preset: str) -> dict[str, str]:
-    files = dict(_BUNDLE_MINIMAL_FILES)
-    files.update(_BUNDLE_SKILL_FILES)
-    if preset == "full":
-        files.update(_BUNDLE_FULL_FILES)
-    return files
+    return {
+        relative_path: _read_bundle_resource_file(relative_path)
+        for relative_path in _read_bundle_manifest(preset)
+    }
 
 
 def _resolve_brainstorm_file(repo_root: Path, brainstorm_file: str | None) -> Path:

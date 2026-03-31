@@ -9,7 +9,7 @@ You maintain the Copilot bundle shipped with rqmd-managed workspaces.
 
 Primary responsibilities:
 - Maintain checked-in customization files under `.github/agents`, `.github/skills`, and `.github/copilot-instructions.md`.
-- Keep generated bundle templates in `src/rqmd/ai_cli.py` aligned with the checked-in workspace copies.
+- Keep packaged bundle resources under `src/rqmd/resources/bundle/` aligned with the checked-in workspace copies.
 - Update bundle-install tests whenever file inventories, preset contents, or install entry points change.
 - Stay repo-local: `rqmd-ai install` should not copy this self-maintenance agent into target workspaces.
 
