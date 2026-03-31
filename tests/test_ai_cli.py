@@ -1110,7 +1110,18 @@ def test_RQMD_AI_020_install_bundle_bootstrap_chat_exposes_interview_and_preview
     assert payload["bootstrap_chat"]["enabled"] is True
     assert payload["bootstrap_chat"]["detected_sources"] == ["package.json scripts"]
     questions = payload["bootstrap_chat"]["questions"]
-    assert any(item["field"] == "dev_run" and "`npm run dev`" in item["inferred_answers"] for item in questions)
+    question_groups = payload["bootstrap_chat"]["question_groups"]
+    assert [group["id"] for group in question_groups] == [
+        "developer_workflows",
+        "validation_workflows",
+        "review_notes",
+    ]
+    dev_run_question = next(item for item in questions if item["field"] == "dev_run")
+    assert dev_run_question["selection_model"]["allow_multiple"] is True
+    assert dev_run_question["selection_model"]["allow_custom"] is True
+    assert dev_run_question["selection_model"]["allow_skip"] is True
+    assert dev_run_question["selection_model"]["first_selected_is_canonical"] is True
+    assert any(option["value"] == "`npm run dev`" for option in dev_run_question["options"])
     preview_map = {entry["path"]: entry["content"] for entry in payload["generated_skill_previews"]}
     assert ".github/skills/dev/SKILL.md" in preview_map
     assert "npm run dev" in preview_map[".github/skills/dev/SKILL.md"]
@@ -1154,6 +1165,101 @@ def test_RQMD_AI_020_install_bundle_bootstrap_chat_applies_answer_overrides(tmp_
     preview_map = {entry["path"]: entry["content"] for entry in payload["generated_skill_previews"]}
     assert "python -m demo.app" in preview_map[".github/skills/dev/SKILL.md"]
     assert "pytest -q" in preview_map[".github/skills/test/SKILL.md"]
+
+
+def test_RQMD_AI_022_init_legacy_bootstrap_chat_exposes_grouped_interview(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / "repo"
+    (repo / "src" / "ac_cli").mkdir(parents=True)
+    (repo / "src" / "ac_cli" / "cli.py").write_text("def main():\n    return 0\n", encoding="utf-8")
+    (repo / "tests").mkdir(parents=True)
+    (repo / "tests" / "test_demo.py").write_text("def test_demo():\n    assert True\n", encoding="utf-8")
+
+    monkeypatch.setattr("rqmd.ai_cli.shutil.which", lambda name: None)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "--workflow-mode",
+            "init-legacy",
+            "--bootstrap-chat",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    _assert_schema_version(payload)
+    assert payload["mode"] == "legacy-init-plan"
+    assert payload["bootstrap_chat"]["enabled"] is True
+    assert [group["id"] for group in payload["bootstrap_chat"]["question_groups"]] == [
+        "catalog_setup",
+        "developer_workflows",
+        "validation_workflows",
+        "repository_understanding",
+        "backlog_sources",
+        "review_notes",
+    ]
+    requirements_dir_question = next(
+        item for item in payload["bootstrap_chat"]["questions"] if item["field"] == "requirements_dir"
+    )
+    assert requirements_dir_question["selection_model"]["allow_multiple"] is False
+    assert requirements_dir_question["selection_model"]["allow_custom"] is True
+    domain_focus_question = next(
+        item for item in payload["bootstrap_chat"]["questions"] if item["field"] == "domain_focus"
+    )
+    assert domain_focus_question["selection_model"]["allow_multiple"] is True
+    assert payload["bootstrap_chat"]["detected_source_areas"]
+
+
+def test_RQMD_AI_023_init_legacy_bootstrap_answers_override_plan(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / "repo"
+    (repo / "src" / "ac_cli").mkdir(parents=True)
+    (repo / "src" / "ac_cli" / "cli.py").write_text("def main():\n    return 0\n", encoding="utf-8")
+    (repo / "package.json").write_text(
+        json.dumps({"name": "demo-app", "scripts": {"dev": "vite"}}),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr("rqmd.ai_cli.shutil.which", lambda name: None)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "--workflow-mode",
+            "init-legacy",
+            "--bootstrap-chat",
+            "--bootstrap-answer",
+            "requirements_dir=requirements",
+            "--bootstrap-answer",
+            "id_prefix=AC",
+            "--bootstrap-answer",
+            "dev_run=python -m demo.app",
+            "--bootstrap-answer",
+            "issue_backlog=skip-gh-issues",
+            "--bootstrap-answer",
+            "domain_focus=Custom Domain",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    _assert_schema_version(payload)
+    assert payload["requirements_dir"] == "requirements"
+    assert payload["starter_prefix"] == "AC"
+    assert payload["issue_discovery"]["used"] is False
+    assert payload["issue_discovery"]["reason"] == "skipped by bootstrap interview"
+    workflow_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == "requirements/developer-workflows.md")
+    assert "python -m demo.app" in workflow_entry["content"]
+    assert "requirements/custom-domain.md" in [entry["path"] for entry in payload["proposed_files"]]
+    readme_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == "requirements/README.md")
+    assert "Bootstrap Interview Notes" in readme_entry["content"]
 
 
 def test_RQMD_AI_017_installed_bundle_reports_generated_dev_and_test_skills(tmp_path: Path) -> None:

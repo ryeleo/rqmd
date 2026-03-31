@@ -166,6 +166,7 @@ Summary: 0💡 21🔧 0✅ 0⛔ 3🗑️
 - So that bundle install can interview the user about the project's build, run, dev, and test commands instead of forcing all customization through manual file edits.
 - So that the bootstrap chat can propose `dev` and `test` skill content, preview the generated files, and only write them after explicit review.
 - So that teams can adopt the bundle through a guided conversation even when they have not yet learned the exact customization file formats.
+- So that the bootstrap chat can present grouped multiple-choice suggestions, allow multi-select answers, let users skip sections, and accept custom text alongside the inferred commands.
 
 ### RQMD-AI-021: rqmd-dev delegation to project dev and test skills
 - **Status:** 🔧 Implemented
@@ -182,6 +183,7 @@ Summary: 0💡 21🔧 0✅ 0⛔ 3🗑️
 - I want an `init-legacy` AI skill or workflow that helps bootstrap rqmd from the repository's existing reality
 - So that adoption can start from the current codebase, docs, backlog, and conventions instead of requiring a blank-slate scaffold.
 - So that rqmd-ai can guide the user through a legacy-init flow focused on first-use setup rather than generic bundle installation alone.
+- So that the legacy-init flow can reuse the same grouped interview UX as bundle bootstrap, including suggested choices, multi-select answers, and custom notes.
 
 ### RQMD-AI-023: Useful first-pass requirements folder for legacy repos
 - **Status:** 🔧 Implemented
@@ -190,6 +192,7 @@ Summary: 0💡 21🔧 0✅ 0⛔ 3🗑️
 - I want the legacy-init flow to produce a useful first-pass `requirements/` folder that I can immediately start editing and using
 - So that the resulting requirements docs reflect the repository's current product areas, workflows, and likely work streams instead of only a generic starter example.
 - So that the flow can propose an initial requirements structure, starter domain files, and seed content for review before writing.
+- So that interview answers about catalog location, ID prefix, starter domains, docs review, and workflow commands can directly shape the generated starter catalog.
 
 ### RQMD-AI-024: Optional GitHub issue discovery during legacy init
 - **Status:** 🔧 Implemented

@@ -398,6 +398,46 @@ _BOOTSTRAP_CHAT_FIELDS: tuple[str, ...] = (
     "notes",
 )
 
+_LEGACY_INIT_CHAT_FIELDS: tuple[str, ...] = (
+    "requirements_dir",
+    "id_prefix",
+    "docs_review",
+    "source_grokking",
+    "test_grokking",
+    "domain_focus",
+    "issue_backlog",
+    "legacy_notes",
+)
+
+_INTERVIEW_GROUP_LABELS: dict[str, str] = {
+    "catalog_setup": "Catalog setup",
+    "developer_workflows": "Developer workflows",
+    "validation_workflows": "Validation workflows",
+    "repository_understanding": "Repository understanding",
+    "backlog_sources": "Backlog sources",
+    "review_notes": "Review notes",
+}
+
+_INTERVIEW_GROUP_ORDER: tuple[str, ...] = (
+    "catalog_setup",
+    "developer_workflows",
+    "validation_workflows",
+    "repository_understanding",
+    "backlog_sources",
+    "review_notes",
+)
+
+_BOOTSTRAP_CHAT_GROUPS: dict[str, str] = {
+    "dev_environment": "developer_workflows",
+    "dev_build": "developer_workflows",
+    "dev_run": "developer_workflows",
+    "dev_smoke": "developer_workflows",
+    "test_primary": "validation_workflows",
+    "test_integration": "validation_workflows",
+    "test_lint": "validation_workflows",
+    "notes": "review_notes",
+}
+
 _BOOTSTRAP_CHAT_LABELS: dict[str, str] = {
     "dev_environment": "Development environment setup",
     "dev_build": "Build commands",
@@ -419,6 +459,249 @@ _BOOTSTRAP_CHAT_PROMPTS: dict[str, str] = {
     "test_lint": "Which lint or static verification commands should /test use?",
     "notes": "What review notes or caveats should be carried into the generated skills?",
 }
+
+_LEGACY_INIT_LABELS: dict[str, str] = {
+    "requirements_dir": "Requirements directory",
+    "id_prefix": "Requirement ID prefix",
+    "docs_review": "Docs review strategy",
+    "source_grokking": "Source understanding depth",
+    "test_grokking": "Test understanding depth",
+    "domain_focus": "Starter domain focus",
+    "issue_backlog": "Issue backlog handling",
+    "legacy_notes": "Legacy bootstrap notes",
+}
+
+_LEGACY_INIT_PROMPTS: dict[str, str] = {
+    "requirements_dir": "Where should rqmd create the starter requirements catalog?",
+    "id_prefix": "Which requirement ID prefix should legacy-init use for the starter catalog?",
+    "docs_review": "How should legacy-init treat existing repository docs when seeding the first-pass catalog?",
+    "source_grokking": "How deeply should the AI spend effort understanding the source tree during legacy bootstrap?",
+    "test_grokking": "How deeply should the AI spend effort understanding the repository's test strategy during legacy bootstrap?",
+    "domain_focus": "Which detected areas should become starter requirement files first?",
+    "issue_backlog": "How should legacy-init handle GitHub issue discovery and backlog seeding?",
+    "legacy_notes": "What extra review notes or caveats should be carried into the generated starter catalog?",
+}
+
+_LEGACY_INIT_GROUPS: dict[str, str] = {
+    "requirements_dir": "catalog_setup",
+    "id_prefix": "catalog_setup",
+    "docs_review": "repository_understanding",
+    "source_grokking": "repository_understanding",
+    "test_grokking": "repository_understanding",
+    "domain_focus": "repository_understanding",
+    "issue_backlog": "backlog_sources",
+    "legacy_notes": "review_notes",
+}
+
+_LEGACY_INIT_FIELD_DEFAULTS: dict[str, dict[str, object]] = {
+    "requirements_dir": {
+        "allow_multiple": False,
+        "allow_custom": True,
+        "allow_skip": False,
+        "first_selected_is_canonical": True,
+        "custom_answer_prompt": "Type a custom requirements directory path.",
+    },
+    "id_prefix": {
+        "allow_multiple": False,
+        "allow_custom": True,
+        "allow_skip": False,
+        "first_selected_is_canonical": True,
+        "custom_answer_prompt": "Type a custom requirement ID prefix.",
+    },
+    "docs_review": {
+        "allow_multiple": True,
+        "allow_custom": True,
+        "allow_skip": True,
+        "first_selected_is_canonical": False,
+        "custom_answer_prompt": "Add a custom docs-review note or rule.",
+    },
+    "source_grokking": {
+        "allow_multiple": False,
+        "allow_custom": True,
+        "allow_skip": True,
+        "first_selected_is_canonical": True,
+        "custom_answer_prompt": "Add a custom source-understanding preference.",
+    },
+    "test_grokking": {
+        "allow_multiple": False,
+        "allow_custom": True,
+        "allow_skip": True,
+        "first_selected_is_canonical": True,
+        "custom_answer_prompt": "Add a custom test-understanding preference.",
+    },
+    "domain_focus": {
+        "allow_multiple": True,
+        "allow_custom": True,
+        "allow_skip": True,
+        "first_selected_is_canonical": False,
+        "custom_answer_prompt": "Add a custom source area or subsystem to seed.",
+    },
+    "issue_backlog": {
+        "allow_multiple": False,
+        "allow_custom": True,
+        "allow_skip": True,
+        "first_selected_is_canonical": True,
+        "custom_answer_prompt": "Add a custom backlog-handling note.",
+    },
+    "legacy_notes": {
+        "allow_multiple": True,
+        "allow_custom": True,
+        "allow_skip": True,
+        "first_selected_is_canonical": False,
+        "custom_answer_prompt": "Add another legacy-bootstrap note.",
+    },
+}
+
+_LEGACY_INIT_OPTION_SETS: dict[str, tuple[dict[str, str], ...]] = {
+    "docs_review": (
+        {
+            "value": "use-current-docs",
+            "label": "Use the current docs as source material",
+            "description": "Let the bootstrap seed requirements from the repo's present docs and READMEs.",
+        },
+        {
+            "value": "avoid-stale-docs",
+            "label": "Treat stale or legacy docs cautiously",
+            "description": "Bias the bootstrap toward current source and tests when docs look outdated.",
+        },
+        {
+            "value": "readmes-first",
+            "label": "Read top-level READMEs first",
+            "description": "Favor README-style docs before broader markdown sweeps.",
+        },
+    ),
+    "source_grokking": (
+        {
+            "value": "focused-pass",
+            "label": "Focused pass",
+            "description": "Spend a bounded pass on the most relevant source areas only.",
+        },
+        {
+            "value": "broad-pass",
+            "label": "Broad pass",
+            "description": "Spend extra time building a wider mental model of the source tree.",
+        },
+        {
+            "value": "quick-scan",
+            "label": "Quick scan",
+            "description": "Prefer a lighter scan and let the generated seeds stay coarse.",
+        },
+    ),
+    "test_grokking": (
+        {
+            "value": "focused-tests",
+            "label": "Focused test pass",
+            "description": "Inspect the core test workflow and representative tests.",
+        },
+        {
+            "value": "deep-tests",
+            "label": "Deep test pass",
+            "description": "Spend extra time understanding test helpers, fixtures, and coverage patterns.",
+        },
+        {
+            "value": "light-tests",
+            "label": "Light test scan",
+            "description": "Infer the test strategy from surface signals unless something looks unusual.",
+        },
+    ),
+    "issue_backlog": (
+        {
+            "value": "use-gh-if-available",
+            "label": "Use GitHub issues when available",
+            "description": "Seed a backlog file from `gh issue list` when the CLI is installed and authenticated.",
+        },
+        {
+            "value": "skip-gh-issues",
+            "label": "Skip GitHub issue seeding",
+            "description": "Do not create issue-derived starter requirements.",
+        },
+        {
+            "value": "issues-as-signals-only",
+            "label": "Treat issues as weak signals",
+            "description": "Use issues to inform the initial catalog, but keep the generated backlog conservative.",
+        },
+    ),
+}
+
+
+def _build_interview_question(
+    *,
+    field: str,
+    group_id: str,
+    label: str,
+    prompt: str,
+    inferred_answers: list[str],
+    allow_multiple: bool,
+    allow_custom: bool,
+    allow_skip: bool,
+    first_selected_is_canonical: bool,
+    custom_answer_prompt: str | None = None,
+    suggested_options: tuple[dict[str, str], ...] = (),
+) -> dict[str, object]:
+    options: list[dict[str, str]] = []
+    seen: set[str] = set()
+
+    def add_option(value: str, *, label_text: str | None = None, kind: str, description: str | None = None) -> None:
+        text = str(value).strip()
+        if not text:
+            return
+        normalized = text.casefold()
+        if normalized in seen:
+            return
+        seen.add(normalized)
+        option: dict[str, str] = {
+            "value": text,
+            "label": str(label_text or text),
+            "kind": kind,
+        }
+        if description:
+            option["description"] = description
+        options.append(option)
+
+    for item in inferred_answers:
+        add_option(item, kind="inferred")
+    for option in suggested_options:
+        add_option(
+            str(option.get("value") or ""),
+            label_text=str(option.get("label") or "") or None,
+            kind="suggested",
+            description=str(option.get("description") or "") or None,
+        )
+
+    return {
+        "field": field,
+        "group_id": group_id,
+        "group_label": _INTERVIEW_GROUP_LABELS[group_id],
+        "label": label,
+        "prompt": prompt,
+        "selection_model": {
+            "allow_multiple": allow_multiple,
+            "allow_custom": allow_custom,
+            "allow_skip": allow_skip,
+            "first_selected_is_canonical": first_selected_is_canonical,
+        },
+        "custom_answer_prompt": custom_answer_prompt,
+        "options": options,
+        "inferred_answers": [str(item) for item in inferred_answers if str(item).strip()],
+    }
+
+
+def _group_interview_questions(questions: list[dict[str, object]]) -> list[dict[str, object]]:
+    grouped: dict[str, dict[str, object]] = {}
+    ordered_groups: list[str] = []
+    for question in questions:
+        group_id = str(question["group_id"])
+        if group_id not in grouped:
+            grouped[group_id] = {
+                "id": group_id,
+                "label": str(question["group_label"]),
+                "questions": [],
+            }
+            ordered_groups.append(group_id)
+        grouped[group_id]["questions"].append(question)
+    ordered = [group_id for group_id in _INTERVIEW_GROUP_ORDER if group_id in grouped]
+    ordered.extend(group_id for group_id in ordered_groups if group_id not in ordered)
+    return [grouped[group_id] for group_id in ordered]
 
 
 def _detect_project_command_hints(repo_root: Path) -> dict[str, list[str]]:
@@ -565,7 +848,7 @@ def _infer_project_skill_content(repo_root: Path) -> dict[str, str]:
     return _render_project_skill_content_from_hints(hints)
 
 
-def _parse_bootstrap_answer_entry(raw: str) -> tuple[str, str]:
+def _parse_bootstrap_answer_entry(raw: str, allowed_fields: tuple[str, ...]) -> tuple[str, str]:
     text = str(raw).strip()
     if "=" not in text:
         raise click.ClickException(
@@ -574,8 +857,8 @@ def _parse_bootstrap_answer_entry(raw: str) -> tuple[str, str]:
     field_raw, value_raw = text.split("=", 1)
     field = field_raw.strip().lower()
     value = value_raw.strip()
-    if field not in _BOOTSTRAP_CHAT_FIELDS:
-        allowed = ", ".join(_BOOTSTRAP_CHAT_FIELDS)
+    if field not in allowed_fields:
+        allowed = ", ".join(allowed_fields)
         raise click.ClickException(
             f"Unknown --bootstrap-answer field {field_raw!r}. Allowed fields: {allowed}."
         )
@@ -584,22 +867,30 @@ def _parse_bootstrap_answer_entry(raw: str) -> tuple[str, str]:
     return field, value
 
 
-def _apply_bootstrap_answers(
-    hints: dict[str, list[str]],
+def _collect_bootstrap_answers(
     bootstrap_answers: tuple[str, ...],
-) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
+    allowed_fields: tuple[str, ...],
+) -> dict[str, list[str]]:
+    collected_answers: dict[str, list[str]] = {field: [] for field in allowed_fields}
+    for raw in bootstrap_answers:
+        field, value = _parse_bootstrap_answer_entry(raw, allowed_fields)
+        collected_answers[field].append(value)
+    return {field: values for field, values in collected_answers.items() if values}
+
+
+def _apply_command_answers(
+    hints: dict[str, list[str]],
+    collected_answers: dict[str, list[str]],
+) -> dict[str, list[str]]:
     updated: dict[str, list[str]] = {
         key: list(value) if isinstance(value, list) else []
         for key, value in hints.items()
     }
-    collected_answers: dict[str, list[str]] = {field: [] for field in _BOOTSTRAP_CHAT_FIELDS}
-    for raw in bootstrap_answers:
-        field, value = _parse_bootstrap_answer_entry(raw)
-        collected_answers[field].append(value)
-    for field, values in collected_answers.items():
+    for field in _BOOTSTRAP_CHAT_FIELDS:
+        values = collected_answers.get(field, [])
         if values:
             updated[field] = list(values)
-    return updated, {field: values for field, values in collected_answers.items() if values}
+    return updated
 
 
 def _build_bootstrap_chat_questions(hints: dict[str, list[str]]) -> list[dict[str, object]]:
@@ -607,14 +898,182 @@ def _build_bootstrap_chat_questions(hints: dict[str, list[str]]) -> list[dict[st
     for field in _BOOTSTRAP_CHAT_FIELDS:
         inferred = hints.get(field) if isinstance(hints.get(field), list) else []
         questions.append(
-            {
-                "field": field,
-                "label": _BOOTSTRAP_CHAT_LABELS[field],
-                "prompt": _BOOTSTRAP_CHAT_PROMPTS[field],
-                "inferred_answers": [str(item) for item in inferred if str(item).strip()],
-            }
+            _build_interview_question(
+                field=field,
+                group_id=_BOOTSTRAP_CHAT_GROUPS[field],
+                label=_BOOTSTRAP_CHAT_LABELS[field],
+                prompt=_BOOTSTRAP_CHAT_PROMPTS[field],
+                inferred_answers=[str(item) for item in inferred if str(item).strip()],
+                allow_multiple=True,
+                allow_custom=True,
+                allow_skip=True,
+                first_selected_is_canonical=(field != "notes"),
+                custom_answer_prompt=(
+                    "Add another command or note."
+                    if field == "notes"
+                    else "Add another custom command."
+                ),
+            )
         )
     return questions
+
+
+def _legacy_init_requirements_dir_options(
+    repo_root: Path,
+    default_dir: Path,
+) -> tuple[dict[str, str], ...]:
+    candidates: list[str] = []
+    for candidate in (
+        default_dir.as_posix(),
+        "docs/requirements",
+        "requirements",
+        "docs/reqs",
+    ):
+        if candidate not in candidates:
+            candidates.append(candidate)
+    return tuple(
+        {
+            "value": value,
+            "label": value,
+            "description": (
+                "Already exists in this repository."
+                if (repo_root / value).exists()
+                else "Suggested starter location for the rqmd catalog."
+            ),
+        }
+        for value in candidates
+    )
+
+
+def _build_legacy_init_chat_questions(
+    repo_root: Path,
+    requirements_dir: Path,
+    id_prefixes: tuple[str, ...],
+    command_hints: dict[str, list[str]],
+    source_areas: list[dict[str, str]],
+    issue_context: dict[str, object],
+) -> list[dict[str, object]]:
+    questions: list[dict[str, object]] = []
+
+    inferred_prefix = id_prefixes[0] if id_prefixes else "REQ"
+    questions.append(
+        _build_interview_question(
+            field="requirements_dir",
+            group_id=_LEGACY_INIT_GROUPS["requirements_dir"],
+            label=_LEGACY_INIT_LABELS["requirements_dir"],
+            prompt=_LEGACY_INIT_PROMPTS["requirements_dir"],
+            inferred_answers=[requirements_dir.as_posix()],
+            allow_multiple=False,
+            allow_custom=True,
+            allow_skip=False,
+            first_selected_is_canonical=True,
+            custom_answer_prompt="Type a custom requirements directory path.",
+            suggested_options=_legacy_init_requirements_dir_options(repo_root, requirements_dir),
+        )
+    )
+    questions.append(
+        _build_interview_question(
+            field="id_prefix",
+            group_id=_LEGACY_INIT_GROUPS["id_prefix"],
+            label=_LEGACY_INIT_LABELS["id_prefix"],
+            prompt=_LEGACY_INIT_PROMPTS["id_prefix"],
+            inferred_answers=[inferred_prefix],
+            allow_multiple=False,
+            allow_custom=True,
+            allow_skip=False,
+            first_selected_is_canonical=True,
+            custom_answer_prompt="Type a custom requirement ID prefix.",
+            suggested_options=(
+                {"value": inferred_prefix, "label": inferred_prefix, "description": "Current inferred or configured prefix."},
+                {"value": "REQ", "label": "REQ", "description": "Generic sequential requirement prefix."},
+                {"value": "RQMD", "label": "RQMD", "description": "Repository-level rqmd prefix."},
+                {"value": "AC", "label": "AC", "description": "Acceptance criteria style prefix."},
+            ),
+        )
+    )
+
+    questions.extend(_build_bootstrap_chat_questions(command_hints))
+
+    issue_mode = "use-gh-if-available" if bool(issue_context.get("used")) or str(issue_context.get("reason") or "") != "gh CLI not found" else "skip-gh-issues"
+    for field in _LEGACY_INIT_CHAT_FIELDS[2:]:
+        inferred_answers: list[str] = []
+        suggested_options = _LEGACY_INIT_OPTION_SETS.get(field, ())
+        config = _LEGACY_INIT_FIELD_DEFAULTS[field]
+        if field == "docs_review":
+            inferred_answers = ["use-current-docs", "readmes-first"]
+        elif field == "source_grokking":
+            inferred_answers = ["focused-pass"]
+        elif field == "test_grokking":
+            inferred_answers = ["focused-tests"]
+        elif field == "domain_focus":
+            inferred_answers = [str(area["title"]) for area in source_areas]
+            suggested_options = tuple(
+                {
+                    "value": str(area["title"]),
+                    "label": str(area["title"]),
+                    "description": f"Detected from `{area['evidence']}`.",
+                }
+                for area in source_areas
+            )
+        elif field == "issue_backlog":
+            inferred_answers = [issue_mode]
+        elif field == "legacy_notes":
+            inferred_answers = [
+                "Review the generated starter catalog before treating it as source of truth.",
+            ]
+        questions.append(
+            _build_interview_question(
+                field=field,
+                group_id=_LEGACY_INIT_GROUPS[field],
+                label=_LEGACY_INIT_LABELS[field],
+                prompt=_LEGACY_INIT_PROMPTS[field],
+                inferred_answers=inferred_answers,
+                allow_multiple=bool(config["allow_multiple"]),
+                allow_custom=bool(config["allow_custom"]),
+                allow_skip=bool(config["allow_skip"]),
+                first_selected_is_canonical=bool(config["first_selected_is_canonical"]),
+                custom_answer_prompt=str(config["custom_answer_prompt"]),
+                suggested_options=suggested_options,
+            )
+        )
+    return questions
+
+
+def _match_domain_focus_answers(
+    source_areas: list[dict[str, str]],
+    values: list[str],
+) -> list[dict[str, str]]:
+    if not values:
+        return source_areas
+    matched: list[dict[str, str]] = []
+    seen_titles: set[str] = set()
+    area_lookup = {
+        str(area["title"]).casefold(): area
+        for area in source_areas
+    }
+    slug_lookup = {
+        str(area["slug"]).casefold(): area
+        for area in source_areas
+    }
+    for raw in values:
+        key = str(raw).strip().casefold()
+        if not key:
+            continue
+        area = area_lookup.get(key) or slug_lookup.get(key)
+        if area is None:
+            title = str(raw).strip()
+            slug = re.sub(r"[^a-z0-9]+", "-", title.casefold()).strip("-") or "custom-domain"
+            area = {
+                "title": title,
+                "slug": slug,
+                "evidence": "bootstrap interview",
+            }
+        title_key = str(area["title"]).casefold()
+        if title_key in seen_titles:
+            continue
+        seen_titles.add(title_key)
+        matched.append(area)
+    return matched or source_areas
 
 
 def _slugify_token(value: str) -> str:
@@ -744,7 +1203,11 @@ def _collect_github_issue_context(repo_root: Path, max_issue_requirements: int) 
     }
 
 
-def _build_legacy_init_readme(requirements_dir: Path, domain_files: list[dict[str, str]]) -> str:
+def _build_legacy_init_readme(
+    requirements_dir: Path,
+    domain_files: list[dict[str, str]],
+    interview_notes: dict[str, list[str]] | None = None,
+) -> str:
     lines = [
         "# Requirements",
         "",
@@ -772,6 +1235,24 @@ def _build_legacy_init_readme(requirements_dir: Path, domain_files: list[dict[st
         "Review them, split them, rename them, or replace them as you refine the initial catalog.",
         "",
     ]
+    notes = interview_notes or {}
+    legacy_preferences: list[str] = []
+    for field in ("docs_review", "source_grokking", "test_grokking", "issue_backlog", "legacy_notes"):
+        for item in notes.get(field, []):
+            text = str(item).strip()
+            if text:
+                legacy_preferences.append(text)
+    if legacy_preferences:
+        lines.extend(
+            [
+                "## Bootstrap Interview Notes",
+                "",
+                "These notes were captured during the bootstrap interview and should guide the first cleanup pass.",
+                "",
+            ]
+        )
+        lines.extend(f"- {item}" for item in legacy_preferences)
+        lines.append("")
     for entry in domain_files:
         lines.append(f"- [{entry['title']}]({entry['path']}) - {entry['description']}")
     return "\n".join(lines).rstrip() + "\n"
@@ -856,13 +1337,27 @@ def _build_legacy_init_files(
     repo_root: Path,
     requirements_dir: Path,
     id_prefixes: tuple[str, ...],
+    bootstrap_answers: tuple[str, ...] = (),
 ) -> dict[str, object]:
     rules = _load_legacy_init_rules()
-    prefix = id_prefixes[0] if id_prefixes else "REQ"
-    next_number = 1
     command_hints = _detect_project_command_hints(repo_root)
     source_areas = _detect_legacy_source_areas(repo_root, int(rules["max_source_areas"]))
     issue_context = _collect_github_issue_context(repo_root, int(rules["max_issue_requirements"]))
+    legacy_answer_map = _collect_bootstrap_answers(
+        bootstrap_answers,
+        _BOOTSTRAP_CHAT_FIELDS + _LEGACY_INIT_CHAT_FIELDS,
+    )
+
+    prefix = id_prefixes[0] if id_prefixes else str(legacy_answer_map.get("id_prefix", ["REQ"])[0]).strip().upper().rstrip("-")
+    next_number = 1
+    command_hints = _apply_command_answers(command_hints, legacy_answer_map)
+    source_areas = _match_domain_focus_answers(source_areas, legacy_answer_map.get("domain_focus", []))
+    if any(value == "skip-gh-issues" for value in legacy_answer_map.get("issue_backlog", [])):
+        issue_context = {
+            "used": False,
+            "reason": "skipped by bootstrap interview",
+            "issues": [],
+        }
 
     proposed_files: list[dict[str, str]] = []
 
@@ -922,7 +1417,11 @@ def _build_legacy_init_files(
     if issue_entry is not None and len(domain_files_for_index) < int(rules["max_domain_files"]):
         domain_files_for_index.append(issue_entry)
 
-    readme_content = _build_legacy_init_readme(requirements_dir, domain_files_for_index)
+    readme_content = _build_legacy_init_readme(
+        requirements_dir,
+        domain_files_for_index,
+        interview_notes=legacy_answer_map,
+    )
     proposed_files.append(
         {
             "path": f"{requirements_dir.as_posix()}/{REQUIREMENTS_INDEX_NAME}",
@@ -942,6 +1441,7 @@ def _build_legacy_init_files(
         },
         "issue_discovery": issue_context,
         "proposed_files": proposed_files,
+        "bootstrap_answers": legacy_answer_map,
     }
 
 
@@ -967,9 +1467,18 @@ def _build_or_apply_legacy_init_payload(
     requirements_dir_input: str | None,
     id_prefixes: tuple[str, ...],
     apply: bool,
+    bootstrap_chat: bool = False,
+    bootstrap_answers: tuple[str, ...] = (),
 ) -> dict[str, object]:
     rules = _load_legacy_init_rules()
-    criteria_dir = Path(requirements_dir_input or str(rules["default_requirements_dir"]))
+    legacy_answer_map = _collect_bootstrap_answers(
+        bootstrap_answers,
+        _BOOTSTRAP_CHAT_FIELDS + _LEGACY_INIT_CHAT_FIELDS,
+    )
+    criteria_dir = Path(
+        requirements_dir_input
+        or str(legacy_answer_map.get("requirements_dir", [str(rules["default_requirements_dir"])] )[0])
+    )
     if not criteria_dir.is_absolute():
         criteria_dir = (repo_root / criteria_dir).resolve()
 
@@ -984,7 +1493,16 @@ def _build_or_apply_legacy_init_payload(
     plan = _build_legacy_init_files(
         repo_root=repo_root,
         requirements_dir=criteria_dir.relative_to(repo_root),
-        id_prefixes=id_prefixes or ("REQ",),
+        id_prefixes=id_prefixes,
+        bootstrap_answers=bootstrap_answers,
+    )
+    legacy_questions = _build_legacy_init_chat_questions(
+        repo_root=repo_root,
+        requirements_dir=criteria_dir.relative_to(repo_root),
+        id_prefixes=id_prefixes or (plan["starter_prefix"],),
+        command_hints=_detect_project_command_hints(repo_root),
+        source_areas=list(plan["detected_context"].get("source_areas", [])),
+        issue_context=plan["issue_discovery"],
     )
     payload = {
         "mode": "legacy-init-plan",
@@ -997,6 +1515,18 @@ def _build_or_apply_legacy_init_payload(
         "issue_discovery": plan["issue_discovery"],
         "proposed_files": plan["proposed_files"],
         "total_files": len(plan["proposed_files"]),
+        "bootstrap_chat": {
+            "enabled": bootstrap_chat,
+            "questions": legacy_questions if bootstrap_chat else [],
+            "question_groups": _group_interview_questions(legacy_questions) if bootstrap_chat else [],
+            "applied_answers": plan.get("bootstrap_answers", {}),
+            "detected_sources": list(plan["detected_context"].get("detected_command_sources", [])),
+            "detected_source_areas": [
+                str(area.get("title") or "")
+                for area in plan["detected_context"].get("source_areas", [])
+                if str(area.get("title") or "").strip()
+            ],
+        },
     }
     if apply:
         payload["created_files"] = _write_legacy_init_files(repo_root, plan["proposed_files"])
@@ -1302,7 +1832,8 @@ def _install_agent_bundle(
 ) -> dict[str, object]:
     files = _bundle_files_for_preset(preset)
     detected_hints = _detect_project_command_hints(repo_root)
-    resolved_hints, applied_answers = _apply_bootstrap_answers(detected_hints, bootstrap_answers)
+    applied_answers = _collect_bootstrap_answers(bootstrap_answers, _BOOTSTRAP_CHAT_FIELDS)
+    resolved_hints = _apply_command_answers(detected_hints, applied_answers)
     generated_skill_files = _render_project_skill_content_from_hints(resolved_hints)
     files.update(generated_skill_files)
     created_files: list[str] = []
@@ -1326,6 +1857,7 @@ def _install_agent_bundle(
         else:
             created_files.append(rel_path)
 
+    bootstrap_questions = _build_bootstrap_chat_questions(detected_hints)
     return {
         "mode": "install-agent-bundle",
         "read_only": dry_run,
@@ -1334,7 +1866,8 @@ def _install_agent_bundle(
         "dry_run": dry_run,
         "bootstrap_chat": {
             "enabled": bootstrap_chat,
-            "questions": _build_bootstrap_chat_questions(detected_hints) if bootstrap_chat else [],
+            "questions": bootstrap_questions if bootstrap_chat else [],
+            "question_groups": _group_interview_questions(bootstrap_questions) if bootstrap_chat else [],
             "applied_answers": applied_answers,
             "detected_sources": list(detected_hints.get("detected_sources", [])),
         },
@@ -2366,13 +2899,13 @@ def _plan_or_apply_updates(
     "--bootstrap-chat",
     "bootstrap_chat",
     is_flag=True,
-    help="Emit a structured interview and preview for AI-guided bundle bootstrap, including generated /dev and /test skills.",
+    help="Emit a structured interview and preview for AI-guided bundle or legacy bootstrap, including grouped questions, suggested options, and generated file previews.",
 )
 @click.option(
     "--bootstrap-answer",
     "bootstrap_answers",
     multiple=True,
-    help="Override one bootstrap interview field using FIELD=VALUE, for example --bootstrap-answer dev_run='npm run dev'.",
+    help="Answer one bootstrap interview field using FIELD=VALUE. Repeat to select multiple suggestions or add custom values.",
 )
 @click.option("--overwrite-existing", "overwrite_existing", is_flag=True, help="Allow --install-agent-bundle to overwrite existing instruction files.")
 @click.option("--dry-run", "dry_run", is_flag=True, help="Preview --install-agent-bundle changes without writing files.")
@@ -2459,6 +2992,8 @@ def main(
             requirements_dir_input=requirements_dir,
             id_prefixes=id_prefixes,
             apply=apply,
+            bootstrap_chat=bootstrap_chat,
+            bootstrap_answers=bootstrap_answers,
         )
         _emit(payload, json_output=json_output)
         return
