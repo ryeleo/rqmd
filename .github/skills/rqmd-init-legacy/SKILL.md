@@ -27,7 +27,7 @@ Workflow:
 - Preview the bootstrap plan with `uv run rqmd-ai --json --workflow-mode init-legacy --bootstrap-chat`.
 - If the repository uses a nonstandard requirements location, pass `--docs-dir` explicitly before applying.
 - Let the workflow inspect repository structure and developer commands, and let it consult `gh issue list` when GitHub CLI is installed and authenticated.
-- Use the grouped interview to choose catalog defaults, review inferred workflow commands, select starter domains, decide how to treat existing docs and tests, and capture custom notes.
+- Use the grouped interview to choose catalog defaults, review inferred workflow commands, inspect recommended choices and safe defaults, select starter domains, decide how to treat existing docs and tests, and capture custom notes.
 - Review the generated `README.md`, workflow seed, domain seeds, and any issue-backlog seed before relying on them.
 - Apply with `uv run rqmd-ai --json --workflow-mode init-legacy --write` only when the target requirements directory is empty.
 

@@ -1121,7 +1121,11 @@ def test_RQMD_AI_020_install_bundle_bootstrap_chat_exposes_interview_and_preview
     assert dev_run_question["selection_model"]["allow_custom"] is True
     assert dev_run_question["selection_model"]["allow_skip"] is True
     assert dev_run_question["selection_model"]["first_selected_is_canonical"] is True
-    assert any(option["value"] == "`npm run dev`" for option in dev_run_question["options"])
+    assert dev_run_question["option_annotations"]["detected_from"] == ["package.json scripts"]
+    dev_run_option = next(option for option in dev_run_question["options"] if option["value"] == "`npm run dev`")
+    assert dev_run_option["recommended"] is True
+    assert dev_run_option["safe_default"] is True
+    assert dev_run_option["detected_from"] == ["package.json scripts"]
     preview_map = {entry["path"]: entry["content"] for entry in payload["generated_skill_previews"]}
     assert ".github/skills/dev/SKILL.md" in preview_map
     assert "npm run dev" in preview_map[".github/skills/dev/SKILL.md"]
@@ -1207,10 +1211,14 @@ def test_RQMD_AI_022_init_legacy_bootstrap_chat_exposes_grouped_interview(tmp_pa
     )
     assert requirements_dir_question["selection_model"]["allow_multiple"] is False
     assert requirements_dir_question["selection_model"]["allow_custom"] is True
+    docs_dir_option = next(option for option in requirements_dir_question["options"] if option["value"] == "docs/requirements")
+    assert docs_dir_option["safe_default"] is True
     domain_focus_question = next(
         item for item in payload["bootstrap_chat"]["questions"] if item["field"] == "domain_focus"
     )
     assert domain_focus_question["selection_model"]["allow_multiple"] is True
+    assert domain_focus_question["option_annotations"]["detected_from"]
+    assert any(option["recommended"] is True for option in domain_focus_question["options"])
     assert payload["bootstrap_chat"]["detected_source_areas"]
 
 

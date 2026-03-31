@@ -637,26 +637,61 @@ def _build_interview_question(
     first_selected_is_canonical: bool,
     custom_answer_prompt: str | None = None,
     suggested_options: tuple[dict[str, str], ...] = (),
+    detected_from: tuple[str, ...] | list[str] = (),
+    recommended_values: tuple[str, ...] | list[str] = (),
+    safe_default_values: tuple[str, ...] | list[str] = (),
 ) -> dict[str, object]:
-    options: list[dict[str, str]] = []
+    options: list[dict[str, object]] = []
     seen: set[str] = set()
+    option_index_by_key: dict[str, int] = {}
+    normalized_recommended = {str(value).strip().casefold() for value in recommended_values if str(value).strip()}
+    normalized_safe_defaults = {str(value).strip().casefold() for value in safe_default_values if str(value).strip()}
+    normalized_detected_from = [str(item).strip() for item in detected_from if str(item).strip()]
 
-    def add_option(value: str, *, label_text: str | None = None, kind: str, description: str | None = None) -> None:
+    def add_option(
+        value: str,
+        *,
+        label_text: str | None = None,
+        kind: str,
+        description: str | None = None,
+        recommended: bool | None = None,
+        safe_default: bool | None = None,
+    ) -> None:
         text = str(value).strip()
         if not text:
             return
         normalized = text.casefold()
         if normalized in seen:
+            existing = options[option_index_by_key[normalized]]
+            if description and not existing.get("description"):
+                existing["description"] = description
+            if kind == "inferred" and normalized_detected_from:
+                existing_detected = existing.get("detected_from")
+                merged_detected = list(existing_detected) if isinstance(existing_detected, list) else []
+                for item in normalized_detected_from:
+                    if item not in merged_detected:
+                        merged_detected.append(item)
+                if merged_detected:
+                    existing["detected_from"] = merged_detected
+            if recommended is True or normalized in normalized_recommended:
+                existing["recommended"] = True
+            if safe_default is True or normalized in normalized_safe_defaults:
+                existing["safe_default"] = True
             return
         seen.add(normalized)
-        option: dict[str, str] = {
+        option: dict[str, object] = {
             "value": text,
             "label": str(label_text or text),
             "kind": kind,
+            "recommended": (normalized in normalized_recommended) if recommended is None else bool(recommended),
+            "safe_default": (normalized in normalized_safe_defaults) if safe_default is None else bool(safe_default),
         }
         if description:
             option["description"] = description
+        if kind == "inferred" and normalized_detected_from:
+            option["detected_from"] = list(normalized_detected_from)
         options.append(option)
+        option_index_by_key[normalized] = len(options) - 1
 
     for item in inferred_answers:
         add_option(item, kind="inferred")
@@ -666,6 +701,8 @@ def _build_interview_question(
             label_text=str(option.get("label") or "") or None,
             kind="suggested",
             description=str(option.get("description") or "") or None,
+            recommended=bool(option.get("recommended")) if "recommended" in option else None,
+            safe_default=bool(option.get("safe_default")) if "safe_default" in option else None,
         )
 
     return {
@@ -683,6 +720,11 @@ def _build_interview_question(
         "custom_answer_prompt": custom_answer_prompt,
         "options": options,
         "inferred_answers": [str(item) for item in inferred_answers if str(item).strip()],
+        "option_annotations": {
+            "recommended_values": [str(item) for item in recommended_values if str(item).strip()],
+            "safe_default_values": [str(item) for item in safe_default_values if str(item).strip()],
+            "detected_from": list(normalized_detected_from),
+        },
     }
 
 
@@ -804,7 +846,7 @@ def _detect_project_command_hints(repo_root: Path) -> dict[str, list[str]]:
     else:
         notes.append("Review the generated commands and tighten them to the repository's canonical workflows before relying on them in automation.")
 
-    return {
+    result = {
         "detected_sources": detected_sources,
         "dev_environment": dev_environment,
         "dev_build": dev_build,
@@ -815,6 +857,12 @@ def _detect_project_command_hints(repo_root: Path) -> dict[str, list[str]]:
         "test_lint": test_lint,
         "notes": notes,
     }
+    result["field_detected_from"] = {
+        field: list(detected_sources)
+        for field in _BOOTSTRAP_CHAT_FIELDS
+        if field != "notes" and result.get(field)
+    }
+    return result
 
 
 def _render_project_skill_content_from_hints(hints: dict[str, list[str]]) -> dict[str, str]:
@@ -895,6 +943,7 @@ def _apply_command_answers(
 
 def _build_bootstrap_chat_questions(hints: dict[str, list[str]]) -> list[dict[str, object]]:
     questions: list[dict[str, object]] = []
+    field_detected_from = hints.get("field_detected_from") if isinstance(hints.get("field_detected_from"), dict) else {}
     for field in _BOOTSTRAP_CHAT_FIELDS:
         inferred = hints.get(field) if isinstance(hints.get(field), list) else []
         questions.append(
@@ -913,6 +962,9 @@ def _build_bootstrap_chat_questions(hints: dict[str, list[str]]) -> list[dict[st
                     if field == "notes"
                     else "Add another custom command."
                 ),
+                detected_from=list(field_detected_from.get(field, [])) if isinstance(field_detected_from, dict) else [],
+                recommended_values=[str(item) for item in inferred if str(item).strip()],
+                safe_default_values=[str(inferred[0])] if inferred and field != "notes" else [],
             )
         )
     return questions
@@ -940,6 +992,8 @@ def _legacy_init_requirements_dir_options(
                 if (repo_root / value).exists()
                 else "Suggested starter location for the rqmd catalog."
             ),
+            "recommended": value == default_dir.as_posix(),
+            "safe_default": value == "docs/requirements",
         }
         for value in candidates
     )
@@ -984,11 +1038,13 @@ def _build_legacy_init_chat_questions(
             first_selected_is_canonical=True,
             custom_answer_prompt="Type a custom requirement ID prefix.",
             suggested_options=(
-                {"value": inferred_prefix, "label": inferred_prefix, "description": "Current inferred or configured prefix."},
-                {"value": "REQ", "label": "REQ", "description": "Generic sequential requirement prefix."},
+                {"value": inferred_prefix, "label": inferred_prefix, "description": "Current inferred or configured prefix.", "recommended": True},
+                {"value": "REQ", "label": "REQ", "description": "Generic sequential requirement prefix.", "safe_default": True},
                 {"value": "RQMD", "label": "RQMD", "description": "Repository-level rqmd prefix."},
                 {"value": "AC", "label": "AC", "description": "Acceptance criteria style prefix."},
             ),
+            recommended_values=[inferred_prefix],
+            safe_default_values=["REQ"],
         )
     )
 
@@ -1012,6 +1068,7 @@ def _build_legacy_init_chat_questions(
                     "value": str(area["title"]),
                     "label": str(area["title"]),
                     "description": f"Detected from `{area['evidence']}`.",
+                    "recommended": True,
                 }
                 for area in source_areas
             )
@@ -1034,6 +1091,19 @@ def _build_legacy_init_chat_questions(
                 first_selected_is_canonical=bool(config["first_selected_is_canonical"]),
                 custom_answer_prompt=str(config["custom_answer_prompt"]),
                 suggested_options=suggested_options,
+                detected_from=[str(area["evidence"]) for area in source_areas] if field == "domain_focus" else [],
+                recommended_values=inferred_answers,
+                safe_default_values=(
+                    ["readmes-first"]
+                    if field == "docs_review"
+                    else ["focused-pass"]
+                    if field == "source_grokking"
+                    else ["focused-tests"]
+                    if field == "test_grokking"
+                    else [issue_mode]
+                    if field == "issue_backlog"
+                    else []
+                ),
             )
         )
     return questions

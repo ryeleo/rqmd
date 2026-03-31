@@ -167,6 +167,7 @@ Summary: 0💡 21🔧 0✅ 0⛔ 3🗑️
 - So that the bootstrap chat can propose `dev` and `test` skill content, preview the generated files, and only write them after explicit review.
 - So that teams can adopt the bundle through a guided conversation even when they have not yet learned the exact customization file formats.
 - So that the bootstrap chat can present grouped multiple-choice suggestions, allow multi-select answers, let users skip sections, and accept custom text alongside the inferred commands.
+- So that each interview option can carry richer UX hints such as recommended choices, detected-from provenance, and safe defaults.
 
 ### RQMD-AI-021: rqmd-dev delegation to project dev and test skills
 - **Status:** 🔧 Implemented
@@ -184,6 +185,7 @@ Summary: 0💡 21🔧 0✅ 0⛔ 3🗑️
 - So that adoption can start from the current codebase, docs, backlog, and conventions instead of requiring a blank-slate scaffold.
 - So that rqmd-ai can guide the user through a legacy-init flow focused on first-use setup rather than generic bundle installation alone.
 - So that the legacy-init flow can reuse the same grouped interview UX as bundle bootstrap, including suggested choices, multi-select answers, and custom notes.
+- So that legacy-init interview options can surface recommended choices, detected source provenance, and safe defaults for the generated starter catalog.
 
 ### RQMD-AI-023: Useful first-pass requirements folder for legacy repos
 - **Status:** 🔧 Implemented
