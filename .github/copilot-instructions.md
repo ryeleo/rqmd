@@ -7,7 +7,7 @@ Purpose:
 Repository conventions:
 - Requirements index: docs/requirements/README.md
 - Domain docs: docs/requirements/*.md
-- Verify-only pass: uv run rqmd --verify-summaries --no-walk --no-table
+- Verify-only pass: rqmd --verify-summaries --no-walk --no-table
 
 AI workflow defaults:
 - Start with read-only context export via rqmd-ai.
@@ -23,10 +23,10 @@ AI workflow defaults:
 - Skills improve workflow discovery and reuse, but they do not bypass terminal/tool approval prompts.
 
 Useful commands:
-- uv run rqmd-ai install --json
-- uv run rqmd-ai i --json --bundle-preset minimal --dry-run
-- uv run rqmd-ai --json --workflow-mode implement
-- uv run rqmd-ai --json --dump-status proposed
-- uv run rqmd-ai --json --dump-id RQMD-CORE-001 --include-requirement-body
-- uv run rqmd-ai --json --update RQMD-CORE-001=implemented
-- uv run rqmd-ai --json --write --update RQMD-CORE-001=implemented
+- rqmd-ai install --json
+- rqmd-ai i --json --bundle-preset minimal --dry-run
+- rqmd-ai --json --workflow-mode implement
+- rqmd-ai --json --dump-status proposed
+- rqmd-ai --json --dump-id RQMD-CORE-001 --include-requirement-body
+- rqmd-ai --json --update RQMD-CORE-001=implemented
+- rqmd-ai --json --write --update RQMD-CORE-001=implemented

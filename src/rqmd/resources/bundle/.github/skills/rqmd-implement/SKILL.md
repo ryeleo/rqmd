@@ -28,11 +28,11 @@ metadata:
 Use this skill when a requirement is ready to move from proposal into implementation.
 
 Workflow:
-- Start with `uv run rqmd-ai --json --workflow-mode implement`.
-- Review the current proposal queue with `uv run rqmd-ai --json --dump-status proposed`.
+- Start with `rqmd-ai --json --workflow-mode implement`.
+- Review the current proposal queue with `rqmd-ai --json --dump-status proposed`.
 - Take the highest-priority 1-3 proposed requirements for the next batch.
 - Update requirement docs, tests, README, and `CHANGELOG.md` as implementation details become concrete.
-- Verify the result with `uv run rqmd --verify-summaries --no-walk --no-table`, targeted tests, and then `uv run --extra dev pytest -q` before continuing.
+- Verify the result with `rqmd --verify-summaries --no-walk --no-table`, targeted tests, and then `uv run --extra dev pytest -q` before continuing.
 
 Constraints:
 - Keep changes focused and avoid broad unrelated refactors.

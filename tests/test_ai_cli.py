@@ -159,7 +159,6 @@ def test_RQMD_AI_001e_init_chat_prefers_starter_scaffold_for_sparse_repo(tmp_pat
             str(repo),
             "--json",
             "init",
-            "--chat",
         ],
     )
 
@@ -168,7 +167,7 @@ def test_RQMD_AI_001e_init_chat_prefers_starter_scaffold_for_sparse_repo(tmp_pat
     assert payload["mode"] == "init-chat"
     assert payload["workflow_mode"] == "init"
     assert payload["strategy"]["selected"] == "starter-scaffold"
-    assert payload["bootstrap_chat"]["enabled"] is True
+    assert payload["interview"]["enabled"] is True
     assert payload["handoff_prompt"]
     assert payload["suggested_commands"]["init_preview"]
     _assert_schema_version(payload)
@@ -189,7 +188,6 @@ def test_RQMD_AI_001f_init_chat_can_force_legacy_strategy(tmp_path: Path, monkey
             str(repo),
             "--json",
             "init",
-            "--chat",
             "--legacy",
         ],
     )
@@ -1157,7 +1155,7 @@ def test_RQMD_AI_019_install_bundle_generates_project_dev_and_test_skills(tmp_pa
     assert "npm run test" in test_skill
 
 
-def test_RQMD_AI_020_install_bundle_bootstrap_chat_exposes_interview_and_previews(tmp_path: Path) -> None:
+def test_RQMD_AI_020_install_bundle_chat_exposes_interview_and_previews(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1186,7 +1184,7 @@ def test_RQMD_AI_020_install_bundle_bootstrap_chat_exposes_interview_and_preview
             "install",
             "--bundle-preset",
             "minimal",
-            "--bootstrap-chat",
+            "--chat",
             "--dry-run",
         ],
     )
@@ -1195,10 +1193,10 @@ def test_RQMD_AI_020_install_bundle_bootstrap_chat_exposes_interview_and_preview
     payload = json.loads(result.output)
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
-    assert payload["bootstrap_chat"]["enabled"] is True
-    assert payload["bootstrap_chat"]["detected_sources"] == ["package.json scripts"]
-    questions = payload["bootstrap_chat"]["questions"]
-    question_groups = payload["bootstrap_chat"]["question_groups"]
+    assert payload["interview"]["enabled"] is True
+    assert payload["interview"]["detected_sources"] == ["package.json scripts"]
+    questions = payload["interview"]["questions"]
+    question_groups = payload["interview"]["question_groups"]
     assert [group["id"] for group in question_groups] == [
         "developer_workflows",
         "validation_workflows",
@@ -1220,7 +1218,7 @@ def test_RQMD_AI_020_install_bundle_bootstrap_chat_exposes_interview_and_preview
     assert "npm run test" in preview_map[".github/skills/test/SKILL.md"]
 
 
-def test_RQMD_AI_020_install_bundle_bootstrap_chat_applies_answer_overrides(tmp_path: Path) -> None:
+def test_RQMD_AI_020_install_bundle_chat_applies_answer_overrides(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
     criteria_dir.mkdir(parents=True)
@@ -1240,10 +1238,10 @@ def test_RQMD_AI_020_install_bundle_bootstrap_chat_applies_answer_overrides(tmp_
             "install",
             "--bundle-preset",
             "minimal",
-            "--bootstrap-chat",
-            "--bootstrap-answer",
+            "--chat",
+            "--answer",
             "dev_run=python -m demo.app",
-            "--bootstrap-answer",
+            "--answer",
             "test_primary=pytest -q",
             "--dry-run",
         ],
@@ -1252,14 +1250,14 @@ def test_RQMD_AI_020_install_bundle_bootstrap_chat_applies_answer_overrides(tmp_
     assert result.exit_code == 0
     payload = json.loads(result.output)
     _assert_schema_version(payload)
-    assert payload["bootstrap_chat"]["applied_answers"]["dev_run"] == ["python -m demo.app"]
-    assert payload["bootstrap_chat"]["applied_answers"]["test_primary"] == ["pytest -q"]
+    assert payload["interview"]["applied_answers"]["dev_run"] == ["python -m demo.app"]
+    assert payload["interview"]["applied_answers"]["test_primary"] == ["pytest -q"]
     preview_map = {entry["path"]: entry["content"] for entry in payload["generated_skill_previews"]}
     assert "python -m demo.app" in preview_map[".github/skills/dev/SKILL.md"]
     assert "pytest -q" in preview_map[".github/skills/test/SKILL.md"]
 
 
-def test_RQMD_AI_022_init_legacy_bootstrap_chat_exposes_grouped_interview(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_AI_022_init_legacy_chat_exposes_grouped_interview(tmp_path: Path, monkeypatch) -> None:
     repo = tmp_path / "repo"
     (repo / "src" / "ac_cli").mkdir(parents=True)
     (repo / "src" / "ac_cli" / "cli.py").write_text("def main():\n    return 0\n", encoding="utf-8")
@@ -1275,18 +1273,17 @@ def test_RQMD_AI_022_init_legacy_bootstrap_chat_exposes_grouped_interview(tmp_pa
             "--project-root",
             str(repo),
             "--json",
-            "--workflow-mode",
-            "init-legacy",
-            "--bootstrap-chat",
+            "init",
+            "--legacy",
         ],
     )
 
     assert result.exit_code == 0
     payload = json.loads(result.output)
     _assert_schema_version(payload)
-    assert payload["mode"] == "legacy-init-plan"
-    assert payload["bootstrap_chat"]["enabled"] is True
-    assert [group["id"] for group in payload["bootstrap_chat"]["question_groups"]] == [
+    assert payload["mode"] == "init-chat"
+    assert payload["interview"]["enabled"] is True
+    assert [group["id"] for group in payload["interview"]["question_groups"]] == [
         "catalog_setup",
         "developer_workflows",
         "validation_workflows",
@@ -1295,22 +1292,22 @@ def test_RQMD_AI_022_init_legacy_bootstrap_chat_exposes_grouped_interview(tmp_pa
         "review_notes",
     ]
     requirements_dir_question = next(
-        item for item in payload["bootstrap_chat"]["questions"] if item["field"] == "requirements_dir"
+        item for item in payload["interview"]["questions"] if item["field"] == "requirements_dir"
     )
     assert requirements_dir_question["selection_model"]["allow_multiple"] is False
     assert requirements_dir_question["selection_model"]["allow_custom"] is True
     docs_dir_option = next(option for option in requirements_dir_question["options"] if option["value"] == "docs/requirements")
     assert docs_dir_option["safe_default"] is True
     domain_focus_question = next(
-        item for item in payload["bootstrap_chat"]["questions"] if item["field"] == "domain_focus"
+        item for item in payload["interview"]["questions"] if item["field"] == "domain_focus"
     )
     assert domain_focus_question["selection_model"]["allow_multiple"] is True
     assert domain_focus_question["option_annotations"]["detected_from"]
     assert any(option["recommended"] is True for option in domain_focus_question["options"])
-    assert payload["bootstrap_chat"]["detected_source_areas"]
+    assert payload["interview"]["detected_source_areas"]
 
 
-def test_RQMD_AI_023_init_legacy_bootstrap_answers_override_plan(tmp_path: Path, monkeypatch) -> None:
+def test_RQMD_AI_023_init_legacy_answers_override_plan(tmp_path: Path, monkeypatch) -> None:
     repo = tmp_path / "repo"
     (repo / "src" / "ac_cli").mkdir(parents=True)
     (repo / "src" / "ac_cli" / "cli.py").write_text("def main():\n    return 0\n", encoding="utf-8")
@@ -1328,18 +1325,17 @@ def test_RQMD_AI_023_init_legacy_bootstrap_answers_override_plan(tmp_path: Path,
             "--project-root",
             str(repo),
             "--json",
-            "--workflow-mode",
-            "init-legacy",
-            "--bootstrap-chat",
-            "--bootstrap-answer",
+            "init",
+            "--legacy",
+            "--answer",
             "requirements_dir=requirements",
-            "--bootstrap-answer",
+            "--answer",
             "id_prefix=AC",
-            "--bootstrap-answer",
+            "--answer",
             "dev_run=python -m demo.app",
-            "--bootstrap-answer",
+            "--answer",
             "issue_backlog=skip-gh-issues",
-            "--bootstrap-answer",
+            "--answer",
             "domain_focus=Custom Domain",
         ],
     )

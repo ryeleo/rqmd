@@ -1577,10 +1577,10 @@ def _filter_timeline_nodes(
     help="Print the next sequential numeric requirement ID for the active namespace and exit.",
 )
 @click.option(
-    "--bootstrap",
+    "--scaffold",
     "init_scaffold",
     is_flag=True,
-    help="Compatibility alias: directly initialize the docs scaffold (index + starter domain file) and exit.",
+    help="Directly initialize the docs scaffold (index + starter domain file) and exit.",
 )
 @click.option(
     "--force-yes",
@@ -1772,10 +1772,45 @@ def main(
     positional_init_requested = len(targets) == 1 and str(targets[0]).strip().casefold() == "init"
 
     if positional_init_requested:
-        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or undo_last or redo_last or tree or rollup_mode or init_scaffold:
+        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or undo_last or redo_last or tree or rollup_mode:
             raise click.ClickException(
-                "rqmd init is a chat-first onboarding surface and cannot be combined with verify/filter/update/tree/rollup or direct scaffold options."
+                "rqmd init is an onboarding surface and cannot be combined with verify/filter/update/tree or rollup options."
             )
+
+        if init_scaffold:
+            try:
+                if requested_init_prefix:
+                    starter_prefix = requested_init_prefix
+                elif confirm_yes:
+                    starter_prefix = "REQ"
+                else:
+                    starter_prefix = prompt_for_init_prefix(default_prefix="REQ")
+            except ValueError as exc:
+                raise click.ClickException(str(exc)) from exc
+
+            created = initialize_requirements_scaffold(
+                repo_root,
+                requirements_dir or DEFAULT_REQUIREMENTS_DIR,
+                starter_prefix=starter_prefix,
+            )
+            if json_output:
+                payload = {
+                    "mode": "init",
+                    "requirements_dir": requirements_dir or DEFAULT_REQUIREMENTS_DIR,
+                    "starter_prefix": starter_prefix,
+                    "created_files": [format_path_display(path, repo_root) for path in created],
+                    "created_count": len(created),
+                }
+                _emit_json_payload(payload)
+                raise SystemExit(0)
+
+            if created:
+                click.echo("Initialized requirement scaffold:")
+                for path in created:
+                    click.echo(f"  + {path.relative_to(repo_root)}")
+            else:
+                click.echo("Requirement scaffold already present; no files created.")
+            raise SystemExit(0)
 
         normalized_init_prefixes = normalize_id_prefixes(id_prefixes) if id_prefixes else ()
         from .ai_cli import _build_or_apply_init_payload
@@ -1786,7 +1821,7 @@ def main(
             id_prefixes=normalized_init_prefixes,
             apply=False,
             chat_mode=True,
-            bootstrap_answers=(),
+            interview_answers=(),
             force_legacy=False,
         )
         if json_output:
@@ -1796,13 +1831,13 @@ def main(
             click.echo("")
             click.echo("Paste this into your AI chat:")
             click.echo("")
-            click.echo(str(payload.get("handoff_prompt") or "Run `uv run rqmd-ai init --chat --json`."))
+            click.echo(str(payload.get("handoff_prompt") or "Run `rqmd-ai init --chat --json`."))
         raise SystemExit(0)
 
     if init_scaffold:
         if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or undo_last or redo_last or tree or rollup_mode or targets:
             raise click.ClickException(
-                "--bootstrap cannot be combined with --verify-summaries, --totals, positional ID, --filter-* / --as-tree, or --update-* options."
+                "--scaffold cannot be combined with --verify-summaries, --totals, positional ID, --filter-* / --as-tree, or --update-* options."
             )
 
         try:
@@ -1852,7 +1887,7 @@ def main(
     domain_files = iter_domain_files(repo_root, resolved_requirements_dir_input)
     if not domain_files:
         missing_msg = f"No requirement markdown files found under: {format_path_display(resolved_criteria_dir, repo_root)}"
-        hint_msg = "Hint: run 'rqmd init' for the default chat-first setup flow, or use 'rqmd --bootstrap --force-yes' for the direct scaffold compatibility path."
+        hint_msg = "Hint: run 'rqmd init' for the default chat-first setup flow, or use 'rqmd init --scaffold --force-yes' for the direct scaffold path."
 
         if confirm_yes:
             starter_prefix = requested_init_prefix or "REQ"
@@ -2211,7 +2246,7 @@ def main(
         index_path = resolved_criteria_dir / "README.md"
         if not index_path.exists():
             click.echo(f"No requirements index found at: {format_path_display(index_path, repo_root)}", err=True)
-            click.echo("  Hint: run 'rqmd init' for the guided setup flow, or 'rqmd --bootstrap' for the direct scaffold compatibility path.", err=True)
+            click.echo("  Hint: run 'rqmd init' for the guided setup flow, or 'rqmd init --scaffold' for the direct scaffold path.", err=True)
             raise SystemExit(1)
         stale_links, orphan_files = check_index_sync(resolved_criteria_dir, index_path)
         issues: list[str] = []

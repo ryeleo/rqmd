@@ -19,7 +19,7 @@ metadata:
 Use this skill when tracked requirements already exist and you need to decide what to work next.
 
 Workflow:
-- Export the current proposal queue with `uv run rqmd-ai --json --dump-status proposed`.
+- Export the current proposal queue with `rqmd-ai --json --dump-status proposed`.
 - Narrow to a domain or requirement with `--dump-file`, `--dump-id`, or targeted rqmd filters when the backlog is broad.
 - Rank candidates by priority, blocking relationships, and implementation batch size.
 - Pick the highest-value 1-3 items for the next implementation slice.

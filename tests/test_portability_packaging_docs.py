@@ -485,7 +485,7 @@ def test_RQMD_packaging_001_to_005_metadata_and_layout() -> None:
 
     readme = (project_root / "README.md").read_text(encoding="utf-8")
     assert "rqmd --verify-summaries" in readme
-    assert "uv run rqmd --help" in readme
+    assert "rqmd --help" in readme
     assert "`reqmd` and `reqmd-ai` remain available as compatibility aliases" in readme
     assert "uv sync --extra speedups" in readme
     assert "--project-root" in readme
@@ -633,7 +633,7 @@ def test_RQMD_portability_009_nonexistent_criteria_dir_gives_not_found_error(tmp
 
     assert result.exit_code != 0
     assert "not found" in result.output.lower()
-    assert "rqmd --bootstrap" in result.output or "requirements-dir" in result.output.lower()
+    assert "rqmd init --scaffold" in result.output or "requirements-dir" in result.output.lower()
 
 
 def test_RQMD_portability_009_unreadable_domain_file_gives_permission_error(tmp_path: Path) -> None:

@@ -24,13 +24,13 @@ metadata:
 Use this skill when you explicitly need the old legacy-init behavior or are following older docs during the transition to `rqmd-init`.
 
 Workflow:
-- Prefer `uv run rqmd-ai init --chat --json --legacy` for new usage; keep this skill for compatibility and explicit override cases.
-- Preview the bootstrap plan with `uv run rqmd-ai init --chat --json --legacy`; the older `--workflow-mode init-legacy --bootstrap-chat` form remains available as a compatibility alias.
+- Prefer `rqmd-ai init --chat --json --legacy` for new usage; keep this skill for compatibility and explicit override cases.
+- Preview the legacy-init plan with `rqmd-ai init --chat --json --legacy`.
 - If the repository uses a nonstandard requirements location, pass `--docs-dir` explicitly before applying.
 - Let the workflow inspect repository structure and developer commands, and let it consult `gh issue list` when GitHub CLI is installed and authenticated.
 - Use the grouped interview to choose catalog defaults, review inferred workflow commands, inspect recommended choices and safe defaults, select starter domains, decide how to treat existing docs and tests, and capture custom notes.
 - Review the generated `README.md`, workflow seed, domain seeds, and any issue-backlog seed before relying on them.
-- Apply with `uv run rqmd-ai init --json --legacy --write` only when the target requirements directory is empty.
+- Apply with `rqmd-ai init --json --legacy --write` only when the target requirements directory is empty.
 
 Constraints:
 - Treat generated requirements as a starting point, not authoritative truth.

@@ -200,7 +200,7 @@ def iter_domain_files(repo_root: Path, requirements_dir_input: str) -> list[Path
     if not criteria_dir.exists():
         raise click.ClickException(
             f"Requirement docs directory not found: {format_path_display(criteria_dir, repo_root)}\n"
-            f"  Hint: run 'rqmd init' to start the default guided setup flow, or use 'rqmd --bootstrap' for the direct scaffold compatibility path."
+            f"  Hint: run 'rqmd init' to start the default guided setup flow, or use 'rqmd init --scaffold' for the direct scaffold path."
         )
 
     try:

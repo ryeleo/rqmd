@@ -22,7 +22,7 @@ Workflow:
 - Update the affected requirement docs in `docs/requirements/*.md`.
 - Keep `docs/requirements/README.md`, top-level `README.md`, and `CHANGELOG.md` aligned with shipped behavior.
 - If work changed AI workflows or onboarding, update `.github/copilot-instructions.md` and any installed bundle text as needed.
-- Re-run `uv run rqmd --verify-summaries --no-walk --no-table`.
+- Re-run `rqmd --verify-summaries --no-walk --no-table`.
 - Call out any remaining drift or docs that still need manual judgment.
 
 Constraints:

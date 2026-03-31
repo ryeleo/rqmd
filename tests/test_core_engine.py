@@ -470,7 +470,8 @@ def test_RQMD_core_009_init_yes_skips_prompt_and_uses_default_prefix(tmp_path: P
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--bootstrap",
+            "init",
+            "--scaffold",
             "--force-yes",
         ],
     )
@@ -515,7 +516,8 @@ def test_RQMD_core_017_bootstrap_readme_includes_tagline_and_links(tmp_path: Pat
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--bootstrap",
+            "init",
+            "--scaffold",
             "--force-yes",
         ],
     )
@@ -539,7 +541,8 @@ def test_RQMD_core_011e_init_yes_json_payload_is_idempotent(tmp_path: Path) -> N
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--bootstrap",
+            "init",
+            "--scaffold",
             "--force-yes",
             "--as-json",
         ],
@@ -561,7 +564,8 @@ def test_RQMD_core_011e_init_yes_json_payload_is_idempotent(tmp_path: Path) -> N
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--bootstrap",
+            "init",
+            "--scaffold",
             "--force-yes",
             "--as-json",
         ],
@@ -585,7 +589,8 @@ def test_RQMD_core_011f_init_yes_json_alias_emits_json_payload(tmp_path: Path) -
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--bootstrap",
+            "init",
+            "--scaffold",
             "--force-yes",
             "--json",
         ],
@@ -639,7 +644,8 @@ def test_RQMD_core_011_and_012_init_scaffold_creates_index_and_starter(tmp_path:
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--bootstrap",
+            "init",
+            "--scaffold",
         ],
         input="\n",
     )
@@ -668,7 +674,8 @@ def test_RQMD_core_012b_init_scaffold_allows_custom_starter_key(tmp_path: Path) 
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--bootstrap",
+            "init",
+            "--scaffold",
         ],
         input="TEAM\n",
     )
@@ -690,7 +697,8 @@ def test_RQMD_core_016_init_scaffold_copies_template_content(tmp_path: Path) -> 
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--bootstrap",
+            "init",
+            "--scaffold",
         ],
         input="\n",
     )
@@ -719,7 +727,8 @@ def test_RQMD_core_011b_init_scaffold_is_idempotent(tmp_path: Path) -> None:
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--bootstrap",
+            "init",
+            "--scaffold",
         ],
         input="\n",
     )
@@ -732,7 +741,8 @@ def test_RQMD_core_011b_init_scaffold_is_idempotent(tmp_path: Path) -> None:
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--bootstrap",
+            "init",
+            "--scaffold",
         ],
         input="\n",
     )
@@ -752,7 +762,8 @@ def test_RQMD_core_011c_init_scaffold_supports_custom_criteria_dir(tmp_path: Pat
             str(repo),
             "--docs-dir",
             "custom/ac",
-            "--bootstrap",
+            "init",
+            "--scaffold",
         ],
         input="\n",
     )
@@ -774,14 +785,15 @@ def test_RQMD_core_011d_init_cannot_be_combined_with_check(tmp_path: Path) -> No
             str(repo),
             "--docs-dir",
             "docs/requirements",
-            "--bootstrap",
+            "init",
+            "--scaffold",
             "--verify-summaries",
         ],
         input="\n",
     )
 
     assert result.exit_code != 0
-    assert "--bootstrap cannot be combined" in result.output
+    assert "rqmd init is an onboarding surface" in result.output
 
 
 def test_RQMD_core_005b_file_priority_sort_key_uses_current_statuses() -> None:

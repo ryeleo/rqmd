@@ -140,7 +140,7 @@ Summary: 0💡 26🔧 10✅ 0⛔ 0🗑️
 - **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a migration operator
-- I want `--bootstrap --force-yes` and `--seed-priorities` to be idempotent, deterministic, and JSON-reportable
+- I want `init --scaffold --force-yes` and `--seed-priorities` to be idempotent, deterministic, and JSON-reportable
 - So that migration steps are reliable in CI/CD workflows.
 
 ### RQMD-AUTOMATION-019: Unique-prefix argument/value abbreviations

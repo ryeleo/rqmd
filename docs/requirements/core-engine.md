@@ -77,9 +77,9 @@ Summary: 0💡 14🔧 16✅ 0⛔ 0🗑️
 - As a rqmd user when no domain markdown files are found
 - I want to run the command
 - So that reqmd prints a clear, actionable error message
-- So that it offers the default `rqmd init` guided setup flow and still keeps the direct `--bootstrap` scaffold path available as a compatibility shortcut
+- So that it offers the default `rqmd init` guided setup flow and still keeps the direct `rqmd init --scaffold` path available as a compatibility shortcut
 - So that the tool never creates files without explicit user confirmation: the initialization flow must prompt the user to confirm creation and allow a `--force-yes`/`--force-confirm` override for automation
-- So that in non-interactive or CI contexts the tool exits non-zero and prints guidance to run `rqmd init` for the default flow or `rqmd --bootstrap --force-yes` for the direct scaffold compatibility path.
+- So that in non-interactive or CI contexts the tool exits non-zero and prints guidance to run `rqmd init` for the default flow or `rqmd init --scaffold --force-yes` for the direct scaffold compatibility path.
 
 ### RQMD-CORE-010: Blocked/deprecated reason extraction
 - **Status:** ✅ Verified
@@ -123,10 +123,10 @@ Summary: 0💡 14🔧 16✅ 0⛔ 0🗑️
 - So that requirement ID prefixes are auto-detected from discovered requirement headers
 - So that filter/lookup/update flows use those detected prefixes without extra CLI flags.
 
-### RQMD-CORE-015: Init key prompt with customizable default
+### RQMD-CORE-015: Scaffold init key prompt with customizable default
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
-- As a rqmd user when users run `rqmd --bootstrap`
+- As a rqmd user when users run `rqmd init --scaffold`
 - I want scaffold initialization to start
 - So that rqmd prompts for a starter requirement key prefix
 - So that Enter accepts default `REQ`
@@ -135,7 +135,7 @@ Summary: 0💡 14🔧 16✅ 0⛔ 0🗑️
 ### RQMD-CORE-016: Initial scaffolding content/copy
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
-- As a rqmd user when users run `rqmd --bootstrap`
+- As a rqmd user when users run `rqmd init --scaffold`
 - I want scaffold initialization to execute
 - So that generated `docs/requirements/README.md` includes a welcome message and instructions for getting started that is copied from:
     - ./init-docs/README.md for the domain index (requirements/README.md)
@@ -146,7 +146,7 @@ Summary: 0💡 14🔧 16✅ 0⛔ 0🗑️
 ### RQMD-CORE-017: Branded init and README messaging
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As a rqmd user when I first encounter rqmd through README or `rqmd --bootstrap`
+- As a rqmd user when I first encounter rqmd through README or `rqmd init --scaffold`
 - I want branded, persuasive copy and direct project links
 - So that the tool clearly positions itself as human-readable, AI-readable, and ready for Requirements Driven Development (RDD).
 - So that generated scaffold copy and README messaging include a concise tagline plus direct links to the project GitHub homepage and/or PyPI page.
@@ -263,13 +263,13 @@ Summary: 0💡 14🔧 16✅ 0⛔ 0🗑️
 - So that 3 digits are treated as the default minimum width rather than a hard upper limit.
 - So that numeric ordering and human readability remain stable as the requirement set grows.
 
-### RQMD-CORE-029: Canonical init command with bootstrap compatibility alias
+### RQMD-CORE-029: Canonical init command with scaffold compatibility path
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a rqmd user starting a repository for the first time
 - I want the public CLI to standardize on `init` as the primary initialization term
 - So that the command surface is simpler, more conventional, and easier to remember than a long-term mix of `init` and `bootstrap` wording.
-- So that `rqmd init` becomes the canonical documented entrypoint for setup while existing `--bootstrap` behavior remains available as a compatibility alias during transition.
+- So that `rqmd init` becomes the canonical documented entrypoint for setup while `rqmd init --scaffold` remains available as the direct scaffold compatibility path.
 - So that error hints, help text, generated copy, and README examples all converge on `init` as the main term instead of teaching both terms as equally first-class.
 
 ### RQMD-CORE-030: Chat-first default onboarding from rqmd init

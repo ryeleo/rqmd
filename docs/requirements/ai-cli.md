@@ -204,21 +204,21 @@ Summary: 0💡 27🔧 0✅ 0⛔ 3🗑️
 - So that rqmd can incorporate the existing issue backlog into its first-pass requirement suggestions instead of ignoring a major source of project intent.
 - So that the workflow remains optional and graceful when `gh` is missing, unauthenticated, or the repository has no accessible issue data.
 
-### RQMD-AI-025: Bootstrap-chat AI handoff prompt generation
+### RQMD-AI-025: Init-chat AI handoff prompt generation
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As a maintainer who wants another AI chat to drive rqmd bootstrap on my behalf
-- I want `rqmd-ai` bootstrap workflows to emit a ready-to-paste handoff prompt for an external AI assistant
+- As a maintainer who wants another AI chat to drive rqmd init on my behalf
+- I want `rqmd-ai` init workflows to emit a ready-to-paste handoff prompt for an external AI assistant
 - So that I can start the guided bootstrap experience by pasting one concise prompt instead of manually explaining the expected command flow.
-- So that the handoff prompt is tailored to the active workflow, such as bundle install bootstrap versus legacy-init bootstrap, instead of using one generic script.
-- So that the handoff prompt tells the receiving AI to run the corresponding `rqmd-ai init --chat --json` or `rqmd-ai install --chat --json` command, inspect the interview payload, ask grouped follow-up questions, and rerun with `--bootstrap-answer` values before any write step.
+- So that the handoff prompt is tailored to the active workflow, such as bundle install onboarding versus legacy-init onboarding, instead of using one generic script.
+- So that the handoff prompt tells the receiving AI to run the corresponding `rqmd-ai init --chat --json` or `rqmd-ai install --chat --json` command, inspect the interview payload, ask grouped follow-up questions, and rerun with `--answer` values before any write step.
 
-### RQMD-AI-026: Concise copy/paste bootstrap prompt UX
+### RQMD-AI-026: Concise copy/paste init prompt UX
 - **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
-- As a maintainer invoking `rqmd-ai` bootstrap workflows directly in my terminal
+- As a maintainer invoking `rqmd-ai` init workflows directly in my terminal
 - I want `rqmd-ai` to print a concise human-facing “paste this into your AI chat” prompt when requested
-- So that the bootstrap-chat flow is understandable even when the user has not yet learned the JSON interview protocol.
+- So that the init-chat flow is understandable even when the user has not yet learned the JSON interview protocol.
 - So that the output includes a short explanatory lead-in plus the exact copy/paste prompt text rather than only a large raw JSON payload.
 - So that the generated prompt can mention the current repository path, the intended init/install mode, and the exact `rqmd-ai ... --chat --json` command the receiving AI should run.
 - So that the prompt stays aligned with the richer grouped interview contract, including grouped questions, selectable suggestions, custom answers, and explicit write confirmation.
@@ -228,7 +228,7 @@ Summary: 0💡 27🔧 0✅ 0⛔ 3🗑️
 - **Priority:** 🟠 P1 - High
 - As a maintainer starting rqmd in a repository
 - I want `rqmd-ai` to expose a single `init` workflow name instead of forcing me to choose between a "new" and "legacy" mental model up front
-- So that bootstrap entry feels simple even when the tool needs to choose a different setup path behind the scenes.
+- So that init entry feels simple even when the tool needs to choose a different setup path behind the scenes.
 - So that `rqmd-ai init` or `--workflow-mode init` can detect whether the repository already looks established and route to the appropriate bootstrap strategy using reasonable heuristics.
 - So that the heuristic can consider signals such as existing source folders, test folders, README/docs volume, build metadata, and issue/backlog availability instead of only whether rqmd docs already exist.
 - So that the chosen path is reported clearly in the payload and user-facing output rather than silently hiding which init strategy was selected.
@@ -238,7 +238,7 @@ Summary: 0💡 27🔧 0✅ 0⛔ 3🗑️
 - **Priority:** 🟡 P2 - Medium
 - As a maintainer working in an unusual repository that may confuse bootstrap heuristics
 - I want an explicit compatibility path to force legacy-style initialization when needed
-- So that repositories with strange layouts or incomplete heuristics are still easy to bootstrap intentionally.
+- So that repositories with strange layouts or incomplete heuristics are still easy to initialize intentionally.
 - So that rqmd-ai can keep a `--legacy` style override or equivalent explicit selector even after the main entrypoint is unified under `init`.
 - So that existing `init-legacy` workflows can remain supported as a compatibility alias during a transition period instead of breaking current docs, prompts, or installed skills immediately.
 
@@ -247,7 +247,7 @@ Summary: 0💡 27🔧 0✅ 0⛔ 3🗑️
 - **Priority:** 🟠 P1 - High
 - As a maintainer setting up rqmd in a new or existing repository with AI help
 - I want `rqmd-ai init --chat` to be the canonical AI-facing onboarding entrypoint
-- So that the recommended startup path is one clear command instead of a mix of `install`, `init-legacy`, `--bootstrap-chat`, and hand-written guidance.
+- So that the recommended startup path is one clear command instead of a mix of `install`, `init-legacy`, and hand-written guidance.
 - So that `rqmd-ai init --chat` emits the concise AI handoff prompt plus the machine-readable interview payload needed for a receiving chat agent to drive the rest of initialization.
 - So that the command can route through the unified `init` heuristics and still report which strategy it selected for the repository.
 - So that users who do want to stay fully inside terminal automation can still run explicit non-chat variants when needed.

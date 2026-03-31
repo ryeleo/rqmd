@@ -446,10 +446,10 @@ def _build_starter_init_payload(
     id_prefixes: tuple[str, ...],
     apply: bool,
     chat_mode: bool,
-    bootstrap_answers: tuple[str, ...] = (),
+    interview_answers: tuple[str, ...] = (),
 ) -> dict[str, object]:
     rules = _load_legacy_init_rules()
-    starter_answer_map = _collect_bootstrap_answers(bootstrap_answers, _STARTER_INIT_CHAT_FIELDS)
+    starter_answer_map = _collect_interview_answers(interview_answers, _STARTER_INIT_CHAT_FIELDS)
     criteria_dir = Path(
         requirements_dir_input
         or str(starter_answer_map.get("requirements_dir", [str(rules["default_requirements_dir"])])[0])
@@ -469,7 +469,7 @@ def _build_starter_init_payload(
         "starter_prefix": prefix,
         "proposed_files": proposed_files,
         "total_files": len(proposed_files),
-        "bootstrap_chat": {
+        "interview": {
             "enabled": chat_mode,
             "questions": questions if chat_mode else [],
             "question_groups": _group_interview_questions(questions) if chat_mode else [],
@@ -539,8 +539,8 @@ def _build_init_handoff_prompt(
         "",
         f"1. Run `{init_command}`.",
         "2. Read the JSON payload and report which init strategy was selected.",
-        "3. If `bootstrap_chat.question_groups` is present, ask the user the grouped follow-up questions in chat.",
-        "4. Rerun the same init command with repeated `--bootstrap-answer FIELD=VALUE` entries to apply the user's answers.",
+        "3. If `interview.question_groups` is present, ask the user the grouped follow-up questions in chat.",
+        "4. Rerun the same init command with repeated `--answer FIELD=VALUE` entries to apply the user's answers.",
         "5. Review the proposed files with the user before writing anything.",
         f"6. Apply only after explicit confirmation by running `{apply_command}`.",
     ]
@@ -560,7 +560,7 @@ def _build_init_handoff_prompt(
 
     lines.extend(
         [
-            f"{final_step}. Finish by running `uv run rqmd --verify-summaries --no-walk --no-table`.",
+            f"{final_step}. Finish by running `rqmd --verify-summaries --no-walk --no-table`.",
             f"{final_step + 1}. Tell the user the rqmd catalog is ready for refinement passes.",
             "",
             f"Selected strategy hint: {strategy.get('selected', 'unknown')}.",
@@ -576,7 +576,7 @@ def _build_or_apply_init_payload(
     apply: bool,
     *,
     chat_mode: bool = False,
-    bootstrap_answers: tuple[str, ...] = (),
+    interview_answers: tuple[str, ...] = (),
     force_legacy: bool = False,
 ) -> dict[str, object]:
     strategy = _detect_init_strategy(
@@ -592,8 +592,8 @@ def _build_or_apply_init_payload(
             requirements_dir_input=requirements_dir_input,
             id_prefixes=id_prefixes,
             apply=apply,
-            bootstrap_chat=chat_mode,
-            bootstrap_answers=bootstrap_answers,
+            chat_mode=chat_mode,
+            interview_answers=interview_answers,
         )
     else:
         payload = _build_starter_init_payload(
@@ -602,7 +602,7 @@ def _build_or_apply_init_payload(
             id_prefixes=id_prefixes,
             apply=apply,
             chat_mode=chat_mode,
-            bootstrap_answers=bootstrap_answers,
+            interview_answers=interview_answers,
         )
 
     init_command = _build_rqmd_ai_init_command(
@@ -628,7 +628,6 @@ def _build_or_apply_init_payload(
     payload["compatibility"] = {
         "legacy_workflow_mode": "init-legacy",
         "legacy_flag": "--legacy",
-        "bootstrap_chat_flag": "--bootstrap-chat",
     }
     if chat_mode:
         payload["handoff_prompt"] = _build_init_handoff_prompt(
@@ -1274,11 +1273,11 @@ def _infer_project_skill_content(repo_root: Path) -> dict[str, str]:
     return _render_project_skill_content_from_hints(hints)
 
 
-def _parse_bootstrap_answer_entry(raw: str, allowed_fields: tuple[str, ...]) -> tuple[str, str]:
+def _parse_interview_answer_entry(raw: str, allowed_fields: tuple[str, ...]) -> tuple[str, str]:
     text = str(raw).strip()
     if "=" not in text:
         raise click.ClickException(
-            "--bootstrap-answer must use FIELD=VALUE format, for example --bootstrap-answer dev_run='npm run dev'."
+            "--answer must use FIELD=VALUE format, for example --answer dev_run='npm run dev'."
         )
     field_raw, value_raw = text.split("=", 1)
     field = field_raw.strip().lower()
@@ -1286,20 +1285,20 @@ def _parse_bootstrap_answer_entry(raw: str, allowed_fields: tuple[str, ...]) -> 
     if field not in allowed_fields:
         allowed = ", ".join(allowed_fields)
         raise click.ClickException(
-            f"Unknown --bootstrap-answer field {field_raw!r}. Allowed fields: {allowed}."
+            f"Unknown --answer field {field_raw!r}. Allowed fields: {allowed}."
         )
     if not value:
-        raise click.ClickException(f"--bootstrap-answer {field}=... requires a non-empty value.")
+        raise click.ClickException(f"--answer {field}=... requires a non-empty value.")
     return field, value
 
 
-def _collect_bootstrap_answers(
-    bootstrap_answers: tuple[str, ...],
+def _collect_interview_answers(
+    interview_answers: tuple[str, ...],
     allowed_fields: tuple[str, ...],
 ) -> dict[str, list[str]]:
     collected_answers: dict[str, list[str]] = {field: [] for field in allowed_fields}
-    for raw in bootstrap_answers:
-        field, value = _parse_bootstrap_answer_entry(raw, allowed_fields)
+    for raw in interview_answers:
+        field, value = _parse_interview_answer_entry(raw, allowed_fields)
         collected_answers[field].append(value)
     return {field: values for field, values in collected_answers.items() if values}
 
@@ -1785,14 +1784,14 @@ def _build_legacy_init_files(
     repo_root: Path,
     requirements_dir: Path,
     id_prefixes: tuple[str, ...],
-    bootstrap_answers: tuple[str, ...] = (),
+    interview_answers: tuple[str, ...] = (),
 ) -> dict[str, object]:
     rules = _load_legacy_init_rules()
     command_hints = _detect_project_command_hints(repo_root)
     source_areas = _detect_legacy_source_areas(repo_root, int(rules["max_source_areas"]))
     issue_context = _collect_github_issue_context(repo_root, int(rules["max_issue_requirements"]))
-    legacy_answer_map = _collect_bootstrap_answers(
-        bootstrap_answers,
+    legacy_answer_map = _collect_interview_answers(
+        interview_answers,
         _BOOTSTRAP_CHAT_FIELDS + _LEGACY_INIT_CHAT_FIELDS,
     )
 
@@ -1889,7 +1888,7 @@ def _build_legacy_init_files(
         },
         "issue_discovery": issue_context,
         "proposed_files": proposed_files,
-        "bootstrap_answers": legacy_answer_map,
+        "interview_answers": legacy_answer_map,
     }
 
 
@@ -1915,12 +1914,12 @@ def _build_or_apply_legacy_init_payload(
     requirements_dir_input: str | None,
     id_prefixes: tuple[str, ...],
     apply: bool,
-    bootstrap_chat: bool = False,
-    bootstrap_answers: tuple[str, ...] = (),
+    chat_mode: bool = False,
+    interview_answers: tuple[str, ...] = (),
 ) -> dict[str, object]:
     rules = _load_legacy_init_rules()
-    legacy_answer_map = _collect_bootstrap_answers(
-        bootstrap_answers,
+    legacy_answer_map = _collect_interview_answers(
+        interview_answers,
         _BOOTSTRAP_CHAT_FIELDS + _LEGACY_INIT_CHAT_FIELDS,
     )
     criteria_dir = Path(
@@ -1942,7 +1941,7 @@ def _build_or_apply_legacy_init_payload(
         repo_root=repo_root,
         requirements_dir=criteria_dir.relative_to(repo_root),
         id_prefixes=id_prefixes,
-        bootstrap_answers=bootstrap_answers,
+        interview_answers=interview_answers,
     )
     legacy_questions = _build_legacy_init_chat_questions(
         repo_root=repo_root,
@@ -1963,11 +1962,11 @@ def _build_or_apply_legacy_init_payload(
         "issue_discovery": plan["issue_discovery"],
         "proposed_files": plan["proposed_files"],
         "total_files": len(plan["proposed_files"]),
-        "bootstrap_chat": {
-            "enabled": bootstrap_chat,
-            "questions": legacy_questions if bootstrap_chat else [],
-            "question_groups": _group_interview_questions(legacy_questions) if bootstrap_chat else [],
-            "applied_answers": plan.get("bootstrap_answers", {}),
+        "interview": {
+            "enabled": chat_mode,
+            "questions": legacy_questions if chat_mode else [],
+            "question_groups": _group_interview_questions(legacy_questions) if chat_mode else [],
+            "applied_answers": plan.get("interview_answers", {}),
             "detected_sources": list(plan["detected_context"].get("detected_command_sources", [])),
             "detected_source_areas": [
                 str(area.get("title") or "")
@@ -2275,12 +2274,12 @@ def _install_agent_bundle(
     preset: str,
     overwrite_existing: bool,
     dry_run: bool,
-    bootstrap_chat: bool = False,
-    bootstrap_answers: tuple[str, ...] = (),
+    chat_mode: bool = False,
+    interview_answers: tuple[str, ...] = (),
 ) -> dict[str, object]:
     files = _bundle_files_for_preset(preset)
     detected_hints = _detect_project_command_hints(repo_root)
-    applied_answers = _collect_bootstrap_answers(bootstrap_answers, _BOOTSTRAP_CHAT_FIELDS)
+    applied_answers = _collect_interview_answers(interview_answers, _BOOTSTRAP_CHAT_FIELDS)
     resolved_hints = _apply_command_answers(detected_hints, applied_answers)
     generated_skill_files = _render_project_skill_content_from_hints(resolved_hints)
     files.update(generated_skill_files)
@@ -2312,10 +2311,10 @@ def _install_agent_bundle(
         "preset": preset,
         "overwrite_existing": overwrite_existing,
         "dry_run": dry_run,
-        "bootstrap_chat": {
-            "enabled": bootstrap_chat,
-            "questions": bootstrap_questions if bootstrap_chat else [],
-            "question_groups": _group_interview_questions(bootstrap_questions) if bootstrap_chat else [],
+        "interview": {
+            "enabled": chat_mode,
+            "questions": bootstrap_questions if chat_mode else [],
+            "question_groups": _group_interview_questions(bootstrap_questions) if chat_mode else [],
             "applied_answers": applied_answers,
             "detected_sources": list(detected_hints.get("detected_sources", [])),
         },
@@ -2323,7 +2322,7 @@ def _install_agent_bundle(
         "generated_skill_previews": [
             {"path": path, "content": content}
             for path, content in sorted(generated_skill_files.items())
-        ] if bootstrap_chat else [],
+        ] if chat_mode else [],
         "created_files": created_files,
         "overwritten_files": overwritten_files,
         "skipped_existing": skipped_existing,
@@ -2394,6 +2393,39 @@ def _emit(payload: dict[str, object], json_output: bool) -> None:
         return
 
     mode = payload.get("mode", "unknown")
+    if mode in {"init-chat", "init-plan", "init-apply"}:
+        strategy = payload.get("strategy")
+        if isinstance(strategy, dict):
+            click.echo(f"rqmd-ai init: {strategy.get('selected', 'unknown')}")
+            for reason in strategy.get("reasons", []):
+                click.echo(f"- {reason}")
+        if payload.get("read_only") is True:
+            click.echo("Preview only. Nothing has been written yet.")
+        prompt = payload.get("handoff_prompt")
+        if isinstance(prompt, str) and prompt.strip():
+            click.echo("")
+            click.echo("Paste this into your AI chat:")
+            click.echo("")
+            click.echo(prompt)
+        return
+    if mode in {"legacy-init-plan", "legacy-init-apply"}:
+        click.echo(f"rqmd-ai legacy init: {payload.get('requirements_dir')}")
+        if payload.get("read_only") is True:
+            click.echo("Preview only. Nothing has been written yet.")
+        issue_discovery = payload.get("issue_discovery")
+        issue_details = issue_discovery if isinstance(issue_discovery, dict) else {}
+        issue_status = "used" if issue_details.get("used") else issue_details.get("reason", "not used")
+        click.echo(f"GitHub issue discovery: {issue_status}")
+        if mode == "legacy-init-plan":
+            click.echo(f"proposed files: {payload.get('total_files')}")
+            for item in payload.get("proposed_files", []):
+                if isinstance(item, dict):
+                    click.echo(f"- {item.get('path')}: {item.get('description')}")
+        else:
+            for path in payload.get("created_files", []):
+                click.echo(f"- created {path}")
+        return
+
     click.echo(f"rqmd-ai mode: {mode}")
     read_only = payload.get("read_only")
     if isinstance(read_only, bool):
@@ -2421,19 +2453,6 @@ def _emit(payload: dict[str, object], json_output: bool) -> None:
             if isinstance(files, list):
                 click.echo(f"packaged definitions embedded: {len(files)}")
         return
-        if mode in {"init-chat", "init-plan", "init-apply"}:
-            strategy = payload.get("strategy")
-            if isinstance(strategy, dict):
-                click.echo(f"selected strategy: {strategy.get('selected', 'unknown')}")
-                for reason in strategy.get("reasons", []):
-                    click.echo(f"- {reason}")
-            prompt = payload.get("handoff_prompt")
-            if isinstance(prompt, str) and prompt.strip():
-                click.echo("")
-                click.echo("Paste this into your AI chat:")
-                click.echo("")
-                click.echo(prompt)
-                return
     if mode == "brainstorm-plan":
         click.echo(f"source file: {payload.get('source_file')}")
         click.echo(f"total proposals: {payload.get('total_proposals')}")
@@ -2445,23 +2464,6 @@ def _emit(payload: dict[str, object], json_output: bool) -> None:
                 f"- #{item.get('rank')} {proposal.get('suggested_id')} [{proposal.get('priority')}] -> {proposal.get('target_file')}: {proposal.get('title')}"
             )
         return
-    if mode in {"legacy-init-plan", "legacy-init-apply"}:
-        click.echo(f"requirements dir: {payload.get('requirements_dir')}")
-        click.echo(f"starter prefix: {payload.get('starter_prefix')}")
-        issue_discovery = payload.get("issue_discovery")
-        issue_details = issue_discovery if isinstance(issue_discovery, dict) else {}
-        issue_status = "used" if issue_details.get("used") else issue_details.get("reason", "not used")
-        click.echo(f"GitHub issue discovery: {issue_status}")
-        if mode == "legacy-init-plan":
-            click.echo(f"proposed files: {payload.get('total_files')}")
-            for item in payload.get("proposed_files", []):
-                if isinstance(item, dict):
-                    click.echo(f"- {item.get('path')}: {item.get('description')}")
-        else:
-            for path in payload.get("created_files", []):
-                click.echo(f"- created {path}")
-        return
-
 
 def _emit_history_report(payload: dict[str, object], json_output: bool) -> None:
     if json_output:
@@ -3365,22 +3367,16 @@ def _plan_or_apply_updates(
     help="Bundle preset for `rqmd-ai install` / --install-agent-bundle.",
 )
 @click.option(
-    "--chat",
+    "--chat/--no-chat",
     "chat_mode",
-    is_flag=True,
-    help="Emit the chat-first onboarding flow. Preferred with `rqmd-ai init` and accepted as a friendlier alias for --bootstrap-chat.",
+    default=None,
+    help="Emit the chat-first interview flow. Enabled by default for `rqmd-ai init`.",
 )
 @click.option(
-    "--bootstrap-chat",
-    "bootstrap_chat",
-    is_flag=True,
-    help="Compatibility alias for the older bootstrap-chat wording. Emits a structured interview and preview for AI-guided bundle or init flows.",
-)
-@click.option(
-    "--bootstrap-answer",
-    "bootstrap_answers",
+    "--answer",
+    "interview_answers",
     multiple=True,
-    help="Answer one bootstrap interview field using FIELD=VALUE. Repeat to select multiple suggestions or add custom values.",
+    help="Answer one interview field using FIELD=VALUE. Repeat to select multiple suggestions or add custom values.",
 )
 @click.option(
     "--legacy",
@@ -3414,16 +3410,14 @@ def main(
     apply: bool,
     install_bundle: bool,
     bundle_preset: str,
-    chat_mode: bool,
-    bootstrap_chat: bool,
-    bootstrap_answers: tuple[str, ...],
+    chat_mode: bool | None,
+    interview_answers: tuple[str, ...],
     force_legacy_init: bool,
     overwrite_existing: bool,
     dry_run: bool,
 ) -> None:
     repo_root = _resolve_repo_root(repo_root)
     workflow_mode = workflow_mode.lower()
-    chat_mode = chat_mode or bootstrap_chat
     if command_name:
         normalized_command = command_name.strip().lower()
         if normalized_command in {"install", "i"}:
@@ -3432,6 +3426,8 @@ def main(
             workflow_mode = "init"
         else:
             raise click.ClickException(f"Unknown rqmd-ai command: {command_name}")
+    if chat_mode is None:
+        chat_mode = workflow_mode == "init"
     if brainstorm_file is not None and workflow_mode != "brainstorm":
         raise click.ClickException("--brainstorm-file can only be used with --workflow-mode brainstorm.")
 
@@ -3445,8 +3441,8 @@ def main(
             preset=bundle_preset.lower(),
             overwrite_existing=overwrite_existing,
             dry_run=dry_run,
-            bootstrap_chat=chat_mode,
-            bootstrap_answers=bootstrap_answers,
+            chat_mode=chat_mode,
+            interview_answers=interview_answers,
         )
         _emit(payload, json_output=json_output)
         return
@@ -3480,7 +3476,7 @@ def main(
             id_prefixes=id_prefixes,
             apply=apply,
             chat_mode=chat_mode,
-            bootstrap_answers=bootstrap_answers,
+            interview_answers=interview_answers,
             force_legacy=force_legacy_init,
         )
         _emit(payload, json_output=json_output)
@@ -3498,8 +3494,8 @@ def main(
             requirements_dir_input=requirements_dir,
             id_prefixes=id_prefixes,
             apply=apply,
-            bootstrap_chat=chat_mode,
-            bootstrap_answers=bootstrap_answers,
+            chat_mode=chat_mode,
+            interview_answers=interview_answers,
         )
         _emit(payload, json_output=json_output)
         return

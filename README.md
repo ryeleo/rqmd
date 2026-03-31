@@ -86,7 +86,7 @@ When `orjson` is installed through the `speedups` extra, rqmd and rqmd-ai use it
 Then run:
 
 ```bash
-uv run rqmd --help
+rqmd --help
 ```
 
 `reqmd` and `reqmd-ai` remain available as compatibility aliases, but the canonical commands are `rqmd` and `rqmd-ai`.
@@ -94,13 +94,13 @@ uv run rqmd --help
 Module entrypoint:
 
 ```bash
-uv run python -m rqmd --help
+python -m rqmd --help
 ```
 
 Pre-release alias plan:
 
 - `rqmd` remains the canonical package name and primary command for now.
-- `reqmd` and `reqmd-ai` are shipped as compatibility aliases so teams can trial the shorter branding before any package rename decision.
+- `reqmd` and `reqmd-ai` are shipped as compatibility aliases so teams can trial the shorter branding before any package regname decision.
 - Any future package-name rename should happen only after a manual PyPI availability check and a documented compatibility window for existing `rqmd` users.
 
 ## Shell completion
@@ -126,7 +126,7 @@ fish activation (add to `~/.config/fish/config.fish`):
 _RQMD_COMPLETE=fish_source rqmd | source
 ```
 
-If you are running from a local clone during development, keep using `uv run rqmd` for execution; completion is provided by the installed `rqmd` console entrypoint.
+If you are running from a local clone during development without installing the console script, use `python -m rqmd`; completion is provided by the installed `rqmd` console entrypoint.
 
 Troubleshooting completion cache refresh:
 
@@ -139,25 +139,25 @@ Troubleshooting completion cache refresh:
 Check summaries only:
 
 ```bash
-uv run rqmd --verify-summaries
+rqmd --verify-summaries
 ```
 
 Interactive mode:
 
 ```bash
-uv run rqmd
+rqmd
 ```
 
 Open a specific domain file directly (absolute or repo-root-relative path):
 
 ```bash
-uv run rqmd docs/requirements/interactive-ux.md
+rqmd docs/requirements/interactive-ux.md
 ```
 
 In non-interactive modes, a positional domain file path scopes operations to that file:
 
 ```bash
-uv run rqmd docs/requirements/interactive-ux.md --update AC-EXAMPLE-001=verified
+rqmd docs/requirements/interactive-ux.md --update AC-EXAMPLE-001=verified
 ```
 
 Interactive file and requirement menus now support:
@@ -207,18 +207,18 @@ Long options also accept unique prefixes, so invocations such as `--proj`, `--do
 
 History operations available in non-interactive mode include:
 
-- `uv run rqmd --history`
-- `uv run rqmd --timeline`
-- `uv run rqmd --undo`
-- `uv run rqmd --redo`
-- `uv run rqmd --history-label-branch <branch-name> --history-branch-label <label>`
-- `uv run rqmd --history-discard-branch <branch-name> --history-discard-save-label <label> --force-yes`
-- `uv run rqmd --history-gc --history-gc-save-label <label> --force-yes`
-- `uv run rqmd --history-gc --force-yes`
-- `uv run rqmd --history-gc --history-prune-now --force-yes`
-- `uv run rqmd --history-checkout-branch <branch-name>`
-- `uv run rqmd --history-cherry-pick <entry-index-or-ref> [--history-target-branch <branch-name>]`
-- `uv run rqmd --history-replay-branch <branch-name> [--history-target-branch <branch-name>]`
+- `rqmd --history`
+- `rqmd --timeline`
+- `rqmd --undo`
+- `rqmd --redo`
+- `rqmd --history-label-branch <branch-name> --history-branch-label <label>`
+- `rqmd --history-discard-branch <branch-name> --history-discard-save-label <label> --force-yes`
+- `rqmd --history-gc --history-gc-save-label <label> --force-yes`
+- `rqmd --history-gc --force-yes`
+- `rqmd --history-gc --history-prune-now --force-yes`
+- `rqmd --history-checkout-branch <branch-name>`
+- `rqmd --history-cherry-pick <entry-index-or-ref> [--history-target-branch <branch-name>]`
+- `rqmd --history-replay-branch <branch-name> [--history-target-branch <branch-name>]`
 
 `--history-gc` requires explicit confirmation because it runs maintenance against the hidden `.rqmd/history/rqmd-history` repository. Add `--history-prune-now` to expire reflogs and prune immediately instead of using Git's default grace period.
 
@@ -227,15 +227,15 @@ File lists now default to the `name` sort in descending order.
 You can select a named sort strategy catalog for interactive mode:
 
 ```bash
-uv run rqmd --sort-profile standard
-uv run rqmd --sort-profile status-focus
-uv run rqmd --sort-profile alpha-asc
+rqmd --sort-profile standard
+rqmd --sort-profile status-focus
+rqmd --sort-profile alpha-asc
 ```
 
 Start rqmd in a new project with the default chat-first flow:
 
 ```bash
-uv run rqmd init
+rqmd init
 ```
 
 `rqmd init` prints a copy/paste handoff prompt for your AI chat. That chat then runs `rqmd-ai init --chat --json`, asks the grouped interview questions, previews the generated files, and applies the bootstrap only after confirmation.
@@ -243,17 +243,17 @@ uv run rqmd init
 Direct scaffold compatibility path:
 
 ```bash
-uv run rqmd --bootstrap
+rqmd init --scaffold
 ```
 
-`--bootstrap` remains available as a compatibility path when you want the immediate starter scaffold without the chat-first onboarding flow.
+`rqmd init --scaffold` is the direct starter scaffold path when you want immediate docs without the chat-first onboarding flow.
 Scaffold content is sourced from repository-managed templates in `init-docs/README.md` and `init-docs/domain-example.md`.
 
 Allocate the next sequential numeric requirement ID for the active namespace:
 
 ```bash
-uv run rqmd --id-namespace TEAM --next-id
-uv run rqmd --id-namespace TEAM --next-id --json
+rqmd --id-namespace TEAM --next-id
+rqmd --id-namespace TEAM --next-id --json
 ```
 
 `--next-id` respects the active key prefix, uses at least 3 digits of zero-padding by default, and continues past `999` as `1000`, `1001`, and higher.
@@ -261,14 +261,14 @@ uv run rqmd --id-namespace TEAM --next-id --json
 Set one requirement non-interactively:
 
 ```bash
-uv run rqmd --update-id AC-EXAMPLE-001 --update-status implemented
+rqmd --update-id AC-EXAMPLE-001 --update-status implemented
 ```
 
 Update priorities non-interactively:
 
 ```bash
-uv run rqmd --update-priority AC-EXAMPLE-001=p0
-uv run rqmd --update-priority AC-EXAMPLE-001=critical --update-priority AC-EXAMPLE-002=medium
+rqmd --update-priority AC-EXAMPLE-001=p0
+rqmd --update-priority AC-EXAMPLE-001=critical --update-priority AC-EXAMPLE-002=medium
 ```
 
 Batch updates can include `priority` fields, or combine `status` and `priority` in one row:
@@ -281,9 +281,9 @@ Batch updates can include `priority` fields, or combine `status` and `priority` 
 Use positional filters for fast narrowing without explicit flags:
 
 ```bash
-uv run rqmd all
-uv run rqmd P1 Proposed --json --no-walk --no-table
-uv run rqmd Proposed core-engine
+rqmd all
+rqmd P1 Proposed --json --no-walk --no-table
+rqmd Proposed core-engine
 ```
 
 `rqmd all` opens a whole-catalog overview ordered by newest requirement ID first. When positional status and priority filters are combined, rqmd narrows across both families, so `rqmd P1 Proposed` returns only proposed P1 requirements. Remaining positional tokens are then resolved as requirement IDs, domain tokens, or subsection tokens.
@@ -291,7 +291,7 @@ uv run rqmd Proposed core-engine
 Interactive entry panels can start in priority mode:
 
 ```bash
-uv run rqmd --focus-priority
+rqmd --focus-priority
 ```
 
 Within an entry panel, press `t` to cycle status, priority, and flagged editing.
@@ -301,21 +301,21 @@ When the entry panel is on status, rqmd also shows a right-hand priority column 
 Regenerate summary blocks with priority aggregates included:
 
 ```bash
-uv run rqmd --priority-rollup --no-walk
+rqmd --priority-rollup --no-walk
 ```
 
 Filter by priority in tree, JSON, or interactive walk modes:
 
 ```bash
-uv run rqmd --priority critical --as-tree
-uv run rqmd --priority p1 --json --no-walk
+rqmd --priority critical --as-tree
+rqmd --priority p1 --json --no-walk
 ```
 
 Filter by subsection name with case-insensitive prefix matching:
 
 ```bash
-uv run rqmd --sub-domain query --as-tree
-uv run rqmd --sub-domain api --json --no-walk
+rqmd --sub-domain query --as-tree
+rqmd --sub-domain api --json --no-walk
 ```
 
 Combine filters for slicing/dicing requirements:
@@ -324,18 +324,18 @@ Combine filters for slicing/dicing requirements:
 - AND within the same flag when repeated
 
 ```bash
-uv run rqmd --status proposed --priority p0 --as-tree
-uv run rqmd --no-flag --json --no-walk
-uv run rqmd --has-link --json --no-walk
-uv run rqmd --status proposed --status implemented --json --no-walk
-uv run rqmd --sub-domain query --sub-domain api --json --no-walk
+rqmd --status proposed --priority p0 --as-tree
+rqmd --no-flag --json --no-walk
+rqmd --has-link --json --no-walk
+rqmd --status proposed --status implemented --json --no-walk
+rqmd --sub-domain query --sub-domain api --json --no-walk
 ```
 
 Target an explicit worklist from CLI tokens or a reusable file:
 
 ```bash
-uv run rqmd demo "Query API"
-uv run rqmd --targets-file tmp/focus.txt --json --no-walk
+rqmd demo "Query API"
+rqmd --targets-file tmp/focus.txt --json --no-walk
 ```
 
 `--targets-file` accepts `.txt`, `.conf`, or `.md` files with one-per-line or whitespace/comma-separated tokens, and supports `#` comments.
@@ -345,13 +345,13 @@ Interactive file and requirement menus also expose `priority` as a sortable colu
 Use a different ID prefix:
 
 ```bash
-uv run rqmd --id-namespace R --update-id R-EXAMPLE-001 --update-status implemented
+rqmd --id-namespace R --update-id R-EXAMPLE-001 --update-status implemented
 ```
 
 Bulk set by repeated flags:
 
 ```bash
-uv run rqmd --update AC-EXAMPLE-001=implemented --update AC-EXAMPLE-002=verified
+rqmd --update AC-EXAMPLE-001=implemented --update AC-EXAMPLE-002=verified
 ```
 
 ## AI CLI (rqmd-ai)
@@ -369,11 +369,11 @@ Recommended AI change loop for brainstorm-driven work:
 Guidance mode:
 
 ```bash
-uv run rqmd-ai --json
-uv run rqmd-ai --json --workflow-mode brainstorm
-uv run rqmd-ai --json --workflow-mode implement
-uv run rqmd-ai init --chat --json
-uv run rqmd-ai --json --workflow-mode init --show-guide
+rqmd-ai --json
+rqmd-ai --json --workflow-mode brainstorm
+rqmd-ai --json --workflow-mode implement
+rqmd-ai init --chat --json
+rqmd-ai --json --workflow-mode init --show-guide
 ```
 
 `--workflow-mode brainstorm` emits requirement-first planning guidance for turning notes into ranked proposals. `--workflow-mode implement` emits the execution loop for working the highest-priority proposed 1-3 items at a time, then re-checking `rqmd`, summaries, tests, changelog, and remaining priorities before the next batch. `rqmd-ai init --chat` is the preferred onboarding entrypoint: it routes between starter scaffold mode and legacy-style repository seeding, emits a copy/paste AI handoff prompt, and keeps `--workflow-mode init-legacy` available only as a compatibility surface.
@@ -385,35 +385,35 @@ Brainstorm mode can read `docs/brainstorm.md` by default or a custom markdown no
 Export context for prompts:
 
 ```bash
-uv run rqmd-ai --json --dump-status proposed
-uv run rqmd-ai --json --dump-id RQMD-CORE-001 --include-requirement-body
-uv run rqmd-ai --json --dump-file ai-cli.md --include-domain-markdown --max-domain-markdown-chars 2000
+rqmd-ai --json --dump-status proposed
+rqmd-ai --json --dump-id RQMD-CORE-001 --include-requirement-body
+rqmd-ai --json --dump-file ai-cli.md --include-domain-markdown --max-domain-markdown-chars 2000
 ```
 
 Plan first, then apply explicitly:
 
 ```bash
-uv run rqmd-ai --json --update RQMD-CORE-001=implemented
-uv run rqmd-ai --json --write --update RQMD-CORE-001=implemented
+rqmd-ai --json --update RQMD-CORE-001=implemented
+rqmd-ai --json --write --update RQMD-CORE-001=implemented
 ```
 
 Install a standard AI agent/skill instruction bundle (minimal or full preset):
 
 ```bash
-uv run rqmd-ai --json --install-agent-bundle --bundle-preset minimal --dry-run
-uv run rqmd-ai --json --install-agent-bundle --bundle-preset full
-uv run rqmd-ai --json --install-agent-bundle --bundle-preset full --overwrite-existing
+rqmd-ai --json --install-agent-bundle --bundle-preset minimal --dry-run
+rqmd-ai --json --install-agent-bundle --bundle-preset full
+rqmd-ai --json --install-agent-bundle --bundle-preset full --overwrite-existing
 ```
 
 Bundle installs are idempotent by default and preserve existing customized instruction files unless `--overwrite-existing` is explicitly passed.
 
 Bundle install also scaffolds project-local `.github/skills/dev/SKILL.md` and `.github/skills/test/SKILL.md` files based on detected repository commands. Treat those as a starting point: review and tighten the generated build, smoke, and validation commands so future `rqmd-dev` runs can rely on them instead of guessing.
 
-Bundle installation can also be driven through a structured chat-style preview with `uv run rqmd-ai install --json --bundle-preset minimal --chat --dry-run`. That payload now includes grouped interview questions, multi-select command suggestions, custom-answer prompts, skip support, detected command sources, recommended choices, safe defaults, and preview content for the generated `/dev` and `/test` skills. Repeat `--bootstrap-answer FIELD=VALUE` to select multiple suggestions or add custom commands before writing.
+Bundle installation can also be driven through a structured chat-style preview with `rqmd-ai install --json --bundle-preset minimal --chat --dry-run`. That payload now includes grouped interview questions, multi-select command suggestions, custom-answer prompts, skip support, detected command sources, recommended choices, safe defaults, and preview content for the generated `/dev` and `/test` skills. Repeat `--answer FIELD=VALUE` to select multiple suggestions or add custom commands before writing.
 
-New-project flow: run `uv run rqmd init`, paste the output into your AI chat, let that chat drive `rqmd-ai init --chat --json`, review the generated requirements catalog and any suggested bundle skill setup, and then start refining the resulting requirements docs.
+New-project flow: run `rqmd init`, paste the output into your AI chat, let that chat drive `rqmd-ai init --chat --json`, review the generated requirements catalog and any suggested bundle skill setup, and then start refining the resulting requirements docs.
 
-Legacy-style repository seeding can still be previewed with `uv run rqmd-ai init --chat --json --legacy`; the older `--workflow-mode init-legacy --bootstrap-chat` form remains available as a compatibility alias. The grouped interview covers catalog setup, developer workflows, repository understanding, backlog handling, and review notes, and its options include recommended choices, detected-from hints, and safe defaults. The generated starter catalog seeds a requirements index, developer workflow requirements, repository-area seed files, and an issue backlog file when `gh issue list` succeeds.
+Legacy-style repository seeding can still be previewed with `rqmd-ai init --chat --json --legacy`. The grouped interview covers catalog setup, developer workflows, repository understanding, backlog handling, and review notes, and its options include recommended choices, detected-from hints, and safe defaults. The generated starter catalog seeds a requirements index, developer workflow requirements, repository-area seed files, and an issue backlog file when `gh issue list` succeeds.
 
 The installed bundle now includes Copilot skills for `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-init`, `/rqmd-init-legacy`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, and `/rqmd-verify` so teams can reuse the core planning, backlog selection, context export, implementation, unified init, compatibility legacy bootstrap, docs-sync, history, bundle-management, and verification loops without rewriting those instructions in every workspace. Those skills help with discovery and consistency, but they do not auto-approve terminal commands or bypass Copilot tool approval prompts.
 
@@ -426,19 +426,19 @@ When apply mode runs, rqmd-ai appends a structured audit event to the local shar
 Batch set from file:
 
 ```bash
-uv run rqmd --update-file tmp/ac-updates.jsonl
+rqmd --update-file tmp/ac-updates.jsonl
 ```
 
 Allow custom prefixes such as `REQ-` in a repo:
 
 ```bash
-uv run rqmd --id-namespace REQ --status proposed --as-tree
+rqmd --id-namespace REQ --status proposed --as-tree
 ```
 
 Filter walk:
 
 ```bash
-uv run rqmd --status proposed
+rqmd --status proposed
 ```
 
 Filtered walk resume behavior (enabled by default):
@@ -450,43 +450,43 @@ Filtered walk resume behavior (enabled by default):
 Examples:
 
 ```bash
-uv run rqmd --status implemented --session-state-dir system-temp
-uv run rqmd --status implemented --session-state-dir project-local
-uv run rqmd --status implemented --session-state-dir .rqmd/state
-uv run rqmd --status implemented --no-resume-walk
+rqmd --status implemented --session-state-dir system-temp
+rqmd --status implemented --session-state-dir project-local
+rqmd --status implemented --session-state-dir .rqmd/state
+rqmd --status implemented --no-resume-walk
 ```
 
 Filter tree only:
 
 ```bash
-uv run rqmd --status proposed --as-tree
+rqmd --status proposed --as-tree
 ```
 
 Filter as JSON for automation/AI parsing:
 
 ```bash
-uv run rqmd --status proposed --json
+rqmd --status proposed --json
 ```
 
 Filter JSON includes requirement body content and line metadata by default:
 
 ```bash
-uv run rqmd --status proposed --json
+rqmd --status proposed --json
 ```
 
 Use compact output without bodies:
 
 ```bash
-uv run rqmd --status proposed --json --no-requirement-body
+rqmd --status proposed --json --no-requirement-body
 ```
 
 Summary/check/set JSON examples:
 
 ```bash
-uv run rqmd --json --no-walk
-uv run rqmd --verify-summaries --json --no-walk
-uv run rqmd --update-id AC-EXAMPLE-001 --update-status verified --json
-uv run rqmd --totals --json --no-walk
+rqmd --json --no-walk
+rqmd --verify-summaries --json --no-walk
+rqmd --update-id AC-EXAMPLE-001 --update-status verified --json
+rqmd --totals --json --no-walk
 ```
 
 ### JSON contract (stable keys)
@@ -522,19 +522,19 @@ RQMD uses this exit-code matrix for automation:
 Explicit global roll-up totals:
 
 ```bash
-uv run rqmd --totals --no-walk
+rqmd --totals --no-walk
 ```
 
 Custom roll-up columns from CLI equations:
 
 ```bash
-uv run rqmd --totals --totals-map "C1=I+V" --totals-map "C2=P" --no-walk
+rqmd --totals --totals-map "C1=I+V" --totals-map "C2=P" --no-walk
 ```
 
 Custom roll-up columns from config (`.json`, `.yml`, `.yaml`):
 
 ```bash
-uv run rqmd --totals --totals-config .rqmd.yml --json --no-walk
+rqmd --totals --totals-config .rqmd.yml --json --no-walk
 ```
 
 Example project config for a repo that defines a custom status catalog and wants RQMD-ROLLUP-007 roll-up buckets:
@@ -655,7 +655,7 @@ Auto-detect preference is deterministic:
 You can override both:
 
 ```bash
-uv run rqmd --project-root /path/to/project --docs-dir docs/requirements
+rqmd --project-root /path/to/project --docs-dir docs/requirements
 ```
 
 `--docs-dir` can be absolute or relative to `--project-root`.
@@ -701,7 +701,7 @@ CLI flags always override config file values. When `.rqmd.yml` (or `.rqmd.yaml` 
 1. Keep an index doc at `docs/requirements/README.md` or `requirements/README.md`.
 2. Keep domain files in that same directory.
 3. Ensure each requirement has exactly one status line directly under the `### <PREFIX>-...` header.
-4. Run `uv run rqmd --verify-summaries` in CI to prevent stale summary blocks.
+4. Run `rqmd --verify-summaries` in CI to prevent stale summary blocks.
 5. Use non-interactive `--update`/`--update-file` in automation.
 
 ## Packaging notes
