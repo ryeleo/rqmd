@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 17🔧 0✅ 0⛔ 3🗑️
+Summary: 1💡 20🔧 0✅ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -176,7 +176,7 @@ Summary: 4💡 17🔧 0✅ 0⛔ 3🗑️
 - So that `rqmd-dev` can stay generally reusable while still becoming concretely useful once a repository has generated or customized those project-local skills.
 
 ### RQMD-AI-022: Legacy-repo init skill and workflow
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a maintainer introducing rqmd into a repository that has never used it before
 - I want an `init-legacy` AI skill or workflow that helps bootstrap rqmd from the repository's existing reality
@@ -184,7 +184,7 @@ Summary: 4💡 17🔧 0✅ 0⛔ 3🗑️
 - So that rqmd-ai can guide the user through a legacy-init flow focused on first-use setup rather than generic bundle installation alone.
 
 ### RQMD-AI-023: Useful first-pass requirements folder for legacy repos
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a maintainer initializing rqmd in an established repository
 - I want the legacy-init flow to produce a useful first-pass `requirements/` folder that I can immediately start editing and using
@@ -192,7 +192,7 @@ Summary: 4💡 17🔧 0✅ 0⛔ 3🗑️
 - So that the flow can propose an initial requirements structure, starter domain files, and seed content for review before writing.
 
 ### RQMD-AI-024: Optional GitHub issue discovery during legacy init
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a maintainer bootstrapping rqmd in a repository that uses GitHub issues
 - I want the legacy-init workflow to try using `gh` to inspect repository issues when the GitHub CLI is available and authenticated

@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from pathlib import Path
 
 from click.testing import CliRunner
-
 from rqmd.ai_cli import _parse_frontmatter, _parse_skill_frontmatter, main
 from rqmd.cli import main as rqmd_main
 from rqmd.constants import JSON_SCHEMA_VERSION
@@ -259,6 +259,164 @@ def test_RQMD_AI_015_workflow_mode_rejects_update_combinations(tmp_path: Path) -
 
     assert result.exit_code != 0
     assert "guidance surface" in result.output
+
+
+def test_RQMD_AI_022_init_legacy_guide_works_without_existing_requirements_docs(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--as-json",
+            "--show-guide",
+            "--workflow-mode",
+            "init-legacy",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "guide"
+    assert payload["workflow_mode"] == "init-legacy"
+    assert payload["requirements_dir"] == "docs/requirements"
+    _assert_schema_version(payload)
+
+
+def test_RQMD_AI_023_init_legacy_plan_seeds_reviewable_requirements(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / "repo"
+    (repo / "src" / "ac_cli").mkdir(parents=True)
+    (repo / "src" / "ac_cli" / "cli.py").write_text("def main():\n    return 0\n", encoding="utf-8")
+    (repo / "scripts").mkdir(parents=True)
+    (repo / "scripts" / "local-smoke.sh").write_text("#!/bin/sh\necho smoke\n", encoding="utf-8")
+    (repo / "package.json").write_text(
+        json.dumps(
+            {
+                "name": "demo-app",
+                "scripts": {
+                    "dev": "vite",
+                    "build": "vite build",
+                    "test": "vitest run",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr("rqmd.ai_cli.shutil.which", lambda name: None)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--as-json",
+            "--workflow-mode",
+            "init-legacy",
+            "--id-namespace",
+            "RQMD",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "legacy-init-plan"
+    assert payload["read_only"] is True
+    assert payload["requirements_dir"] == "docs/requirements"
+    assert payload["starter_prefix"] == "RQMD"
+    assert payload["issue_discovery"]["used"] is False
+    assert payload["issue_discovery"]["reason"] == "gh CLI not found"
+    proposed_paths = [entry["path"] for entry in payload["proposed_files"]]
+    assert "docs/requirements/README.md" in proposed_paths
+    assert "docs/requirements/developer-workflows.md" in proposed_paths
+    workflow_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == "docs/requirements/developer-workflows.md")
+    assert "npm run dev" in workflow_entry["content"]
+    assert "npm run build" in workflow_entry["content"]
+    assert "npm run test" in workflow_entry["content"]
+    assert not (repo / "docs" / "requirements").exists()
+    _assert_schema_version(payload)
+
+
+def test_RQMD_AI_024_init_legacy_apply_can_seed_issue_backlog_from_gh(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / "repo"
+    (repo / "src" / "ac_cli").mkdir(parents=True)
+    (repo / "src" / "ac_cli" / "cli.py").write_text("def main():\n    return 0\n", encoding="utf-8")
+
+    monkeypatch.setattr("rqmd.ai_cli.shutil.which", lambda name: "/usr/bin/gh")
+    monkeypatch.setattr(
+        "rqmd.ai_cli.subprocess.run",
+        lambda *args, **kwargs: subprocess.CompletedProcess(
+            args=args[0],
+            returncode=0,
+            stdout=json.dumps(
+                [
+                    {
+                        "number": 17,
+                        "title": "Document missing automation contract",
+                        "state": "OPEN",
+                        "labels": [{"name": "docs"}, {"name": "automation"}],
+                    }
+                ]
+            ),
+            stderr="",
+        ),
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--as-json",
+            "--workflow-mode",
+            "init-legacy",
+            "--write",
+            "--id-namespace",
+            "RQMD",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["mode"] == "legacy-init-apply"
+    assert payload["read_only"] is False
+    assert payload["issue_discovery"]["used"] is True
+    assert "docs/requirements/issue-backlog.md" in payload["created_files"]
+    issue_backlog = (repo / "docs" / "requirements" / "issue-backlog.md").read_text(encoding="utf-8")
+    assert "GitHub issue #17" in issue_backlog
+    assert "Issue labels: docs, automation" in issue_backlog
+    index_text = (repo / "docs" / "requirements" / "README.md").read_text(encoding="utf-8")
+    assert "Issue Backlog Requirements" in index_text
+    _assert_schema_version(payload)
+
+
+def test_RQMD_AI_023_init_legacy_write_requires_empty_target_dir(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "README.md").write_text("# Existing\n", encoding="utf-8")
+
+    monkeypatch.setattr("rqmd.ai_cli.shutil.which", lambda name: None)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--workflow-mode",
+            "init-legacy",
+            "--write",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "requires an empty target requirements directory" in result.output
 
 
 def test_RQMD_AI_014_brainstorm_mode_builds_ranked_proposals_from_note_file(tmp_path: Path) -> None:
@@ -718,7 +876,7 @@ def test_RQMD_AI_012_install_bundle_dry_run_preview(tmp_path: Path) -> None:
     assert payload["mode"] == "install-agent-bundle"
     assert payload["dry_run"] is True
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 13
+    assert payload["changed_count"] == 14
     assert payload["generated_skill_files"] == [
         ".github/skills/dev/SKILL.md",
         ".github/skills/test/SKILL.md",
@@ -731,6 +889,7 @@ def test_RQMD_AI_012_install_bundle_dry_run_preview(tmp_path: Path) -> None:
     assert ".github/skills/rqmd-triage/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-export-context/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-implement/SKILL.md" in payload["created_files"]
+    assert ".github/skills/rqmd-init-legacy/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-status-maintenance/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-doc-sync/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-history/SKILL.md" in payload["created_files"]
@@ -762,12 +921,13 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     )
     assert first.exit_code == 0
     first_payload = json.loads(first.output)
-    assert first_payload["changed_count"] == 18
+    assert first_payload["changed_count"] == 19
     assert (repo / ".github" / "copilot-instructions.md").exists()
     assert ".github/agents/rqmd-requirements.agent.md" in first_payload["created_files"]
     assert ".github/agents/rqmd-docs.agent.md" in first_payload["created_files"]
     assert ".github/agents/rqmd-history.agent.md" in first_payload["created_files"]
     assert ".github/agents/rqmd-bundle-maintainer.agent.md" not in first_payload["created_files"]
+    assert ".github/skills/rqmd-init-legacy/SKILL.md" in first_payload["created_files"]
     assert ".github/skills/dev/SKILL.md" in first_payload["created_files"]
     assert ".github/skills/test/SKILL.md" in first_payload["created_files"]
 
@@ -788,7 +948,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     second_payload = json.loads(second.output)
     _assert_schema_version(second_payload)
     assert second_payload["changed_count"] == 0
-    assert len(second_payload["skipped_existing"]) == 18
+    assert len(second_payload["skipped_existing"]) == 19
 
     custom = repo / ".github" / "copilot-instructions.md"
     custom.write_text("# custom\n", encoding="utf-8")
@@ -830,7 +990,7 @@ def test_RQMD_AI_012_install_bundle_without_requirements_docs(tmp_path: Path) ->
     payload = json.loads(result.output)
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
-    assert payload["changed_count"] == 18
+    assert payload["changed_count"] == 19
 
 
 def test_RQMD_AI_012_install_bundle_positional_alias(tmp_path: Path) -> None:
@@ -856,7 +1016,7 @@ def test_RQMD_AI_012_install_bundle_positional_alias(tmp_path: Path) -> None:
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 13
+    assert payload["changed_count"] == 14
 
 
 def test_RQMD_AI_019_install_bundle_generates_project_dev_and_test_skills(tmp_path: Path) -> None:

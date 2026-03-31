@@ -363,9 +363,10 @@ Guidance mode:
 uv run rqmd-ai --json
 uv run rqmd-ai --json --workflow-mode brainstorm
 uv run rqmd-ai --json --workflow-mode implement
+uv run rqmd-ai --json --workflow-mode init-legacy --show-guide
 ```
 
-`--workflow-mode brainstorm` emits requirement-first planning guidance for turning notes into ranked proposals. `--workflow-mode implement` emits the execution loop for working the highest-priority proposed 1-3 items at a time, then re-checking `rqmd`, summaries, tests, changelog, and remaining priorities before the next batch.
+`--workflow-mode brainstorm` emits requirement-first planning guidance for turning notes into ranked proposals. `--workflow-mode implement` emits the execution loop for working the highest-priority proposed 1-3 items at a time, then re-checking `rqmd`, summaries, tests, changelog, and remaining priorities before the next batch. `--workflow-mode init-legacy` emits a legacy-bootstrap guide and can also preview or write a first-pass requirements folder for repositories that do not already have rqmd docs.
 
 By default, `rqmd-ai --json` now includes the packaged skill and agent definitions from `resources/bundle` when the rqmd bundle is not installed in the workspace. If the bundle is already installed, the guide payload stays concise and reports the active local definition files instead of duplicating the packaged content.
 
@@ -398,7 +399,9 @@ Bundle installs are idempotent by default and preserve existing customized instr
 
 Bundle install also scaffolds project-local `.github/skills/dev/SKILL.md` and `.github/skills/test/SKILL.md` files based on detected repository commands. Treat those as a starting point: review and tighten the generated build, smoke, and validation commands so future `rqmd-dev` runs can rely on them instead of guessing.
 
-The installed bundle now includes Copilot skills for `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, and `/rqmd-verify` so teams can reuse the core planning, backlog selection, context export, implementation, docs-sync, history, bundle-management, and verification loops without rewriting those instructions in every workspace. Those skills help with discovery and consistency, but they do not auto-approve terminal commands or bypass Copilot tool approval prompts.
+Legacy bootstrap can be previewed with `uv run rqmd-ai --json --workflow-mode init-legacy` and applied with `uv run rqmd-ai --json --workflow-mode init-legacy --write`. The generated starter catalog seeds a requirements index, developer workflow requirements, repository-area seed files, and an issue backlog file when `gh issue list` succeeds.
+
+The installed bundle now includes Copilot skills for `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-init-legacy`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, and `/rqmd-verify` so teams can reuse the core planning, backlog selection, context export, implementation, legacy bootstrap, docs-sync, history, bundle-management, and verification loops without rewriting those instructions in every workspace. Those skills help with discovery and consistency, but they do not auto-approve terminal commands or bypass Copilot tool approval prompts.
 
 The full bundle preset also installs specialized agents for requirement maintenance, docs sync, history investigation, and bundle maintenance so future agents can stay narrow and workflow-aware instead of overloading the single core agent with every repo-management task.
 

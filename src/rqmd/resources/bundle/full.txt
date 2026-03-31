@@ -4,6 +4,7 @@
 .github/skills/rqmd-triage/SKILL.md
 .github/skills/rqmd-export-context/SKILL.md
 .github/skills/rqmd-implement/SKILL.md
+.github/skills/rqmd-init-legacy/SKILL.md
 .github/skills/rqmd-status-maintenance/SKILL.md
 .github/skills/rqmd-doc-sync/SKILL.md
 .github/skills/rqmd-history/SKILL.md

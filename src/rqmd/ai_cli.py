@@ -14,6 +14,8 @@ from __future__ import annotations
 import importlib.resources
 import json
 import re
+import shutil
+import subprocess
 import sys
 import tempfile
 from datetime import datetime, timezone
@@ -31,20 +33,30 @@ except ImportError:
 
 from .batch_inputs import parse_set_entry
 from .config import load_config, load_priorities_file, validate_config
-from .constants import JSON_SCHEMA_VERSION, PRIORITY_ORDER
+from .constants import (JSON_SCHEMA_VERSION, PRIORITY_ORDER,
+                        REQUIREMENTS_INDEX_NAME)
 from .history import HistoryManager
 from .json_speedups import dumps_json
-from .markdown_io import (discover_project_root, format_path_display,
-                          iter_domain_files, resolve_requirements_dir,
-                          validate_files_readable)
+from .markdown_io import (
+    discover_project_root,
+    format_path_display,
+    iter_domain_files,
+    resolve_requirements_dir,
+    validate_files_readable,
+)
 from .priority_model import configure_priority_catalog
-from .req_parser import (extract_blocking_id,
-                         extract_requirement_block_with_lines,
-                         find_duplicate_requirement_ids, normalize_id_prefixes,
-                         parse_domain_priority_metadata, parse_requirements,
-                         resolve_id_prefixes)
+from .req_parser import (
+    extract_blocking_id,
+    extract_requirement_block_with_lines,
+    find_duplicate_requirement_ids,
+    normalize_id_prefixes,
+    parse_domain_priority_metadata,
+    parse_requirements,
+    resolve_id_prefixes,
+)
 from .status_model import normalize_status_input
 from .status_update import apply_status_change_by_id
+from .summary import process_file
 
 HISTORY_REPO_RELATIVE = Path(".rqmd") / "history" / "rqmd-history"
 AUDIT_LOG_RELATIVE = HISTORY_REPO_RELATIVE / "audit.jsonl"
@@ -53,6 +65,7 @@ _WORKFLOW_MODE_SKILLS: dict[str, str] = {
     "general": "rqmd-export-context",
     "brainstorm": "rqmd-brainstorm",
     "implement": "rqmd-implement",
+    "init-legacy": "rqmd-init-legacy",
 }
 
 _BUNDLE_RESOURCE_ROOT = ("resources", "bundle")
@@ -225,6 +238,36 @@ def _load_brainstorm_rules() -> dict[str, object]:
     }
 
 
+def _load_legacy_init_rules() -> dict[str, object]:
+    relative_path, frontmatter = _load_skill_frontmatter("rqmd-init-legacy")
+    metadata = frontmatter.get("metadata")
+    legacy_init = metadata.get("legacy_init") if isinstance(metadata, dict) else None
+    if not isinstance(legacy_init, dict):
+        raise click.ClickException(
+            f"Bundle legacy-init metadata missing or invalid in {relative_path}."
+        )
+
+    default_requirements_dir = legacy_init.get("default_requirements_dir")
+    max_domain_files = legacy_init.get("max_domain_files")
+    max_issue_requirements = legacy_init.get("max_issue_requirements")
+    max_source_areas = legacy_init.get("max_source_areas")
+    if (
+        not isinstance(default_requirements_dir, str)
+        or not isinstance(max_domain_files, int)
+        or not isinstance(max_issue_requirements, int)
+        or not isinstance(max_source_areas, int)
+    ):
+        raise click.ClickException(
+            f"Bundle legacy-init metadata missing or invalid in {relative_path}."
+        )
+    return {
+        "default_requirements_dir": default_requirements_dir,
+        "max_domain_files": max_domain_files,
+        "max_issue_requirements": max_issue_requirements,
+        "max_source_areas": max_source_areas,
+    }
+
+
 def _priority_label_for_rank(priority_labels: tuple[str, ...], rank: int) -> str:
     if not priority_labels:
         raise click.ClickException("No priorities configured for brainstorm proposal generation.")
@@ -344,7 +387,7 @@ def _render_bundle_template(relative_path: str, replacements: dict[str, str]) ->
     return content
 
 
-def _infer_project_skill_content(repo_root: Path) -> dict[str, str]:
+def _detect_project_command_hints(repo_root: Path) -> dict[str, list[str]]:
     detected_sources: list[str] = []
 
     dev_environment: list[str] = []
@@ -445,28 +488,431 @@ def _infer_project_skill_content(repo_root: Path) -> dict[str, str]:
         notes.append("Review the generated commands and tighten them to the repository's canonical workflows before relying on them in automation.")
 
     return {
+        "detected_sources": detected_sources,
+        "dev_environment": dev_environment,
+        "dev_build": dev_build,
+        "dev_run": dev_run,
+        "dev_smoke": dev_smoke,
+        "test_primary": test_primary,
+        "test_integration": test_integration,
+        "test_lint": test_lint,
+        "notes": notes,
+    }
+
+
+def _infer_project_skill_content(repo_root: Path) -> dict[str, str]:
+    hints = _detect_project_command_hints(repo_root)
+    return {
         ".github/skills/dev/SKILL.md": _render_bundle_template(
             "templates/dev-skill.md",
             {
-                "DETECTED_SOURCES": _markdown_list(detected_sources, "No common command source files were detected automatically."),
-                "ENVIRONMENT_SETUP": _markdown_list(dev_environment, "No canonical environment setup command was detected yet. Replace this with the repository's real setup step."),
-                "BUILD_COMMANDS": _markdown_list(dev_build, "No canonical build command was detected yet. Replace this with the repository's real build step."),
-                "RUN_COMMANDS": _markdown_list(dev_run, "No canonical run or dev-server command was detected yet. Replace this with the repository's real run step."),
-                "SMOKE_COMMANDS": _markdown_list(dev_smoke, "No smoke-test command was detected yet. Add the repository's primary smoke path here if one exists."),
-                "NOTES": _markdown_list(notes, "Review and edit this generated skill after bootstrap."),
+                "DETECTED_SOURCES": _markdown_list(hints["detected_sources"], "No common command source files were detected automatically."),
+                "ENVIRONMENT_SETUP": _markdown_list(hints["dev_environment"], "No canonical environment setup command was detected yet. Replace this with the repository's real setup step."),
+                "BUILD_COMMANDS": _markdown_list(hints["dev_build"], "No canonical build command was detected yet. Replace this with the repository's real build step."),
+                "RUN_COMMANDS": _markdown_list(hints["dev_run"], "No canonical run or dev-server command was detected yet. Replace this with the repository's real run step."),
+                "SMOKE_COMMANDS": _markdown_list(hints["dev_smoke"], "No smoke-test command was detected yet. Add the repository's primary smoke path here if one exists."),
+                "NOTES": _markdown_list(hints["notes"], "Review and edit this generated skill after bootstrap."),
             },
         ),
         ".github/skills/test/SKILL.md": _render_bundle_template(
             "templates/test-skill.md",
             {
-                "DETECTED_SOURCES": _markdown_list(detected_sources, "No common command source files were detected automatically."),
-                "PRIMARY_TEST_COMMANDS": _markdown_list(test_primary, "No primary automated test command was detected yet. Replace this with the repository's real test command."),
-                "INTEGRATION_TEST_COMMANDS": _markdown_list(test_integration, "No dedicated integration or end-to-end test command was detected yet. Add one here if the repository has it."),
-                "LINT_AND_CHECK_COMMANDS": _markdown_list(test_lint, "No lint or check command was detected yet. Add one here if the repository uses it."),
-                "NOTES": _markdown_list(notes, "Review and edit this generated skill after bootstrap."),
+                "DETECTED_SOURCES": _markdown_list(hints["detected_sources"], "No common command source files were detected automatically."),
+                "PRIMARY_TEST_COMMANDS": _markdown_list(hints["test_primary"], "No primary automated test command was detected yet. Replace this with the repository's real test command."),
+                "INTEGRATION_TEST_COMMANDS": _markdown_list(hints["test_integration"], "No dedicated integration or end-to-end test command was detected yet. Add one here if the repository has it."),
+                "LINT_AND_CHECK_COMMANDS": _markdown_list(hints["test_lint"], "No lint or check command was detected yet. Add one here if the repository uses it."),
+                "NOTES": _markdown_list(hints["notes"], "Review and edit this generated skill after bootstrap."),
             },
         ),
     }
+
+
+def _slugify_token(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", value.casefold()).strip("-")
+    return slug or "legacy"
+
+
+def _title_from_token(value: str) -> str:
+    parts = re.split(r"[^A-Za-z0-9]+", value)
+    return " ".join(part.capitalize() for part in parts if part) or "Legacy"
+
+
+def _allocate_sequential_id(prefix: str, next_number: int) -> tuple[str, int]:
+    return f"{prefix}-{next_number:03d}", next_number + 1
+
+
+def _detect_legacy_source_areas(repo_root: Path, max_source_areas: int) -> list[dict[str, str]]:
+    candidates: list[dict[str, str]] = []
+    seen_slugs: set[str] = set()
+
+    def add_candidate(raw_name: str, evidence: str) -> None:
+        slug = _slugify_token(raw_name)
+        if slug in seen_slugs:
+            return
+        seen_slugs.add(slug)
+        candidates.append(
+            {
+                "slug": slug,
+                "title": _title_from_token(raw_name),
+                "evidence": evidence,
+            }
+        )
+
+    src_root = repo_root / "src"
+    if src_root.exists():
+        for path in sorted(src_root.iterdir()):
+            if len(candidates) >= max_source_areas:
+                break
+            if path.is_dir() and not path.name.startswith((".", "__")):
+                add_candidate(path.name, f"src/{path.name}")
+
+    if not candidates:
+        for dirname in ("app", "apps", "lib", "server", "client", "backend", "frontend"):
+            path = repo_root / dirname
+            if path.is_dir():
+                add_candidate(dirname, dirname)
+            if len(candidates) >= max_source_areas:
+                break
+
+    if not candidates:
+        add_candidate(repo_root.name, repo_root.name)
+
+    return candidates[:max_source_areas]
+
+
+def _collect_github_issue_context(repo_root: Path, max_issue_requirements: int) -> dict[str, object]:
+    gh_executable = shutil.which("gh")
+    if gh_executable is None:
+        return {
+            "available": False,
+            "used": False,
+            "reason": "gh CLI not found",
+            "issues": [],
+        }
+
+    try:
+        result = subprocess.run(
+            [
+                gh_executable,
+                "issue",
+                "list",
+                "--limit",
+                str(max_issue_requirements),
+                "--json",
+                "number,title,labels,state",
+            ],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError as exc:
+        return {
+            "available": True,
+            "used": False,
+            "reason": str(exc),
+            "issues": [],
+        }
+
+    if result.returncode != 0:
+        return {
+            "available": True,
+            "used": False,
+            "reason": (result.stderr or result.stdout or "gh issue list failed").strip(),
+            "issues": [],
+        }
+
+    try:
+        data = json.loads(result.stdout or "[]")
+    except json.JSONDecodeError:
+        return {
+            "available": True,
+            "used": False,
+            "reason": "gh returned invalid JSON",
+            "issues": [],
+        }
+
+    issues: list[dict[str, object]] = []
+    if isinstance(data, list):
+        for item in data[:max_issue_requirements]:
+            if not isinstance(item, dict):
+                continue
+            labels = item.get("labels") if isinstance(item.get("labels"), list) else []
+            issues.append(
+                {
+                    "number": int(item.get("number") or 0),
+                    "title": str(item.get("title") or "").strip(),
+                    "state": str(item.get("state") or "open"),
+                    "labels": [str(label.get("name") or "") for label in labels if isinstance(label, dict)],
+                }
+            )
+    return {
+        "available": True,
+        "used": bool(issues),
+        "reason": None if issues else "gh returned no issues",
+        "issues": issues,
+    }
+
+
+def _build_legacy_init_readme(requirements_dir: Path, domain_files: list[dict[str, str]]) -> str:
+    lines = [
+        "# Requirements",
+        "",
+        "This document is the source-of-truth index for rqmd requirements.",
+        "Generated by `rqmd-ai --workflow-mode init-legacy`.",
+        "",
+        "## How To Use",
+        "",
+        "- Review and refine these generated seed requirements before treating them as complete.",
+        "- Keep requirement IDs stable and unique.",
+        "- Keep one status line directly below each requirement heading.",
+        f"- Keep this index at {requirements_dir.as_posix()}/{REQUIREMENTS_INDEX_NAME}.",
+        f"- Keep requirement docs under {requirements_dir.as_posix()}/.",
+        "",
+        "Status workflow:",
+        "- 💡 Proposed",
+        "- 🔧 Implemented",
+        "- ✅ Verified",
+        "- ⛔ Blocked",
+        "- 🗑️ Deprecated",
+        "",
+        "## Requirement Documents",
+        "",
+        "These files were seeded from the repository's current structure, workflows, and optional issue backlog.",
+        "Review them, split them, rename them, or replace them as you refine the initial catalog.",
+        "",
+    ]
+    for entry in domain_files:
+        lines.append(f"- [{entry['title']}]({entry['path']}) - {entry['description']}")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _render_legacy_source_domain(title: str, scope: str, evidence: str, requirement_id: str) -> str:
+    return (
+        f"# {title} Requirements\n\n"
+        f"Scope: {scope}\n\n"
+        "This file was generated by `rqmd-ai --workflow-mode init-legacy` as a starting point.\n"
+        "Review the seed requirement below and replace it with more precise, testable requirements as you learn the repository.\n\n"
+        f"### {requirement_id}: Refine the initial {title} requirements from existing code\n"
+        "- **Status:** 💡 Proposed\n"
+        f"- Derived from detected repository evidence under `{evidence}`.\n"
+        "- Capture the current responsibilities, constraints, and near-term work for this area.\n"
+        "- Split this seed requirement into more specific requirements as the domain becomes clearer.\n"
+    )
+
+
+def _render_legacy_workflow_domain(scope: str, hints: dict[str, list[str]], requirement_ids: tuple[str, str]) -> str:
+    setup_id, validation_id = requirement_ids
+    lines = [
+        "# Developer Workflows Requirements",
+        "",
+        f"Scope: {scope}",
+        "",
+        "This file was generated by `rqmd-ai --workflow-mode init-legacy` from detected repository commands.",
+        "Use it to lock down the canonical developer workflows before future agents rely on guesses.",
+        "",
+        f"### {setup_id}: Capture the canonical development workflow commands",
+        "- **Status:** 💡 Proposed",
+        "- Review and refine the repository's canonical setup, build, and run commands.",
+    ]
+    for command in hints["dev_environment"] + hints["dev_build"] + hints["dev_run"]:
+        lines.append(f"- Candidate command: {command}")
+    if not (hints["dev_environment"] or hints["dev_build"] or hints["dev_run"]):
+        lines.append("- No setup, build, or run commands were detected automatically; replace this seed with the real workflow.")
+    lines.extend(
+        [
+            "",
+            f"### {validation_id}: Capture the canonical validation and smoke-test commands",
+            "- **Status:** 💡 Proposed",
+            "- Review and refine the repository's canonical test, smoke, lint, and verification flows.",
+        ]
+    )
+    for command in hints["dev_smoke"] + hints["test_primary"] + hints["test_integration"] + hints["test_lint"]:
+        lines.append(f"- Candidate command: {command}")
+    if not (hints["dev_smoke"] or hints["test_primary"] or hints["test_integration"] or hints["test_lint"]):
+        lines.append("- No validation commands were detected automatically; replace this seed with the real workflow.")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _render_legacy_issue_domain(scope: str, issues: list[dict[str, object]], requirement_ids: list[str]) -> str:
+    lines = [
+        "# Issue Backlog Requirements",
+        "",
+        f"Scope: {scope}",
+        "",
+        "This file was generated from GitHub issues discovered during `rqmd-ai --workflow-mode init-legacy`.",
+        "Review, move, or delete these seeds once they are mapped into better domain files.",
+        "",
+    ]
+    for requirement_id, issue in zip(requirement_ids, issues):
+        labels = issue.get("labels") if isinstance(issue.get("labels"), list) else []
+        label_text = ", ".join(str(label) for label in labels if str(label).strip())
+        lines.extend(
+            [
+                f"### {requirement_id}: {issue.get('title')}",
+                "- **Status:** 💡 Proposed",
+                f"- Seeded from GitHub issue #{issue.get('number')}",
+                f"- Issue state: {issue.get('state')}",
+            ]
+        )
+        if label_text:
+            lines.append(f"- Issue labels: {label_text}")
+        lines.append("- Review whether this backlog seed belongs in a more specific requirement file.")
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _build_legacy_init_files(
+    repo_root: Path,
+    requirements_dir: Path,
+    id_prefixes: tuple[str, ...],
+) -> dict[str, object]:
+    rules = _load_legacy_init_rules()
+    prefix = id_prefixes[0] if id_prefixes else "REQ"
+    next_number = 1
+    command_hints = _detect_project_command_hints(repo_root)
+    source_areas = _detect_legacy_source_areas(repo_root, int(rules["max_source_areas"]))
+    issue_context = _collect_github_issue_context(repo_root, int(rules["max_issue_requirements"]))
+
+    proposed_files: list[dict[str, str]] = []
+
+    source_domain_entries: list[dict[str, str]] = []
+    for area in source_areas:
+        requirement_id, next_number = _allocate_sequential_id(prefix, next_number)
+        relative_path = f"{requirements_dir.as_posix()}/{area['slug']}.md"
+        source_domain_entries.append(
+            {
+                "path": relative_path,
+                "title": f"{area['title']} Requirements",
+                "description": f"initial seed derived from detected repository area `{area['evidence']}`",
+                "content": _render_legacy_source_domain(
+                    title=area["title"],
+                    scope=f"initial legacy-init seed derived from `{area['evidence']}`.",
+                    evidence=area["evidence"],
+                    requirement_id=requirement_id,
+                ),
+            }
+        )
+
+    workflow_ids = []
+    for _index in range(2):
+        requirement_id, next_number = _allocate_sequential_id(prefix, next_number)
+        workflow_ids.append(requirement_id)
+    workflow_entry = {
+        "path": f"{requirements_dir.as_posix()}/developer-workflows.md",
+        "title": "Developer Workflows Requirements",
+        "description": "seeded from detected build, run, smoke, and validation commands",
+        "content": _render_legacy_workflow_domain(
+            scope="initial legacy-init seed for the repository's canonical developer workflows.",
+            hints=command_hints,
+            requirement_ids=(workflow_ids[0], workflow_ids[1]),
+        ),
+    }
+
+    issue_entry: dict[str, str] | None = None
+    issues = issue_context.get("issues") if isinstance(issue_context.get("issues"), list) else []
+    if issues:
+        issue_ids: list[str] = []
+        for _issue in issues:
+            requirement_id, next_number = _allocate_sequential_id(prefix, next_number)
+            issue_ids.append(requirement_id)
+        issue_entry = {
+            "path": f"{requirements_dir.as_posix()}/issue-backlog.md",
+            "title": "Issue Backlog Requirements",
+            "description": "seeded from GitHub issues discovered via gh CLI",
+            "content": _render_legacy_issue_domain(
+                scope="initial legacy-init seed from the repository's GitHub issue backlog.",
+                issues=issues,
+                requirement_ids=issue_ids,
+            ),
+        }
+
+    selected_domains = source_domain_entries[: max(int(rules["max_domain_files"]) - 1, 1)]
+    domain_files_for_index = [*selected_domains, workflow_entry]
+    if issue_entry is not None and len(domain_files_for_index) < int(rules["max_domain_files"]):
+        domain_files_for_index.append(issue_entry)
+
+    readme_content = _build_legacy_init_readme(requirements_dir, domain_files_for_index)
+    proposed_files.append(
+        {
+            "path": f"{requirements_dir.as_posix()}/{REQUIREMENTS_INDEX_NAME}",
+            "title": "Requirements Index",
+            "description": "legacy-init index for the generated requirement seeds",
+            "content": readme_content,
+        }
+    )
+    proposed_files.extend(domain_files_for_index)
+
+    return {
+        "requirements_dir": requirements_dir.as_posix(),
+        "starter_prefix": prefix,
+        "detected_context": {
+            "source_areas": source_areas,
+            "detected_command_sources": command_hints["detected_sources"],
+        },
+        "issue_discovery": issue_context,
+        "proposed_files": proposed_files,
+    }
+
+
+def _write_legacy_init_files(repo_root: Path, proposed_files: list[dict[str, str]]) -> list[str]:
+    created_files: list[str] = []
+    domain_paths: list[Path] = []
+    for entry in proposed_files:
+        relative_path = str(entry["path"])
+        content = str(entry["content"])
+        target = repo_root / relative_path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+        created_files.append(relative_path)
+        if target.name != REQUIREMENTS_INDEX_NAME:
+            domain_paths.append(target)
+    for domain_path in domain_paths:
+        process_file(domain_path, check_only=False)
+    return created_files
+
+
+def _build_or_apply_legacy_init_payload(
+    repo_root: Path,
+    requirements_dir_input: str | None,
+    id_prefixes: tuple[str, ...],
+    apply: bool,
+) -> dict[str, object]:
+    rules = _load_legacy_init_rules()
+    criteria_dir = Path(requirements_dir_input or str(rules["default_requirements_dir"]))
+    if not criteria_dir.is_absolute():
+        criteria_dir = (repo_root / criteria_dir).resolve()
+
+    existing_markdown = sorted(criteria_dir.glob("*.md")) if criteria_dir.exists() else []
+    if apply and existing_markdown:
+        display = ", ".join(format_path_display(path, repo_root) for path in existing_markdown)
+        raise click.ClickException(
+            "--workflow-mode init-legacy --write requires an empty target requirements directory. "
+            f"Found existing markdown files: {display}"
+        )
+
+    plan = _build_legacy_init_files(
+        repo_root=repo_root,
+        requirements_dir=criteria_dir.relative_to(repo_root),
+        id_prefixes=id_prefixes or ("REQ",),
+    )
+    payload = {
+        "mode": "legacy-init-plan",
+        "workflow_mode": "init-legacy",
+        "read_only": not apply,
+        "repo_root": str(repo_root),
+        "requirements_dir": plan["requirements_dir"],
+        "starter_prefix": plan["starter_prefix"],
+        "detected_context": plan["detected_context"],
+        "issue_discovery": plan["issue_discovery"],
+        "proposed_files": plan["proposed_files"],
+        "total_files": len(plan["proposed_files"]),
+    }
+    if apply:
+        payload["created_files"] = _write_legacy_init_files(repo_root, plan["proposed_files"])
+        payload["changed_count"] = len(payload["created_files"])
+        payload["mode"] = "legacy-init-apply"
+    return payload
 
 
 def _detect_workspace_bundle_state(repo_root: Path) -> dict[str, object]:
@@ -900,6 +1346,23 @@ def _emit(payload: dict[str, object], json_output: bool) -> None:
             click.echo(
                 f"- #{item.get('rank')} {proposal.get('suggested_id')} [{proposal.get('priority')}] -> {proposal.get('target_file')}: {proposal.get('title')}"
             )
+        return
+    if mode in {"legacy-init-plan", "legacy-init-apply"}:
+        click.echo(f"requirements dir: {payload.get('requirements_dir')}")
+        click.echo(f"starter prefix: {payload.get('starter_prefix')}")
+        issue_discovery = payload.get("issue_discovery")
+        issue_details = issue_discovery if isinstance(issue_discovery, dict) else {}
+        issue_status = "used" if issue_details.get("used") else issue_details.get("reason", "not used")
+        click.echo(f"GitHub issue discovery: {issue_status}")
+        if mode == "legacy-init-plan":
+            click.echo(f"proposed files: {payload.get('total_files')}")
+            for item in payload.get("proposed_files", []):
+                if isinstance(item, dict):
+                    click.echo(f"- {item.get('path')}: {item.get('description')}")
+        else:
+            for path in payload.get("created_files", []):
+                click.echo(f"- created {path}")
+        return
 
 
 def _emit_history_report(payload: dict[str, object], json_output: bool) -> None:
@@ -1727,7 +2190,7 @@ def _plan_or_apply_updates(
 @click.option(
     "--workflow-mode",
     "workflow_mode",
-    type=click.Choice(["general", "brainstorm", "implement"], case_sensitive=False),
+    type=click.Choice(["general", "brainstorm", "implement", "init-legacy"], case_sensitive=False),
     default="general",
     show_default=True,
     help="Guide variant to emit for rqmd-ai workflow sequencing.",
@@ -1844,6 +2307,38 @@ def main(
             preset=bundle_preset.lower(),
             overwrite_existing=overwrite_existing,
             dry_run=dry_run,
+        )
+        _emit(payload, json_output=json_output)
+        return
+
+    if workflow_mode == "init-legacy" and guide:
+        rules = _load_legacy_init_rules()
+        guide_requirements_dir = Path(requirements_dir or str(rules["default_requirements_dir"]))
+        if not guide_requirements_dir.is_absolute():
+            guide_requirements_dir = repo_root / guide_requirements_dir
+        _emit(
+            _build_guide_payload(
+                repo_root,
+                guide_requirements_dir,
+                read_only=not apply,
+                workflow_mode=workflow_mode,
+            ),
+            json_output=json_output,
+        )
+        return
+
+    if workflow_mode == "init-legacy":
+        if brainstorm_file is not None:
+            raise click.ClickException("--brainstorm-file cannot be combined with --workflow-mode init-legacy.")
+        if set_entries or export_ids or export_files or export_status or history_ref or compare_refs or history_action or history_report:
+            raise click.ClickException(
+                "--workflow-mode init-legacy is a bootstrap surface and cannot be combined with export, update, or history options."
+            )
+        payload = _build_or_apply_legacy_init_payload(
+            repo_root=repo_root,
+            requirements_dir_input=requirements_dir,
+            id_prefixes=id_prefixes,
+            apply=apply,
         )
         _emit(payload, json_output=json_output)
         return
