@@ -1020,6 +1020,96 @@ Scope: demo.
     assert "- **Flagged:** true" in text
 
 
+def test_RQMD_interactive_031_lookup_opens_linked_requirement_and_returns(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    domain_file = criteria_dir / "demo.md"
+    domain_file.write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: First
+- **Status:** 💡 Proposed
+- **Links:**
+  - [AC-DEMO-002](demo.md#ac-demo-002)
+
+### AC-DEMO-002: Second
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    visits: list[str] = []
+    opened_titles: list[str] = []
+    actions = iter(["open-linked", 0, "up", "up"])
+
+    def fake_select(title, options, **kwargs):
+        del kwargs
+        if title.startswith("Choose Status or Priority for "):
+            visits.append(title.removeprefix("Choose Status or Priority for ").splitlines()[0].removesuffix("."))
+            return next(actions)
+        if title.startswith("Open linked requirement from AC-DEMO-001"):
+            opened_titles.extend(options)
+            return next(actions)
+        return None
+
+    monkeypatch.setattr(cli, "select_from_menu", fake_select)
+
+    result = cli.lookup_criterion_interactive(
+        repo_root=repo,
+        domain_files=[domain_file],
+        requirement_id="AC-DEMO-001",
+        emoji_columns=False,
+        id_prefixes=("AC",),
+    )
+
+    assert result == 0
+    assert opened_titles == ["AC-DEMO-002: Second (docs/requirements/demo.md)"]
+    assert visits == ["AC-DEMO-001", "AC-DEMO-002", "AC-DEMO-001"]
+
+
+def test_RQMD_interactive_031_lookup_reports_no_resolvable_linked_requirements(monkeypatch, tmp_path: Path, capsys) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    domain_file = criteria_dir / "demo.md"
+    domain_file.write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: First
+- **Status:** 💡 Proposed
+- **Links:**
+  - [External docs](https://example.com)
+- See also AC-MISSING-999.
+""",
+        encoding="utf-8",
+    )
+
+    actions = iter(["open-linked", "up"])
+
+    def fake_select(title, options, **kwargs):
+        del title, options, kwargs
+        return next(actions)
+
+    monkeypatch.setattr(cli, "select_from_menu", fake_select)
+
+    result = cli.lookup_criterion_interactive(
+        repo_root=repo,
+        domain_files=[domain_file],
+        requirement_id="AC-DEMO-001",
+        emoji_columns=False,
+        id_prefixes=("AC",),
+    )
+
+    output = capsys.readouterr().out
+    assert result == 0
+    assert "No linked requirements in the current catalog for AC-DEMO-001." in output
+
+
 def test_RQMD_interactive_009b_filtered_walk_up_exits(monkeypatch, repo_with_domain_docs: Path) -> None:
     domain_file = repo_with_domain_docs / "docs" / "requirements" / "demo.md"
     monkeypatch.setattr(cli, "select_from_menu", lambda *args, **kwargs: "up")
@@ -1166,7 +1256,7 @@ def test_RQMD_interactive_021c_requirement_menu_exposes_history_shortcuts() -> N
     assert "next-ac" in captured["footer_legend"]
     assert "first-ac" in captured["footer_legend"]
     assert "/=fwd" not in captured["footer_legend"]
-    assert captured["compact_footer"] == "keys: 1-9 select | !=p0..$=p3 | ↓/j=next-ac | ↑/k=prev-ac | :=help | u=up | q=quit"
+    assert captured["compact_footer"] == "keys: 1-9 select | !=p0..$=p3 | ↓/j=next-ac | ↑/k=prev-ac | :=help | o=refs | u=up | q=quit"
 
 
 def test_RQMD_interactive_021ca_status_menu_exposes_priority_shortcuts() -> None:
@@ -1208,7 +1298,7 @@ def test_RQMD_interactive_021ca_status_menu_exposes_priority_shortcuts() -> None
     assert "5=🗑️ Deprecated" in captured["footer_legend"]
     assert "!=p0" in captured["footer_legend"]
     assert "@=p1" in captured["footer_legend"]
-    assert captured["compact_footer"] == "keys: 1-9 select | !=p0..$=p3 | ↓/j=next-ac | ↑/k=prev-ac | :=help | u=up | q=quit"
+    assert captured["compact_footer"] == "keys: 1-9 select | !=p0..$=p3 | ↓/j=next-ac | ↑/k=prev-ac | :=help | o=refs | u=up | q=quit"
     right_labels_plain = [re.sub(r"\x1b\[[0-9;]*m", "", item).rstrip() for item in captured["right_labels"]]
     assert right_labels_plain == [
         "  !) 🔴 P0 - Critical",
@@ -1283,7 +1373,7 @@ def test_RQMD_interactive_021cad_status_menu_shows_custom_priorities_beyond_shor
     assert "^=p5" in captured["footer_legend"]
     assert "&=p6" in captured["footer_legend"]
     assert "*=p7" in captured["footer_legend"]
-    assert captured["compact_footer"] == "keys: 1-9 select | !=p0..*=p7 | ↓/j=next-ac | ↑/k=prev-ac | :=help | u=up | q=quit"
+    assert captured["compact_footer"] == "keys: 1-9 select | !=p0..*=p7 | ↓/j=next-ac | ↑/k=prev-ac | :=help | o=refs | u=up | q=quit"
 
 
 def test_RQMD_interactive_021cc_split_status_and_priority_highlights(monkeypatch, capsys) -> None:

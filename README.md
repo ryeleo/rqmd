@@ -298,6 +298,8 @@ Within an entry panel, press `t` to cycle status, priority, and flagged editing.
 
 When the entry panel is on status, rqmd also shows a right-hand priority column so the current priority and available shifted number-row shortcuts such as `!`/`@`/`#`/`$`/`%`/`^`/`&`/`*` stay visible while you review statuses. That column is rendered as its own aligned block, and its current-priority highlight remains separate from the active status-row highlight so both states stay readable at once. Those shortcuts set the first configured priorities immediately and keep focus on the current requirement until you explicitly move on with down arrow or `j`.
 
+From any requirement detail panel, press `o` to inspect linked local requirement references that rqmd can resolve from the current entry. Selecting one opens that linked requirement in a nested detail view, and pressing `u` there returns you to the originating requirement.
+
 Regenerate summary blocks with priority aggregates included:
 
 ```bash

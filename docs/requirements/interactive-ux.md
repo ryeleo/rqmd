@@ -3,7 +3,7 @@
 Scope: interactive menus, keyboard navigation, and in-session requirement status editing.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 9🔧 18✅ 0⛔ 4🗑️
+Summary: 3💡 9🔧 19✅ 0⛔ 4🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-INTERACTIVE-001: Interactive mode default
@@ -367,7 +367,7 @@ colors:
 - So that after opening the editor location I can return to rqmd without losing my interactive context.
 
 ### RQMD-INTERACTIVE-031: Open linked requirement references from interactive detail view
-- **Status:** 💡 Proposed
+- **Status:** ✅ Verified
 - **Priority:** 🟠 P1 - High
 - As a rqmd user when I am reading a requirement in the interactive detail view and it references another local requirement ID
 - I want to click or otherwise activate that referenced requirement link and have rqmd offer to open the referenced requirement immediately

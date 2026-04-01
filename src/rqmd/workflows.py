@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -26,7 +27,7 @@ from .menus import (apply_background_preserving_styles,
                     right_align_menu_suffix, select_from_menu, truncate_text,
                     visible_length)
 from .priority_model import coerce_priority_label, style_priority_label
-from .req_parser import (collect_sub_sections,
+from .req_parser import (collect_sub_sections, extract_requirement_block,
                          extract_requirement_block_with_lines,
                          find_requirement_by_id, normalize_sub_domain_name,
                          parse_requirements)
@@ -339,7 +340,7 @@ def _build_requirement_action_footer(allow_nav: bool, include_priority_shortcuts
         shortcut_legend = _priority_shortcut_footer_legend()
         if shortcut_legend:
             base += f" | {shortcut_legend}"
-    base += " | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
+    base += " | o=refs | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
     if not allow_nav:
         return base
     nav = "keys: 1-9 select"
@@ -352,7 +353,7 @@ def _build_requirement_action_footer(allow_nav: bool, include_priority_shortcuts
         shortcut_legend = _priority_shortcut_footer_legend()
         if shortcut_legend:
             nav += f" | {shortcut_legend}"
-    return nav + " | ↓/j=next-ac | ↑/k=prev-ac | gg=first-ac | G=last-ac | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
+    return nav + " | ↓/j=next-ac | ↑/k=prev-ac | gg=first-ac | G=last-ac | o=refs | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
 
 
 def _build_requirement_action_compact_footer(allow_nav: bool, include_priority_shortcuts: bool = False) -> str:
@@ -362,13 +363,13 @@ def _build_requirement_action_compact_footer(allow_nav: bool, include_priority_s
             shortcut_legend = _priority_shortcut_compact_footer_legend()
             if shortcut_legend:
                 base += f" | {shortcut_legend}"
-        return base + " | :=help | u=up | q=quit"
+        return base + " | :=help | o=refs | u=up | q=quit"
     base = "keys: 1-9 select"
     if include_priority_shortcuts:
         shortcut_legend = _priority_shortcut_compact_footer_legend()
         if shortcut_legend:
             base += f" | {shortcut_legend}"
-    return base + " | ↓/j=next-ac | ↑/k=prev-ac | :=help | u=up | q=quit"
+    return base + " | ↓/j=next-ac | ↑/k=prev-ac | :=help | o=refs | u=up | q=quit"
 
 
 def _build_history_browser_compact_footer() -> str:
@@ -853,6 +854,8 @@ def _priority_highlight_bg(priority: str) -> str:
 
 ENTRY_FIELDS = ("status", "priority", "flagged", "links")
 PRIORITY_SHORTCUT_KEYS = ("!", "@", "#", "$", "%", "^", "&", "*")
+_BARE_REQ_ID_PATTERN = re.compile(r"\b([A-Z][A-Z0-9]*-[A-Z0-9][A-Z0-9-]*)\b")
+_MD_LINK_PATTERN = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 
 
 def _next_entry_field(current: str) -> str:
@@ -1019,6 +1022,100 @@ def _build_requirement_field_menu(
     return title, labels, options, current_index, highlight_bg
 
 
+def _linked_requirement_candidates(
+    path: Path,
+    requirement: dict[str, object],
+    domain_files: list[Path],
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+) -> list[tuple[Path, dict[str, object]]]:
+    block_text = extract_requirement_block(path, str(requirement["id"]), id_prefixes=id_prefixes)
+    current_id = str(requirement["id"]).upper()
+    valid_prefixes = tuple(f"{prefix.upper()}-" for prefix in id_prefixes)
+    seen_ids: set[str] = set()
+    candidate_ids: list[str] = []
+
+    def maybe_add(raw_candidate: str) -> None:
+        candidate = raw_candidate.strip().upper()
+        if candidate == current_id:
+            return
+        if not any(candidate.startswith(prefix) for prefix in valid_prefixes):
+            return
+        if candidate in seen_ids:
+            return
+        seen_ids.add(candidate)
+        candidate_ids.append(candidate)
+
+    for match in _MD_LINK_PATTERN.finditer(block_text):
+        label, target = match.groups()
+        for source in (label, target):
+            for ref_match in _BARE_REQ_ID_PATTERN.finditer(source.upper()):
+                maybe_add(ref_match.group(1))
+
+    for ref_match in _BARE_REQ_ID_PATTERN.finditer(block_text.upper()):
+        maybe_add(ref_match.group(1))
+
+    resolved: list[tuple[Path, dict[str, object]]] = []
+    for candidate_id in candidate_ids:
+        matches = [
+            (domain_path, found)
+            for domain_path in domain_files
+            if (found := find_requirement_by_id(domain_path, candidate_id, id_prefixes=id_prefixes)) is not None
+        ]
+        if len(matches) == 1:
+            resolved.append(matches[0])
+    return resolved
+
+
+def _open_linked_requirement_from_panel(
+    repo_root: Path,
+    domain_files: list[Path],
+    current_path: Path,
+    requirement: dict[str, object],
+    emoji_columns: bool,
+    id_prefixes: tuple[str, ...],
+    select_from_menu_fn,
+    include_status_emojis: bool,
+    priority_mode: bool,
+    include_priority_summary: bool,
+) -> None:
+    candidates = _linked_requirement_candidates(
+        current_path,
+        requirement,
+        domain_files,
+        id_prefixes=id_prefixes,
+    )
+    if not candidates:
+        click.echo(f"No linked requirements in the current catalog for {requirement['id']}.")
+        return
+
+    options = [
+        f"{candidate['id']}: {candidate['title']} ({format_path_display(candidate_path, repo_root)})"
+        for candidate_path, candidate in candidates
+    ]
+    choice = select_from_menu_fn(
+        f"Open linked requirement from {requirement['id']}",
+        options,
+        show_page_indicator=False,
+        allow_paging_nav=False,
+    )
+    if choice is None or choice == "up":
+        return
+
+    selected_path, selected_requirement = candidates[int(choice)]
+    del selected_path
+    lookup_criterion_interactive(
+        repo_root=repo_root,
+        domain_files=domain_files,
+        requirement_id=str(selected_requirement["id"]),
+        emoji_columns=emoji_columns,
+        id_prefixes=id_prefixes,
+        select_from_menu_fn=select_from_menu_fn,
+        include_status_emojis=include_status_emojis,
+        priority_mode=priority_mode,
+        include_priority_summary=include_priority_summary,
+    )
+
+
 def _prompt_for_requirement_action(
     requirement: dict[str, object],
     active_field: str,
@@ -1034,8 +1131,8 @@ def _prompt_for_requirement_action(
     )
     include_priority_shortcuts = active_field == "status"
     option_right_labels = _build_status_priority_preview(requirement)[1] if include_priority_shortcuts else None
-    extra_keys = {"t": "toggle-field"}
-    extra_keys_help = {"t": "toggle"}
+    extra_keys = {"t": "toggle-field", "o": "open-linked"}
+    extra_keys_help = {"t": "toggle", "o": "refs"}
     extra_keys.update({"z": "undo", "y": "redo", "h": "history"})
     extra_keys_help.update({"z": "undo", "y": "redo", "h": "history"})
     if include_priority_shortcuts:
@@ -1063,7 +1160,7 @@ def _prompt_for_requirement_action(
     )
     if choice is None:
         return "quit", None
-    if isinstance(choice, str) and choice in {"up", "nav-prev", "nav-next", "nav-first", "nav-last", "toggle-field", "undo", "redo", "history"}:
+    if isinstance(choice, str) and choice in {"up", "nav-prev", "nav-next", "nav-first", "nav-last", "toggle-field", "open-linked", "undo", "redo", "history"}:
         return choice, None
     if isinstance(choice, str) and choice.startswith("priority-shortcut:"):
         return "apply-priority", choice.split(":", 1)[1]
@@ -1485,6 +1582,21 @@ def focused_target_interactive_loop(
             current_entry_field = _next_entry_field(current_entry_field)
             save_current(flat_list, index)
             continue
+        if action == "open-linked":
+            _open_linked_requirement_from_panel(
+                repo_root=repo_root,
+                domain_files=domain_files,
+                current_path=path,
+                requirement=requirement,
+                emoji_columns=emoji_columns,
+                id_prefixes=id_prefixes,
+                select_from_menu_fn=select_from_menu_fn,
+                include_status_emojis=include_status_emojis,
+                priority_mode=(current_entry_field == "priority"),
+                include_priority_summary=include_priority_summary,
+            )
+            save_current(flat_list, index)
+            continue
         if _handle_requirement_history_action(
             action,
             repo_root,
@@ -1885,6 +1997,20 @@ def interactive_update_loop(
             if action == "toggle-field":
                 current_entry_field = _next_entry_field(current_entry_field)
                 continue
+            if action == "open-linked":
+                _open_linked_requirement_from_panel(
+                    repo_root=repo_root,
+                    domain_files=domain_files,
+                    current_path=selected_path,
+                    requirement=selected_criterion,
+                    emoji_columns=emoji_columns,
+                    id_prefixes=id_prefixes,
+                    select_from_menu_fn=select_from_menu_fn,
+                    include_status_emojis=include_status_emojis,
+                    priority_mode=(current_entry_field == "priority"),
+                    include_priority_summary=include_priority_summary,
+                )
+                continue
             if _handle_requirement_history_action(
                 action,
                 repo_root,
@@ -2142,6 +2268,21 @@ def filtered_interactive_loop(
             current_entry_field = _next_entry_field(current_entry_field)
             save_current(flat_list, index)
             continue
+        if action == "open-linked":
+            _open_linked_requirement_from_panel(
+                repo_root=repo_root,
+                domain_files=domain_files,
+                current_path=path,
+                requirement=requirement,
+                emoji_columns=emoji_columns,
+                id_prefixes=id_prefixes,
+                select_from_menu_fn=select_from_menu_fn,
+                include_status_emojis=include_status_emojis,
+                priority_mode=(current_entry_field == "priority"),
+                include_priority_summary=include_priority_summary,
+            )
+            save_current(flat_list, index)
+            continue
         if _handle_requirement_history_action(
             action,
             repo_root,
@@ -2375,6 +2516,21 @@ def filtered_priority_interactive_loop(
             current_entry_field = _next_entry_field(current_entry_field)
             save_current(flat_list, index)
             continue
+        if action == "open-linked":
+            _open_linked_requirement_from_panel(
+                repo_root=repo_root,
+                domain_files=domain_files,
+                current_path=path,
+                requirement=requirement,
+                emoji_columns=emoji_columns,
+                id_prefixes=id_prefixes,
+                select_from_menu_fn=select_from_menu_fn,
+                include_status_emojis=include_status_emojis,
+                priority_mode=(current_entry_field == "priority"),
+                include_priority_summary=include_priority_summary,
+            )
+            save_current(flat_list, index)
+            continue
         if _handle_requirement_history_action(
             action,
             repo_root,
@@ -2525,6 +2681,20 @@ def lookup_criterion_interactive(
 
         if action == "toggle-field":
             current_entry_field = _next_entry_field(current_entry_field)
+            continue
+        if action == "open-linked":
+            _open_linked_requirement_from_panel(
+                repo_root=repo_root,
+                domain_files=domain_files,
+                current_path=path,
+                requirement=requirement,
+                emoji_columns=emoji_columns,
+                id_prefixes=id_prefixes,
+                select_from_menu_fn=select_from_menu_fn,
+                include_status_emojis=include_status_emojis,
+                priority_mode=(current_entry_field == "priority"),
+                include_priority_summary=include_priority_summary,
+            )
             continue
         if _handle_requirement_history_action(
             action,
