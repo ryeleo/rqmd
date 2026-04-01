@@ -61,6 +61,13 @@ Domain note line two.
     )
 
 
+def _assert_default_closeout_guidance(text: str) -> None:
+    assert "# What got done" in text
+    assert "# Up next" in text
+    assert "# Direction" in text
+    assert "not fenced code blocks" in text
+
+
 def test_RQMD_AI_001_and_002_default_guide_is_read_only_json(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
@@ -261,6 +268,9 @@ def test_RQMD_AI_017_default_guide_suppresses_packaged_definitions_when_bundle_i
         ],
     )
     assert install_result.exit_code == 0
+    _assert_default_closeout_guidance(
+        (repo / ".github" / "copilot-instructions.md").read_text(encoding="utf-8")
+    )
 
     result = runner.invoke(
         main,
@@ -1055,6 +1065,9 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     first_payload = json.loads(first.output)
     assert first_payload["changed_count"] == 20
     assert (repo / ".github" / "copilot-instructions.md").exists()
+    _assert_default_closeout_guidance(
+        (repo / ".github" / "copilot-instructions.md").read_text(encoding="utf-8")
+    )
     assert ".github/agents/rqmd-requirements.agent.md" in first_payload["created_files"]
     assert ".github/agents/rqmd-docs.agent.md" in first_payload["created_files"]
     assert ".github/agents/rqmd-history.agent.md" in first_payload["created_files"]
@@ -1102,6 +1115,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     _assert_schema_version(overwrite_payload)
     assert ".github/copilot-instructions.md" in overwrite_payload["overwritten_files"]
     assert custom.read_text(encoding="utf-8") != "# custom\n"
+    _assert_default_closeout_guidance(custom.read_text(encoding="utf-8"))
 
 
 def test_RQMD_AI_012_install_bundle_without_requirements_docs(tmp_path: Path) -> None:

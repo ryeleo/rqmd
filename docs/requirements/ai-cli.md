@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 30🔧 0✅ 0⛔ 3🗑️
+Summary: 1💡 30🔧 1✅ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -296,3 +296,14 @@ Summary: 1💡 30🔧 0✅ 0⛔ 3🗑️
 - So that generated or edited requirements are easier to understand at both the product-intent and implementation-detail levels.
 - So that rqmd-ai can treat the two blocks as related views of the same requirement and help keep them semantically aligned instead of letting them drift silently.
 - So that AI-facing prompts, review flows, and requirement-edit suggestions nudge contributors toward maintaining both blocks together rather than treating one style as disposable prose.
+
+### RQMD-AI-035: Default markdown closeout styling for installed AI guidance
+- **Status:** ✅ Verified
+- **Priority:** 🟠 P1 - High
+- As a maintainer initializing rqmd AI guidance with `rqmd-ai init`
+- I want the installed default agent instructions to prefer a concise markdown closeout structure such as `# What got done`, `# Up next`, and `# Direction`
+- So that implementation updates are easier to scan quickly in AI chat transcripts and review handoffs.
+- So that `What got done` summarizes the completed work in polished markdown instead of ad hoc prose.
+- So that `Up next` includes the full markdown bodies of the highest-priority proposed requirements rather than only listing requirement IDs as rendered markdown and not code blocks -- do not put each requirement within "```" blocks!!!
+- So that `Direction` gives a concrete next recommendation derived from the active backlog state instead of a vague generic follow-up.
+- So that this formatting becomes the default style installed by `rqmd-ai init` while still allowing repositories to customize the final instructions after install.

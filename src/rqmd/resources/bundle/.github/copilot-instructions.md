@@ -15,6 +15,13 @@ AI workflow defaults:
 - Apply only after review with `--write`.
 - For implementation work, use `rqmd-ai --workflow-mode implement` and take the highest-priority 1-3 proposed requirements at a time.
 - After each implementation batch, make sure rqmd runs, summaries verify, tests pass, and priorities are re-checked before continuing.
+- Prefer final markdown closeouts that use these exact sections in order:
+	- `# What got done`
+	- `# Up next`
+	- `# Direction`
+- Keep `What got done` concise and polished.
+- Under `Up next`, include the full markdown bodies of the highest-priority proposed requirements as normal rendered markdown, not fenced code blocks.
+- Under `Direction`, give a concrete next recommendation derived from the active backlog state.
 - If you customize statuses, keep lifecycle equivalents for Proposed, Implemented, Verified, Blocked, and Deprecated so the bundled AI workflows and examples still map cleanly onto your catalog.
 - Prefer the installed Copilot skills for repeatable workflows such as `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-init`, `/rqmd-init-legacy`, `/rqmd-status-maintenance`, `/rqmd-doc-sync`, `/rqmd-history`, `/rqmd-bundle`, and `/rqmd-verify`.
 - The standard bundle install includes specialized agents for exploration, requirements, docs sync, and history inspection. Use `--bundle-preset minimal` when you only want the lean bundle.
