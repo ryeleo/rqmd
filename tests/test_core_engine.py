@@ -722,7 +722,9 @@ def test_RQMD_core_016_init_scaffold_copies_template_content(tmp_path: Path) -> 
     assert "## Schema Reference" in index_text
     assert "This section is intentionally included in the generated requirements index" in index_text
     assert "filter-sub-domain" in index_text
+    assert "Prefer pairing a short user story" in index_text
     assert "And this file content is sourced from init-docs/domain-example.md." in starter_text
+    assert "I want a starter requirement that demonstrates both intent and acceptance detail" in starter_text
 
 
 def test_RQMD_core_011b_init_scaffold_is_idempotent(tmp_path: Path) -> None:

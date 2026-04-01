@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 1💡 30🔧 1✅ 0⛔ 3🗑️
+Summary: 0💡 30🔧 2✅ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -289,7 +289,7 @@ Summary: 1💡 30🔧 1✅ 0⛔ 3🗑️
 - So that the payload can also expose a precomputed interview flow with ordered groups and questions, making the intended question order and UI style explicit for agents that do not want to infer it themselves.
 
 ### RQMD-AI-034: Encourage dual user-story and Given/When/Then requirement authoring
-- **Status:** 💡 Proposed
+- **Status:** ✅ Verified
 - **Priority:** 🟠 P1 - High
 - As a maintainer using `rqmd-ai` to draft, refine, or implement requirements
 - I want rqmd-ai guidance and editing workflows to actively encourage requirements that include both a user story and a Given/When/Then acceptance block when both are useful

@@ -7,6 +7,7 @@ This document is the source-of-truth index for rqmd requirements.
 - Keep requirement IDs stable and unique.
 - Keep one status line directly below each requirement heading.
 - Simple one-line requirements with only a title and status are also valid.
+- Prefer pairing a short user story with Given/When/Then when both help clarify intent and behavior.
 - Use Given/When/Then when a requirement needs explicit acceptance detail.
 - Keep this index at docs/requirements/README.md.
 - Keep domain docs under docs/requirements/.

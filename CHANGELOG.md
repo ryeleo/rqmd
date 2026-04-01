@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added default `.rqmd.yml` scaffolding during `rqmd init --scaffold` and both rqmd-ai init apply paths so newly initialized repositories get an explicit root config with the selected requirements directory, ID prefix, and canonical status/priority catalogs for human and AI consumers (RQMD-CORE-032).
+- Added rqmd-ai guidance that now prefers pairing a short user-story block with Given/When/Then acceptance bullets when both clarify a requirement, across the installed AI bundle and starter authoring templates (RQMD-AI-034).
 - Added default markdown closeout guidance to the bundled `.github/copilot-instructions.md` template installed by `rqmd-ai init` and `rqmd-ai install`, preferring `# What got done`, `# Up next`, and `# Direction` with rendered requirement bodies in `Up next` instead of fenced code blocks (RQMD-AI-035).
 - Added proposed backlog requirements for opening the current requirement in VS Code from the interactive UI, opening linked requirement references directly from interactive requirement detail views, and for first-class dual support of user-story plus Given/When/Then requirement blocks.
 - Added an explicit interactive interview contract and ordered interview flow metadata to chat-mode `rqmd-ai` payloads so receiving agents are told to run a one-question-at-a-time multi-choice session with checked defaults and deferred recap behavior instead of summarizing answers after every question (RQMD-AI-033).

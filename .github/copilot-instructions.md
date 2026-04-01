@@ -13,6 +13,8 @@ AI workflow defaults:
 - Start with read-only context export via rqmd-ai.
 - Propose updates before apply (`--update ...` without `--write`).
 - Apply only after review with `--write`.
+- When drafting or editing requirement text, prefer a short user-story block (`As a ...`, `I want ...`, `So that ...`) plus Given/When/Then acceptance bullets when both add value.
+- Treat the user-story and Given/When/Then sections as complementary views of the same requirement and keep them semantically aligned rather than letting one drift.
 - For implementation work, use `rqmd-ai --workflow-mode implement` and take the highest-priority 1-3 proposed requirements at a time.
 - After each implementation batch, make sure rqmd runs, summaries verify, tests pass, and priorities are re-checked before continuing.
 - Prefer final markdown closeouts that use these exact sections in order:

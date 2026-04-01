@@ -8,6 +8,7 @@ metadata:
     summary: Work highest-priority proposed requirements in small validated batches.
     workflow:
       - Start by reviewing proposed requirements and choose the highest-priority 1-3 items for the next batch.
+      - When refining requirement text, prefer a short user-story block plus Given/When/Then acceptance bullets when both clarify the behavior, and keep those two views aligned.
       - Update requirements, tests, and CHANGELOG entries as implementation details become concrete instead of deferring doc updates until the end.
       - Before taking the next batch, verify rqmd still runs, verify summaries, run the test suite, and re-check remaining proposal priorities.
     examples:
@@ -31,6 +32,7 @@ Workflow:
 - Start with `rqmd-ai --json --workflow-mode implement`.
 - Review the current proposal queue with `rqmd-ai --json --dump-status proposed`.
 - Take the highest-priority 1-3 proposed requirements for the next batch.
+- When requirement text is being added or refreshed, prefer preserving or adding both a short user story and Given/When/Then acceptance bullets when that improves clarity.
 - Update requirement docs, tests, README, and `CHANGELOG.md` as implementation details become concrete.
 - Verify the result with `rqmd --verify-summaries --no-walk --no-table`, targeted tests, and then `uv run --extra dev pytest -q` before continuing.
 

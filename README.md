@@ -28,7 +28,7 @@ Summary: 10💡 2🔧 3✅ 0⛔ 1🗑️
 - Supports interactive status editing with keyboard navigation.
 - Supports non-interactive updates for automation/agents.
 
-Requirement bodies can be as short as a title plus status line, or include richer Given/When/Then acceptance detail under the same heading.
+Requirement bodies can be as short as a title plus status line, or include richer detail under the same heading. When both are useful, prefer pairing a short user story (`As a ...`, `I want ...`, `So that ...`) with Given/When/Then acceptance bullets.
 
 ## Status model
 

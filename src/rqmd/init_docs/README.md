@@ -9,7 +9,8 @@ Generated from init-docs/README.md.
 
 - Keep requirement IDs stable and unique (e.g., `AC-001`, `R-CORE-042`).
 - Keep one status line directly below each requirement heading: `- **Status:** <Status>` (e.g., `- **Status:** ✅ Verified`).
-- Use Given/When/Then format for detailed requirements — or keep requirements as simple title + status.
+- Simple title + status requirements are still valid for lightweight placeholders.
+- Prefer pairing a short user story (`As a ...`, `I want ...`, `So that ...`) with Given/When/Then acceptance bullets when both help clarify intent and behavior.
 - Optional fields:
   - Priority: `- **Priority:** <Level>` (e.g., `🔴 P0 - Critical`, `🟡 P2 - Medium`)
   - Blocked/Deprecated reasons: `**Blocked:** <reason>` or `**Deprecated:** <reason>` on line(s) following status line
