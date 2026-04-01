@@ -5,6 +5,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 from datetime import datetime
@@ -340,7 +341,7 @@ def _build_requirement_action_footer(allow_nav: bool, include_priority_shortcuts
         shortcut_legend = _priority_shortcut_footer_legend()
         if shortcut_legend:
             base += f" | {shortcut_legend}"
-    base += " | o=refs | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
+    base += " | v=code | o=refs | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
     if not allow_nav:
         return base
     nav = "keys: 1-9 select"
@@ -353,7 +354,7 @@ def _build_requirement_action_footer(allow_nav: bool, include_priority_shortcuts
         shortcut_legend = _priority_shortcut_footer_legend()
         if shortcut_legend:
             nav += f" | {shortcut_legend}"
-    return nav + " | ↓/j=next-ac | ↑/k=prev-ac | gg=first-ac | G=last-ac | o=refs | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
+    return nav + " | ↓/j=next-ac | ↑/k=prev-ac | gg=first-ac | G=last-ac | v=code | o=refs | u=up | t=toggle | z=undo | y=redo | h=history | q=quit"
 
 
 def _build_requirement_action_compact_footer(allow_nav: bool, include_priority_shortcuts: bool = False) -> str:
@@ -363,13 +364,13 @@ def _build_requirement_action_compact_footer(allow_nav: bool, include_priority_s
             shortcut_legend = _priority_shortcut_compact_footer_legend()
             if shortcut_legend:
                 base += f" | {shortcut_legend}"
-        return base + " | :=help | o=refs | u=up | q=quit"
+        return base + " | :=help | v=code | o=refs | u=up | q=quit"
     base = "keys: 1-9 select"
     if include_priority_shortcuts:
         shortcut_legend = _priority_shortcut_compact_footer_legend()
         if shortcut_legend:
             base += f" | {shortcut_legend}"
-    return base + " | ↓/j=next-ac | ↑/k=prev-ac | :=help | o=refs | u=up | q=quit"
+    return base + " | ↓/j=next-ac | ↑/k=prev-ac | :=help | v=code | o=refs | u=up | q=quit"
 
 
 def _build_history_browser_compact_footer() -> str:
@@ -1116,6 +1117,42 @@ def _open_linked_requirement_from_panel(
     )
 
 
+def _open_current_requirement_in_vscode(
+    path: Path,
+    requirement: dict[str, object],
+    id_prefixes: tuple[str, ...] = DEFAULT_ID_PREFIXES,
+) -> None:
+    requirement_id = str(requirement["id"])
+    _block_text, start_line, _end_line = extract_requirement_block_with_lines(
+        path,
+        requirement_id,
+        id_prefixes=id_prefixes,
+    )
+    if start_line is None:
+        click.echo(f"Could not locate source line for {requirement_id}.")
+        return
+
+    code_bin = shutil.which("code")
+    if not code_bin:
+        click.echo("VS Code command-line launcher 'code' is not available.")
+        return
+
+    target = f"{path}:{start_line + 1}:1"
+    try:
+        subprocess.run(
+            [code_bin, "--goto", target],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        message = getattr(exc, "stderr", None) or getattr(exc, "stdout", None) or str(exc)
+        click.echo(f"Could not open {requirement_id} in VS Code: {message.strip()}")
+        return
+
+    click.echo(f"Opened {requirement_id} in VS Code.")
+
+
 def _prompt_for_requirement_action(
     requirement: dict[str, object],
     active_field: str,
@@ -1131,8 +1168,8 @@ def _prompt_for_requirement_action(
     )
     include_priority_shortcuts = active_field == "status"
     option_right_labels = _build_status_priority_preview(requirement)[1] if include_priority_shortcuts else None
-    extra_keys = {"t": "toggle-field", "o": "open-linked"}
-    extra_keys_help = {"t": "toggle", "o": "refs"}
+    extra_keys = {"t": "toggle-field", "v": "open-vscode", "o": "open-linked"}
+    extra_keys_help = {"t": "toggle", "v": "code", "o": "refs"}
     extra_keys.update({"z": "undo", "y": "redo", "h": "history"})
     extra_keys_help.update({"z": "undo", "y": "redo", "h": "history"})
     if include_priority_shortcuts:
@@ -1160,7 +1197,7 @@ def _prompt_for_requirement_action(
     )
     if choice is None:
         return "quit", None
-    if isinstance(choice, str) and choice in {"up", "nav-prev", "nav-next", "nav-first", "nav-last", "toggle-field", "open-linked", "undo", "redo", "history"}:
+    if isinstance(choice, str) and choice in {"up", "nav-prev", "nav-next", "nav-first", "nav-last", "toggle-field", "open-vscode", "open-linked", "undo", "redo", "history"}:
         return choice, None
     if isinstance(choice, str) and choice.startswith("priority-shortcut:"):
         return "apply-priority", choice.split(":", 1)[1]
@@ -1582,6 +1619,14 @@ def focused_target_interactive_loop(
             current_entry_field = _next_entry_field(current_entry_field)
             save_current(flat_list, index)
             continue
+        if action == "open-vscode":
+            _open_current_requirement_in_vscode(
+                path,
+                requirement,
+                id_prefixes=id_prefixes,
+            )
+            save_current(flat_list, index)
+            continue
         if action == "open-linked":
             _open_linked_requirement_from_panel(
                 repo_root=repo_root,
@@ -1997,6 +2042,13 @@ def interactive_update_loop(
             if action == "toggle-field":
                 current_entry_field = _next_entry_field(current_entry_field)
                 continue
+            if action == "open-vscode":
+                _open_current_requirement_in_vscode(
+                    selected_path,
+                    selected_criterion,
+                    id_prefixes=id_prefixes,
+                )
+                continue
             if action == "open-linked":
                 _open_linked_requirement_from_panel(
                     repo_root=repo_root,
@@ -2268,6 +2320,14 @@ def filtered_interactive_loop(
             current_entry_field = _next_entry_field(current_entry_field)
             save_current(flat_list, index)
             continue
+        if action == "open-vscode":
+            _open_current_requirement_in_vscode(
+                path,
+                requirement,
+                id_prefixes=id_prefixes,
+            )
+            save_current(flat_list, index)
+            continue
         if action == "open-linked":
             _open_linked_requirement_from_panel(
                 repo_root=repo_root,
@@ -2516,6 +2576,14 @@ def filtered_priority_interactive_loop(
             current_entry_field = _next_entry_field(current_entry_field)
             save_current(flat_list, index)
             continue
+        if action == "open-vscode":
+            _open_current_requirement_in_vscode(
+                path,
+                requirement,
+                id_prefixes=id_prefixes,
+            )
+            save_current(flat_list, index)
+            continue
         if action == "open-linked":
             _open_linked_requirement_from_panel(
                 repo_root=repo_root,
@@ -2681,6 +2749,13 @@ def lookup_criterion_interactive(
 
         if action == "toggle-field":
             current_entry_field = _next_entry_field(current_entry_field)
+            continue
+        if action == "open-vscode":
+            _open_current_requirement_in_vscode(
+                path,
+                requirement,
+                id_prefixes=id_prefixes,
+            )
             continue
         if action == "open-linked":
             _open_linked_requirement_from_panel(

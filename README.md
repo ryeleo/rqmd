@@ -300,6 +300,8 @@ When the entry panel is on status, rqmd also shows a right-hand priority column 
 
 From any requirement detail panel, press `o` to inspect linked local requirement references that rqmd can resolve from the current entry. Selecting one opens that linked requirement in a nested detail view, and pressing `u` there returns you to the originating requirement.
 
+From the same detail panel, press `v` to open the current requirement in VS Code at the requirement heading line. If the `code` launcher is unavailable, rqmd reports that cleanly and keeps you in the current interactive context.
+
 Regenerate summary blocks with priority aggregates included:
 
 ```bash

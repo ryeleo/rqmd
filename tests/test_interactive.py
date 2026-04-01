@@ -4,6 +4,7 @@ import json
 import re
 import shutil
 from pathlib import Path
+from types import SimpleNamespace
 
 import click
 import pytest
@@ -1230,6 +1231,7 @@ def test_RQMD_interactive_021c_requirement_menu_exposes_history_shortcuts() -> N
 
     def fake_select(title, options, **kwargs):
         captured["extra_keys"] = kwargs.get("extra_keys")
+        captured["extra_keys_help"] = kwargs.get("extra_keys_help")
         captured["footer_legend"] = kwargs.get("footer_legend")
         captured["compact_footer"] = kwargs.get("compact_footer")
         return "history"
@@ -1250,13 +1252,16 @@ def test_RQMD_interactive_021c_requirement_menu_exposes_history_shortcuts() -> N
     assert captured["extra_keys"]["z"] == "undo"
     assert captured["extra_keys"]["y"] == "redo"
     assert captured["extra_keys"]["h"] == "history"
+    assert captured["extra_keys"]["v"] == "open-vscode"
+    assert captured["extra_keys_help"]["v"] == "code"
     assert "z=undo" in captured["footer_legend"]
     assert "y=redo" in captured["footer_legend"]
     assert "h=history" in captured["footer_legend"]
+    assert "v=code" in captured["footer_legend"]
     assert "next-ac" in captured["footer_legend"]
     assert "first-ac" in captured["footer_legend"]
     assert "/=fwd" not in captured["footer_legend"]
-    assert captured["compact_footer"] == "keys: 1-9 select | !=p0..$=p3 | ↓/j=next-ac | ↑/k=prev-ac | :=help | o=refs | u=up | q=quit"
+    assert captured["compact_footer"] == "keys: 1-9 select | !=p0..$=p3 | ↓/j=next-ac | ↑/k=prev-ac | :=help | v=code | o=refs | u=up | q=quit"
 
 
 def test_RQMD_interactive_021ca_status_menu_exposes_priority_shortcuts() -> None:
@@ -1298,7 +1303,7 @@ def test_RQMD_interactive_021ca_status_menu_exposes_priority_shortcuts() -> None
     assert "5=🗑️ Deprecated" in captured["footer_legend"]
     assert "!=p0" in captured["footer_legend"]
     assert "@=p1" in captured["footer_legend"]
-    assert captured["compact_footer"] == "keys: 1-9 select | !=p0..$=p3 | ↓/j=next-ac | ↑/k=prev-ac | :=help | o=refs | u=up | q=quit"
+    assert captured["compact_footer"] == "keys: 1-9 select | !=p0..$=p3 | ↓/j=next-ac | ↑/k=prev-ac | :=help | v=code | o=refs | u=up | q=quit"
     right_labels_plain = [re.sub(r"\x1b\[[0-9;]*m", "", item).rstrip() for item in captured["right_labels"]]
     assert right_labels_plain == [
         "  !) 🔴 P0 - Critical",
@@ -1373,7 +1378,100 @@ def test_RQMD_interactive_021cad_status_menu_shows_custom_priorities_beyond_shor
     assert "^=p5" in captured["footer_legend"]
     assert "&=p6" in captured["footer_legend"]
     assert "*=p7" in captured["footer_legend"]
-    assert captured["compact_footer"] == "keys: 1-9 select | !=p0..*=p7 | ↓/j=next-ac | ↑/k=prev-ac | :=help | o=refs | u=up | q=quit"
+    assert captured["compact_footer"] == "keys: 1-9 select | !=p0..*=p7 | ↓/j=next-ac | ↑/k=prev-ac | :=help | v=code | o=refs | u=up | q=quit"
+
+
+def test_RQMD_interactive_030_lookup_opens_current_requirement_in_vscode(monkeypatch, tmp_path: Path, capsys) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    domain_file = criteria_dir / "demo.md"
+    domain_file.write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: First
+- **Status:** 💡 Proposed
+
+### AC-DEMO-002: Second
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    visits: list[str] = []
+    launched: list[list[str]] = []
+    actions = iter(["open-vscode", "up"])
+
+    def fake_select(title, options, **kwargs):
+        del options, kwargs
+        if title.startswith("Choose Status or Priority for "):
+            visits.append(title.removeprefix("Choose Status or Priority for ").splitlines()[0].removesuffix("."))
+            return next(actions)
+        return None
+
+    monkeypatch.setattr(cli, "select_from_menu", fake_select)
+    monkeypatch.setattr(cli.workflows_mod.shutil, "which", lambda name: "/usr/local/bin/code" if name == "code" else None)
+
+    def fake_run(cmd, **kwargs):
+        del kwargs
+        launched.append(list(cmd))
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(cli.workflows_mod.subprocess, "run", fake_run)
+
+    result = cli.lookup_criterion_interactive(
+        repo_root=repo,
+        domain_files=[domain_file],
+        requirement_id="AC-DEMO-001",
+        emoji_columns=False,
+        id_prefixes=("AC",),
+    )
+
+    output = capsys.readouterr().out
+    assert result == 0
+    assert visits == ["AC-DEMO-001", "AC-DEMO-001"]
+    assert launched == [["/usr/local/bin/code", "--goto", f"{domain_file}:5:1"]]
+    assert "Opened AC-DEMO-001 in VS Code." in output
+
+
+def test_RQMD_interactive_030_lookup_reports_missing_vscode_launcher(monkeypatch, tmp_path: Path, capsys) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    domain_file = criteria_dir / "demo.md"
+    domain_file.write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### AC-DEMO-001: First
+- **Status:** 💡 Proposed
+""",
+        encoding="utf-8",
+    )
+
+    actions = iter(["open-vscode", "up"])
+
+    def fake_select(title, options, **kwargs):
+        del title, options, kwargs
+        return next(actions)
+
+    monkeypatch.setattr(cli, "select_from_menu", fake_select)
+    monkeypatch.setattr(cli.workflows_mod.shutil, "which", lambda name: None)
+
+    result = cli.lookup_criterion_interactive(
+        repo_root=repo,
+        domain_files=[domain_file],
+        requirement_id="AC-DEMO-001",
+        emoji_columns=False,
+        id_prefixes=("AC",),
+    )
+
+    output = capsys.readouterr().out
+    assert result == 0
+    assert "VS Code command-line launcher 'code' is not available." in output
 
 
 def test_RQMD_interactive_021cc_split_status_and_priority_highlights(monkeypatch, capsys) -> None:
