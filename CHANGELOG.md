@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Changed repeated positional requirement IDs such as `rqmd SSVR-0001 SSVR-0002` to use the focused multi-target selection flow instead of being intercepted by the legacy single-ID lookup shortcut.
 - Changed scaffold prompt, completion, idempotent no-op, and empty-directory confirmation messages to load from packaged init templates via a shared CLI helper instead of repeating those strings inline across scaffold paths.
 - Changed the `rqmd-ai init` chat handoff prompt body to render from packaged init templates, including the bundle-follow-up section and final verification steps, so another long shipped onboarding script is editable outside Python code.
 - Changed the shared AI-chat handoff heading, preview-only notice, and `rqmd init` chat-first notice to load from packaged init message templates instead of being repeated inline across `rqmd` and `rqmd-ai`.

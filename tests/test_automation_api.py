@@ -1155,6 +1155,62 @@ Scope: demo.
     assert "priority:🔴 P0 - Critical" in captured["tokens"]
 
 
+def test_RQMD_automation_multiple_positional_ids_use_focused_target_flow(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repo = tmp_path / "repo"
+    domain = repo / "docs" / "requirements"
+    domain.mkdir(parents=True)
+    (domain / "demo.md").write_text(
+        """# Demo Requirements
+
+Scope: demo.
+
+### SSVR-0001: First item
+- **Status:** 💡 Proposed
+
+### SSVR-0002: Second item
+- **Status:** 🔧 Implemented
+""",
+        encoding="utf-8",
+    )
+
+    captured: dict[str, object] = {}
+
+    def fail_lookup(*_args, **_kwargs):
+        raise AssertionError("single-ID lookup path should not be used for repeated positional IDs")
+
+    def fake_focused(*_args, **kwargs):
+        selected_items = kwargs["selected_items"]
+        captured["ids"] = [str(requirement["id"]) for _path, requirement in selected_items]
+        captured["tokens"] = list(kwargs["target_tokens"])
+        return 0
+
+    monkeypatch.setattr(cli, "lookup_criterion_interactive", fail_lookup)
+    monkeypatch.setattr(cli, "focused_target_interactive_loop", fake_focused)
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--id-namespace",
+            "SSVR",
+            "SSVR-0001",
+            "SSVR-0002",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["ids"] == ["SSVR-0001", "SSVR-0002"]
+    assert captured["tokens"] == ["SSVR-0001", "SSVR-0002"]
+
+
 def test_RQMD_automation_combined_filters_and_within_same_flag(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     domain = repo / "docs" / "requirements"

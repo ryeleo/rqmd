@@ -2322,8 +2322,9 @@ def main(
         if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or rollup_mode:
             raise click.ClickException("The positional target 'all' cannot be combined with --verify-summaries, --totals, --filter-*, or --update-* options.")
 
-    # Preserve legacy single-ID lookup mode and prioritize explicit ID lookup over positional file hints.
-    if not filter_ids_file and not has_non_lookup_mode:
+    # Preserve legacy single-ID lookup mode, but allow repeated positional IDs
+    # to fall through to the focused multi-target path below.
+    if not filter_ids_file and not has_non_lookup_mode and len(explicit_target_tokens) == 1:
         for token in targets:
             exact_id_matches = []
             for path in domain_files:
