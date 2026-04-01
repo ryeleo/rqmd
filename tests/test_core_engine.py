@@ -436,6 +436,7 @@ def test_RQMD_core_009_missing_domain_docs_handling(tmp_path: Path) -> None:
 
     assert result.exit_code == 1
     assert "No requirement markdown files found under" in result.output
+    assert "default chat-first setup flow" in result.output
     assert "rqmd init" in result.output
 
 
@@ -461,6 +462,37 @@ def test_RQMD_core_009_missing_requirements_index_shows_first_time_setup_guidanc
     assert "rqmd init --scaffold" in result.output
 
 
+def test_RQMD_core_013_verify_index_missing_index_uses_shared_startup_guidance(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "demo.md").write_text(
+        "# Demo Requirement\n\n"
+        "Scope: demo.\n\n"
+        "### AC-DEMO-001: Example\n"
+        "- **Status:** 💡 Proposed\n",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--verify-index",
+            "--no-table",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "No requirements index found at: docs/requirements/README.md" in result.output
+    assert "guided setup flow" in result.output
+    assert "rqmd init --scaffold" in result.output
+
+
 def test_RQMD_core_009_missing_domain_docs_yes_initializes_scaffold(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     (repo / "docs" / "requirements").mkdir(parents=True)
@@ -478,9 +510,16 @@ def test_RQMD_core_009_missing_domain_docs_yes_initializes_scaffold(tmp_path: Pa
     )
 
     assert result.exit_code == 0
+    assert "Initialized requirement scaffold:" in result.output
     assert (repo / "docs" / "requirements" / "README.md").exists()
     starter = (repo / "docs" / "requirements" / "starter.md").read_text(encoding="utf-8")
     assert "### REQ-HELLO-001: Replace this starter requirement" in starter
+
+
+def test_RQMD_core_009b_missing_domain_docs_prompt_template_matches_cli_confirmation_copy() -> None:
+    assert cli.render_startup_message("scaffold-empty-confirm.md").rstrip() == (
+        "No requirement files found. Initialize a starter scaffold now?"
+    )
 
 
 def test_RQMD_core_009_init_yes_skips_prompt_and_uses_default_prefix(tmp_path: Path) -> None:
@@ -677,6 +716,9 @@ def test_RQMD_core_011_and_012_init_scaffold_creates_index_and_starter(tmp_path:
     )
 
     assert result.exit_code == 0
+    assert "Initialize scaffold: choose a requirement ID key prefix" in result.output
+    assert "Tip: customize this for your project to avoid generic IDs." in result.output
+    assert "Initialized requirement scaffold:" in result.output
     config_path = repo / ".rqmd.yml"
     index_path = repo / "docs" / "requirements" / "README.md"
     starter_path = repo / "docs" / "requirements" / "starter.md"
@@ -784,7 +826,7 @@ def test_RQMD_core_011b_init_scaffold_is_idempotent(tmp_path: Path) -> None:
         input="\n",
     )
     assert second.exit_code == 0
-    assert "already present" in second.output
+    assert second.output.strip().endswith("Requirement scaffold already present; no files created.")
 
 
 def test_RQMD_core_011c_init_scaffold_supports_custom_criteria_dir(tmp_path: Path) -> None:

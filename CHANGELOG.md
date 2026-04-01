@@ -31,6 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Changed scaffold prompt, completion, idempotent no-op, and empty-directory confirmation messages to load from packaged init templates via a shared CLI helper instead of repeating those strings inline across scaffold paths.
+- Changed the `rqmd-ai init` chat handoff prompt body to render from packaged init templates, including the bundle-follow-up section and final verification steps, so another long shipped onboarding script is editable outside Python code.
+- Changed the shared AI-chat handoff heading, preview-only notice, and `rqmd init` chat-first notice to load from packaged init message templates instead of being repeated inline across `rqmd` and `rqmd-ai`.
+- Changed no-docs and missing-index startup guidance to load from packaged init message templates instead of duplicated inline CLI strings, extending the shared resource-backed path to more first-run user-facing text.
+- Changed the default `.rqmd.yml` scaffold to render from an editable init template plus catalog placeholders instead of assembling the YAML layout entirely in Python, pushing another shipped init asset onto the packaged-resource path.
+- Changed the remaining legacy-init seeded requirement document bodies for source-area, workflow, and issue-backlog files to load from editable init templates instead of embedded Python markdown builders, continuing the packaged-resource migration for shipped init content.
 - Changed legacy-init README generation to use the same packaged requirements-index template as scaffold init, so init workflows now install a consistent schema-bearing requirements index instead of maintaining divergent README builders.
 - Changed the built-in default status and priority catalogs to load from packaged YAML resources under `src/rqmd/resources/catalogs/`, and updated scaffold generation to consume those same resources so future default-catalog edits are data-driven instead of scattered across Python constants.
 - Added `⚠️ Janky` as a built-in default status after `✅ Verified`, propagated the new six-status order through generated summaries, README sync rollups, scaffolds, and interactive status shortcuts so teams can mark verified-but-rough work without custom catalog setup.

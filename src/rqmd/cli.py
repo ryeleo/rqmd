@@ -98,7 +98,8 @@ from .markdown_io import (auto_detect_requirements_dir, check_files_writable,
                           display_name_from_h1, format_path_display,
                           initialize_requirements_scaffold, iter_domain_files,
                           iter_requirements_search_roots, parse_index_links,
-                          resolve_requirements_dir, validate_files_readable)
+                          render_startup_message, resolve_requirements_dir,
+                          validate_files_readable)
 from .menus import select_from_menu
 from .priority_model import (configure_priority_catalog,
                              normalize_priority_input)
@@ -626,8 +627,8 @@ def _rename_requirement_id_prefix_in_text(text: str, old_prefix: str, new_prefix
 
 
 def prompt_for_init_prefix(default_prefix: str = "REQ") -> str:
-    click.echo("Initialize scaffold: choose a requirement ID key prefix (for example AC, R, RQMD).")
-    click.echo("Tip: customize this for your project to avoid generic IDs.")
+    click.echo(render_startup_message("scaffold-prefix-heading.md").rstrip())
+    click.echo(render_startup_message("scaffold-prefix-tip.md").rstrip())
 
     raw = click.prompt(
         "Starter key prefix (without trailing '-')",
@@ -638,6 +639,16 @@ def prompt_for_init_prefix(default_prefix: str = "REQ") -> str:
     if not value or not ID_PREFIX_PATTERN.fullmatch(value):
         raise click.ClickException("Invalid key prefix. Use uppercase letters/numbers, for example REQ, AC, or TEAM1.")
     return value
+
+
+def _emit_scaffold_result(created: list[Path], repo_root: Path) -> None:
+    if created:
+        click.echo(render_startup_message("scaffold-created-heading.md").rstrip())
+        for path in created:
+            click.echo(f"  + {path.relative_to(repo_root)}")
+        return
+
+    click.echo(render_startup_message("scaffold-already-present.md").rstrip())
 
 
 def infer_include_status_emojis(domain_files: list[Path]) -> bool:
@@ -1805,12 +1816,7 @@ def main(
                 _emit_json_payload(payload)
                 raise SystemExit(0)
 
-            if created:
-                click.echo("Initialized requirement scaffold:")
-                for path in created:
-                    click.echo(f"  + {path.relative_to(repo_root)}")
-            else:
-                click.echo("Requirement scaffold already present; no files created.")
+            _emit_scaffold_result(created, repo_root)
             raise SystemExit(0)
 
         normalized_init_prefixes = normalize_id_prefixes(id_prefixes) if id_prefixes else ()
@@ -1828,9 +1834,9 @@ def main(
         if json_output:
             _emit_json_payload(payload)
         else:
-            click.echo("rqmd init now uses the chat-first onboarding flow.")
+            click.echo(render_startup_message("chat-init-notice.md").rstrip())
             click.echo("")
-            click.echo("Paste this into your AI chat:")
+            click.echo(render_startup_message("chat-handoff-heading.md").rstrip())
             click.echo("")
             click.echo(str(payload.get("handoff_prompt") or "Run `rqmd-ai init --chat --json`."))
         raise SystemExit(0)
@@ -1867,12 +1873,7 @@ def main(
             _emit_json_payload(payload)
             raise SystemExit(0)
 
-        if created:
-            click.echo("Initialized requirement scaffold:")
-            for path in created:
-                click.echo(f"  + {path.relative_to(repo_root)}")
-        else:
-            click.echo("Requirement scaffold already present; no files created.")
+        _emit_scaffold_result(created, repo_root)
         raise SystemExit(0)
 
     resolved_criteria_dir, criteria_dir_message = resolve_requirements_dir(repo_root, requirements_dir)
@@ -1888,7 +1889,10 @@ def main(
     domain_files = iter_domain_files(repo_root, resolved_requirements_dir_input)
     if not domain_files:
         missing_msg = f"No requirement markdown files found under: {format_path_display(resolved_criteria_dir, repo_root)}"
-        hint_msg = "Hint: run 'rqmd init' for the default chat-first setup flow, or use 'rqmd init --scaffold --force-yes' for the direct scaffold path."
+        hint_msg = render_startup_message(
+            "startup-empty-dir.md",
+            {"CRITERIA_DIR_DISPLAY": format_path_display(resolved_criteria_dir, repo_root)},
+        ).split("\n", 1)[1].strip()
 
         if confirm_yes:
             starter_prefix = requested_init_prefix or "REQ"
@@ -1897,12 +1901,7 @@ def main(
                 resolved_requirements_dir_input,
                 starter_prefix=starter_prefix,
             )
-            if created:
-                click.echo("Initialized requirement scaffold:")
-                for path in created:
-                    click.echo(f"  + {path.relative_to(repo_root)}")
-            else:
-                click.echo("Requirement scaffold already present; no files created.")
+            _emit_scaffold_result(created, repo_root)
             raise SystemExit(0)
 
         if (not sys.stdin.isatty()) or check or json_output or (not interactive):
@@ -1912,7 +1911,7 @@ def main(
 
         click.echo(missing_msg, err=True)
         should_init = click.confirm(
-            "No requirement files found. Initialize a starter scaffold now?",
+            render_startup_message("scaffold-empty-confirm.md").rstrip(),
             default=False,
             show_default=True,
         )
@@ -1930,12 +1929,7 @@ def main(
             resolved_requirements_dir_input,
             starter_prefix=starter_prefix,
         )
-        if created:
-            click.echo("Initialized requirement scaffold:")
-            for path in created:
-                click.echo(f"  + {path.relative_to(repo_root)}")
-        else:
-            click.echo("Requirement scaffold already present; no files created.")
+        _emit_scaffold_result(created, repo_root)
         raise SystemExit(0)
 
     # RQMD-PORTABILITY-009: validate files are readable before proceeding
@@ -2246,8 +2240,13 @@ def main(
     if check_index:
         index_path = resolved_criteria_dir / "README.md"
         if not index_path.exists():
-            click.echo(f"No requirements index found at: {format_path_display(index_path, repo_root)}", err=True)
-            click.echo("  Hint: run 'rqmd init' for the guided setup flow, or 'rqmd init --scaffold' for the direct scaffold path.", err=True)
+            click.echo(
+                render_startup_message(
+                    "startup-missing-index.md",
+                    {"INDEX_PATH": format_path_display(index_path, repo_root)},
+                ).rstrip(),
+                err=True,
+            )
             raise SystemExit(1)
         stale_links, orphan_files = check_index_sync(resolved_criteria_dir, index_path)
         issues: list[str] = []

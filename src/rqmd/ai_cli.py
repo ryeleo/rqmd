@@ -44,8 +44,11 @@ from .markdown_io import (discover_project_root, format_path_display,
                           initialize_requirements_scaffold, iter_domain_files,
                           preview_project_config_scaffold,
                           preview_requirements_scaffold,
-                          render_requirements_index, resolve_requirements_dir,
-                          validate_files_readable)
+                          render_legacy_issue_domain,
+                          render_legacy_source_domain,
+                          render_legacy_workflow_domain,
+                          render_requirements_index, render_startup_message,
+                          resolve_requirements_dir, validate_files_readable)
 from .priority_model import configure_priority_catalog
 from .req_parser import (extract_blocking_id,
                          extract_requirement_block_with_lines,
@@ -629,42 +632,49 @@ def _build_init_handoff_prompt(
 ) -> str:
     init_artifact_path = _default_json_artifact_path(repo_root, "rqmd-ai-init-preview")
     bundle_artifact_path = _default_json_artifact_path(repo_root, "rqmd-ai-bundle-preview")
-    lines = [
-        f"You are helping initialize rqmd in the repository at {repo_root}.",
-        "",
-        f"1. Run `{init_command}`.",
-        f"2. If your terminal wrapper truncates stdout, rerun it as `{init_command} --json-output-file {shlex.quote(str(init_artifact_path))}` and read that file directly.",
-        "3. Read the JSON payload and report which init strategy was selected.",
-        "4. If `interview.question_groups` is present, switch into an interactive one-question-at-a-time multi-choice interview instead of paraphrasing the payload.",
-        "5. Start any `option_annotations.default_checked_values` as already selected, allow custom answers only when the question says so, and avoid recapping all prior answers after each question unless the user asks.",
-        "6. Collect the interview answers first, then rerun the same init command with repeated `--answer FIELD=VALUE` entries to apply them.",
-        "7. Review the proposed files with the user before writing anything.",
-        f"8. Apply only after explicit confirmation by running `{apply_command}`.",
+    sections = [
+        render_startup_message(
+            "init-handoff-base.md",
+            {
+                "REPO_ROOT": str(repo_root),
+                "INIT_COMMAND": init_command,
+                "INIT_ARTIFACT_COMMAND": f"{init_command} --json-output-file {shlex.quote(str(init_artifact_path))}",
+                "APPLY_COMMAND": apply_command,
+            },
+        ).rstrip()
     ]
 
     if not bool(bundle_state.get("installed")):
         bundle_command = _build_bundle_follow_up_command(repo_root)
-        lines.extend(
-            [
-                f"9. Because the rqmd Copilot bundle is currently `{bundle_state.get('state', 'absent')}`, also run `{bundle_command}`.",
-                f"10. If that preview is truncated too, rerun it as `{bundle_command} --json-output-file {shlex.quote(str(bundle_artifact_path))}` and read that file directly.",
-                "11. Use that bundle interview to generate or refine the project-local `/dev` and `/test` skills before finishing setup.",
-                "12. Apply the bundle install only after the user confirms the preview.",
-            ]
+        sections.append(
+            render_startup_message(
+                "init-handoff-bundle-followup.md",
+                {
+                    "BUNDLE_STEP": "9",
+                    "BUNDLE_ARTIFACT_STEP": "10",
+                    "BUNDLE_SKILLS_STEP": "11",
+                    "BUNDLE_APPLY_STEP": "12",
+                    "BUNDLE_STATE": str(bundle_state.get("state", "absent")),
+                    "BUNDLE_COMMAND": bundle_command,
+                    "BUNDLE_ARTIFACT_COMMAND": f"{bundle_command} --json-output-file {shlex.quote(str(bundle_artifact_path))}",
+                },
+            ).rstrip()
         )
         final_step = 13
     else:
         final_step = 9
 
-    lines.extend(
-        [
-            f"{final_step}. Finish by running `rqmd --verify-summaries --no-walk --no-table`.",
-            f"{final_step + 1}. Tell the user the rqmd catalog is ready for refinement passes.",
-            "",
-            f"Selected strategy hint: {strategy.get('selected', 'unknown')}.",
-        ]
+    sections.append(
+        render_startup_message(
+            "init-handoff-tail.md",
+            {
+                "VERIFY_STEP": str(final_step),
+                "READY_STEP": str(final_step + 1),
+                "STRATEGY": str(strategy.get("selected", "unknown")),
+            },
+        ).rstrip()
     )
-    return "\n".join(lines)
+    return "\n".join(section for section in sections if section.strip())
 
 
 def _build_or_apply_init_payload(
@@ -1881,81 +1891,6 @@ def _build_legacy_init_readme(
     )
 
 
-def _render_legacy_source_domain(title: str, scope: str, evidence: str, requirement_id: str) -> str:
-    return (
-        f"# {title} Requirements\n\n"
-        f"Scope: {scope}\n\n"
-        "This file was generated by `rqmd-ai init --chat --legacy` as a starting point.\n"
-        "Review the seed requirement below and replace it with more precise, testable requirements as you learn the repository.\n\n"
-        f"### {requirement_id}: Refine the initial {title} requirements from existing code\n"
-        "- **Status:** 💡 Proposed\n"
-        f"- Derived from detected repository evidence under `{evidence}`.\n"
-        "- Capture the current responsibilities, constraints, and near-term work for this area.\n"
-        "- Split this seed requirement into more specific requirements as the domain becomes clearer.\n"
-    )
-
-
-def _render_legacy_workflow_domain(scope: str, hints: dict[str, list[str]], requirement_ids: tuple[str, str]) -> str:
-    setup_id, validation_id = requirement_ids
-    lines = [
-        "# Developer Workflows Requirements",
-        "",
-        f"Scope: {scope}",
-        "",
-        "This file was generated by `rqmd-ai init --chat --legacy` from detected repository commands.",
-        "Use it to lock down the canonical developer workflows before future agents rely on guesses.",
-        "",
-        f"### {setup_id}: Capture the canonical development workflow commands",
-        "- **Status:** 💡 Proposed",
-        "- Review and refine the repository's canonical setup, build, and run commands.",
-    ]
-    for command in hints["dev_environment"] + hints["dev_build"] + hints["dev_run"]:
-        lines.append(f"- Candidate command: {command}")
-    if not (hints["dev_environment"] or hints["dev_build"] or hints["dev_run"]):
-        lines.append("- No setup, build, or run commands were detected automatically; replace this seed with the real workflow.")
-    lines.extend(
-        [
-            "",
-            f"### {validation_id}: Capture the canonical validation and smoke-test commands",
-            "- **Status:** 💡 Proposed",
-            "- Review and refine the repository's canonical test, smoke, lint, and verification flows.",
-        ]
-    )
-    for command in hints["dev_smoke"] + hints["test_primary"] + hints["test_integration"] + hints["test_lint"]:
-        lines.append(f"- Candidate command: {command}")
-    if not (hints["dev_smoke"] or hints["test_primary"] or hints["test_integration"] or hints["test_lint"]):
-        lines.append("- No validation commands were detected automatically; replace this seed with the real workflow.")
-    return "\n".join(lines).rstrip() + "\n"
-
-
-def _render_legacy_issue_domain(scope: str, issues: list[dict[str, object]], requirement_ids: list[str]) -> str:
-    lines = [
-        "# Issue Backlog Requirements",
-        "",
-        f"Scope: {scope}",
-        "",
-        "This file was generated from GitHub issues discovered during `rqmd-ai init --chat --legacy`.",
-        "Review, move, or delete these seeds once they are mapped into better domain files.",
-        "",
-    ]
-    for requirement_id, issue in zip(requirement_ids, issues):
-        labels = issue.get("labels") if isinstance(issue.get("labels"), list) else []
-        label_text = ", ".join(str(label) for label in labels if str(label).strip())
-        lines.extend(
-            [
-                f"### {requirement_id}: {issue.get('title')}",
-                "- **Status:** 💡 Proposed",
-                f"- Seeded from GitHub issue #{issue.get('number')}",
-                f"- Issue state: {issue.get('state')}",
-            ]
-        )
-        if label_text:
-            lines.append(f"- Issue labels: {label_text}")
-        lines.append("- Review whether this backlog seed belongs in a more specific requirement file.")
-        lines.append("")
-    return "\n".join(lines).rstrip() + "\n"
-
-
 def _build_legacy_init_files(
     repo_root: Path,
     requirements_dir: Path,
@@ -1993,7 +1928,7 @@ def _build_legacy_init_files(
                 "path": relative_path,
                 "title": f"{area['title']} Requirements",
                 "description": f"initial seed derived from detected repository area `{area['evidence']}`",
-                "content": _render_legacy_source_domain(
+                "content": render_legacy_source_domain(
                     title=area["title"],
                     scope=f"initial legacy-init seed derived from `{area['evidence']}`.",
                     evidence=area["evidence"],
@@ -2010,10 +1945,12 @@ def _build_legacy_init_files(
         "path": f"{requirements_dir.as_posix()}/developer-workflows.md",
         "title": "Developer Workflows Requirements",
         "description": "seeded from detected build, run, smoke, and validation commands",
-        "content": _render_legacy_workflow_domain(
+        "content": render_legacy_workflow_domain(
             scope="initial legacy-init seed for the repository's canonical developer workflows.",
-            hints=command_hints,
-            requirement_ids=(workflow_ids[0], workflow_ids[1]),
+            setup_id=workflow_ids[0],
+            validation_id=workflow_ids[1],
+            setup_commands=command_hints["dev_environment"] + command_hints["dev_build"] + command_hints["dev_run"],
+            validation_commands=command_hints["dev_smoke"] + command_hints["test_primary"] + command_hints["test_integration"] + command_hints["test_lint"],
         ),
     }
 
@@ -2028,7 +1965,7 @@ def _build_legacy_init_files(
             "path": f"{requirements_dir.as_posix()}/issue-backlog.md",
             "title": "Issue Backlog Requirements",
             "description": "seeded from GitHub issues discovered via gh CLI",
-            "content": _render_legacy_issue_domain(
+            "content": render_legacy_issue_domain(
                 scope="initial legacy-init seed from the repository's GitHub issue backlog.",
                 issues=issues,
                 requirement_ids=issue_ids,
@@ -2590,18 +2527,18 @@ def _emit(payload: dict[str, object], json_output: bool, json_output_file: Path 
             for reason in strategy.get("reasons", []):
                 click.echo(f"- {reason}")
         if payload.get("read_only") is True:
-            click.echo("Preview only. Nothing has been written yet.")
+            click.echo(render_startup_message("preview-only.md").rstrip())
         prompt = payload.get("handoff_prompt")
         if isinstance(prompt, str) and prompt.strip():
             click.echo("")
-            click.echo("Paste this into your AI chat:")
+            click.echo(render_startup_message("chat-handoff-heading.md").rstrip())
             click.echo("")
             click.echo(prompt)
         return
     if mode in {"legacy-init-plan", "legacy-init-apply"}:
         click.echo(f"rqmd-ai legacy init: {payload.get('requirements_dir')}")
         if payload.get("read_only") is True:
-            click.echo("Preview only. Nothing has been written yet.")
+            click.echo(render_startup_message("preview-only.md").rstrip())
         issue_discovery = payload.get("issue_discovery")
         issue_details = issue_discovery if isinstance(issue_discovery, dict) else {}
         issue_status = "used" if issue_details.get("used") else issue_details.get("reason", "not used")
@@ -3885,13 +3822,6 @@ def main(
             read_only=True,
             workflow_mode=workflow_mode,
         ),
-        json_output=json_output,
-        json_output_file=json_output_file,
-    )
-
-
-if __name__ == "__main__":
-    main()        ),
         json_output=json_output,
         json_output_file=json_output_file,
     )
