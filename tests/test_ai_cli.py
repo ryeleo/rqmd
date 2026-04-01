@@ -1538,6 +1538,57 @@ def test_RQMD_TIME_008_history_ref_accepts_stable_id(tmp_path: Path) -> None:
     assert stable_payload["history_source"]["stable_id"] == stable_id
 
 
+def test_RQMD_TIME_009_history_report_honors_json_output_file(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    domain = criteria_dir / "demo.md"
+    _write_demo_domain(domain)
+    output_path = repo / "tmp" / "history-report.json"
+
+    runner = CliRunner()
+    applied = runner.invoke(
+        rqmd_main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--update-id",
+            "RQMD-DEMO-001",
+            "--update-status",
+            "verified",
+            "--no-walk",
+            "--no-table",
+        ],
+    )
+    assert applied.exit_code == 0
+
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--history-ref",
+            "0",
+            "--history-report",
+            "--json-output-file",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "History Report" in result.output
+    assert output_path.exists()
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert payload["report_type"] == "state"
+    assert payload["source"]["requested_ref"] == "0"
+    assert payload["source"]["detached"] is True
+    _assert_schema_version(payload)
+
+
 def test_RQMD_TIME_001_rejects_unknown_history_ref(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"

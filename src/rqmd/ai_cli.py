@@ -2514,10 +2514,17 @@ def _emit(payload: dict[str, object], json_output: bool, json_output_file: Path 
             )
         return
 
-def _emit_history_report(payload: dict[str, object], json_output: bool) -> None:
+def _emit_history_report(
+    payload: dict[str, object],
+    json_output: bool,
+    json_output_file: Path | None = None,
+) -> None:
     if json_output:
-        _emit(payload, json_output=True)
+        _emit(payload, json_output=True, json_output_file=json_output_file)
         return
+
+    if json_output_file is not None:
+        _write_json_payload_file(payload, json_output_file)
 
     report_type = str(payload.get("report_type") or "unknown")
     summary = payload.get("summary") if isinstance(payload.get("summary"), dict) else {}
@@ -3611,6 +3618,7 @@ def main(
             _emit_history_report(
                 _build_history_compare_report_payload(payload, ref_a=ref_a, ref_b=ref_b),
                 json_output=json_output,
+                json_output_file=json_output_file,
             )
         else:
             _emit(payload, json_output=json_output, json_output_file=json_output_file)
@@ -3651,7 +3659,7 @@ def main(
             id_prefixes=id_prefixes,
             history_source=history_source,
         )
-        _emit_history_report(payload, json_output=json_output)
+        _emit_history_report(payload, json_output=json_output, json_output_file=json_output_file)
         if history_tempdir is not None:
             history_tempdir.cleanup()
         return
