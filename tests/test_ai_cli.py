@@ -1348,6 +1348,9 @@ def test_RQMD_AI_020_install_bundle_chat_exposes_interview_and_previews(tmp_path
         "review_notes",
     ]
     dev_run_question = next(item for item in questions if item["field"] == "dev_run")
+    assert dev_run_question["label"] == "Run or dev-server commands"
+    assert dev_run_question["prompt"] == "Which run or dev-server commands should /dev use?"
+    assert dev_run_question["custom_answer_prompt"] == "Add another custom command."
     assert dev_run_question["selection_model"]["allow_multiple"] is True
     assert dev_run_question["selection_model"]["allow_custom"] is True
     assert dev_run_question["selection_model"]["allow_skip"] is True
@@ -1358,6 +1361,10 @@ def test_RQMD_AI_020_install_bundle_chat_exposes_interview_and_previews(tmp_path
     assert dev_run_option["recommended"] is True
     assert dev_run_option["safe_default"] is True
     assert dev_run_option["detected_from"] == ["package.json scripts"]
+    notes_question = next(item for item in questions if item["field"] == "notes")
+    assert notes_question["label"] == "Bootstrap notes"
+    assert notes_question["prompt"] == "What review notes or caveats should be carried into the generated skills?"
+    assert notes_question["custom_answer_prompt"] == "Add another command or note."
     preview_map = {entry["path"]: entry["content"] for entry in payload["generated_skill_previews"]}
     assert ".github/skills/dev/SKILL.md" in preview_map
     assert "npm run dev" in preview_map[".github/skills/dev/SKILL.md"]
@@ -1497,6 +1504,18 @@ def test_RQMD_AI_022b_init_starter_chat_recommends_project_specific_prefix(tmp_p
     assert "project-specific key" in id_prefix_question["prompt"]
     assert "project-specific" in str(id_prefix_question["custom_answer_prompt"])
     assert any(option["value"] == "ACCLI" and option["recommended"] is True for option in id_prefix_question["options"])
+    requirements_dir_question = next(
+        item for item in payload["interview"]["questions"] if item["field"] == "requirements_dir"
+    )
+    assert requirements_dir_question["label"] == "Requirements directory"
+    assert requirements_dir_question["prompt"] == "Where should rqmd create the starter requirements catalog?"
+    assert requirements_dir_question["custom_answer_prompt"] == "Type a custom requirements directory path."
+    starter_notes_question = next(
+        item for item in payload["interview"]["questions"] if item["field"] == "starter_notes"
+    )
+    assert starter_notes_question["label"] == "Starter scaffold notes"
+    assert starter_notes_question["prompt"] == "What notes should guide the first refinement pass after the starter scaffold is created?"
+    assert starter_notes_question["custom_answer_prompt"] == "Add another starter note."
 
 
 def test_RQMD_AI_023_init_legacy_answers_override_plan(tmp_path: Path, monkeypatch) -> None:

@@ -42,8 +42,7 @@ from .history import HistoryManager
 from .json_speedups import dumps_json
 from .markdown_io import (discover_project_root, format_path_display,
                           initialize_requirements_scaffold, iter_domain_files,
-                          load_init_yaml,
-                          preview_project_config_scaffold,
+                          load_init_yaml, preview_project_config_scaffold,
                           preview_requirements_scaffold,
                           render_legacy_issue_domain,
                           render_legacy_source_domain,
@@ -76,13 +75,6 @@ _GENERATED_PROJECT_SKILL_PATHS = (
     ".github/skills/dev/SKILL.md",
     ".github/skills/test/SKILL.md",
 )
-
-_STARTER_INIT_CHAT_FIELDS: tuple[str, ...] = (
-    "requirements_dir",
-    "id_prefix",
-    "starter_notes",
-)
-
 
 def _editable_source_path_from_distribution() -> Path | None:
     try:
@@ -412,37 +404,40 @@ def _build_starter_init_chat_questions(
     id_prefixes: tuple[str, ...],
 ) -> list[dict[str, object]]:
     inferred_prefix = id_prefixes[0] if id_prefixes else "REQ"
+    requirements_dir_config = _STARTER_INIT_FIELD_CONFIGS["requirements_dir"]
+    id_prefix_config = _STARTER_INIT_FIELD_CONFIGS["id_prefix"]
+    starter_notes_config = _STARTER_INIT_FIELD_CONFIGS["starter_notes"]
     return [
         _build_interview_question(
             field="requirements_dir",
-            group_id="catalog_setup",
-            label="Requirements directory",
-            prompt="Where should rqmd create the starter requirements catalog?",
+            group_id=str(requirements_dir_config["group"]),
+            label=str(requirements_dir_config["label"]),
+            prompt=str(requirements_dir_config["prompt"]),
             inferred_answers=[requirements_dir.as_posix()],
-            allow_multiple=False,
-            allow_custom=True,
-            allow_skip=False,
-            first_selected_is_canonical=True,
-            custom_answer_prompt="Type a custom requirements directory path.",
+            allow_multiple=bool(requirements_dir_config["allow_multiple"]),
+            allow_custom=bool(requirements_dir_config["allow_custom"]),
+            allow_skip=bool(requirements_dir_config["allow_skip"]),
+            first_selected_is_canonical=bool(requirements_dir_config["first_selected_is_canonical"]),
+            custom_answer_prompt=str(requirements_dir_config["custom_answer_prompt"]),
             suggested_options=_legacy_init_requirements_dir_options(repo_root, requirements_dir),
         ),
         _build_id_prefix_question(
             repo_root=repo_root,
-            group_id="catalog_setup",
-            prompt="Which requirement ID prefix should the starter scaffold use?",
+            group_id=str(id_prefix_config["group"]),
+            prompt=str(id_prefix_config["prompt"]),
             inferred_prefix=inferred_prefix,
         ),
         _build_interview_question(
             field="starter_notes",
-            group_id="review_notes",
-            label="Starter scaffold notes",
-            prompt="What notes should guide the first refinement pass after the starter scaffold is created?",
+            group_id=str(starter_notes_config["group"]),
+            label=str(starter_notes_config["label"]),
+            prompt=str(starter_notes_config["prompt"]),
             inferred_answers=[],
-            allow_multiple=True,
-            allow_custom=True,
-            allow_skip=True,
-            first_selected_is_canonical=False,
-            custom_answer_prompt="Add another starter note.",
+            allow_multiple=bool(starter_notes_config["allow_multiple"]),
+            allow_custom=bool(starter_notes_config["allow_custom"]),
+            allow_skip=bool(starter_notes_config["allow_skip"]),
+            first_selected_is_canonical=bool(starter_notes_config["first_selected_is_canonical"]),
+            custom_answer_prompt=str(starter_notes_config["custom_answer_prompt"]),
         ),
     ]
 
@@ -898,134 +893,93 @@ def _render_bundle_template(relative_path: str, replacements: dict[str, str]) ->
     return content
 
 
-_BOOTSTRAP_CHAT_FIELDS: tuple[str, ...] = (
-    "dev_environment",
-    "dev_build",
-    "dev_run",
-    "dev_smoke",
-    "test_primary",
-    "test_integration",
-    "test_lint",
-    "notes",
-)
+def _expect_init_mapping(value: object, *, message: str) -> dict[str, object]:
+    if not isinstance(value, dict):
+        raise click.ClickException(message)
+    return {str(key): item for key, item in value.items()}
 
-_LEGACY_INIT_CHAT_FIELDS: tuple[str, ...] = (
-    "requirements_dir",
-    "id_prefix",
-    "docs_review",
-    "source_grokking",
-    "test_grokking",
-    "domain_focus",
-    "issue_backlog",
-    "legacy_notes",
-)
+
+def _expect_init_list(value: object, *, message: str) -> list[object]:
+    if not isinstance(value, list):
+        raise click.ClickException(message)
+    return list(value)
+
+
+def _load_init_field_section(section_name: str) -> tuple[tuple[str, ...], dict[str, dict[str, object]]]:
+    section = _expect_init_mapping(
+        _INIT_INTERVIEW_CONFIG.get(section_name),
+        message=f"Invalid init interview config: missing {section_name} mapping.",
+    )
+    field_order = _expect_init_list(
+        section.get("field_order"),
+        message=(
+            f"Invalid init interview config: {section_name} field_order/fields must be present."
+        ),
+    )
+    fields = _expect_init_mapping(
+        section.get("fields"),
+        message=(
+            f"Invalid init interview config: {section_name} field_order/fields must be present."
+        ),
+    )
+    return (
+        tuple(str(item) for item in field_order if str(item).strip()),
+        {
+            field_name: dict(field_config)
+            for field_name, field_config in fields.items()
+            if isinstance(field_config, dict)
+        },
+    )
+
+
+def _load_init_option_sets(section_name: str) -> dict[str, tuple[dict[str, str], ...]]:
+    section = _expect_init_mapping(
+        _INIT_INTERVIEW_CONFIG.get(section_name),
+        message=f"Invalid init interview config: missing {section_name} mapping.",
+    )
+    raw_option_sets = _expect_init_mapping(
+        section.get("option_sets"),
+        message=f"Invalid init interview config: {section_name} option_sets must be a mapping.",
+    )
+    return {
+        str(key): tuple(
+            {
+                str(option_key): str(option_value)
+                for option_key, option_value in option.items()
+            }
+            for option in value
+            if isinstance(option, dict)
+        )
+        for key, value in raw_option_sets.items()
+        if isinstance(value, list)
+    }
+
 
 _INIT_INTERVIEW_CONFIG = load_init_yaml("init-interview.yml")
 if not isinstance(_INIT_INTERVIEW_CONFIG, dict):
     raise click.ClickException("Invalid init interview config: expected a mapping in init-interview.yml.")
 
-_RAW_INTERVIEW_GROUP_LABELS = _INIT_INTERVIEW_CONFIG.get("group_labels")
-if not isinstance(_RAW_INTERVIEW_GROUP_LABELS, dict):
-    raise click.ClickException("Invalid init interview config: missing group_labels mapping.")
+_RAW_INTERVIEW_GROUP_LABELS = _expect_init_mapping(
+    _INIT_INTERVIEW_CONFIG.get("group_labels"),
+    message="Invalid init interview config: missing group_labels mapping.",
+)
 _INTERVIEW_GROUP_LABELS: dict[str, str] = {
     str(key): str(value)
     for key, value in _RAW_INTERVIEW_GROUP_LABELS.items()
 }
 
-_RAW_LEGACY_INIT_CONFIG = _INIT_INTERVIEW_CONFIG.get("legacy_init")
-if not isinstance(_RAW_LEGACY_INIT_CONFIG, dict):
-    raise click.ClickException("Invalid init interview config: missing legacy_init mapping.")
-
-_RAW_LEGACY_INIT_LABELS = _RAW_LEGACY_INIT_CONFIG.get("labels")
-_RAW_LEGACY_INIT_PROMPTS = _RAW_LEGACY_INIT_CONFIG.get("prompts")
-_RAW_LEGACY_INIT_FIELD_DEFAULTS = _RAW_LEGACY_INIT_CONFIG.get("field_defaults")
-_RAW_LEGACY_INIT_OPTION_SETS = _RAW_LEGACY_INIT_CONFIG.get("option_sets")
-if not isinstance(_RAW_LEGACY_INIT_LABELS, dict) or not isinstance(_RAW_LEGACY_INIT_PROMPTS, dict):
-    raise click.ClickException("Invalid init interview config: legacy_init labels/prompts must be mappings.")
-if not isinstance(_RAW_LEGACY_INIT_FIELD_DEFAULTS, dict) or not isinstance(_RAW_LEGACY_INIT_OPTION_SETS, dict):
-    raise click.ClickException("Invalid init interview config: legacy_init field_defaults/option_sets must be mappings.")
-
-_INTERVIEW_GROUP_ORDER: tuple[str, ...] = (
-    "catalog_setup",
-    "developer_workflows",
-    "validation_workflows",
-    "repository_understanding",
-    "backlog_sources",
-    "review_notes",
+_RAW_INTERVIEW_GROUP_ORDER = _expect_init_list(
+    _INIT_INTERVIEW_CONFIG.get("group_order"),
+    message="Invalid init interview config: missing group_order list.",
+)
+_INTERVIEW_GROUP_ORDER: tuple[str, ...] = tuple(
+    str(item) for item in _RAW_INTERVIEW_GROUP_ORDER if str(item).strip()
 )
 
-_BOOTSTRAP_CHAT_GROUPS: dict[str, str] = {
-    "dev_environment": "developer_workflows",
-    "dev_build": "developer_workflows",
-    "dev_run": "developer_workflows",
-    "dev_smoke": "developer_workflows",
-    "test_primary": "validation_workflows",
-    "test_integration": "validation_workflows",
-    "test_lint": "validation_workflows",
-    "notes": "review_notes",
-}
-
-_BOOTSTRAP_CHAT_LABELS: dict[str, str] = {
-    "dev_environment": "Development environment setup",
-    "dev_build": "Build commands",
-    "dev_run": "Run or dev-server commands",
-    "dev_smoke": "Smoke-test commands",
-    "test_primary": "Primary automated test commands",
-    "test_integration": "Integration or end-to-end test commands",
-    "test_lint": "Lint and static check commands",
-    "notes": "Bootstrap notes",
-}
-
-_BOOTSTRAP_CHAT_PROMPTS: dict[str, str] = {
-    "dev_environment": "Which setup commands should /dev use before building or running this project?",
-    "dev_build": "Which build commands should /dev treat as canonical?",
-    "dev_run": "Which run or dev-server commands should /dev use?",
-    "dev_smoke": "Which smoke-test commands should /dev use for quick checks?",
-    "test_primary": "Which primary automated test commands should /test use?",
-    "test_integration": "Which integration or end-to-end test commands should /test use?",
-    "test_lint": "Which lint or static verification commands should /test use?",
-    "notes": "What review notes or caveats should be carried into the generated skills?",
-}
-
-_LEGACY_INIT_LABELS: dict[str, str] = {
-    str(key): str(value)
-    for key, value in _RAW_LEGACY_INIT_LABELS.items()
-}
-
-_LEGACY_INIT_PROMPTS: dict[str, str] = {
-    str(key): str(value)
-    for key, value in _RAW_LEGACY_INIT_PROMPTS.items()
-}
-
-_LEGACY_INIT_GROUPS: dict[str, str] = {
-    "requirements_dir": "catalog_setup",
-    "id_prefix": "catalog_setup",
-    "docs_review": "repository_understanding",
-    "source_grokking": "repository_understanding",
-    "test_grokking": "repository_understanding",
-    "domain_focus": "repository_understanding",
-    "issue_backlog": "backlog_sources",
-    "legacy_notes": "review_notes",
-}
-
-_LEGACY_INIT_FIELD_DEFAULTS: dict[str, dict[str, object]] = {
-    str(key): dict(value)
-    for key, value in _RAW_LEGACY_INIT_FIELD_DEFAULTS.items()
-    if isinstance(value, dict)
-}
-
-_LEGACY_INIT_OPTION_SETS: dict[str, tuple[dict[str, str], ...]] = {
-    str(key): tuple(
-        {
-            str(option_key): str(option_value)
-            for option_key, option_value in option.items()
-        }
-        for option in value
-        if isinstance(option, dict)
-    )
-    for key, value in _RAW_LEGACY_INIT_OPTION_SETS.items()
-    if isinstance(value, list)
-}
+_BOOTSTRAP_CHAT_FIELDS, _BOOTSTRAP_CHAT_FIELD_CONFIGS = _load_init_field_section("bootstrap")
+_STARTER_INIT_CHAT_FIELDS, _STARTER_INIT_FIELD_CONFIGS = _load_init_field_section("starter_init")
+_LEGACY_INIT_CHAT_FIELDS, _LEGACY_INIT_FIELD_CONFIGS = _load_init_field_section("legacy_init")
+_LEGACY_INIT_OPTION_SETS = _load_init_option_sets("legacy_init")
 
 
 def _build_interview_question(
@@ -1433,22 +1387,19 @@ def _build_bootstrap_chat_questions(hints: dict[str, list[str]]) -> list[dict[st
     field_detected_from = hints.get("field_detected_from") if isinstance(hints.get("field_detected_from"), dict) else {}
     for field in _BOOTSTRAP_CHAT_FIELDS:
         inferred = hints.get(field) if isinstance(hints.get(field), list) else []
+        config = _BOOTSTRAP_CHAT_FIELD_CONFIGS[field]
         questions.append(
             _build_interview_question(
                 field=field,
-                group_id=_BOOTSTRAP_CHAT_GROUPS[field],
-                label=_BOOTSTRAP_CHAT_LABELS[field],
-                prompt=_BOOTSTRAP_CHAT_PROMPTS[field],
+                group_id=str(config["group"]),
+                label=str(config["label"]),
+                prompt=str(config["prompt"]),
                 inferred_answers=[str(item) for item in inferred if str(item).strip()],
-                allow_multiple=True,
-                allow_custom=True,
-                allow_skip=True,
-                first_selected_is_canonical=(field != "notes"),
-                custom_answer_prompt=(
-                    "Add another command or note."
-                    if field == "notes"
-                    else "Add another custom command."
-                ),
+                allow_multiple=bool(config["allow_multiple"]),
+                allow_custom=bool(config["allow_custom"]),
+                allow_skip=bool(config["allow_skip"]),
+                first_selected_is_canonical=bool(config["first_selected_is_canonical"]),
+                custom_answer_prompt=str(config["custom_answer_prompt"]),
                 detected_from=list(field_detected_from.get(field, [])) if isinstance(field_detected_from, dict) else [],
                 recommended_values=[str(item) for item in inferred if str(item).strip()],
                 safe_default_values=[str(inferred[0])] if inferred and field != "notes" else [],
@@ -1497,26 +1448,28 @@ def _build_legacy_init_chat_questions(
     questions: list[dict[str, object]] = []
 
     inferred_prefix = id_prefixes[0] if id_prefixes else "REQ"
+    requirements_dir_config = _LEGACY_INIT_FIELD_CONFIGS["requirements_dir"]
     questions.append(
         _build_interview_question(
             field="requirements_dir",
-            group_id=_LEGACY_INIT_GROUPS["requirements_dir"],
-            label=_LEGACY_INIT_LABELS["requirements_dir"],
-            prompt=_LEGACY_INIT_PROMPTS["requirements_dir"],
+            group_id=str(requirements_dir_config["group"]),
+            label=str(requirements_dir_config["label"]),
+            prompt=str(requirements_dir_config["prompt"]),
             inferred_answers=[requirements_dir.as_posix()],
-            allow_multiple=False,
-            allow_custom=True,
-            allow_skip=False,
-            first_selected_is_canonical=True,
-            custom_answer_prompt="Type a custom requirements directory path.",
+            allow_multiple=bool(requirements_dir_config["allow_multiple"]),
+            allow_custom=bool(requirements_dir_config["allow_custom"]),
+            allow_skip=bool(requirements_dir_config["allow_skip"]),
+            first_selected_is_canonical=bool(requirements_dir_config["first_selected_is_canonical"]),
+            custom_answer_prompt=str(requirements_dir_config["custom_answer_prompt"]),
             suggested_options=_legacy_init_requirements_dir_options(repo_root, requirements_dir),
         )
     )
+    id_prefix_config = _LEGACY_INIT_FIELD_CONFIGS["id_prefix"]
     questions.append(
         _build_id_prefix_question(
             repo_root=repo_root,
-            group_id=_LEGACY_INIT_GROUPS["id_prefix"],
-            prompt=_LEGACY_INIT_PROMPTS["id_prefix"],
+            group_id=str(id_prefix_config["group"]),
+            prompt=str(id_prefix_config["prompt"]),
             inferred_prefix=inferred_prefix,
         )
     )
@@ -1527,7 +1480,7 @@ def _build_legacy_init_chat_questions(
     for field in _LEGACY_INIT_CHAT_FIELDS[2:]:
         inferred_answers: list[str] = []
         suggested_options = _LEGACY_INIT_OPTION_SETS.get(field, ())
-        config = _LEGACY_INIT_FIELD_DEFAULTS[field]
+        config = _LEGACY_INIT_FIELD_CONFIGS[field]
         if field == "docs_review":
             inferred_answers = ["use-current-docs", "readmes-first"]
         elif field == "source_grokking":
@@ -1554,9 +1507,9 @@ def _build_legacy_init_chat_questions(
         questions.append(
             _build_interview_question(
                 field=field,
-                group_id=_LEGACY_INIT_GROUPS[field],
-                label=_LEGACY_INIT_LABELS[field],
-                prompt=_LEGACY_INIT_PROMPTS[field],
+                group_id=str(config["group"]),
+                label=str(config["label"]),
+                prompt=str(config["prompt"]),
                 inferred_answers=inferred_answers,
                 allow_multiple=bool(config["allow_multiple"]),
                 allow_custom=bool(config["allow_custom"]),

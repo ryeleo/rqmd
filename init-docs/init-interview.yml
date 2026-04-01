@@ -5,69 +5,201 @@ group_labels:
   repository_understanding: Repository understanding
   backlog_sources: Backlog sources
   review_notes: Review notes
-legacy_init:
-  labels:
-    requirements_dir: Requirements directory
-    id_prefix: Requirement ID prefix
-    docs_review: Docs review strategy
-    source_grokking: Source understanding depth
-    test_grokking: Test understanding depth
-    domain_focus: Starter domain focus
-    issue_backlog: Issue backlog handling
-    legacy_notes: Legacy bootstrap notes
-  prompts:
-    requirements_dir: Where should rqmd create the starter requirements catalog?
-    id_prefix: Which requirement ID prefix should legacy-init use for the starter catalog?
-    docs_review: How should legacy-init treat existing repository docs when seeding the first-pass catalog?
-    source_grokking: How deeply should the AI spend effort understanding the source tree during legacy bootstrap?
-    test_grokking: How deeply should the AI spend effort understanding the repository's test strategy during legacy bootstrap?
-    domain_focus: Which detected areas should become starter requirement files first?
-    issue_backlog: How should legacy-init handle GitHub issue discovery and backlog seeding?
-    legacy_notes: What extra review notes or caveats should be carried into the generated starter catalog?
-  field_defaults:
+group_order:
+  - catalog_setup
+  - developer_workflows
+  - validation_workflows
+  - repository_understanding
+  - backlog_sources
+  - review_notes
+bootstrap:
+  field_order:
+    - dev_environment
+    - dev_build
+    - dev_run
+    - dev_smoke
+    - test_primary
+    - test_integration
+    - test_lint
+    - notes
+  fields:
+    dev_environment:
+      group: developer_workflows
+      label: Development environment setup
+      prompt: Which setup commands should /dev use before building or running this project?
+      allow_multiple: true
+      allow_custom: true
+      allow_skip: true
+      first_selected_is_canonical: true
+      custom_answer_prompt: Add another custom command.
+    dev_build:
+      group: developer_workflows
+      label: Build commands
+      prompt: Which build commands should /dev treat as canonical?
+      allow_multiple: true
+      allow_custom: true
+      allow_skip: true
+      first_selected_is_canonical: true
+      custom_answer_prompt: Add another custom command.
+    dev_run:
+      group: developer_workflows
+      label: Run or dev-server commands
+      prompt: Which run or dev-server commands should /dev use?
+      allow_multiple: true
+      allow_custom: true
+      allow_skip: true
+      first_selected_is_canonical: true
+      custom_answer_prompt: Add another custom command.
+    dev_smoke:
+      group: developer_workflows
+      label: Smoke-test commands
+      prompt: Which smoke-test commands should /dev use for quick checks?
+      allow_multiple: true
+      allow_custom: true
+      allow_skip: true
+      first_selected_is_canonical: true
+      custom_answer_prompt: Add another custom command.
+    test_primary:
+      group: validation_workflows
+      label: Primary automated test commands
+      prompt: Which primary automated test commands should /test use?
+      allow_multiple: true
+      allow_custom: true
+      allow_skip: true
+      first_selected_is_canonical: true
+      custom_answer_prompt: Add another custom command.
+    test_integration:
+      group: validation_workflows
+      label: Integration or end-to-end test commands
+      prompt: Which integration or end-to-end test commands should /test use?
+      allow_multiple: true
+      allow_custom: true
+      allow_skip: true
+      first_selected_is_canonical: true
+      custom_answer_prompt: Add another custom command.
+    test_lint:
+      group: validation_workflows
+      label: Lint and static check commands
+      prompt: Which lint or static verification commands should /test use?
+      allow_multiple: true
+      allow_custom: true
+      allow_skip: true
+      first_selected_is_canonical: true
+      custom_answer_prompt: Add another custom command.
+    notes:
+      group: review_notes
+      label: Bootstrap notes
+      prompt: What review notes or caveats should be carried into the generated skills?
+      allow_multiple: true
+      allow_custom: true
+      allow_skip: true
+      first_selected_is_canonical: false
+      custom_answer_prompt: Add another command or note.
+starter_init:
+  field_order:
+    - requirements_dir
+    - id_prefix
+    - starter_notes
+  fields:
     requirements_dir:
+      group: catalog_setup
+      label: Requirements directory
+      prompt: Where should rqmd create the starter requirements catalog?
       allow_multiple: false
       allow_custom: true
       allow_skip: false
       first_selected_is_canonical: true
       custom_answer_prompt: Type a custom requirements directory path.
     id_prefix:
+      group: catalog_setup
+      prompt: Which requirement ID prefix should the starter scaffold use?
+    starter_notes:
+      group: review_notes
+      label: Starter scaffold notes
+      prompt: What notes should guide the first refinement pass after the starter scaffold is created?
+      allow_multiple: true
+      allow_custom: true
+      allow_skip: true
+      first_selected_is_canonical: false
+      custom_answer_prompt: Add another starter note.
+legacy_init:
+  field_order:
+    - requirements_dir
+    - id_prefix
+    - docs_review
+    - source_grokking
+    - test_grokking
+    - domain_focus
+    - issue_backlog
+    - legacy_notes
+  fields:
+    requirements_dir:
+      group: catalog_setup
+      label: Requirements directory
+      prompt: Where should rqmd create the starter requirements catalog?
+      allow_multiple: false
+      allow_custom: true
+      allow_skip: false
+      first_selected_is_canonical: true
+      custom_answer_prompt: Type a custom requirements directory path.
+    id_prefix:
+      group: catalog_setup
+      label: Requirement ID prefix
+      prompt: Which requirement ID prefix should legacy-init use for the starter catalog?
       allow_multiple: false
       allow_custom: true
       allow_skip: false
       first_selected_is_canonical: true
       custom_answer_prompt: Type a custom requirement ID prefix.
     docs_review:
+      group: repository_understanding
+      label: Docs review strategy
+      prompt: How should legacy-init treat existing repository docs when seeding the first-pass catalog?
       allow_multiple: true
       allow_custom: true
       allow_skip: true
       first_selected_is_canonical: false
       custom_answer_prompt: Add a custom docs-review note or rule.
     source_grokking:
+      group: repository_understanding
+      label: Source understanding depth
+      prompt: How deeply should the AI spend effort understanding the source tree during legacy bootstrap?
       allow_multiple: false
       allow_custom: true
       allow_skip: true
       first_selected_is_canonical: true
       custom_answer_prompt: Add a custom source-understanding preference.
     test_grokking:
+      group: repository_understanding
+      label: Test understanding depth
+      prompt: How deeply should the AI spend effort understanding the repository's test strategy during legacy bootstrap?
       allow_multiple: false
       allow_custom: true
       allow_skip: true
       first_selected_is_canonical: true
       custom_answer_prompt: Add a custom test-understanding preference.
     domain_focus:
+      group: repository_understanding
+      label: Starter domain focus
+      prompt: Which detected areas should become starter requirement files first?
       allow_multiple: true
       allow_custom: true
       allow_skip: true
       first_selected_is_canonical: false
       custom_answer_prompt: Add a custom source area or subsystem to seed.
     issue_backlog:
+      group: backlog_sources
+      label: Issue backlog handling
+      prompt: How should legacy-init handle GitHub issue discovery and backlog seeding?
       allow_multiple: false
       allow_custom: true
       allow_skip: true
       first_selected_is_canonical: true
       custom_answer_prompt: Add a custom backlog-handling note.
     legacy_notes:
+      group: review_notes
+      label: Legacy bootstrap notes
+      prompt: What extra review notes or caveats should be carried into the generated starter catalog?
       allow_multiple: true
       allow_custom: true
       allow_skip: true
