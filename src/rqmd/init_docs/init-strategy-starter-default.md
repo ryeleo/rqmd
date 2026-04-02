@@ -1,0 +1,1 @@
+no strong established-project signals were detected, so starter scaffold mode was selected

@@ -364,7 +364,10 @@ def _detect_init_strategy(
     existing_markdown = sorted(criteria_dir.glob("*.md")) if criteria_dir.exists() else []
     if existing_markdown:
         reasons.append(
-            f"existing requirement markdown detected under `{format_path_display(criteria_dir, repo_root)}`"
+            render_startup_message(
+                "init-strategy-existing-markdown.md",
+                {"REQUIREMENTS_DIR": format_path_display(criteria_dir, repo_root)},
+            ).strip()
         )
 
     established_markers = (
@@ -382,13 +385,18 @@ def _detect_init_strategy(
     )
     marker_count = sum(1 for present in established_markers if present)
     if marker_count:
-        reasons.append(f"detected {marker_count} established-project signal(s) in the repository root")
+        reasons.append(
+            render_startup_message(
+                "init-strategy-marker-count.md",
+                {"MARKER_COUNT": str(marker_count)},
+            ).strip()
+        )
 
     selected = "legacy-init" if force_legacy or existing_markdown or marker_count >= 2 else "starter-scaffold"
     if force_legacy:
-        reasons.insert(0, "explicit `--legacy` override requested")
+        reasons.insert(0, render_startup_message("init-strategy-force-legacy.md").strip())
     if not reasons:
-        reasons.append("no strong established-project signals were detected, so starter scaffold mode was selected")
+        reasons.append(render_startup_message("init-strategy-starter-default.md").strip())
 
     return {
         "selected": selected,
@@ -1748,24 +1756,16 @@ def _build_legacy_init_readme(
             if text:
                 legacy_preferences.append(text)
     extra_sections = [
-        "\n".join(
-            [
-                "These files were seeded from the repository's current structure, workflows, and optional issue backlog.",
-                "Review them, split them, rename them, or replace them as you refine the initial catalog.",
-            ]
-        )
+        render_startup_message("legacy-readme-seeded-note.md").strip()
     ]
     if legacy_preferences:
         extra_sections.append(
-            "\n".join(
-                [
-                    "## Bootstrap Interview Notes",
-                    "",
-                    "These notes were captured during the bootstrap interview and should guide the first cleanup pass.",
-                    "",
-                    *[f"- {item}" for item in legacy_preferences],
-                ]
-            )
+            render_startup_message(
+                "legacy-readme-interview-notes.md",
+                {
+                    "NOTES_BULLETS": _markdown_list(legacy_preferences, "")
+                },
+            ).strip()
         )
     return render_requirements_index(
         index_display=f"{requirements_dir.as_posix()}/{REQUIREMENTS_INDEX_NAME}",

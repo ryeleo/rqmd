@@ -1,0 +1,1 @@
+detected {{MARKER_COUNT}} established-project signal(s) in the repository root
