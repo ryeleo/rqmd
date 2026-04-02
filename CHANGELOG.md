@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0rc3] - 2026-04-02
+
 ### Changed
 
 - Changed release-tag validation to run from `scripts/validate_release_tag.py` instead of inline workflow Python, and added Python-script syntax checks to the local smoke path so CI catches indentation or syntax typos in repository scripts earlier.
+- Changed prerelease docs and tests to use generic `rcN` examples or the live `project.version`, so documentation and validation no longer drift every time the prerelease number increments.
+- Changed the README to read more like a product landing page, with clearer command-group headings, more rendered output examples, a preview-first AI CLI section, and a linked proposal for moving the long-form user guide to GitHub Pages.
 
 ## [0.1.0rc1] - 2026-04-01
 ### Added

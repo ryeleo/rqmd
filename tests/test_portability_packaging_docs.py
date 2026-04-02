@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 import click
@@ -343,7 +344,7 @@ Scope: root.
 
 Scope: feature.
 
-### AC-FEATURE-001: Feature requirement
+### RQ-001: Feature requirement
 - **Status:** 🔧 Implemented
 """,
         encoding="utf-8",
@@ -358,7 +359,7 @@ Scope: feature.
 
     assert result.exit_code == 0
     assert "Auto-selected requirement docs: packages/feature/requirements/README.md" in result.output
-    assert "AC-FEATURE-001" in result.output
+    assert "RQ-001" in result.output
     assert "AC-ROOT-001" not in result.output
 
 
@@ -591,15 +592,16 @@ def test_RQMD_packaging_008_release_publish_workflow_present() -> None:
     assert "id-token: write" in workflow_text
     assert "gh-action-pypi-publish" in workflow_text
     assert "rc\\d+" in validation_script_text
-    assert "v0.1.0rc1" in validation_script_text
+    assert "v1.2.3rc1" in validation_script_text
 
 
 def test_RQMD_packaging_008_release_tag_validation_script_accepts_matching_rc_version() -> None:
     project_root = Path(__file__).resolve().parents[1]
     script_path = project_root / "scripts" / "validate_release_tag.py"
+    project_version = tomllib.loads((project_root / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
 
     result = subprocess.run(
-        [sys.executable, str(script_path), "v0.1.0rc1"],
+        [sys.executable, str(script_path), f"v{project_version}"],
         cwd=project_root,
         capture_output=True,
         text=True,
@@ -640,10 +642,10 @@ def test_RQMD_packaging_008_release_docs_match_trusted_publishing_flow() -> None
     assert "trusted publishing" in readme
     assert "docs/releasing.md" in readme
     assert "GitHub Release" in readme
-    assert "v0.1.0rc1" in readme
+    assert "v0.1.0rcN" in readme
     assert "trusted publishing" in release_doc
     assert "v0.1.0" in release_doc
-    assert "v0.1.0rc1" in release_doc
+    assert "v0.1.0rcN" in release_doc
     assert "project.version" in release_doc
 
 

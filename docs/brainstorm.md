@@ -1,4 +1,28 @@
-## Brainstorm Triage
+# Brainstorm
+
+## Discovery Mode
+
+Explore vs Discovery... What is the difference...
+
+Exploring is open ended, breadth focused, and doesn't have an end result required. It can be what it can be.
+
+Discovery is more focused on finding specific information or insights that can help drive key decisions for the project. It has a goal of uncovering something helpful . It can be what it needs to be to achieve that result, but the result is the point.
+
+Solving is more focused on a specific question or problem that might/could have a solution.
+
+
+
+## Consistent AI Experience with rqmd-agents
+
+We want rqmd agents to behave similarly in each project they are added to. They should provide similar outputs and follow similar workflows across projects, even if the underlying requirement content and priorities differ. This consistency helps users build trust and familiarity with the AI features, and it allows us to create reusable documentation, training materials, and best practices that apply broadly.
+
+### AI output should use "info" "note" and "warning" block quotes like in our README.md
+
+### AI output should use consistent emoji and status formatting for proposed/implemented/verified/blocked/deprecated items, matching the README guidance
+
+
+
+# Brainstorm Triage
 
 This file is now a checkpointed backlog scratchpad rather than a raw dump. Ideas that are already shipped or already tracked should move out of the way quickly so the remaining notes are easier to act on.
 

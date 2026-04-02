@@ -63,7 +63,7 @@ def main() -> int:
 
     if not TAG_PATTERN.fullmatch(tag):
         raise SystemExit(
-            f"Release tag {tag!r} must be a stable or rc semver tag like v0.1.0, 0.1.0, v0.1.0rc1, or 0.1.0rc1"
+            f"Release tag {tag!r} must be a stable or rc semver tag like v1.2.3, 1.2.3, v1.2.3rc1, or 1.2.3rc1"
         )
 
     version = load_project_version(args.pyproject)

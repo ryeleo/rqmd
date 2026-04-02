@@ -1,6 +1,6 @@
 # rqmd
 
-Reusable requirements and acceptance-requirements workflow CLI.
+Reusable requirements and acceptance-requirements workflow CLI (command-line interface).
 
 rqmd: Human-readable + AI-readable requirements for Requirements Driven Development (RDD).
 
@@ -15,8 +15,8 @@ This package extracts the markdown status-tracking workflow used in this reposit
 - Scans requirement markdown files in a requirements directory.
 - Uses `README.md` inside that directory as the requirements index.
 - When `--docs-dir` is omitted, auto-detects the nearest viable requirement index from the current working path.
-- Normalizes `- **Status:** ...` lines to canonical statuses.
-- Parses requirement headers such as `### AC-FOO-001: Title` or `### R-FOO-001: Title`.
+- Normalizes `- **Status:** ...` lines to the built-in standard status labels that rqmd writes back to disk.
+- Parses requirement headers such as `### RQ-001: Title` or `### FOOBAR-001: Title`.
 - Regenerates per-file summary blocks:
 
 ```md
@@ -30,9 +30,60 @@ Summary: 10💡 2🔧 3✅ 0⚠️ 0⛔ 1🗑️
 
 Requirement bodies can be as short as a title plus status line, or include richer detail under the same heading. When both are useful, prefer pairing a short user story (`As a ...`, `I want ...`, `So that ...`) with Given/When/Then acceptance bullets.
 
+> **ℹ️ Info:** In this README, "canonical" just means the normalized built-in value rqmd uses internally and writes back out, such as `✅ Verified` instead of a looser input like `verified`.
+
+## What rqmd looks like
+
+> **ℹ️ Info:** The examples below are representative outputs from the CLI. They are meant to show the shape and feel of rqmd in real use.
+
+### Summary blocks stay readable in Git diffs and PRs
+
+```md
+<!-- acceptance-status-summary:start -->
+Summary: 10💡 2🔧 3✅ 0⚠️ 0⛔ 1🗑️
+<!-- acceptance-status-summary:end -->
+```
+
+### Tree output is fast to scan during triage
+
+```text
+$ rqmd --status implemented --as-tree --no-walk --no-table
+core-engine.md
+	RQMD-CORE-001: Domain file discovery
+	RQMD-CORE-011: Project scaffold initialization
+interactive-ux.md
+	RQMD-INTERACTIVE-007: Keep current requirement visible after update
+```
+
+### JSON mode is ready for automation and AI tooling
+
+```json
+{
+	"mode": "filter-status",
+	"schema_version": "1.0.0",
+	"status": "💡 Proposed",
+	"criteria_dir": "docs/requirements",
+	"total": 3,
+	"files": [
+		{
+			"path": "core-engine.md",
+			"requirements": [
+				{
+					"id": "RQMD-CORE-033",
+					"title": "Versioned requirement markdown schema and migration path",
+					"status": "💡 Proposed"
+				}
+			]
+		}
+	]
+}
+```
+
 ## Status model
 
 The built-in default status and priority catalogs ship as packaged YAML resources under `src/rqmd/resources/catalogs/`, so changing the shipped defaults no longer requires touching multiple Python tables.
+
+> **ℹ️ Info:** A "catalog" here is just the list of allowed status or priority values, plus their labels and emoji.
 
 - `💡 Proposed`
 - `🔧 Implemented`
@@ -55,7 +106,7 @@ Default priority levels:
 Example requirement with priority:
 
 ```md
-### AC-FEATURE-001: Core API endpoint
+### RQ-001: Core API endpoint
 - **Status:** 🔧 Implemented
 - **Priority:** 🔴 P0 - Critical
 ```
@@ -86,7 +137,7 @@ Install optional native JSON acceleration:
 uv sync --extra speedups
 ```
 
-When `orjson` is installed through the `speedups` extra, rqmd and rqmd-ai use it for JSON export and audit-log serialization while preserving the existing JSON schema and a pure-Python fallback when the extra is absent.
+When `orjson` is installed through the `speedups` extra, rqmd and rqmd-ai use it for faster JSON export and audit-log serialization while preserving the existing JSON output shape (`schema`) and a pure-Python fallback when the extra is absent.
 
 Then run:
 
@@ -94,7 +145,7 @@ Then run:
 rqmd --help
 ```
 
-`reqmd` and `reqmd-ai` remain available as compatibility aliases, but the canonical commands are `rqmd` and `rqmd-ai`.
+`reqmd` and `reqmd-ai` remain available as compatibility aliases, but the primary supported commands are `rqmd` and `rqmd-ai`.
 
 Module entrypoint:
 
@@ -112,6 +163,8 @@ Pre-release alias plan:
 
 rqmd uses Click dynamic completion and supports shell activation without maintaining static completion files.
 Completion candidates stay in sync with live requirement docs, including positional target tokens (domain names, requirement IDs, and subsection names) plus positional status/priority filter values such as `Proposed` and `P1`.
+
+> **ℹ️ Info:** "Dynamic completion" means the shell asks rqmd for suggestions at completion time, instead of relying on a pre-generated completion file that can go stale.
 
 zsh activation (add to `~/.zshrc`):
 
@@ -141,11 +194,19 @@ Troubleshooting completion cache refresh:
 
 ## Core commands
 
+The command surface is broad, so the easiest way to learn it is by job to be done.
+
+### Check whether your docs are in sync
+
 Check summaries only:
 
 ```bash
 rqmd --verify-summaries
 ```
+
+This is the safest first command to run in an existing repo. It tells you whether the generated summary blocks still match the underlying requirement statuses.
+
+### Open the interactive review UI
 
 Interactive mode:
 
@@ -153,23 +214,11 @@ Interactive mode:
 rqmd
 ```
 
-Open a specific domain file directly (absolute or repo-root-relative path):
-
-```bash
-rqmd docs/requirements/interactive-ux.md
-```
-
-In non-interactive modes, a positional domain file path scopes operations to that file:
-
-```bash
-rqmd docs/requirements/interactive-ux.md --update AC-EXAMPLE-001=verified
-```
-
 Interactive file and requirement menus now support:
 
 - `j` and `k` for next/previous vertical movement alongside arrow keys
 - `gg` to jump to the first visible list position and `G` to jump to the last
-- `Ctrl-U` and `Ctrl-D` for deterministic half-page movement in paged menus
+- `Ctrl-U` and `Ctrl-D` for predictable half-page movement in paged menus
 - `/` and `?` to search forward or backward within the current interactive list
 - `n` and `N` to repeat the last list search in the same or opposite direction
 - compact default footers with `:=help` instead of always showing the full key legend inline
@@ -182,6 +231,22 @@ Interactive file and requirement menus now support:
 - `y` to redo the next recorded history step from a requirement action menu
 - `h` to open the paged history browser from a requirement action menu
 
+### Open or scope to one file
+
+Open a specific domain file directly (absolute or repo-root-relative path):
+
+```bash
+rqmd docs/requirements/interactive-ux.md
+```
+
+In non-interactive modes, a positional domain file path scopes operations to that file:
+
+```bash
+rqmd docs/requirements/interactive-ux.md --update RQ-001=verified
+```
+
+### Recover, inspect, and maintain history
+
 Inside the history browser, selecting an entry opens a detail view where you can:
 
 - press `c` to checkout the selected entry's branch
@@ -193,6 +258,10 @@ Inside the history browser, selecting an entry opens a detail view where you can
 - press `G` to run history gc with immediate prune
 
 Both interactive gc actions can optionally save a human-readable label on the current history branch before maintenance runs.
+
+> **⚠️ NOTE:** `gc` here means garbage collection: cleanup of old history data and Git internals, not Python memory cleanup.
+
+> **ℹ️ Info:** `checkout`, `cherry-pick`, and `replay` are Git operations. In short: `checkout` switches to another branch state, `cherry-pick` reapplies one specific change, and `replay` reapplies a sequence of changes.
 
 History retention now uses a conservative default policy of retaining the last 1000 entries or the last 90 days of history metadata before running pack/prune maintenance. You can override that policy in project or user config with a top-level `history_retention` object:
 
@@ -225,7 +294,11 @@ History operations available in non-interactive mode include:
 - `rqmd --history-cherry-pick <entry-index-or-ref> [--history-target-branch <branch-name>]`
 - `rqmd --history-replay-branch <branch-name> [--history-target-branch <branch-name>]`
 
-`--history-gc` requires explicit confirmation because it runs maintenance against the hidden `.rqmd/history/rqmd-history` repository. Add `--history-prune-now` to expire reflogs and prune immediately instead of using Git's default grace period.
+`--history-gc` requires explicit confirmation because it runs maintenance against the hidden `.rqmd/history/rqmd-history` repository. Add `--history-prune-now` to expire reflogs (Git's internal reference history) and prune immediately instead of using Git's default grace period.
+
+> **‼️ WARNING ‼️:** History cleanup and branch-discard commands are destructive maintenance operations. Read the prompt carefully before confirming them, especially if you have not saved a branch label first.
+
+### Choose how interactive lists are ordered
 
 File lists now default to the `name` sort in descending order.
 
@@ -237,6 +310,8 @@ rqmd --sort-profile status-focus
 rqmd --sort-profile alpha-asc
 ```
 
+### Start a new repository
+
 Start rqmd in a new project with the default chat-first flow:
 
 ```bash
@@ -244,6 +319,8 @@ rqmd init
 ```
 
 `rqmd init` prints a copy/paste handoff prompt for your AI chat. That chat then runs `rqmd-ai init --chat --json`, asks the grouped interview questions, previews the generated files, and applies the bootstrap only after confirmation.
+
+> **ℹ️ Info:** "Scaffold" and "bootstrap" both mean creating the initial requirements files and supporting config for a repo. This README uses "scaffold" for the direct file-generation path and "chat-first onboarding" for the AI-guided path.
 
 Direct scaffold compatibility path:
 
@@ -253,6 +330,8 @@ rqmd init --scaffold
 
 `rqmd init --scaffold` is the direct starter scaffold path when you want immediate docs without the chat-first onboarding flow.
 Scaffold content is sourced from repository-managed templates in `src/rqmd/resources/init/README.md` and `src/rqmd/resources/init/domain-example.md`.
+
+### Allocate or update requirement IDs from the CLI
 
 Allocate the next sequential numeric requirement ID for the active namespace:
 
@@ -266,22 +345,24 @@ rqmd --id-namespace TEAM --next-id --json
 Set one requirement non-interactively:
 
 ```bash
-rqmd --update-id AC-EXAMPLE-001 --update-status implemented
+rqmd --update-id RQ-001 --update-status implemented
 ```
 
 Update priorities non-interactively:
 
 ```bash
-rqmd --update-priority AC-EXAMPLE-001=p0
-rqmd --update-priority AC-EXAMPLE-001=critical --update-priority AC-EXAMPLE-002=medium
+rqmd --update-priority RQ-001=p0
+rqmd --update-priority RQ-001=critical --update-priority RQ-002=medium
 ```
 
 Batch updates can include `priority` fields, or combine `status` and `priority` in one row:
 
 ```json
-{"id":"AC-EXAMPLE-001","priority":"p0"}
-{"id":"AC-EXAMPLE-002","status":"implemented","priority":"medium"}
+{"id":"RQ-001","priority":"p0"}
+{"id":"RQ-002","status":"implemented","priority":"medium"}
 ```
+
+### Filter the catalog quickly
 
 Use positional filters for fast narrowing without explicit flags:
 
@@ -292,6 +373,10 @@ rqmd Proposed core-engine
 ```
 
 `rqmd all` opens a whole-catalog overview ordered by newest requirement ID first. When positional status and priority filters are combined, rqmd narrows across both families, so `rqmd P1 Proposed` returns only proposed P1 requirements. Remaining positional tokens are then resolved as requirement IDs, domain tokens, or subsection tokens.
+
+> **ℹ️ Info:** A "positional filter" is a filter value passed as a plain argument like `P1` or `Proposed`, instead of a named flag like `--priority p1`.
+
+### Work inside a focused requirement panel
 
 Interactive entry panels can start in priority mode:
 
@@ -306,6 +391,8 @@ When the entry panel is on status, rqmd also shows a right-hand priority column 
 From any requirement detail panel, press `o` to inspect linked local requirement references that rqmd can resolve from the current entry. Selecting one opens that linked requirement in a nested detail view, and pressing `u` there returns you to the originating requirement.
 
 From the same detail panel, press `v` to open the current requirement in VS Code at the requirement heading line. If the `code` launcher is unavailable, rqmd reports that cleanly and keeps you in the current interactive context.
+
+### Show priority-aware and grouped totals
 
 Regenerate summary blocks with priority aggregates included:
 
@@ -360,12 +447,29 @@ rqmd --id-namespace R --update-id R-EXAMPLE-001 --update-status implemented
 Bulk set by repeated flags:
 
 ```bash
-rqmd --update AC-EXAMPLE-001=implemented --update AC-EXAMPLE-002=verified
+rqmd --update RQ-001=implemented --update RQ-002=verified
 ```
 
 ## AI CLI (rqmd-ai)
 
 `rqmd-ai` is a companion command for AI-oriented workflows. It is read-only by default and supports prompt-context export, plan previews, and guarded apply mode.
+
+> **⚠️ NOTE:** Treat `rqmd-ai` as preview-first. It stays read-only unless you explicitly add `--write`.
+
+### Preview guidance and plan payloads
+
+Representative guide output looks like this:
+
+```json
+{
+	"workflow_mode": "implement",
+	"mode": "guide",
+	"read_only": true,
+	"next_step": "Review the preview, then add --write only when the plan matches your intent."
+}
+```
+
+### Export focused context
 
 Recommended AI change loop for brainstorm-driven work:
 
@@ -389,6 +493,8 @@ rqmd-ai --json --workflow-mode init --show-guide
 
 By default, `rqmd-ai --json` now includes the packaged skill and agent definitions from `resources/bundle` when the rqmd bundle is not installed in the workspace. If the bundle is already installed, the guide payload stays concise and reports the active local definition files instead of duplicating the packaged content.
 
+> **ℹ️ Info:** In this section, a "bundle" means the installable set of Copilot instructions, skills, and agents that rqmd can scaffold into a repository.
+
 Brainstorm mode can read `docs/brainstorm.md` by default or a custom markdown note file via `--brainstorm-file`, then emit ranked read-only proposal suggestions with recommended target requirement docs, suggested IDs, canonical `💡 Proposed` status, and inferred priorities.
 
 Export context for prompts:
@@ -399,12 +505,18 @@ rqmd-ai --json --dump-id RQMD-CORE-001 --include-requirement-body
 rqmd-ai --json --dump-file ai-cli.md --include-domain-markdown --max-domain-markdown-chars 2000
 ```
 
+### Review a planned change before writing
+
 Plan first, then apply explicitly:
 
 ```bash
 rqmd-ai --json --update RQMD-CORE-001=implemented
 rqmd-ai --json --write --update RQMD-CORE-001=implemented
 ```
+
+That two-step flow is the safest way to use `rqmd-ai`: inspect the preview first, then repeat the same command with `--write` only when the proposed change is correct.
+
+### Install the Copilot bundle
 
 Install a standard AI agent/skill instruction bundle (minimal or full preset):
 
@@ -416,9 +528,13 @@ rqmd-ai --json --install-agent-bundle --bundle-preset full --overwrite-existing
 
 Bundle installs are idempotent by default and preserve existing customized instruction files unless `--overwrite-existing` is explicitly passed.
 
+> **ℹ️ Info:** "Idempotent" means you can run the same install command again without duplicating files or changing already-correct output.
+
 Bundle install also scaffolds project-local `.github/skills/dev/SKILL.md` and `.github/skills/test/SKILL.md` files based on detected repository commands. Treat those as a starting point: review and tighten the generated build, smoke, and validation commands so future `rqmd-dev` runs can rely on them instead of guessing.
 
 Bundle installation can also be driven through a structured chat-style preview with `rqmd-ai install --json --bundle-preset minimal --chat --dry-run`. That payload now includes grouped interview questions, multi-select command suggestions, custom-answer prompts, skip support, detected command sources, recommended choices, safe defaults, and preview content for the generated `/dev` and `/test` skills. Repeat `--answer FIELD=VALUE` to select multiple suggestions or add custom commands before writing.
+
+### Use rqmd-ai for new-project onboarding
 
 New-project flow: run `rqmd init`, paste the output into your AI chat, let that chat drive `rqmd-ai init --chat --json`, review the generated requirements catalog and any suggested bundle skill setup, and then start refining the resulting requirements docs.
 
@@ -430,9 +546,9 @@ The full bundle preset also installs specialized agents for requirement maintena
 
 Bundle workflows assume the core lifecycle states remain representable in your status catalog. Custom labels are fine, but if you want `rqmd-ai` guidance, examples, and installed skills to work well out of the box, keep lifecycle equivalents for `💡 Proposed`, `🔧 Implemented`, `✅ Verified`, `⛔ Blocked`, and `🗑️ Deprecated`.
 
-When apply mode runs, rqmd-ai appends a structured audit event to the local shared history backend at `.rqmd/history/rqmd-history/audit.jsonl`.
+When apply mode runs, rqmd-ai appends a structured audit event to the local shared history backend at `.rqmd/history/rqmd-history/audit.jsonl` (JSON Lines, one JSON object per line).
 
-Batch set from file:
+Batch set from a JSON Lines (`.jsonl`) file:
 
 ```bash
 rqmd --update-file tmp/ac-updates.jsonl
@@ -494,7 +610,7 @@ Summary/check/set JSON examples:
 ```bash
 rqmd --json --no-walk
 rqmd --verify-summaries --json --no-walk
-rqmd --update-id AC-EXAMPLE-001 --update-status verified --json
+rqmd --update-id RQ-001 --update-status verified --json
 rqmd --totals --json --no-walk
 ```
 
@@ -502,6 +618,8 @@ rqmd --totals --json --no-walk
 
 When `--json` is used, top-level keys are stable by mode.
 All JSON payloads include `schema_version` (current value: `1.0.0`) and follow semantic versioning (`major.minor.patch`).
+
+> **ℹ️ Info:** `schema_version` is the version of the machine-readable JSON structure, not the package release version.
 
 - `summary`: `mode`, `schema_version`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
 - `check`: `mode`, `schema_version`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
@@ -528,7 +646,7 @@ RQMD uses this exit-code matrix for automation:
 - `1`: Validation or contract failure (for example `--verify-summaries` found out-of-sync summaries, invalid input, missing docs, ambiguity, or other `ClickException` errors)
 - `130`: Interrupted by user (`Ctrl+C`)
 
-Explicit global roll-up totals:
+Explicit global roll-up totals (combined totals from multiple statuses):
 
 ```bash
 rqmd --totals --no-walk
@@ -588,10 +706,12 @@ That example yields these roll-up families:
 
 When no CLI map/config is passed, rqmd resolves roll-up mappings with this precedence:
 
+> **ℹ️ Info:** A "roll-up" is a combined total such as grouping multiple statuses into one higher-level bucket like `Build-Ready` or `Complete`.
+
 1. `--totals-map` CLI equations
 2. project config (`.rqmd.yml|.rqmd.yaml` in `--project-root`)
 3. user config (`~/.config/rqmd/rollup.json|yaml|yml`)
-4. built-in canonical status totals
+4. built-in status totals
 
 ## Tests
 
@@ -627,6 +747,8 @@ Notable project changes are tracked in `CHANGELOG.md` using the Keep a Changelog
 
 ## CI
 
+> **ℹ️ Info:** CI means continuous integration: the automated checks that run in GitHub Actions on pushes, pull requests, and releases.
+
 This package includes GitHub Actions workflows:
 
 - `.github/workflows/pytest.yml`
@@ -636,8 +758,10 @@ This package includes GitHub Actions workflows:
 
 - `.github/workflows/publish-pypi.yml`
 - Triggers when a GitHub release is published.
-- Validates that the release tag is a stable semver tag or `rc` prerelease tag matching `project.version`.
+- Validates that the release tag is a stable semver tag or `rc` prerelease tag such as `v0.1.0rcN`, matching `project.version`.
 - Builds with `python -m build` and publishes with GitHub Actions trusted publishing.
+
+> **⚠️ NOTE:** "Trusted publishing" means GitHub Actions authenticates directly to PyPI using OpenID Connect (`id-token: write`) instead of storing a long-lived PyPI upload token in repository secrets.
 
 ## Project portability
 
@@ -680,6 +804,8 @@ Filtered walkthrough resume state is configurable with `--session-state-dir`:
 Requirement header prefixes are configurable with `--id-namespace`.
 When omitted, rqmd auto-detects prefixes by reading the selected `README.md` requirements index and linked domain docs when available.
 If no prefixes are discovered, it falls back to `AC-`, `R-`, and `RQMD-`.
+
+> **ℹ️ Info:** An "ID namespace" here just means the leading identifier family such as `RQMD-`, `REQ-`, or `TEAM-`.
 
 ### Project configuration file
 
@@ -725,5 +851,5 @@ When ready for PyPI:
 
 1. Follow semantic versioning policy in `docs/SEMVER.md`.
 2. Follow the release checklist in `docs/releasing.md`.
-3. Create and publish a GitHub Release with a matching tag such as `v0.1.0` or `v0.1.0rc1`.
+3. Create and publish a GitHub Release with a matching tag such as `v0.1.0` or `v0.1.0rcN`.
 4. Let `.github/workflows/publish-pypi.yml` publish through trusted publishing.

@@ -41,7 +41,7 @@ Before cutting a stable release or release candidate:
 
 ## Release steps
 
-1. Choose a tag that matches `project.version`, such as `v0.1.0` for a stable release or `v0.1.0rc1` for a release candidate.
+1. Choose a tag that matches `project.version`, such as `v0.1.0` for a stable release or `v0.1.0rcN` for a release candidate.
 2. Ensure that tag exactly matches `project.version` after removing the optional leading `v`.
 3. Push the release commit and create a GitHub Release with that tag.
 4. Publish the GitHub Release.
@@ -50,6 +50,6 @@ Before cutting a stable release or release candidate:
 
 ## Notes
 
-- The publish workflow accepts stable releases and PEP 440 `rc` prereleases such as `0.1.0rc1`.
+- The publish workflow accepts stable releases and PEP 440 `rc` prereleases such as `0.1.0rcN`.
 - The publish workflow rejects tags that do not match `project.version` in `pyproject.toml`.
 - Publication uses GitHub Actions trusted publishing via the `pypi` environment instead of a repository-stored `PYPI_API_TOKEN`.
