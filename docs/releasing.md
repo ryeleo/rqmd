@@ -2,6 +2,31 @@
 
 This repository publishes rqmd to PyPI through GitHub Actions trusted publishing.
 
+## First-time PyPI trusted publisher setup
+
+Do this once before your first release from this repository:
+
+1. Create or sign in to your account on `pypi.org`.
+2. Verify your email address and enable two-factor authentication on the PyPI account that will own the project.
+3. Reserve the project through a pending publisher instead of creating a long-lived API token.
+4. On PyPI, open Account Settings -> Publishing and add a new pending publisher.
+5. Choose GitHub Actions and enter:
+   - PyPI project name: `rqmd`
+   - Owner: your GitHub user or organization
+   - Repository name: this repository
+   - Workflow name: `publish-pypi.yml`
+   - Environment name: `pypi`
+6. In GitHub, open repository Settings -> Environments and create an environment named `pypi` if it does not already exist.
+7. If you want extra guardrails, add environment protection rules such as restricting deployment to tags or requiring manual approval.
+8. Confirm `.github/workflows/publish-pypi.yml` still requests `id-token: write` and uses the same `pypi` environment name.
+9. Your first successful GitHub Release publish will create the project on PyPI and bind it to that trusted publisher configuration.
+
+Notes:
+
+- You do not need to store a `PYPI_API_TOKEN` in GitHub secrets for this flow.
+- The pending publisher must match the GitHub owner, repository, workflow file, and environment exactly.
+- If the `rqmd` name is already taken on PyPI, you will need to use the existing owner account or pick a different package name before releasing.
+
 ## Pre-release checklist
 
 Before cutting a stable release or release candidate:
