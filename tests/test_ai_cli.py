@@ -185,6 +185,9 @@ def test_RQMD_AI_001e_init_chat_prefers_starter_scaffold_for_sparse_repo(tmp_pat
     assert payload["interaction_contract"]["preferred_ui"] == "multi-choice"
     assert payload["interaction_contract"]["confirmation_policy"] == "defer-recaps-until-review"
     assert payload["interview"]["interaction_contract"]["presentation"] == "one-question-at-a-time"
+    assert payload["interview"]["interaction_contract"]["instructions"][0] == (
+        "Present each question as an interactive multi-choice selection instead of paraphrasing the payload."
+    )
     assert payload["interview"]["flow"]
     assert payload["interview"]["flow"][0]["presentation"] == "one-question-at-a-time"
     proposed_paths = [entry["path"] for entry in payload["proposed_files"]]
@@ -1454,9 +1457,15 @@ def test_RQMD_AI_022_init_legacy_chat_exposes_grouped_interview(tmp_path: Path, 
     id_prefix_question = next(
         item for item in payload["interview"]["questions"] if item["field"] == "id_prefix"
     )
+    assert id_prefix_question["label"] == "Requirement ID prefix"
     assert "project-specific key" in id_prefix_question["prompt"]
     assert "project-specific" in str(id_prefix_question["custom_answer_prompt"])
     assert any(option["value"] == "REPO" and option["recommended"] is True for option in id_prefix_question["options"])
+    req_option = next(option for option in id_prefix_question["options"] if option["value"] == "REQ")
+    assert req_option["description"] == (
+        "Generic sequential requirement prefix. Use this if you do not want a project-specific key yet."
+    )
+    assert req_option["safe_default"] is True
     docs_dir_option = next(option for option in requirements_dir_question["options"] if option["value"] == "docs/requirements")
     assert docs_dir_option["safe_default"] is True
     domain_focus_question = next(
@@ -1501,9 +1510,15 @@ def test_RQMD_AI_022b_init_starter_chat_recommends_project_specific_prefix(tmp_p
     id_prefix_question = next(
         item for item in payload["interview"]["questions"] if item["field"] == "id_prefix"
     )
+    assert id_prefix_question["label"] == "Requirement ID prefix"
     assert "project-specific key" in id_prefix_question["prompt"]
     assert "project-specific" in str(id_prefix_question["custom_answer_prompt"])
     assert any(option["value"] == "ACCLI" and option["recommended"] is True for option in id_prefix_question["options"])
+    req_option = next(option for option in id_prefix_question["options"] if option["value"] == "REQ")
+    assert req_option["description"] == (
+        "Generic sequential requirement prefix. Use this if you do not want a project-specific key yet."
+    )
+    assert req_option["safe_default"] is True
     requirements_dir_question = next(
         item for item in payload["interview"]["questions"] if item["field"] == "requirements_dir"
     )

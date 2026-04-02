@@ -466,7 +466,7 @@ def _build_id_prefix_question(
     project_specific_prefix = _derive_project_specific_prefix(repo_root)
     recommended_values: list[str] = []
     inferred_prefix_recommended = True
-    inferred_description = "Current inferred or configured prefix."
+    inferred_description = _ID_PREFIX_INFERRED_DESCRIPTION
     suggested_options: list[dict[str, str]] = []
 
     if project_specific_prefix and project_specific_prefix.casefold() != inferred_prefix.casefold():
@@ -474,54 +474,47 @@ def _build_id_prefix_question(
             {
                 "value": project_specific_prefix,
                 "label": project_specific_prefix,
-                "description": "Recommended project-specific short key inferred from the repository name. Prefer this over generic fallbacks when it fits your team.",
+                "description": _ID_PREFIX_PROJECT_SPECIFIC_DESCRIPTION,
                 "recommended": True,
             }
         )
         recommended_values.append(project_specific_prefix)
         inferred_prefix_recommended = False
-        inferred_description = "Current inferred or configured prefix. A project-specific short key is usually a better long-term choice when you want clearer requirement IDs."
+        inferred_description = _ID_PREFIX_INFERRED_DESCRIPTION_WHEN_PROJECT_SPECIFIC
     else:
         recommended_values.append(inferred_prefix)
 
-    suggested_options.extend(
-        [
+    base_option_values = {
+        str(option.get("value") or "").strip().casefold()
+        for option in _ID_PREFIX_BASE_OPTIONS
+        if str(option.get("value") or "").strip()
+    }
+    if inferred_prefix.casefold() not in base_option_values:
+        suggested_options.append(
             {
                 "value": inferred_prefix,
                 "label": inferred_prefix,
                 "description": inferred_description,
                 "recommended": inferred_prefix_recommended,
-            },
-            {
-                "value": "REQ",
-                "label": "REQ",
-                "description": "Generic sequential requirement prefix. Use this if you do not want a project-specific key yet.",
-                "safe_default": True,
-            },
-            {
-                "value": "RQMD",
-                "label": "RQMD",
-                "description": "Repository-level rqmd prefix. Useful as a generic fallback.",
-            },
-            {
-                "value": "AC",
-                "label": "AC",
-                "description": "Acceptance criteria style prefix. Useful when matching existing team language.",
-            },
-        ]
-    )
+            }
+        )
+    suggested_options.extend(_ID_PREFIX_BASE_OPTIONS)
+
+    rendered_prompt = prompt
+    if _ID_PREFIX_PROMPT_SUFFIX:
+        rendered_prompt = f"{prompt} {_ID_PREFIX_PROMPT_SUFFIX}".strip()
 
     return _build_interview_question(
         field="id_prefix",
         group_id=group_id,
-        label="Requirement ID prefix",
-        prompt=f"{prompt} Prefer a short project-specific key when possible so IDs stay recognizable and avoid collisions across catalogs.",
+        label=_ID_PREFIX_QUESTION_LABEL,
+        prompt=rendered_prompt,
         inferred_answers=[inferred_prefix],
         allow_multiple=False,
         allow_custom=True,
         allow_skip=False,
         first_selected_is_canonical=True,
-        custom_answer_prompt="Type a custom project-specific requirement ID prefix, for example `ACCLI`.",
+        custom_answer_prompt=_ID_PREFIX_CUSTOM_ANSWER_PROMPT,
         suggested_options=tuple(suggested_options),
         recommended_values=recommended_values,
         safe_default_values=["REQ"],
@@ -955,6 +948,25 @@ def _load_init_option_sets(section_name: str) -> dict[str, tuple[dict[str, str],
     }
 
 
+def _load_init_option_list(section_name: str, option_key: str) -> tuple[dict[str, str], ...]:
+    section = _expect_init_mapping(
+        _INIT_INTERVIEW_CONFIG.get(section_name),
+        message=f"Invalid init interview config: missing {section_name} mapping.",
+    )
+    raw_options = _expect_init_list(
+        section.get(option_key),
+        message=f"Invalid init interview config: {section_name} {option_key} must be a list.",
+    )
+    return tuple(
+        {
+            str(raw_key): str(raw_value)
+            for raw_key, raw_value in option.items()
+        }
+        for option in raw_options
+        if isinstance(option, dict)
+    )
+
+
 _INIT_INTERVIEW_CONFIG = load_init_yaml("init-interview.yml")
 if not isinstance(_INIT_INTERVIEW_CONFIG, dict):
     raise click.ClickException("Invalid init interview config: expected a mapping in init-interview.yml.")
@@ -975,6 +987,40 @@ _RAW_INTERVIEW_GROUP_ORDER = _expect_init_list(
 _INTERVIEW_GROUP_ORDER: tuple[str, ...] = tuple(
     str(item) for item in _RAW_INTERVIEW_GROUP_ORDER if str(item).strip()
 )
+
+_RAW_INTERACTION_CONTRACT = _expect_init_mapping(
+    _INIT_INTERVIEW_CONFIG.get("interaction_contract"),
+    message="Invalid init interview config: missing interaction_contract mapping.",
+)
+_RAW_INTERACTION_CONTRACT_INSTRUCTIONS = _expect_init_list(
+    _RAW_INTERACTION_CONTRACT.get("instructions"),
+    message="Invalid init interview config: interaction_contract instructions must be a list.",
+)
+_INTERVIEW_INTERACTION_CONTRACT: dict[str, object] = {
+    "interaction_mode": str(_RAW_INTERACTION_CONTRACT.get("interaction_mode") or ""),
+    "preferred_ui": str(_RAW_INTERACTION_CONTRACT.get("preferred_ui") or ""),
+    "presentation": str(_RAW_INTERACTION_CONTRACT.get("presentation") or ""),
+    "next_action": str(_RAW_INTERACTION_CONTRACT.get("next_action") or ""),
+    "confirmation_policy": str(_RAW_INTERACTION_CONTRACT.get("confirmation_policy") or ""),
+    "selection_behavior": str(_RAW_INTERACTION_CONTRACT.get("selection_behavior") or ""),
+    "instructions": [str(item) for item in _RAW_INTERACTION_CONTRACT_INSTRUCTIONS if str(item).strip()],
+}
+
+_RAW_ID_PREFIX_QUESTION = _expect_init_mapping(
+    _INIT_INTERVIEW_CONFIG.get("id_prefix_question"),
+    message="Invalid init interview config: missing id_prefix_question mapping.",
+)
+_ID_PREFIX_QUESTION_LABEL = str(_RAW_ID_PREFIX_QUESTION.get("label") or "Requirement ID prefix")
+_ID_PREFIX_PROMPT_SUFFIX = str(_RAW_ID_PREFIX_QUESTION.get("prompt_suffix") or "")
+_ID_PREFIX_CUSTOM_ANSWER_PROMPT = str(_RAW_ID_PREFIX_QUESTION.get("custom_answer_prompt") or "")
+_ID_PREFIX_PROJECT_SPECIFIC_DESCRIPTION = str(
+    _RAW_ID_PREFIX_QUESTION.get("project_specific_description") or ""
+)
+_ID_PREFIX_INFERRED_DESCRIPTION = str(_RAW_ID_PREFIX_QUESTION.get("inferred_description") or "")
+_ID_PREFIX_INFERRED_DESCRIPTION_WHEN_PROJECT_SPECIFIC = str(
+    _RAW_ID_PREFIX_QUESTION.get("inferred_description_when_project_specific") or ""
+)
+_ID_PREFIX_BASE_OPTIONS = _load_init_option_list("id_prefix_question", "options")
 
 _BOOTSTRAP_CHAT_FIELDS, _BOOTSTRAP_CHAT_FIELD_CONFIGS = _load_init_field_section("bootstrap")
 _STARTER_INIT_CHAT_FIELDS, _STARTER_INIT_FIELD_CONFIGS = _load_init_field_section("starter_init")
@@ -1007,8 +1053,8 @@ def _build_interview_question(
     normalized_detected_from = [str(item).strip() for item in detected_from if str(item).strip()]
 
     def add_option(
-        value: str,
         *,
+        value: str,
         label_text: str | None = None,
         kind: str,
         description: str | None = None,
@@ -1023,7 +1069,7 @@ def _build_interview_question(
             existing = options[option_index_by_key[normalized]]
             if label_text and (existing.get("label") in {None, "", text} or existing.get("kind") == "inferred"):
                 existing["label"] = label_text
-            if description and not existing.get("description"):
+            if description and (not existing.get("description") or (kind == "suggested" and existing.get("kind") == "inferred")):
                 existing["description"] = description
             if kind == "suggested" and existing.get("kind") == "inferred":
                 existing["kind"] = "suggested"
@@ -1056,10 +1102,10 @@ def _build_interview_question(
         option_index_by_key[normalized] = len(options) - 1
 
     for item in inferred_answers:
-        add_option(item, kind="inferred")
+        add_option(value=item, kind="inferred")
     for option in suggested_options:
         add_option(
-            str(option.get("value") or ""),
+            value=str(option.get("value") or ""),
             label_text=str(option.get("label") or "") or None,
             kind="suggested",
             description=str(option.get("description") or "") or None,
@@ -1117,19 +1163,8 @@ def _group_interview_questions(questions: list[dict[str, object]]) -> list[dict[
 
 def _build_interview_interaction_contract() -> dict[str, object]:
     return {
-        "interaction_mode": "ask-user",
-        "preferred_ui": "multi-choice",
-        "presentation": "one-question-at-a-time",
-        "next_action": "collect-answers-before-rerun",
-        "confirmation_policy": "defer-recaps-until-review",
-        "selection_behavior": "show-default-checked-values",
-        "instructions": [
-            "Present each question as an interactive multi-choice selection instead of paraphrasing the payload.",
-            "Start any values from option_annotations.default_checked_values as already selected.",
-            "Ask one question at a time in the provided flow order and only accept custom answers when the question allows them.",
-            "Do not recap all prior selections after each question unless the user asks for a summary.",
-            "Collect the interview answers first, then rerun rqmd-ai with repeated --answer FIELD=VALUE entries.",
-        ],
+        **_INTERVIEW_INTERACTION_CONTRACT,
+        "instructions": list(_INTERVIEW_INTERACTION_CONTRACT["instructions"]),
     }
 
 

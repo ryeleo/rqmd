@@ -12,6 +12,37 @@ group_order:
   - repository_understanding
   - backlog_sources
   - review_notes
+interaction_contract:
+  interaction_mode: ask-user
+  preferred_ui: multi-choice
+  presentation: one-question-at-a-time
+  next_action: collect-answers-before-rerun
+  confirmation_policy: defer-recaps-until-review
+  selection_behavior: show-default-checked-values
+  instructions:
+    - Present each question as an interactive multi-choice selection instead of paraphrasing the payload.
+    - Start any values from option_annotations.default_checked_values as already selected.
+    - Ask one question at a time in the provided flow order and only accept custom answers when the question allows them.
+    - Do not recap all prior selections after each question unless the user asks for a summary.
+    - Collect the interview answers first, then rerun rqmd-ai with repeated --answer FIELD=VALUE entries.
+id_prefix_question:
+  label: Requirement ID prefix
+  prompt_suffix: Prefer a short project-specific key when possible so IDs stay recognizable and avoid collisions across catalogs.
+  custom_answer_prompt: Type a custom project-specific requirement ID prefix, for example `ACCLI`.
+  project_specific_description: Recommended project-specific short key inferred from the repository name. Prefer this over generic fallbacks when it fits your team.
+  inferred_description: Current inferred or configured prefix.
+  inferred_description_when_project_specific: Current inferred or configured prefix. A project-specific short key is usually a better long-term choice when you want clearer requirement IDs.
+  options:
+    - value: REQ
+      label: REQ
+      description: Generic sequential requirement prefix. Use this if you do not want a project-specific key yet.
+      safe_default: true
+    - value: RQMD
+      label: RQMD
+      description: Repository-level rqmd prefix. Useful as a generic fallback.
+    - value: AC
+      label: AC
+      description: Acceptance criteria style prefix. Useful when matching existing team language.
 bootstrap:
   field_order:
     - dev_environment
