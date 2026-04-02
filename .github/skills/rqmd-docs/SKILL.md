@@ -30,13 +30,13 @@ Workflow:
 
 Callout examples:
 
-> **Info:** `rqmd --verify-summaries --no-walk --no-table` only verifies summary blocks and does not rewrite requirement files.
+> **ℹ️ Info:** `rqmd --verify-summaries --no-walk --no-table` only verifies summary blocks and does not rewrite requirement files.
 
-> **Note:** If a page introduces `rqmd-ai` before `rqmd`, expand the acronym on first use and explain the relationship once rather than assuming prior context.
+> **⚠️ Note:** If a page introduces `rqmd-ai` before `rqmd`, expand the acronym on first use and explain the relationship once rather than assuming prior context.
 
-> **Warning:** Do not paste tokens, credentials, or internal-only URLs into repository documentation, even in examples.
+> **🚨 Warning:** Do not paste tokens, credentials, or internal-only URLs into repository documentation, even in examples.
 
-Use that exact callout shape when you need one; avoid mixing in icon-prefixed or all-caps variants unless a repository already standardized on them.
+Use that exact callout shape when you need one; avoid mixing in all-caps or multiple icon variants unless a repository already standardized on them.
 
 Constraints:
 - Do not use this skill when the real task is only keeping docs aligned with a known behavior change; use `/rqmd-doc-sync` for that.

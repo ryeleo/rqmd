@@ -32,4 +32,4 @@ AI output defaults:
 - Prefer descriptive hyperlinks over raw pasted URLs.
 - Use ordered or unordered lists to break up dense prose when they improve scanning.
 - Use Info, Note, and Warning callouts deliberately to separate optional context, important reminders, and critical warnings.
-- Use this exact markdown shape for callouts when examples or authored output need one: `> **Info:** ...`, `> **Note:** ...`, `> **Warning:** ...`.
+- Use this exact markdown shape for callouts when examples or authored output need one: `> **ℹ️ Info:** ...`, `> **⚠️ Note:** ...`, `> **🚨 Warning:** ...`.
