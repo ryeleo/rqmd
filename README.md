@@ -252,7 +252,7 @@ rqmd init --scaffold
 ```
 
 `rqmd init --scaffold` is the direct starter scaffold path when you want immediate docs without the chat-first onboarding flow.
-Scaffold content is sourced from repository-managed templates in `init-docs/README.md` and `init-docs/domain-example.md`.
+Scaffold content is sourced from repository-managed templates in `src/rqmd/resources/init/README.md` and `src/rqmd/resources/init/domain-example.md`.
 
 Allocate the next sequential numeric requirement ID for the active namespace:
 

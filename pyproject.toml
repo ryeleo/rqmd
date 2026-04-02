@@ -57,8 +57,8 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 rqmd = [
-  "init_docs/*.md",
-  "init_docs/*.yml",
+  "resources/init/*.md",
+  "resources/init/*.yml",
   "resources/catalogs/*.yml",
   "resources/bundle/minimal.txt",
   "resources/bundle/full.txt",

@@ -14,7 +14,7 @@ This section demonstrates basic requirement structure. You can delete this subse
 - Given a newly initialized requirements catalog
 - When teams adopt this tool in their project
 - Then this requirement serves as an easy-to-delete handoff placeholder.
-- And this file content is sourced from init-docs/domain-example.md.
+- And this file content is sourced from resources/init/domain-example.md.
 
 ### {{STARTER_PREFIX}}-HELLO-002: Second example with optional metadata
 - **Status:** Proposed

@@ -138,10 +138,10 @@ Summary: 4💡 15🔧 16✅ 0⛔ 0🗑️
 - As a rqmd user when users run `rqmd init --scaffold`
 - I want scaffold initialization to execute
 - So that generated `docs/requirements/README.md` includes a welcome message and instructions for getting started that is copied from:
-    - ./init-docs/README.md for the domain index (requirements/README.md)
-    - ./init-docs/domain-example.md for the starter domain doc (requirements/domain-example.md)
+    - ./src/rqmd/resources/init/README.md for the domain index (requirements/README.md)
+    - ./src/rqmd/resources/init/domain-example.md for the starter domain doc (requirements/domain-example.md)
 - So that those instructions are included in the python package README somewhere, so they are published on pypi.org as a simple web page.
-- So that those documents are maintained in the "./init-docs" directory in this repo for easy editing and management.
+- So that those documents are maintained in the packaged `src/rqmd/resources/init` directory in this repo for easy editing and management.
 
 ### RQMD-CORE-017: Branded init and README messaging
 - **Status:** 🔧 Implemented

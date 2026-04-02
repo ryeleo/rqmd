@@ -1,7 +1,7 @@
 # Requirements
 
 This document is the source-of-truth index for rqmd requirements.
-Generated from init-docs/README.md.
+Generated from resources/init/README.md.
 
 ## How To Use
 

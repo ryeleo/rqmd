@@ -31,6 +31,9 @@ from .constants import (DEFAULT_PRIORITY_CATALOG, DEFAULT_STATUS_CATALOG,
 from .summary import process_file
 
 
+_INIT_RESOURCE_ROOT = ("resources", "init")
+
+
 def format_path_display(path: Path, repo_root: Path) -> str:
     """Format a path for user display, relative to repo root if possible.
 
@@ -487,10 +490,7 @@ def scope_and_body_from_file(
 
 
 def _load_init_template(template_name: str) -> str:
-    """Load an initialization template from the repository or package.
-
-    Prefers the repo-local template for easy editing during development,
-    then falls back to the packaged version.
+    """Load an initialization template from packaged resources.
 
     Args:
         template_name: Filename of the template (e.g., 'README.md').
@@ -498,12 +498,7 @@ def _load_init_template(template_name: str) -> str:
     Returns:
         The template content as a string.
     """
-    repo_template = Path(__file__).resolve().parents[2] / "init-docs" / template_name
-    if repo_template.exists() and repo_template.is_file():
-        return repo_template.read_text(encoding="utf-8")
-
-    # Packaged fallback for installed distributions.
-    packaged = importlib.resources.files("rqmd").joinpath("init_docs", template_name)
+    packaged = importlib.resources.files("rqmd").joinpath(*_INIT_RESOURCE_ROOT, template_name)
     return packaged.read_text(encoding="utf-8")
 
 
