@@ -9,7 +9,7 @@ Legacy equivalent:
 `rqmd-ai --install-agent-bundle`
 
 Presets:
-- full (default): `.github/copilot-instructions.md`, `.github/agents/rqmd-dev.agent.md`, the rqmd workflow skills under `.github/skills/`, `.github/agents/rqmd-explore.agent.md`, `.github/agents/rqmd-requirements.agent.md`, `.github/agents/rqmd-docs.agent.md`, `.github/agents/rqmd-history.agent.md`, and this README
+- full (default): `.github/copilot-instructions.md`, `.github/agents/rqmd-dev.agent.md`, `.github/agents/rqmd-dev-longrunning.agent.md`, `.github/agents/rqmd-dev-easy.agent.md`, the rqmd workflow skills under `.github/skills/`, `.github/agents/rqmd-explore.agent.md`, `.github/agents/rqmd-requirements.agent.md`, `.github/agents/rqmd-docs.agent.md`, `.github/agents/rqmd-history.agent.md`, and this README
 - minimal: `.github/copilot-instructions.md`, `.github/agents/rqmd-dev.agent.md`, and the rqmd workflow skills under `.github/skills/`
 
 Operational notes:
@@ -30,13 +30,18 @@ Installed workflow skills:
 - `/rqmd-export-context`
 - `/rqmd-implement`
 - `/rqmd-status-maintenance`
+- `/rqmd-docs`
 - `/rqmd-doc-sync`
+- `/rqmd-changelog`
 - `/rqmd-history`
+- `/rqmd-pin`
 - `/rqmd-bundle`
 - `/rqmd-verify`
 
 Installed agents in the full preset:
 - `rqmd-dev`: primary implementation and orchestration agent
+- `rqmd-dev-longrunning`: priority-first implementation agent that keeps working through feasible backlog slices until it reaches a real stop condition
+- `rqmd-dev-easy`: conservative implementation agent that prefers low-risk, high-confidence backlog wins first
 - `rqmd-explore`: read-only codebase and requirement discovery agent
 - `rqmd-requirements`: backlog, status, priority, and requirement-doc maintenance agent
 - `rqmd-docs`: README, changelog, and requirement-doc sync agent

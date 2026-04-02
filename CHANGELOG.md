@@ -7,150 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-04-02
+
+### Added
+
+- Added a dedicated `/rqmd-changelog` bundle skill and tracked AI workflow requirement so changelog curation is treated as a first-class authored workflow instead of a generic docs-sync afterthought.
+- Added a dedicated `/rqmd-docs` bundle skill and tracked AI workflow requirement so documentation quality work has an authored workflow for structure, readability, jargon handling, callouts, and page organization beyond simple drift correction.
+- Added full-preset `rqmd-dev-longrunning` and `rqmd-dev-easy` agent variants so the shipped bundle can offer either long-running priority-first execution or conservative easy-wins execution without abandoning the shared rqmd workflow contract.
+- Added a dedicated `/rqmd-pin` bundle skill so important project context, decisions, and quick-reference notes can be kept easy to find across sessions instead of disappearing into chat history.
+- Added a concrete `docs/pins/` default shape with a lightweight index page and starter note template so the pin workflow has an obvious first place to land in this repository.
+- Added a first example pinned note under `docs/pins/` to make the default pin workflow concrete in this repository.
+
+### Changed
+
+- Changed changelog guidance to prefer concise user-facing highlights first, with optional nested `AI Development` detail when supporting implementation context is worth keeping.
+- Narrowed `/rqmd-doc-sync` toward synchronization work, and moved broader documentation-quality guidance into `/rqmd-docs` so docs craft and docs alignment are no longer conflated.
+- Implemented `RQMD-AI-041`: a shared cross-project rqmd agent contract covering requirement-first sequencing, standard closeout headings, consistent lifecycle formatting, and Info/Note/Warning callout conventions.
+- Implemented `RQMD-AI-036` and `RQMD-AI-037` by shipping long-running and easy-first development agent variants in the full bundle preset and documenting how they differ from the default `rqmd-dev` agent.
+- Implemented `RQMD-AI-042` by shipping an authored `rqmd-pin` workflow that defaults durable notes toward maintainable pin locations and hands larger note-organization cleanup to `/rqmd-docs`.
+
 ## [0.1.0rc3] - 2026-04-02
 
 ### Changed
 
-- Changed release-tag validation to run from `scripts/validate_release_tag.py` instead of inline workflow Python, and added Python-script syntax checks to the local smoke path so CI catches indentation or syntax typos in repository scripts earlier.
-- Changed prerelease docs and tests to use generic `rcN` examples or the live `project.version`, so documentation and validation no longer drift every time the prerelease number increments.
-- Changed the README to read more like a product landing page, with clearer command-group headings, more rendered output examples, a preview-first AI CLI section, and a linked proposal for moving the long-form user guide to GitHub Pages.
+- Hardened release prep by moving release-tag validation into `scripts/validate_release_tag.py` and syntax-checking repository Python scripts during the local smoke path.
+- Reduced prerelease churn by switching docs and tests to generic `rcN` examples or the live `project.version` instead of a hard-coded prerelease number.
+- Reworked the README into a clearer landing page with stronger command-group headings, more rendered output examples, and a proposal for splitting longer-form docs into GitHub Pages.
+
+#### AI Development
+
+- Added a clearer preview-first AI CLI section in the README so bundle-driven workflows stay discoverable during release preparation.
 
 ## [0.1.0rc1] - 2026-04-01
 ### Added
 
-- Added proposed backlog requirements to continue moving shipped defaults toward a packaged-resource source of truth and to ensure legacy-init installs local schema guidance into generated requirement indexes for AI-friendly repository-local onboarding (RQMD-CORE-035, RQMD-AI-038).
-- Added proposed backlog requirements for long-running and easy-first rqmd development agents, markdown catalog schema versioning, duplicate-ID repair, positional `rqmd ranked` grooming entry, and grapheme-safe emoji alignment in interactive menus; also cleaned the brainstorm and bug notes to point at tracked follow-up work (RQMD-AI-036, RQMD-AI-037, RQMD-CORE-033, RQMD-CORE-034, RQMD-SORTING-016, RQMD-INTERACTIVE-032).
-- Added default `.rqmd.yml` scaffolding during `rqmd init --scaffold` and both rqmd-ai init apply paths so newly initialized repositories get an explicit root config with the selected requirements directory, ID prefix, and canonical status/priority catalogs for human and AI consumers (RQMD-CORE-032).
-- Added rqmd-ai guidance that now prefers pairing a short user-story block with Given/When/Then acceptance bullets when both clarify a requirement, across the installed AI bundle and starter authoring templates (RQMD-AI-034).
-- Added default markdown closeout guidance to the bundled `.github/copilot-instructions.md` template installed by `rqmd-ai init` and `rqmd-ai install`, preferring `# What got done`, `# Up next`, and `# Direction` with rendered requirement bodies in `Up next` instead of fenced code blocks (RQMD-AI-035).
-- Added proposed backlog requirements for opening the current requirement in VS Code from the interactive UI, opening linked requirement references directly from interactive requirement detail views, and for first-class dual support of user-story plus Given/When/Then requirement blocks.
-- Added an explicit interactive interview contract and ordered interview flow metadata to chat-mode `rqmd-ai` payloads so receiving agents are told to run a one-question-at-a-time multi-choice session with checked defaults and deferred recap behavior instead of summarizing answers after every question (RQMD-AI-033).
-- Added stronger `rqmd-ai init` interview guidance for requirement ID prefixes by recommending a short project-specific key when one can be inferred, and added explicit default-checked selection metadata for suggested or recommended multi-select init choices (RQMD-AI-031, RQMD-AI-032).
-- Added a unified `rqmd-ai init` entrypoint with `--chat` and `--legacy` support, plus a new bundled `rqmd-init` skill and copy/paste AI handoff prompts that guide the default onboarding flow through grouped interview questions before any write step (RQMD-AI-025, RQMD-AI-026, RQMD-AI-027, RQMD-AI-028, RQMD-AI-029, RQMD-AI-030).
-- Added a chat-first `rqmd init` entrypoint that emits the same AI handoff contract as `rqmd-ai init --chat`, making guided onboarding the default public setup flow while keeping `--bootstrap` as a direct scaffold compatibility path (RQMD-CORE-029, RQMD-CORE-030).
-- Added bundle-aware default `rqmd-ai` guide output that embeds packaged skill and agent definitions from `resources/bundle` when no workspace bundle is installed, while suppressing those embedded definitions and reporting active local files once the rqmd bundle is present (RQMD-AI-016, RQMD-AI-017, RQMD-AI-018).
-- Added resource-backed brainstorm proposal title and ranking metadata so rqmd-ai brainstorm sorting/order guidance is no longer hard-coded in Python and can be tuned from the bundled skill definition.
-- Added project-local `dev` and `test` skill scaffolding during `rqmd-ai install`, using detected repository commands as a reviewable starting point, and updated `rqmd-dev` guidance to rely on those generated skills when present (RQMD-AI-019, RQMD-AI-021).
-- Added `rqmd-ai --workflow-mode init-legacy`, a bundled `rqmd-init-legacy` skill, and a first-pass legacy bootstrap flow that can preview or write a seeded requirements folder from repository structure, detected commands, and optional `gh` issue discovery (RQMD-AI-022, RQMD-AI-023, RQMD-AI-024).
-- Added `rqmd-ai install --bootstrap-chat`, which exposes a structured interview payload for AI-guided bundle bootstrap, including inferred command questions, override answers, and generated `/dev` and `/test` skill previews before writing (RQMD-AI-020).
-- Added duplicate requirement ID validation across rqmd and rqmd-ai plus a new `rqmd --next-id` allocator that emits the next sequential numeric ID for a single active namespace, using 3-digit minimum padding by default and continuing cleanly past `999` (RQMD-CORE-026, RQMD-CORE-027, RQMD-CORE-028).
-- Added installable Copilot workflow skills for brainstorm planning, backlog triage, focused context export, implementation, status/priority maintenance, doc sync, history inspection, bundle management, and verification, plus specialized full-preset agents for requirements, docs, history, and bundle maintenance; the bundle/docs now ship those workflows while explicitly documenting that skills and agents do not bypass tool approval prompts.
-- Added an optional `speedups` extra powered by `orjson`, and wired rqmd/rqmd-ai JSON export plus audit-log serialization through a native-acceleration helper with a pure-Python fallback (RQMD-CORE-025).
-- Added `reqmd` and `reqmd-ai` as pre-release console-script aliases while keeping `rqmd` and `rqmd-ai` as the canonical command names, and documented the manual PyPI-check plus compatibility-window plan for any future rename decision (RQMD-PACKAGING-012).
-- Added `rqmd-ai --workflow-mode brainstorm` as a read-only planning surface that parses brainstorm markdown into ranked requirement suggestions with recommended target docs, suggested IDs, canonical proposed status, and inferred priorities (RQMD-AI-014).
+- Added a chat-first onboarding flow built around `rqmd init` and `rqmd-ai init`, with grouped interview prompts, preview-first handoff guidance, legacy-repo seeding support, and generated `.rqmd.yml` scaffolding so new or existing repositories can adopt rqmd with less manual setup.
+- Added an installable Copilot bundle with reusable workflow skills and specialized agents, plus project-local `/dev` and `/test` skill scaffolding so AI-assisted work can stay closer to the repository's actual commands and review loop.
+- Added richer history and recovery tooling across `rqmd` and `rqmd-ai`, including persistent undo/redo, branch-aware history, detached historical views, replay and cherry-pick planning, timeline filtering, and exportable history reports.
+- Added stronger interactive and automation support, including duplicate-ID validation and next-ID allocation, machine-readable JSON output, custom priority-catalog loading, shell-completion improvements, external-link editing, and broader interactive navigation/search/history affordances.
+- Added optional native JSON speedups through `orjson`, plus prerelease command aliases `reqmd` and `reqmd-ai` while the project evaluates a possible future rename.
 
 ### Changed
 
-- Changed CLI startup to treat `readline` as optional so source installs continue working on Windows and other Python environments where the standard line-editing module is unavailable.
-- Changed the release guide to include first-time PyPI trusted-publisher setup steps for creating the `rqmd` project without a long-lived upload token.
-- Changed repeated positional requirement IDs such as `rqmd SSVR-0001 SSVR-0002` to use the focused multi-target selection flow instead of being intercepted by the legacy single-ID lookup shortcut.
-- Changed shared interview group ordering, interaction-contract guidance, ID-prefix option copy, and bootstrap-chat, starter-init, and legacy-init interview labels, prompts, grouping, selection defaults, and option sets to load from packaged init YAML instead of hard-coded `rqmd-ai` Python dicts.
-- Changed init strategy reason strings and legacy-init README note sections to load from packaged init templates instead of remaining inline `rqmd-ai` strings, continuing the packaged-resource migration for shipped onboarding copy.
-- Changed init templates to live under `src/rqmd/resources/init/` as the single packaged source of truth, replacing the parallel `init-docs/` and `src/rqmd/init_docs/` directories and aligning init assets with the existing `resources/` layout.
-- Changed release documentation and packaging tests to match the current trusted-publishing GitHub release workflow, and added a concrete release checklist for cutting versions such as `v0.1.0`.
-- Changed the trusted-publishing release flow to also accept PEP 440 `rc` prerelease tags such as `v0.1.0rc1`, and updated release docs and packaging requirements/tests to document that prerelease path.
-- Changed scaffold prompt, completion, idempotent no-op, and empty-directory confirmation messages to load from packaged init templates via a shared CLI helper instead of repeating those strings inline across scaffold paths.
-- Changed the `rqmd-ai init` chat handoff prompt body to render from packaged init templates, including the bundle-follow-up section and final verification steps, so another long shipped onboarding script is editable outside Python code.
-- Changed the shared AI-chat handoff heading, preview-only notice, and `rqmd init` chat-first notice to load from packaged init message templates instead of being repeated inline across `rqmd` and `rqmd-ai`.
-- Changed no-docs and missing-index startup guidance to load from packaged init message templates instead of duplicated inline CLI strings, extending the shared resource-backed path to more first-run user-facing text.
-- Changed the default `.rqmd.yml` scaffold to render from an editable init template plus catalog placeholders instead of assembling the YAML layout entirely in Python, pushing another shipped init asset onto the packaged-resource path.
-- Changed the remaining legacy-init seeded requirement document bodies for source-area, workflow, and issue-backlog files to load from editable init templates instead of embedded Python markdown builders, continuing the packaged-resource migration for shipped init content.
-- Changed legacy-init README generation to use the same packaged requirements-index template as scaffold init, so init workflows now install a consistent schema-bearing requirements index instead of maintaining divergent README builders.
-- Changed the built-in default status and priority catalogs to load from packaged YAML resources under `src/rqmd/resources/catalogs/`, and updated scaffold generation to consume those same resources so future default-catalog edits are data-driven instead of scattered across Python constants.
-- Added `⚠️ Janky` as a built-in default status after `✅ Verified`, propagated the new six-status order through generated summaries, README sync rollups, scaffolds, and interactive status shortcuts so teams can mark verified-but-rough work without custom catalog setup.
-- Changed the bare no-docs startup error to print a clearer first-time setup message that recommends the canonical `rqmd init` AI-driven onboarding flow while still surfacing `rqmd init --scaffold` as the manual compatibility path (RQMD-CORE-009).
-- Changed the GitHub release publishing workflow to require a stable semver release tag that matches `project.version`, and switched PyPI publication to GitHub trusted publishing instead of a repository-stored API token (RQMD-PACKAGING-008).
-- Added explicit `rqmd-ai --workflow-mode` guidance variants for `general`, `brainstorm`, and `implement`, including a proposal-batch implement loop that tells agents to work the highest-priority 1-3 proposed requirements at a time and re-run rqmd/tests/priority checks between batches (RQMD-AI-015).
-- Added proposed requirement backlog entries for an AI brainstorm mode, proposal-batch implement mode, optional native acceleration hot paths, and a pre-release `ReqMD` rename/alias evaluation so those brainstorm items are now ranked in the tracked requirement set.
-- Added lightweight terminal markdown rendering in requirement panels so criterion headings and bold inline labels display cleanly during interactive review without changing the underlying line-oriented markdown contract.
-- Added explicit requirement-first AI workflow guidance to the README and AI CLI requirements, codifying the brainstorm -> requirements/docs -> preview -> apply -> verify loop for agent-assisted changes (RQMD-AI-013).
-- Added terminology-neutral requirement document wording in scaffolded and generated indexes so teams can treat requirement markdown files as domains, user stories, feature areas, or other project-specific groupings without changing the parser contract (RQMD-PORTABILITY-019).
-- Added positional status/priority filter tokens with filter-first precedence over requirement/domain lookup, deterministic prefix matching for IDs and domains, mixed filter-plus-target scoping such as `rqmd P1 core-engine`, and shell completion entries for positional filter values alongside IDs, domains, and subsection tokens (RQMD-AUTOMATION-035, RQMD-INTERACTIVE-027, RQMD-PACKAGING-011).
+- Made rqmd more portable and release-ready by treating `readline` as optional for Windows-style environments, documenting trusted publishing, supporting `rc` prerelease tags, and matching the GitHub release flow to `project.version`.
+- Moved more shipped onboarding, catalog, and bundle guidance into packaged resources so defaults and templates are edited as normal files instead of scattered Python strings.
+- Standardized the public workflow language around `init`, chat-first onboarding, preview-first AI guidance, and `--json` as the preferred machine-readable flag while preserving compatibility surfaces where needed.
+- Expanded the default status and interaction model with `⚠️ Janky`, clearer first-run guidance, richer interactive menus, and better requirement-doc terminology across scaffolded and generated content.
 
-### Changed
+#### AI Development
 
-- Changed the recommended initialization vocabulary throughout the docs and bundle guidance to prefer `init` and the chat-first onboarding flow, while keeping `bootstrap`, `--bootstrap-chat`, and `init-legacy` as compatibility surfaces during transition.
-- Changed rqmd and rqmd-ai docs, help text, and generated bundle guidance to prefer `--json` as the standard machine-readable output flag while keeping `--as-json` as a backward-compatible alias.
-- Changed bootstrap-chat payloads for bundle install and `init-legacy` to expose grouped interview questions with multi-select suggestions, custom-answer prompts, skip support, recommended choices, detected-from hints, safe defaults, and answer-driven catalog generation.
-- Changed `rqmd-ai install` to load bundle templates from packaged resource files under `src/rqmd/resources/bundle/` instead of embedding the bundle contents directly in code, so the shipped bundle can be edited as normal files and installed from package data.
-- Added policy-aware history retention defaults and config overrides (`history_retention.retain_last`, `retain_days`, `max_size_kib`), and wired `rqmd --history-gc` to trim persisted history state before pack/prune maintenance while reporting the active policy in `--history` and `--history-gc` outputs (RQMD-UNDO-008).
-- Added `rqmd --history-gc` with optional `--history-prune-now`, plus explicit confirmation and JSON/text reporting for safe maintenance of the hidden `rqmd-history` repository (progress toward RQMD-UNDO-007).
-- Added interactive `g` and `G` history-browser actions for confirmed history gc and immediate-prune maintenance from the entry detail view (progress toward RQMD-UNDO-007).
-- Added interactive `l` and `x` history-browser actions for saving named branch labels and discarding alternate branches, including an explicit chance to save a snapshot label before destructive branch removal (progress toward RQMD-UNDO-007).
-- Added `rqmd --history-label-branch <name> --history-branch-label <label>` so automation can name alternate history branches without using the interactive browser (progress toward RQMD-UNDO-007).
-- Added `rqmd --history-discard-save-label <label>` so non-interactive branch discard flows can preserve a named snapshot label in the same command before branch navigation is removed (progress toward RQMD-UNDO-007).
-- Added `rqmd --history-gc-save-label <label>` plus matching interactive gc/prune save-label prompts so maintenance flows can preserve a named snapshot label before destructive history cleanup runs (progress toward RQMD-UNDO-007).
-- Added proposed Vim-alignment requirements covering `j`/`k` vertical navigation defaults, richer Vim-style motions (`gg`, `G`, `Ctrl-U`, `Ctrl-D`), and `/`/`?` search with `n`/`N` repeat semantics in interactive mode.
-- Added compact interactive footers with `:=help`, plus a shared help overlay that opens on `:` and toggles on invalid keys so full keymaps stay discoverable without long inline legends (RQMD-INTERACTIVE-026).
-- Updated interactive requirement walks so status and priority edits keep the current requirement visible until the user explicitly presses next, and status-panel shifted-number priority shortcuts now update in place from the default status view instead of auto-advancing away (RQMD-INTERACTIVE-007).
-- Updated the interactive status action menu to render those priority shortcuts as a visible aligned right-hand column, with the current priority marked in-place while status stays selected (RQMD-INTERACTIVE-007).
-- Added a `v=code` action in interactive requirement detail menus that opens the current requirement in VS Code at its heading line when the `code` launcher is available, while keeping the interactive session active and reporting a graceful fallback otherwise (RQMD-INTERACTIVE-030).
-- Added an `o=refs` action in interactive requirement detail menus that resolves local requirement references from the current entry and opens the selected linked requirement in a nested lookup flow, so users can jump to related requirements and return with `u` (RQMD-INTERACTIVE-031).
-- Updated README-sync empty-state messaging to use requirement-document terminology consistently, avoiding a stale "requirement domains" message after the terminology-neutral indexing work (RQMD-PORTABILITY-019).
-- Refined the interactive status menu's priority preview so the right-hand column is fixed-width and left-aligned within its own block, and so the active status highlight no longer overwrites the current-priority highlight (RQMD-INTERACTIVE-007).
-- Added a pytest timeout guard (`timeout = 30`) plus a startup requirement for `pytest-timeout`, so interactive regressions fail fast instead of silently hanging when the timeout plugin is missing from the local test environment.
-- Updated local test and smoke-check commands to use `uv run --extra dev pytest ...`, matching the `pytest-timeout` requirement instead of relying on plain `uv run pytest`.
-- Added explicit selected-row arrow markers in interactive menus so the current status, priority, or flagged choice is obvious on first render even before any further navigation (RQMD-INTERACTIVE-006).
-- Added unique long-option prefix expansion in the top-level `rqmd` CLI wrapper, allowing unambiguous prefixes such as `--proj`, `--docs`, and `--as-j` while preserving deterministic ambiguity failures with candidate lists (RQMD-AUTOMATION-019).
-- Added `z=undo`, `y=redo`, and `h=history` shortcuts to requirement action menus, plus a paged interactive history browser that surfaces commit, branch, and diff-summary metadata from the existing snapshot log (progress toward RQMD-UNDO-007).
-- Added `rqmd --history-checkout-branch <name>` to restore the HEAD snapshot of a named alternate history branch through the main CLI, complementing the existing branch summaries in `--timeline` and branch-prune workflow in `--history-discard-branch` (progress toward RQMD-UNDO-007).
-- Added `rqmd --history-cherry-pick <ref>` and `rqmd --history-replay-branch <branch>` with optional `--history-target-branch`, exposing replay/apply history controls through the main CLI for branch recovery workflows without dropping into internal APIs (progress toward RQMD-UNDO-007).
-- Updated the interactive history selector to render a git-log-style one-line view with short commits, `HEAD -> branch` decorations, and date-ordered metadata so it reads more like `git log --graph --decorate --all --date-order --oneline` (progress toward RQMD-UNDO-007).
-- Added interactive entry actions inside the history browser detail view so a selected history record can drive branch checkout, commit cherry-pick, and branch replay directly from the UI, with explicit confirmation for replay/apply paths (progress toward RQMD-UNDO-007).
-- Added targeted pytest timeout markers to the interactive history and deep-paging regressions so accidental input loops fail quickly instead of hanging long local or agent-driven test runs.
-- Fixed stray indentation in the screen-write precedence tests and rewrote the new history-browser action regressions to use deterministic stubs, restoring a clean timeout-enabled pytest run across the interactive suite and full repository.
-
-- Added detached historical export browsing to `rqmd-ai` via `--history-ref`, allowing point-in-time inspection of prior requirement snapshots by history index or commit ref without mutating the current working tree (RQMD-TIME-001).
-- Added detached historical view safety guards for `rqmd-ai --history-ref`, explicitly rejecting `--write` and `--update` mutation paths while in historical export mode to preserve read-only detached behavior (RQMD-TIME-003).
-- Added branch-aware historical timeline in the history backend: automatically creates recovery branches when undoing and making divergent edits, with full DAG reconstruction and branch tracking in state metadata (RQMD-TIME-002).
-- Added historical activity context in `rqmd-ai` history exports, including neighboring entry pointers and per-requirement before/after status deltas for the selected history entry (RQMD-TIME-004).
-- Added `--compare-refs` to `rqmd-ai` for point-in-time diff views between any two history refs; supports `A..B` and `A B` syntax with entry indices, commit hashes, `head`, `current`, and `latest` keywords; returns structured JSON with status transitions, added/removed requirements, and cumulative summary counters (RQMD-TIME-005).
-- Added stable history identifiers (`hid:<commit>`) in `rqmd-ai` historical payloads (`history_source`, compare refs, and neighbors), and support for resolving those identifiers in `--history-ref` and `--compare-refs` for durable deep links (RQMD-TIME-008).
-- Added `rqmd-ai --history-report` for exportable temporal reports in both JSON (`--as-json`) and text form, covering single detached historical states (`--history-ref`) and point-to-point comparison ranges (`--compare-refs`) with summary counters and per-requirement details (RQMD-TIME-009).
-- Added timeline query filters in `rqmd --timeline` for branch, actor, command, file path, requirement ID, transition token, and ISO-8601 date ranges, with enriched node metadata (`changed_requirement_ids`, `status_transitions`) to support machine-readable navigation in long-lived histories (RQMD-TIME-007).
-- Added `rqmd-ai --history-action` read-only previews for `restore`, `replay`, and `cherry-pick` planning workflows, including action-step metadata and diff-style impact summaries before any write paths are used (RQMD-TIME-006).
-- Added a temporal verification matrix test suite covering branch graph reconstruction, detached historical reads, point-to-point diffs, replay previews, and stable identifier resolution across multi-file branching fixtures (RQMD-TIME-010).
-- Added `rqmd --history` non-interactive history-log API output (text + JSON) including entry-indexed commits, stable IDs, branch metadata, head cursor, and undo/redo availability for automation flows (RQMD-UNDO-009).
-- Added `rqmd --undo` and `rqmd --redo` non-interactive catalog restoration commands backed by persistent snapshot history, including automatic baseline capture on the first rqmd mutation (RQMD-UNDO-001).
-- Added persistent hidden `.rqmd/history/rqmd-history` git-backed catalog snapshots plus on-disk cursor state (v2.0) with branch tracking for durable undo/redo recovery and branch-aware history across process restarts (RQMD-UNDO-005, RQMD-TIME-002).
-- Added restart-durability regression coverage for undo history persistence, validating that entries, cursor state, snapshot materialization, and undo/redo behavior survive `HistoryManager` reinitialization (RQMD-UNDO-002).
-- Added an undo verification matrix suite covering history log output, branch-aware timeline views, replay preview planning, and restart-based undo checks across multi-file divergent history fixtures (RQMD-UNDO-010).
-- Added explicit rqmd-ai apply audit linkage to `rqmd-history` commits, including per-update history entry metadata (`entry_index`, commit, stable `hid:` identifier, timestamp, command, branch) in both API payloads and persisted audit events for deterministic undo/audit cross-referencing (RQMD-UNDO-011).
-- Added structured history delta payloads to persisted `rqmd-history` entries and `rqmd --history --as-json` output, including per-file numstat summaries (`additions`, `deletions`, `files_changed`) alongside existing provenance metadata for audit and timeline consumers (RQMD-UNDO-006).
-- Added priority undo/history semantics coverage: priority-only updates are recorded as first-class `set-priority` history operations, and combined status+priority updates are captured atomically as a single `update-requirement` history entry with undo/redo restoration behavior (RQMD-PRIORITY-008).
-- Added UI-010 renderer verification coverage with a dedicated row-diff helper (`compute_row_diff`) and tests covering changed-row detection, row removal semantics, and integration behavior across both TTY screen-write and non-TTY fallback paths for CI stability (RQMD-UI-010).
-- Added UI-008 terminal resize handling in interactive menus by wiring SIGWINCH lifecycle management (install on TTY entry, consume pending resize markers, restore previous handler on exit) with regression tests to ensure resize events preserve stable rendering and selection flow (RQMD-UI-008).
-- Added UI-007 contrast-preserving redraw safeguards: vetted zebra background accessibility checks, CLI-level colorized redraw gating, and fallback to plain non-colorized menu rendering when background contrast cannot be trusted (RQMD-UI-007).
-- Added UI-009 adaptive performance heuristics with a dedicated render-mode controller using smoothed latency windows (median/p95), hysteresis thresholds, and cooldown-based anti-thrashing transitions between `screen-write` and `append` rendering modes, including regression tests for sustained-latency degrade/recover behavior (RQMD-UI-009).
-- Added UNDO-003 branching history support with automatic recovery branch creation on divergence, new `HistoryManager` methods (`checkout_branch`, `cherry_pick`, `replay_branch`, `label_branch`, `discard_branch`, `get_branches`), branch head tracking in state metadata, and comprehensive regression tests for branch navigation, preservation of alternate timelines, and replay workflows (RQMD-UNDO-003).
-- Added `rqmd --history-discard-branch <name>` as a dedicated non-interactive history mode for pruning alternate branches, with explicit confirmation enforcement (`--force-yes`) for automation-safe destructive operations and JSON/text result payloads (RQMD-UNDO-004).
-- Added scratch frontend QA assets under `test-corpus/scratch/`: a new mixed-metadata edge-case corpus page (`requirements/page-24-edge-cases.md`) and a task-oriented manual validation guide (`QA-frontend-checklist.md`) for interactive rendering, resize behavior, filters, and history/confirmation smoke checks.
-- Added portability hardening for user-facing compatibility failures to avoid raw Python traceback output in normal CLI flows, including catalog-safe roll-up rendering with custom status taxonomies and regression coverage for interactive startup behavior (RQMD-PORTABILITY-018).
-
-- Added `extract_blocking_id()` to `req_parser.py`; `blocking_id` and `blocked_reason` fields now appear in JSON exports from `rqmd` and `rqmd-ai` when a requirement is blocked by a linked or bare requirement ID (RQMD-CORE-022).
-- Added `parse_domain_priority_metadata()` to `req_parser.py`; `domain_priority` and `sub_section_priorities` fields now appear in JSON payloads when domain-level `**Priority:**` metadata is present (RQMD-PRIORITY-012).
-- Added `--priorities-config` CLI option for loading a custom project priority catalog from a YAML or JSON file, mirroring the existing `--status-config` option (RQMD-PRIORITY-011).
-- Added compact domain-notes pane to the interactive criterion panel in `status_update.py`: shows up to 3 lines of domain preamble body text with `…` truncation when more lines are present (RQMD-INTERACTIVE-018).
-- Added interactive link-entry flow accessible via the `t` (toggle-field) key in all interactive loops; supports adding plain URL or `[label](url)` markdown links, optional label prompting for bare URLs, and numbered removal of existing links (RQMD-INTERACTIVE-022).
-- Added theme-aware zebra-striping support with config override precedence, including `resolve_zebra_bg()` and threaded `zebra_bg` usage in interactive menus for accessibility-safe rendering (RQMD-INTERACTIVE-012).
-- Added best-effort terminal theme detection with ordered precedence (CLI `--theme`, config override, macOS/GNOME probes, default fallback) via `detect_theme()` and wired CLI support for `--theme` (RQMD-INTERACTIVE-013).
-- Added a project changelog following the Keep a Changelog format.
-- Added README-index portability tests for automatic requirements discovery.
-- Added deep scratch pagination corpus pages through page 23 for e2e coverage.
-- Added first-class `--json` output for non-interactive summary/check/set/filter workflows to support machine-readable automation and AI triage.
-- Added `schema_version` to JSON payload contracts across `rqmd` and `rqmd-ai`, with coverage tests for both CLIs.
-- Added shell-completion activation and troubleshooting guidance for zsh, bash, and fish in README.
-- Added requirement-level tests for status value-prefix resolution and ambiguous option-prefix candidate reporting.
-- Added `rqmd-ai --install-agent-bundle` with minimal/full presets, dry-run preview, idempotent reruns, and optional overwrite behavior for existing instruction files.
-- Added unknown-status compatibility tests and machine-readable JSON error payload coverage.
-- Added `rqmd.readme_gen` module for RQMD-CORE-024: domain-to-README section generation with idempotent marker-based updates, status rollup summaries, and integration-ready API.
-- Added comprehensive tests for README generation: domain summary extraction, section generation, marker-based updates, and idempotency validation.
-- Added `--rename-id-prefix OLD=NEW` one-time bulk rename mode to rewrite requirement ID prefixes across domain files with conflict detection, dry-run/json output support, and per-file replacement summaries (RQMD-CORE-023).
-- Added full-screen ANSI redraw behavior for interactive menus when `--screen-write` is enabled or configured; includes clear + home cursor escapes on each render and pagination for snappy, stable visual updates without scrollback artifacts (RQMD-UI-001).
-- Added `--screen-write/--no-screen-write` with `screen_write` config support and precedence resolution (CLI > project config > user config > TTY default) for interactive rendering mode selection (RQMD-UI-002).
-- Added automatic fallback to scrolling/append-style output for non-TTY environments (scripts, CI, piped output, file redirects); screen-write mode respects `sys.stdout.isatty()` check to ensure no ANSI escapes in non-interactive contexts (RQMD-UI-003).
-- Added reserved footer region for standardized legend and transient notification messages in interactive menus; `footer_legend` parameter allows custom key-mapping displays (e.g., `d=[asc|dsc]`) that reliably persist across renders and pagination without shifting menu content (RQMD-UI-006).
-- Added stable cursor/selection position maintenance across pagination and re-renders in interactive menus; `selected_option_index` parameter with optional `selected_option_bg` highlighting ensures predictable focus across n/p key navigation and page transitions (RQMD-UI-005).
+- Promoted and tracked the next backlog slice for long-running and easy-first development agents, markdown schema versioning, duplicate-ID repair, `rqmd ranked`, grapheme-safe menu alignment, and local schema guidance in generated requirement indexes (RQMD-AI-036, RQMD-AI-037, RQMD-CORE-033, RQMD-CORE-034, RQMD-SORTING-016, RQMD-INTERACTIVE-032, RQMD-AI-038, RQMD-CORE-035).
+- Refined the shipped AI authoring guidance around user-story plus Given/When/Then drafting, concise markdown closeouts, requirement-first implement loops, and explicit interview contracts for chat-mode onboarding and bundle bootstrap (RQMD-AI-013, RQMD-AI-014, RQMD-AI-015, RQMD-AI-031, RQMD-AI-032, RQMD-AI-033, RQMD-AI-034, RQMD-AI-035).
+- Consolidated bundle and init assets under packaged resources, including resource-backed skill definitions, init templates, message text, starter guidance, and bundle-install output, so more of the shipped AI experience is editable without code changes (RQMD-AI-016 through RQMD-AI-030).
+- Deepened verification and implementation coverage for history, undo, time-machine, screen-write, interactive navigation, portability, JSON export, README sync, and other foundational capabilities that shipped alongside the rc1 milestone.
 
 ### Changed
 

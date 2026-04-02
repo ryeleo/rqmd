@@ -1,5 +1,7 @@
 .github/copilot-instructions.md
 .github/agents/rqmd-dev.agent.md
+.github/agents/rqmd-dev-longrunning.agent.md
+.github/agents/rqmd-dev-easy.agent.md
 .github/skills/rqmd-brainstorm/SKILL.md
 .github/skills/rqmd-triage/SKILL.md
 .github/skills/rqmd-export-context/SKILL.md
@@ -7,8 +9,11 @@
 .github/skills/rqmd-init/SKILL.md
 .github/skills/rqmd-init-legacy/SKILL.md
 .github/skills/rqmd-status-maintenance/SKILL.md
+.github/skills/rqmd-docs/SKILL.md
 .github/skills/rqmd-doc-sync/SKILL.md
+.github/skills/rqmd-changelog/SKILL.md
 .github/skills/rqmd-history/SKILL.md
+.github/skills/rqmd-pin/SKILL.md
 .github/skills/rqmd-bundle/SKILL.md
 .github/skills/rqmd-verify/SKILL.md
 .github/agents/rqmd-explore.agent.md

@@ -1,5 +1,51 @@
 # Brainstorm
 
+The gumption you have to say, "I need to take action" and then "I need to focus on requirements" is AMAZING! Can we ensure this kind of religious care for requirements is in all rqmd AI agents? Lol 
+
+## Agent skill: allow commands for AI agents
+
+## Interview Questions
+
+- Should we use simple or expanded statuses?
+- Should we use rqmd-agents and rqmd-skills? Should we overwrite/write you a  copilot-instructions.md per rqmd recommendations?
+- 
+
+## "🤖 AI Verified" status
+
+This is a proposed new status label to indicate that a requirement has been verified by an AI agent rather than a living being. It could be used in cases where the requirement has been implemented and the implementation has been validated through automated tests or other machine-driven verification methods, but has not yet been reviewed and approved by a living being.
+
+Is there much value here? It isn't like we want to have to test EVERYTHING that the AI can test for us, right? But, for postarity it is probably a good idea to be able to distinguish between things that have been verified by a human and things that have only been verified by an AI, especially if we want to eventually have some kind of "AI-verified" badge or filter in the interactive UI.
+
+Also, we should probably pin which AI agent model was used for the verification, and maybe even the date it was verified, so we can track how our AI verification capabilities evolve over time and have more context for the reliability of the verification.
+
+## New rqmd-* skill: rqmd-pin
+
+Use `rqmd-pin` to create a pinned note that captures important context, decisions, or other information that you want to keep easily accessible during your work with rqmd. Pinned notes can be used to:
+- Keep track of key decisions or insights that come up during brainstorming or implementation.
+- Save important context that you want to refer back to later without having to search through chat history or documentation.
+- Create a quick reference for yourself or others on the team about specific topics related to the project.
+
+Work with the user to decide where their pinned notes should be stored (e.g., a specific markdown file, a dedicated section in the README, or even a folder like `docs/pins/` with individual pinned ideas per file!) and how they want to format the pinned information for easy readability and reference.
+
+Promoted into tracked AI workflow requirement `RQMD-AI-042`.
+
+## New rqmd-* skill: rqmd-changelog
+
+Use ["keep a changelog"](https://keepachangelog.com/en/1.1.0/) principles to maintain a clear and user-focused `CHANGELOG.md` that highlights the most important changes driven by human decisions and key functional updates, while still acknowledging the AI-driven work that supports those changes.
+
+Right now, the changelogs we are creating are not great...
+
+They should absolutely be focused on the line items that were driven by:
+1. (living being) requests given to AI by a living being, or
+2. (living being) changes/additions/removals made directly by a living being in the code or docs and not by AI, or
+3. (key info) changes/additions/removals that are essential to how the project functions for end users.
+
+The other things that AI had to do to make those requests actually happen should be shown, but under a nested (H4? I think?) heading like "AI Development" or something.
+
+This way we can keep the human-driven narrative clear and focused, while still acknowledging the important AI-driven work that went into making those changes possible.
+
+Promoted into tracked AI workflow requirement `RQMD-AI-039`.
+
 ## Discovery Mode
 
 Explore vs Discovery... What is the difference...
@@ -19,6 +65,8 @@ We want rqmd agents to behave similarly in each project they are added to. They 
 ### AI output should use "info" "note" and "warning" block quotes like in our README.md
 
 ### AI output should use consistent emoji and status formatting for proposed/implemented/verified/blocked/deprecated items, matching the README guidance
+
+Promoted into tracked AI workflow requirement `RQMD-AI-041`.
 
 
 
@@ -48,6 +96,9 @@ This file is now a checkpointed backlog scratchpad rather than a raw dump. Ideas
 
 - `RQMD-AI-036`: long-running priority-first development agent (`rqmd-dev-longrunning`).
 - `RQMD-AI-037`: easy-first low-hanging-fruit development agent (`rqmd-dev-easy`).
+- `RQMD-AI-039`: authored changelog-maintenance skill (`rqmd-changelog`).
+- `RQMD-AI-041`: consistent cross-project AI workflow experience.
+- `RQMD-AI-042`: pinned context and decision notes workflow (`rqmd-pin`).
 - `RQMD-CORE-033`: versioned requirement markdown schema and migration path.
 - `RQMD-CORE-034`: guided duplicate-ID repair workflow.
 - `RQMD-SORTING-016`: positional `rqmd ranked` target for backlog grooming.
@@ -84,8 +135,4 @@ The `Speed Shooting VR` status issue is not a generic parser incompatibility. It
 - Decide whether README generation should eventually become a stronger "tool-owned index" policy rather than marker-bounded sync.
 - Explore whether cross-root config discovery should follow `--docs-dir` targets when users intentionally point rqmd at another repository's requirement catalog.
 - Revisit native acceleration later if the current Python implementation becomes a real bottleneck despite the existing optional speedups path.
-
-## Workflow prompt note
-
-The "implement all proposed items" style prompt still works well, but the shipped rqmd AI workflow deliberately prefers small validated batches with re-triage between batches instead of one giant uninterrupted backlog sweep.
 

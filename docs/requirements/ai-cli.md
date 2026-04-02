@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 31🔧 2✅ 0⚠️ 0⛔ 3🗑️
+Summary: 0💡 37🔧 2✅ 0⚠️ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -309,22 +309,24 @@ Summary: 2💡 31🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - So that this formatting becomes the default style installed by `rqmd-ai init` while still allowing repositories to customize the final instructions after install.
 
 ### RQMD-AI-036: Long-running priority-first development agent
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a maintainer when I want an AI agent to keep working through the backlog for an extended session
 - I want rqmd to ship a `rqmd-dev-longrunning` agent variant that explicitly tries to continue making progress for as long as feasible
 - So that the agent works proposed requirements in priority order, keeps reassessing the backlog after each validated batch, and stops only when it reaches a real blocker, exhausts feasible work, or completes the active slice.
 - So that the long-running mode remains requirement-first and still updates requirements, tests, verification results, and changelog entries as it goes instead of treating persistence as permission to skip quality gates.
 - So that the guidance explicitly favors autonomous follow-through and repeated re-triage over early handoff when there is still clear work available.
+- So that its outputs, closeout structure, and workflow language still feel recognizably rqmd across projects instead of becoming a project-specific one-off personality.
 
 ### RQMD-AI-037: Easy-first low-hanging-fruit development agent
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As a maintainer when I want quick backlog progress without sending an AI agent into the hardest architectural work immediately
 - I want rqmd to ship a `rqmd-dev-easy` agent variant that focuses on low-risk, high-confidence requirement slices first
 - So that the agent preferentially picks low-hanging-fruit proposed requirements where it can make clean progress with minimal exploratory risk.
 - So that the easy-first mode can still respect overall requirement priority order, but only within the subset of items that appear straightforward enough to implement, validate, and document in small batches.
 - So that maintainers can choose between a broad long-running executor and a conservative easy-wins executor depending on how much autonomy or risk they want in a given session.
+- So that the easy-first mode still follows the same core rqmd output conventions and workflow shape as other shipped agents even when its selection strategy differs.
 
 ### RQMD-AI-038: Legacy-init installs local schema guidance into generated requirement indexes
 - **Status:** 🔧 Implemented
@@ -335,3 +337,44 @@ Summary: 2💡 31🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - So that legacy-init and other init apply paths install or embed the schema content deterministically as part of the generated requirements index experience rather than treating schema visibility as optional tribal knowledge.
 - So that the generated requirements index clearly points at the local schema source of truth and keeps that source synchronized with the shipped rqmd contract templates.
 - So that AI agents working only from local repository files can reliably discover the requirement markdown contract during later implementation and review sessions.
+
+### RQMD-AI-039: Authored changelog maintenance skill
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a maintainer using the shipped rqmd AI bundle to prepare releases and pre-releases
+- I want rqmd to ship a dedicated `/rqmd-changelog` skill for maintaining `CHANGELOG.md`
+- So that changelog work becomes a first-class authored workflow instead of an implicit side effect of generic docs cleanup.
+- So that top-level changelog entries stay focused on human-directed decisions, user-visible behavior, and other release-relevant changes instead of turning into a raw dump of every AI implementation step.
+- So that supporting AI implementation detail can still be recorded under a nested heading such as `AI Development` when that context is useful without crowding the primary narrative.
+- So that maintainers get consistent guidance for updating `Unreleased`, tightening noisy recent entries, and preserving Keep a Changelog structure across repositories that install the bundle.
+
+### RQMD-AI-040: General documentation-quality skill
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a maintainer improving repository documentation with the shipped rqmd AI bundle
+- I want rqmd to ship a dedicated `/rqmd-docs` skill for documentation quality and structure work beyond simple drift correction
+- So that README, requirement docs, bundle guidance, and other markdown can be improved using explicit standards for headings, clarity, jargon handling, page splitting, hyperlinks, and callouts instead of only being kept mechanically in sync.
+- So that `rqmd-doc-sync` can stay focused on alignment and follow-up cleanup after behavior changes rather than trying to own all documentation craft decisions.
+- So that repositories installing the bundle get a reusable authored documentation workflow that is broader than changelog curation but more specific than generic implementation guidance.
+- So that documentation improvements can stay technical but user-friendly, with readable structure and smaller linked pages when content grows too long.
+
+### RQMD-AI-041: Consistent cross-project AI workflow experience
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a maintainer using rqmd agents across multiple repositories
+- I want shipped rqmd agents and skills to behave consistently across projects even when the requirement catalogs and priorities differ
+- So that users build trust and familiarity with the AI workflows instead of relearning a different style in every repository.
+- So that outputs, closeout structure, status formatting, and workflow sequencing remain recognizably rqmd unless a repository intentionally overrides them.
+- So that reusable documentation, training material, and best practices can describe one stable rqmd agent experience instead of many near-miss variants.
+- So that project-local customization still fits inside a consistent shared contract rather than silently changing the overall workflow shape.
+
+### RQMD-AI-042: Pinned context and decision notes workflow
+- **Status:** 🔧 Implemented
+- **Priority:** 🟡 P2 - Medium
+- As a maintainer or collaborator working with rqmd over multiple sessions
+- I want an `rqmd-pin` workflow for capturing important context, decisions, and quick-reference notes that should remain easy to find later
+- So that useful insights do not disappear into chat history or scattered documentation during brainstorming and implementation.
+- So that the workflow can help teams choose an appropriate home for pinned notes, such as a dedicated markdown file, a README section, or a `docs/pins/` folder with one note per topic, defaulting to `docs/pins/` when the best location is unclear for maintainability.
+- So that larger pin collections can grow into an indexed notes area without turning into another hard-to-navigate dump, with `/rqmd-docs` handling any follow-on structure and navigation cleanup when needed.
+- So that pinned information can follow a readable, reviewable format instead of becoming ad hoc scratch text.
+- So that rqmd can grow a lightweight memory or note-pinning workflow without forcing one storage layout on every repository.
