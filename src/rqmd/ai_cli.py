@@ -36,25 +36,35 @@ except ImportError:
 
 from .batch_inputs import parse_set_entry
 from .config import load_config, load_priorities_file, validate_config
-from .constants import (JSON_SCHEMA_VERSION, PRIORITY_ORDER,
-                        REQUIREMENTS_INDEX_NAME)
+from .constants import JSON_SCHEMA_VERSION, PRIORITY_ORDER, REQUIREMENTS_INDEX_NAME
 from .history import HistoryManager
 from .json_speedups import dumps_json
-from .markdown_io import (discover_project_root, format_path_display,
-                          initialize_requirements_scaffold, iter_domain_files,
-                          load_init_yaml, preview_project_config_scaffold,
-                          preview_requirements_scaffold,
-                          render_legacy_issue_domain,
-                          render_legacy_source_domain,
-                          render_legacy_workflow_domain,
-                          render_requirements_index, render_startup_message,
-                          resolve_requirements_dir, validate_files_readable)
+from .markdown_io import (
+    discover_project_root,
+    format_path_display,
+    initialize_requirements_scaffold,
+    iter_domain_files,
+    load_init_yaml,
+    preview_project_config_scaffold,
+    preview_requirements_scaffold,
+    render_legacy_issue_domain,
+    render_legacy_source_domain,
+    render_legacy_workflow_domain,
+    render_requirements_index,
+    render_startup_message,
+    resolve_requirements_dir,
+    validate_files_readable,
+)
 from .priority_model import configure_priority_catalog
-from .req_parser import (extract_blocking_id,
-                         extract_requirement_block_with_lines,
-                         find_duplicate_requirement_ids, normalize_id_prefixes,
-                         parse_domain_priority_metadata, parse_requirements,
-                         resolve_id_prefixes)
+from .req_parser import (
+    extract_blocking_id,
+    extract_requirement_block_with_lines,
+    find_duplicate_requirement_ids,
+    normalize_id_prefixes,
+    parse_domain_priority_metadata,
+    parse_requirements,
+    resolve_id_prefixes,
+)
 from .status_model import normalize_status_input
 from .status_update import apply_status_change_by_id
 from .summary import process_file
@@ -788,6 +798,8 @@ def _priority_label_for_rank(priority_labels: tuple[str, ...], rank: int) -> str
 def _bundle_definition_kind(relative_path: str) -> str | None:
     if relative_path == ".github/copilot-instructions.md":
         return "instruction"
+    if relative_path.startswith(".github/prompts/") and relative_path.endswith(".prompt.md"):
+        return "prompt"
     if relative_path.startswith(".github/skills/") and relative_path.endswith("/SKILL.md"):
         return "skill"
     if relative_path.startswith(".github/agents/") and relative_path.endswith(".agent.md"):
@@ -822,6 +834,11 @@ def _workspace_definition_files(repo_root: Path) -> list[str]:
     instructions_path = root / "copilot-instructions.md"
     if instructions_path.exists():
         results.append(".github/copilot-instructions.md")
+
+    prompts_root = root / "prompts"
+    if prompts_root.exists():
+        for path in sorted(prompts_root.glob("*.prompt.md")):
+            results.append(path.relative_to(repo_root).as_posix())
 
     skills_root = root / "skills"
     if skills_root.exists():

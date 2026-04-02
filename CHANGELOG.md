@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added prompt-aware bundle support and a bundled prompt suite including `/go`, `/commit-and-go`, `/next`, `/brainstorm`, `/docs-pass`, `/pin`, and `/ship-check` so the installed rqmd AI experience can stay centered on one primary implementation agent with simpler slash-command entrypoints.
+
+### Changed
+
+- Reworked the README entrypoint with a clearer top-level install section and a short getting-started flow so first-time users can reach `rqmd init` or `rqmd --verify-summaries` faster.
+- Reframed the bundled AI workflow surface toward a single-agent-first model where `rqmd-dev` stays primary, `/go` handles the most common “just continue” action, and specialized agents remain available as advanced modes.
+
 ## [0.1.0] - 2026-04-02
 
 ### Added

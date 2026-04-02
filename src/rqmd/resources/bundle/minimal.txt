@@ -1,5 +1,12 @@
 .github/copilot-instructions.md
 .github/agents/rqmd-dev.agent.md
+.github/prompts/brainstorm.prompt.md
+.github/prompts/commit-and-go.prompt.md
+.github/prompts/docs-pass.prompt.md
+.github/prompts/go.prompt.md
+.github/prompts/next.prompt.md
+.github/prompts/pin.prompt.md
+.github/prompts/ship-check.prompt.md
 .github/skills/rqmd-brainstorm/SKILL.md
 .github/skills/rqmd-triage/SKILL.md
 .github/skills/rqmd-export-context/SKILL.md

@@ -6,7 +6,6 @@ import subprocess
 from pathlib import Path
 
 from click.testing import CliRunner
-
 from rqmd import ai_cli
 from rqmd.ai_cli import _parse_frontmatter, _parse_skill_frontmatter, main
 from rqmd.cli import main as rqmd_main
@@ -101,6 +100,13 @@ def test_RQMD_AI_001_and_002_default_guide_is_read_only_json(tmp_path: Path) -> 
     assert payload["bundle_installation"]["state"] == "absent"
     assert payload["bundled_definitions"]["source"] == "packaged-resources"
     bundled_paths = {entry["path"] for entry in payload["bundled_definitions"]["files"]}
+    assert ".github/prompts/brainstorm.prompt.md" in bundled_paths
+    assert ".github/prompts/commit-and-go.prompt.md" in bundled_paths
+    assert ".github/prompts/docs-pass.prompt.md" in bundled_paths
+    assert ".github/prompts/go.prompt.md" in bundled_paths
+    assert ".github/prompts/next.prompt.md" in bundled_paths
+    assert ".github/prompts/pin.prompt.md" in bundled_paths
+    assert ".github/prompts/ship-check.prompt.md" in bundled_paths
     assert ".github/skills/rqmd-export-context/SKILL.md" in bundled_paths
     assert ".github/skills/rqmd-pin/SKILL.md" in bundled_paths
     assert ".github/agents/rqmd-dev.agent.md" in bundled_paths
@@ -733,6 +739,39 @@ def test_RQMD_AI_bundle_skill_files_match_checked_in_workspace_copies() -> None:
         assert workspace_file.read_text(encoding="utf-8") == resource_file.read_text(encoding="utf-8")
 
 
+def test_RQMD_AI_bundle_prompt_files_match_checked_in_workspace_copies() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    resource_root = repo_root / "src" / "rqmd" / "resources" / "bundle" / ".github" / "prompts"
+    workspace_root = repo_root / ".github" / "prompts"
+
+    resource_files = sorted(resource_root.glob("*.prompt.md"))
+    assert resource_files
+
+    for resource_file in resource_files:
+        relative = resource_file.relative_to(resource_root)
+        workspace_file = workspace_root / relative
+        assert workspace_file.exists(), f"Missing workspace prompt copy for {relative.as_posix()}"
+        assert workspace_file.read_text(encoding="utf-8") == resource_file.read_text(encoding="utf-8")
+
+
+def test_RQMD_AI_bundle_prompt_files_have_valid_frontmatter_and_guidance() -> None:
+    repo_root = Path(__file__).resolve().parents[1]
+    resource_root = repo_root / "src" / "rqmd" / "resources" / "bundle" / ".github" / "prompts"
+
+    resource_files = sorted(resource_root.glob("*.prompt.md"))
+    assert resource_files
+
+    for resource_file in resource_files:
+        text = resource_file.read_text(encoding="utf-8")
+        frontmatter = _parse_frontmatter(text)
+        assert isinstance(frontmatter.get("name"), str) and frontmatter["name"].strip()
+        assert isinstance(frontmatter.get("description"), str) and frontmatter["description"].strip()
+        assert isinstance(frontmatter.get("argument-hint"), str) and frontmatter["argument-hint"].strip()
+        assert frontmatter.get("agent") == "rqmd-dev"
+        assert "rqmd" in text.lower()
+        assert text.count("- ") >= 3
+
+
 def test_RQMD_AI_bundle_skill_files_expose_structured_guide_metadata() -> None:
     repo_root = Path(__file__).resolve().parents[1]
     resource_root = repo_root / "src" / "rqmd" / "resources" / "bundle" / ".github" / "skills"
@@ -1105,13 +1144,20 @@ def test_RQMD_AI_012_install_bundle_dry_run_preview(tmp_path: Path) -> None:
     assert payload["mode"] == "install-agent-bundle"
     assert payload["dry_run"] is True
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 18
+    assert payload["changed_count"] == 25
     assert payload["generated_skill_files"] == [
         ".github/skills/dev/SKILL.md",
         ".github/skills/test/SKILL.md",
     ]
     assert ".github/copilot-instructions.md" in payload["created_files"]
     assert ".github/agents/rqmd-dev.agent.md" in payload["created_files"]
+    assert ".github/prompts/brainstorm.prompt.md" in payload["created_files"]
+    assert ".github/prompts/commit-and-go.prompt.md" in payload["created_files"]
+    assert ".github/prompts/docs-pass.prompt.md" in payload["created_files"]
+    assert ".github/prompts/go.prompt.md" in payload["created_files"]
+    assert ".github/prompts/next.prompt.md" in payload["created_files"]
+    assert ".github/prompts/pin.prompt.md" in payload["created_files"]
+    assert ".github/prompts/ship-check.prompt.md" in payload["created_files"]
     assert ".github/skills/dev/SKILL.md" in payload["created_files"]
     assert ".github/skills/test/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-brainstorm/SKILL.md" in payload["created_files"]
@@ -1154,7 +1200,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     )
     assert first.exit_code == 0
     first_payload = json.loads(first.output)
-    assert first_payload["changed_count"] == 25
+    assert first_payload["changed_count"] == 32
     assert (repo / ".github" / "copilot-instructions.md").exists()
     _assert_default_closeout_guidance(
         (repo / ".github" / "copilot-instructions.md").read_text(encoding="utf-8")
@@ -1167,6 +1213,13 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     assert ".github/agents/rqmd-history.agent.md" in first_payload["created_files"]
     assert ".github/agents/rqmd-dev-longrunning.agent.md" in first_payload["created_files"]
     assert ".github/agents/rqmd-dev-easy.agent.md" in first_payload["created_files"]
+    assert ".github/prompts/brainstorm.prompt.md" in first_payload["created_files"]
+    assert ".github/prompts/commit-and-go.prompt.md" in first_payload["created_files"]
+    assert ".github/prompts/docs-pass.prompt.md" in first_payload["created_files"]
+    assert ".github/prompts/go.prompt.md" in first_payload["created_files"]
+    assert ".github/prompts/next.prompt.md" in first_payload["created_files"]
+    assert ".github/prompts/pin.prompt.md" in first_payload["created_files"]
+    assert ".github/prompts/ship-check.prompt.md" in first_payload["created_files"]
     assert ".github/agents/rqmd-bundle-maintainer.agent.md" not in first_payload["created_files"]
     assert ".github/skills/rqmd-init/SKILL.md" in first_payload["created_files"]
     assert ".github/skills/rqmd-init-legacy/SKILL.md" in first_payload["created_files"]
@@ -1190,7 +1243,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     second_payload = json.loads(second.output)
     _assert_schema_version(second_payload)
     assert second_payload["changed_count"] == 0
-    assert len(second_payload["skipped_existing"]) == 25
+    assert len(second_payload["skipped_existing"]) == 32
 
     custom = repo / ".github" / "copilot-instructions.md"
     custom.write_text("# custom\n", encoding="utf-8")
@@ -1234,7 +1287,7 @@ def test_RQMD_AI_012_install_bundle_without_requirements_docs(tmp_path: Path) ->
     payload = json.loads(result.output)
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
-    assert payload["changed_count"] == 25
+    assert payload["changed_count"] == 32
 
 
 def test_RQMD_AI_012_install_bundle_positional_alias(tmp_path: Path) -> None:
@@ -1260,7 +1313,7 @@ def test_RQMD_AI_012_install_bundle_positional_alias(tmp_path: Path) -> None:
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 18
+    assert payload["changed_count"] == 25
 
 
 def test_RQMD_AI_019_install_bundle_generates_project_dev_and_test_skills(tmp_path: Path) -> None:
@@ -1632,6 +1685,13 @@ def test_RQMD_AI_017_installed_bundle_reports_generated_dev_and_test_skills(tmp_
 
     assert result.exit_code == 0
     payload = json.loads(result.output)
+    assert ".github/prompts/brainstorm.prompt.md" in payload["bundle_installation"]["active_definition_files"]
+    assert ".github/prompts/commit-and-go.prompt.md" in payload["bundle_installation"]["active_definition_files"]
+    assert ".github/prompts/docs-pass.prompt.md" in payload["bundle_installation"]["active_definition_files"]
+    assert ".github/prompts/go.prompt.md" in payload["bundle_installation"]["active_definition_files"]
+    assert ".github/prompts/next.prompt.md" in payload["bundle_installation"]["active_definition_files"]
+    assert ".github/prompts/pin.prompt.md" in payload["bundle_installation"]["active_definition_files"]
+    assert ".github/prompts/ship-check.prompt.md" in payload["bundle_installation"]["active_definition_files"]
     assert ".github/skills/dev/SKILL.md" in payload["bundle_installation"]["active_definition_files"]
     assert ".github/skills/test/SKILL.md" in payload["bundle_installation"]["active_definition_files"]
 

@@ -64,6 +64,7 @@ rqmd = [
   "resources/bundle/full.txt",
   "resources/bundle/templates/*.md",
   "resources/bundle/.github/copilot-instructions.md",
+  "resources/bundle/.github/prompts/*.prompt.md",
   "resources/bundle/.github/agents/*.md",
   "resources/bundle/.github/skills/*/SKILL.md"
 ]

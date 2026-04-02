@@ -9,13 +9,13 @@ Legacy equivalent:
 `rqmd-ai --install-agent-bundle`
 
 Presets:
-- full (default): `.github/copilot-instructions.md`, `.github/agents/rqmd-dev.agent.md`, `.github/agents/rqmd-dev-longrunning.agent.md`, `.github/agents/rqmd-dev-easy.agent.md`, the rqmd workflow skills under `.github/skills/`, `.github/agents/rqmd-explore.agent.md`, `.github/agents/rqmd-requirements.agent.md`, `.github/agents/rqmd-docs.agent.md`, `.github/agents/rqmd-history.agent.md`, and this README
-- minimal: `.github/copilot-instructions.md`, `.github/agents/rqmd-dev.agent.md`, and the rqmd workflow skills under `.github/skills/`
+- full (default): `.github/copilot-instructions.md`, `.github/agents/rqmd-dev.agent.md`, the bundled prompt suite under `.github/prompts/`, the rqmd workflow skills under `.github/skills/`, specialized full-preset agents under `.github/agents/`, and this README
+- minimal: `.github/copilot-instructions.md`, `.github/agents/rqmd-dev.agent.md`, the bundled prompt suite under `.github/prompts/`, and the rqmd workflow skills under `.github/skills/`
 
 Operational notes:
 - Re-run is idempotent.
 - Existing files are preserved unless `--overwrite-existing` is used.
-- Skills improve workflow discovery and slash-command reuse, but they do not bypass terminal or tool approval prompts.
+- Prompts and skills improve workflow discovery and slash-command reuse, but they do not bypass terminal or tool approval prompts.
 - The rqmd source repository also keeps a repo-local `rqmd-bundle-maintainer` agent for maintaining the bundle itself; `rqmd-ai install` does not install that self-maintenance agent into target workspaces.
 - Bundle install also generates project-local `.github/skills/dev/SKILL.md` and `.github/skills/test/SKILL.md` scaffolds based on detected repository commands; review and customize them after install.
 
@@ -23,6 +23,15 @@ Useful commands:
 - `rqmd-ai install`
 - `rqmd-ai i --bundle-preset minimal --dry-run`
 - `rqmd-ai --install-agent-bundle --bundle-preset minimal`
+
+Installed prompts:
+- `/go`: start or continue the standard rqmd implementation loop through `rqmd-dev`
+- `/commit-and-go`: keep going through one or more validated slices and create a clean git commit after each slice
+- `/next`: pick the next highest-priority feasible rqmd slice and work it through validation
+- `/brainstorm`: turn loose ideas or notes into ranked rqmd proposals before implementation
+- `/docs-pass`: run a focused documentation quality or sync pass for rqmd work
+- `/pin`: capture durable context or decision notes into a maintainable pinned note
+- `/ship-check`: run a release or handoff readiness pass with verification and blocker review
 
 Installed workflow skills:
 - `/rqmd-brainstorm`
@@ -46,3 +55,9 @@ Installed agents in the full preset:
 - `rqmd-requirements`: backlog, status, priority, and requirement-doc maintenance agent
 - `rqmd-docs`: README, changelog, and requirement-doc sync agent
 - `rqmd-history`: timeline, history-ref, compare-refs, and recovery-planning agent
+
+Recommended default:
+- Start with `rqmd-dev` plus prompts such as `/go`.
+- Use `/go 10`-style numeric arguments when you want one prompt run to cover multiple validated slices without enabling automatic commits.
+- Use `/commit-and-go 10` when you explicitly want the agent to commit each validated slice during a longer unattended run.
+- Treat the extra full-preset agents as specialized or advanced modes when you want a materially different execution style.

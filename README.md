@@ -1,14 +1,61 @@
 # rqmd
 
-Reusable requirements and acceptance-requirements workflow CLI (command-line interface).
+`rqmd` is a CLI tool for Requirements Driven Development (RDD).
 
-rqmd: Human-readable + AI-readable requirements for Requirements Driven Development (RDD).
+Works great with AI assisted workflows, but also fully functional as a standalone CLI for teams who want to keep AI out of their requirements process.
 
 Project links:
 - [GitHub repository](https://github.com/example/rqmd)
 - [PyPI package](https://pypi.org/project/rqmd/)
 
-This package extracts the markdown status-tracking workflow used in this repository into a portable Python package that can be copied to other projects and eventually published to PyPI.
+## Getting started
+
+If you want the fastest path to a working rqmd setup:
+
+1. Install `rqmd` with `uv`, `pipx`, or `pip`.
+2. In a new or existing repository, run `rqmd-ai init`.
+3. Install the rqmd AI bundle if you want the prompt and skill shortcuts in chat.
+
+Main prompt shortcuts after bundle install:
+
+- `/go`: start or continue the standard rqmd implementation loop
+- `/commit-and-go`: checkpoint existing related work if needed, then keep going and create a clean commit after each validated slice
+- `/next`: pick the highest-priority feasible next slice and work it through validation
+- `/brainstorm`: turn loose ideas or notes into ranked rqmd proposals before implementation
+- `/docs-pass`: run a focused documentation quality or sync pass
+- `/pin`: capture durable context or decision notes into a maintainable pinned note
+- `/ship-check`: run a release or handoff readiness pass and call out blockers
+
+> **ℹ️ Info:** `/go 10` means work through up to 10 validated slices before stopping. `/commit-and-go 10` means do the same thing, but create a clean git commit after each validated slice.
+
+## Install
+
+Recommended with `uv`:
+
+```bash
+uv tool install rqmd
+```
+
+With `pipx`:
+
+```bash
+pipx install rqmd
+```
+
+With `pip`:
+
+```bash
+python -m pip install rqmd
+```
+
+Then verify the install:
+
+```bash
+rqmd --help
+rqmd-ai --help
+```
+
+> **ℹ️ Info:** `reqmd` and `reqmd-ai` remain available as compatibility aliases, but the primary supported commands are `rqmd` and `rqmd-ai`.
 
 ## What this tool does
 
@@ -24,6 +71,10 @@ This package extracts the markdown status-tracking workflow used in this reposit
 Summary: 10💡 2🔧 3✅ 0⚠️ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 ```
+
+Rendered:
+
+> Summary: 10💡 2🔧 3✅ 0⚠️ 0⛔ 1🗑️
 
 - Supports interactive status editing with keyboard navigation.
 - Supports non-interactive updates for automation/agents.
@@ -43,6 +94,10 @@ Requirement bodies can be as short as a title plus status line, or include riche
 Summary: 10💡 2🔧 3✅ 0⚠️ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 ```
+
+Rendered:
+
+> Summary: 10💡 2🔧 3✅ 0⚠️ 0⛔ 1🗑️
 
 ### Tree output is fast to scan during triage
 
@@ -111,13 +166,19 @@ Example requirement with priority:
 - **Priority:** 🔴 P0 - Critical
 ```
 
+Rendered:
+
+> ### RQ-001: Core API endpoint
+> - **Status:** 🔧 Implemented
+> - **Priority:** 🔴 P0 - Critical
+
 Priority is optional; requirements without a priority line parse successfully with `priority: None`.
 
 Priority values are normalized case-insensitively, so `p0`, `P0`, `critical`, and `CRITICAL` all map to `🔴 P0 - Critical`.
 
 Project config can still override these built-ins with `.rqmd.yml`, `.rqmd.json`, or standalone status/priority catalog files.
 
-## Install (local development)
+## Development install (from source)
 
 From this folder:
 
@@ -491,7 +552,7 @@ rqmd-ai --json --workflow-mode init --show-guide
 
 `--workflow-mode brainstorm` emits requirement-first planning guidance for turning notes into ranked proposals. `--workflow-mode implement` emits the execution loop for working the highest-priority proposed 1-3 items at a time, then re-checking `rqmd`, summaries, tests, changelog, and remaining priorities before the next batch. `rqmd-ai init --chat` is the preferred onboarding entrypoint: it routes between starter scaffold mode and legacy-style repository seeding, emits a copy/paste AI handoff prompt, and keeps `--workflow-mode init-legacy` available only as a compatibility surface.
 
-By default, `rqmd-ai --json` now includes the packaged skill and agent definitions from `resources/bundle` when the rqmd bundle is not installed in the workspace. If the bundle is already installed, the guide payload stays concise and reports the active local definition files instead of duplicating the packaged content.
+By default, `rqmd-ai --json` now includes the packaged prompt, skill, and agent definitions from `resources/bundle` when the rqmd bundle is not installed in the workspace. If the bundle is already installed, the guide payload stays concise and reports the active local definition files instead of duplicating the packaged content.
 
 > **ℹ️ Info:** In this section, a "bundle" means the installable set of Copilot instructions, skills, and agents that rqmd can scaffold into a repository.
 
@@ -518,7 +579,7 @@ That two-step flow is the safest way to use `rqmd-ai`: inspect the preview first
 
 ### Install the Copilot bundle
 
-Install a standard AI agent/skill instruction bundle (minimal or full preset):
+Install a standard AI prompt/agent/skill instruction bundle (minimal or full preset):
 
 ```bash
 rqmd-ai --json --install-agent-bundle --bundle-preset minimal --dry-run
@@ -532,6 +593,8 @@ Bundle installs are idempotent by default and preserve existing customized instr
 
 Bundle install also scaffolds project-local `.github/skills/dev/SKILL.md` and `.github/skills/test/SKILL.md` files based on detected repository commands. Treat those as a starting point: review and tighten the generated build, smoke, and validation commands so future `rqmd-dev` runs can rely on them instead of guessing.
 
+The default bundle shape is now single-agent-first: `rqmd-dev` stays the main implementation agent, the bundled prompts provide the main slash-command entrypoints for common rqmd actions, and the extra full-preset agents stay available as specialized modes when you intentionally want a different execution style.
+
 Bundle installation can also be driven through a structured chat-style preview with `rqmd-ai install --json --bundle-preset minimal --chat --dry-run`. That payload now includes grouped interview questions, multi-select command suggestions, custom-answer prompts, skip support, detected command sources, recommended choices, safe defaults, and preview content for the generated `/dev` and `/test` skills. Repeat `--answer FIELD=VALUE` to select multiple suggestions or add custom commands before writing.
 
 ### Use rqmd-ai for new-project onboarding
@@ -540,11 +603,21 @@ New-project flow: run `rqmd init`, paste the output into your AI chat, let that 
 
 Legacy-style repository seeding can still be previewed with `rqmd-ai init --chat --json --legacy`. The grouped interview covers catalog setup, developer workflows, repository understanding, backlog handling, and review notes, and its options include recommended choices, detected-from hints, and safe defaults. The generated starter catalog seeds a requirements index, developer workflow requirements, repository-area seed files, and an issue backlog file when `gh issue list` succeeds.
 
-The installed bundle now includes Copilot skills for `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-init`, `/rqmd-init-legacy`, `/rqmd-status-maintenance`, `/rqmd-docs`, `/rqmd-doc-sync`, `/rqmd-changelog`, `/rqmd-history`, `/rqmd-pin`, `/rqmd-bundle`, and `/rqmd-verify` so teams can reuse the core planning, backlog selection, context export, implementation, unified init, compatibility legacy bootstrap, documentation-quality, docs-sync, changelog-authoring, history, pinning durable project context, bundle-management, and verification loops without rewriting those instructions in every workspace. Those skills help with discovery and consistency, but they do not auto-approve terminal commands or bypass Copilot tool approval prompts.
+Installed prompt shortcuts:
+
+- `/go`: start or continue the standard rqmd implementation loop; `/go 10` means work through up to 10 validated slices before stopping
+- `/commit-and-go`: work through one or more validated slices and create a clean git commit after each slice; `/commit-and-go 10` means keep going for up to 10 validated committed slices
+- `/next`: pick the highest-priority feasible next slice and work it through validation
+- `/brainstorm`: turn loose ideas or notes into ranked rqmd proposals before implementation
+- `/docs-pass`: run a focused documentation quality or sync pass
+- `/pin`: capture durable context or decision notes into a maintainable pinned note
+- `/ship-check`: run a release or handoff readiness pass and call out blockers
+
+The installed bundle also includes Copilot skills for `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-init`, `/rqmd-init-legacy`, `/rqmd-status-maintenance`, `/rqmd-docs`, `/rqmd-doc-sync`, `/rqmd-changelog`, `/rqmd-history`, `/rqmd-pin`, `/rqmd-bundle`, and `/rqmd-verify` so teams can reuse the core planning, backlog selection, context export, implementation, unified init, compatibility legacy bootstrap, documentation-quality, docs-sync, changelog-authoring, history, pinning durable project context, bundle-management, and verification loops without rewriting those instructions in every workspace. Prompts and skills help with discovery and consistency, but they do not auto-approve terminal commands or bypass Copilot tool approval prompts.
 
 For repositories that use `/rqmd-pin`, a practical default is `docs/pins/README.md` as a lightweight index plus one markdown file per topic started from `docs/pins/pin-template.md`.
 
-The full bundle preset also installs specialized agents for exploration, requirement maintenance, docs sync, history investigation, and the `rqmd-dev-longrunning` and `rqmd-dev-easy` implementation variants so teams can pick a working style without losing the shared rqmd workflow contract.
+The full bundle preset also installs specialized agents for exploration, requirement maintenance, docs sync, history investigation, and the `rqmd-dev-longrunning` and `rqmd-dev-easy` implementation variants so teams can opt into a different working style without losing the shared rqmd workflow contract.
 
 Bundle workflows assume the core lifecycle states remain representable in your status catalog. Custom labels are fine, but if you want `rqmd-ai` guidance, examples, and installed skills to work well out of the box, keep lifecycle equivalents for `💡 Proposed`, `🔧 Implemented`, `✅ Verified`, `⛔ Blocked`, and `🗑️ Deprecated`.
 

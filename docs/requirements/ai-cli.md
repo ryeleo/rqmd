@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 37🔧 2✅ 0⚠️ 0⛔ 3🗑️
+Summary: 0💡 40🔧 2✅ 0⚠️ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -378,3 +378,30 @@ Summary: 0💡 37🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - So that larger pin collections can grow into an indexed notes area without turning into another hard-to-navigate dump, with `/rqmd-docs` handling any follow-on structure and navigation cleanup when needed.
 - So that pinned information can follow a readable, reviewable format instead of becoming ad hoc scratch text.
 - So that rqmd can grow a lightweight memory or note-pinning workflow without forcing one storage layout on every repository.
+
+### RQMD-AI-043: Prompt-first single-agent bundle entrypoints
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a maintainer using the installed rqmd AI bundle in day-to-day work
+- I want rqmd to install focused prompt entrypoints such as `/go` alongside one primary implementation agent
+- So that the default user experience can stay centered on `rqmd-dev` instead of forcing users to choose among several agent variants up front.
+- So that bundled prompt files are exported, detected, and installed as first-class definitions alongside instructions, skills, and agents.
+- So that specialized agent variants can remain available as advanced modes without becoming the main discovery surface for common implementation work.
+
+### RQMD-AI-044: Installed prompt suite for common rqmd actions
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a maintainer using the rqmd AI bundle day to day
+- I want rqmd to ship a visible suite of focused prompts for common actions such as go, next, brainstorm, docs passes, pinning, and ship checks
+- So that I can discover and invoke the most common rqmd workflows quickly without memorizing the lower-level skill names or choosing among multiple agents up front.
+- So that the installed prompts feel like ergonomic entrypoints layered on top of the primary `rqmd-dev` agent and the underlying rqmd workflow skills.
+- So that the README and bundle docs list the installed prompt set clearly enough for users to browse the available shortcuts in one place.
+
+### RQMD-AI-045: Count-aware go prompts and commit-per-slice variant
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a maintainer driving rqmd through prompt shortcuts such as `/go`
+- I want prompt arguments like `/go 10` to mean “work through up to 10 validated slices” and a separate `/commit-and-go` prompt for explicitly commit-authorized long runs
+- So that long-running prompt usage can be more expressive than a single slice without forcing me to switch to a different agent variant.
+- So that `/go` remains the non-commit default while `/commit-and-go` clearly opts into creating a clean commit after each validated slice.
+- So that users returning after a long unattended run can inspect the resulting commit history and understand how the work progressed over time.
