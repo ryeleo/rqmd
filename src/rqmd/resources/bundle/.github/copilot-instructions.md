@@ -13,6 +13,8 @@ AI workflow defaults:
 - Start with read-only context export via rqmd-ai.
 - Propose updates before apply (`--update ...` without `--write`).
 - Apply only after review with `--write`.
+- For `rqmd-ai --json` workflows, run commands in the foreground and parse stdout as JSON while keeping stderr separate for diagnostics.
+- On Windows shells, avoid mixing or reformatting streams when parsing JSON output; check the process exit code before JSON parsing.
 - Keep the shared rqmd workflow shape recognizable across projects unless the repository intentionally overrides it.
 - Preserve the requirement-first flow of context export -> requirements/docs updates -> preview -> apply -> verify instead of inventing ad hoc sequences for each repository.
 - When drafting or editing requirement text, prefer a short user-story block (`As a ...`, `I want ...`, `So that ...`) plus Given/When/Then acceptance bullets when both add value.

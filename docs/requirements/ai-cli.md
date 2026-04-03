@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 40🔧 2✅ 0⚠️ 0⛔ 3🗑️
+Summary: 0💡 42🔧 2✅ 0⚠️ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -98,6 +98,7 @@ Summary: 0💡 40🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - So that installation supports a dry-run preview and idempotent re-run behavior
 - So that teams can choose a minimal or full preset while preserving existing customized instruction files unless explicit overwrite is requested
 - So that installed guidance references local commands and requirement file conventions in this repository layout.
+- So that bundled guidance explicitly teaches foreground `rqmd-ai --json` execution with stdout-only parsing and separate stderr handling for cross-shell reliability, including Windows-heavy workflows.
 
 ### RQMD-AI-013: Requirement-first AI workflow guidance
 - **Status:** 🔧 Implemented
@@ -251,6 +252,7 @@ Summary: 0💡 40🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - So that `rqmd-ai init --chat` emits the concise AI handoff prompt plus the machine-readable interview payload needed for a receiving chat agent to drive the rest of initialization.
 - So that the command can route through the unified `init` heuristics and still report which strategy it selected for the repository.
 - So that users who do want to stay fully inside terminal automation can still run explicit non-chat variants when needed.
+- So that init-chat onboarding includes a first-class status-scheme choice with built-in defaults (for example canonical, lean, delivery) and an option to copy statuses from an existing project config path.
 
 ### RQMD-AI-030: Default init guidance favors AI chat flow
 - **Status:** 🔧 Implemented
@@ -405,3 +407,22 @@ Summary: 0💡 40🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - So that long-running prompt usage can be more expressive than a single slice without forcing me to switch to a different agent variant.
 - So that `/go` remains the non-commit default while `/commit-and-go` clearly opts into creating a clean commit after each validated slice.
 - So that users returning after a long unattended run can inspect the resulting commit history and understand how the work progressed over time.
+
+### RQMD-AI-046: Workspace bundle provenance and refresh metadata
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a maintainer installing or refreshing the rqmd AI bundle across multiple repositories
+- I want each workspace bundle install to record which rqmd version and JSON schema version generated the local bundle files
+- So that I can tell at a glance which rqmd release last installed or refreshed the prompts, skills, and instructions in that repository.
+- So that `rqmd-ai` guide and install output can surface the running rqmd version alongside the installed bundle metadata instead of forcing me to infer it from file timestamps or changelog guesses.
+- So that upgrading rqmd has a clear follow-up workflow: run `rqmd-ai upgrade` to refresh confidently managed files while leaving customized files untouched by default.
+
+### RQMD-AI-047: Single-agent-first bundle install defaults with explicit reinstall/upgrade commands
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a maintainer expecting rqmd AI setup to feel prompt-and-skill-first instead of agent-heavy
+- I want default `rqmd-ai install` behavior to keep one primary implementation agent and offer explicit `reinstall`/`upgrade` commands for bundle lifecycle operations
+- So that normal bundle installs avoid surprising users with extra specialized agent files when they wanted the default single-agent experience.
+- So that `rqmd-ai reinstall` and `rqmd-ai upgrade` provide obvious command-level workflows for refreshing managed bundle files without forcing users to remember flag combinations.
+- So that `upgrade` can preserve the currently installed preset by default while still allowing explicit preset selection when needed.
+- So that `upgrade` only overwrites files that rqmd can confidently identify as managed and unchanged since install, while `reinstall` remains the explicit reset path for rqmd-managed files only.

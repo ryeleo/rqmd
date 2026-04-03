@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 
 from click.testing import CliRunner
+
 from rqmd import ai_cli
 from rqmd.ai_cli import _parse_frontmatter, _parse_skill_frontmatter, main
 from rqmd.cli import main as rqmd_main
@@ -73,6 +74,12 @@ def _assert_dual_requirement_guidance(text: str) -> None:
     assert "keep them semantically aligned" in text
 
 
+def _assert_json_output_capture_guidance(text: str) -> None:
+    assert "run commands in the foreground" in text
+    assert "parse stdout as JSON" in text
+    assert "keeping stderr separate" in text
+
+
 def test_RQMD_AI_001_and_002_default_guide_is_read_only_json(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"
@@ -96,8 +103,13 @@ def test_RQMD_AI_001_and_002_default_guide_is_read_only_json(tmp_path: Path) -> 
     assert payload["mode"] == "guide"
     assert payload["workflow_mode"] == "general"
     assert payload["read_only"] is True
+    assert payload["tooling"]["json_schema_version"] == JSON_SCHEMA_VERSION
+    assert re.fullmatch(r"\d+\.\d+\.\d+|unknown", str(payload["tooling"]["rqmd_version"]))
     assert payload["bundle_installation"]["installed"] is False
     assert payload["bundle_installation"]["state"] == "absent"
+    assert payload["bundle_installation"]["metadata_file"] is None
+    assert payload["bundle_installation"]["installed_by_rqmd_version"] is None
+    assert payload["bundle_installation"]["matches_running_rqmd_version"] is None
     assert payload["bundled_definitions"]["source"] == "packaged-resources"
     bundled_paths = {entry["path"] for entry in payload["bundled_definitions"]["files"]}
     assert ".github/prompts/brainstorm.prompt.md" in bundled_paths
@@ -110,8 +122,6 @@ def test_RQMD_AI_001_and_002_default_guide_is_read_only_json(tmp_path: Path) -> 
     assert ".github/skills/rqmd-export-context/SKILL.md" in bundled_paths
     assert ".github/skills/rqmd-pin/SKILL.md" in bundled_paths
     assert ".github/agents/rqmd-dev.agent.md" in bundled_paths
-    assert ".github/agents/rqmd-dev-longrunning.agent.md" in bundled_paths
-    assert ".github/agents/rqmd-dev-easy.agent.md" in bundled_paths
     _assert_schema_version(payload)
 
 
@@ -205,7 +215,7 @@ def test_RQMD_AI_001e_init_chat_prefers_starter_scaffold_for_sparse_repo(tmp_pat
     proposed_paths = [entry["path"] for entry in payload["proposed_files"]]
     assert ".rqmd.yml" in proposed_paths
     assert payload["suggested_commands"]["init_preview"].startswith("rqmd-ai init --chat --json")
-    assert payload["suggested_commands"]["bundle_preview"].startswith("rqmd-ai install --bundle-preset full --chat --json --dry-run")
+    assert payload["suggested_commands"]["bundle_preview"].startswith("rqmd-ai install --bundle-preset minimal --chat --json --dry-run")
     assert payload["suggested_commands"]["init_preview_artifact"].startswith("rqmd-ai init --chat --json")
     assert "--json-output-file" in payload["suggested_commands"]["init_preview_artifact"]
     assert "--json-output-file" in payload["handoff_prompt"]
@@ -229,6 +239,10 @@ def test_RQMD_AI_001f_init_chat_handoff_prompt_skips_bundle_followup_when_bundle
             "state": "minimal",
             "preset": "minimal",
             "active_definition_files": [],
+            "metadata_file": None,
+            "bundle_metadata": None,
+            "installed_by_rqmd_version": None,
+            "matches_running_rqmd_version": None,
         },
     )
 
@@ -358,6 +372,9 @@ def test_RQMD_AI_017_default_guide_suppresses_packaged_definitions_when_bundle_i
         (repo / ".github" / "copilot-instructions.md").read_text(encoding="utf-8")
     )
     _assert_dual_requirement_guidance(
+        (repo / ".github" / "copilot-instructions.md").read_text(encoding="utf-8")
+    )
+    _assert_json_output_capture_guidance(
         (repo / ".github" / "copilot-instructions.md").read_text(encoding="utf-8")
     )
 
@@ -552,6 +569,7 @@ def test_RQMD_AI_023_init_legacy_plan_seeds_reviewable_requirements(tmp_path: Pa
     assert payload["read_only"] is True
     assert payload["requirements_dir"] == "docs/requirements"
     assert payload["starter_prefix"] == "RQMD"
+    assert payload["status_scheme"] == "canonical"
     assert payload["issue_discovery"]["used"] is False
     assert payload["issue_discovery"]["reason"] == "gh CLI not found"
     proposed_paths = [entry["path"] for entry in payload["proposed_files"]]
@@ -560,6 +578,7 @@ def test_RQMD_AI_023_init_legacy_plan_seeds_reviewable_requirements(tmp_path: Pa
     assert "docs/requirements/developer-workflows.md" in proposed_paths
     config_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == ".rqmd.yml")
     assert "id_prefix: RQMD" in config_entry["content"]
+    assert "name: Janky" in config_entry["content"]
     workflow_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == "docs/requirements/developer-workflows.md")
     assert "This file was generated by `rqmd-ai init --chat --legacy` from detected repository commands." in workflow_entry["content"]
     assert "npm run dev" in workflow_entry["content"]
@@ -1144,12 +1163,14 @@ def test_RQMD_AI_012_install_bundle_dry_run_preview(tmp_path: Path) -> None:
     assert payload["mode"] == "install-agent-bundle"
     assert payload["dry_run"] is True
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 25
+    assert payload["changed_count"] == 26
+    assert payload["metadata_file"] == ".github/rqmd-bundle.json"
     assert payload["generated_skill_files"] == [
         ".github/skills/dev/SKILL.md",
         ".github/skills/test/SKILL.md",
     ]
     assert ".github/copilot-instructions.md" in payload["created_files"]
+    assert ".github/rqmd-bundle.json" in payload["created_files"]
     assert ".github/agents/rqmd-dev.agent.md" in payload["created_files"]
     assert ".github/prompts/brainstorm.prompt.md" in payload["created_files"]
     assert ".github/prompts/commit-and-go.prompt.md" in payload["created_files"]
@@ -1200,19 +1221,29 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     )
     assert first.exit_code == 0
     first_payload = json.loads(first.output)
-    assert first_payload["changed_count"] == 32
+    assert first_payload["changed_count"] == 27
     assert (repo / ".github" / "copilot-instructions.md").exists()
+    metadata_path = repo / ".github" / "rqmd-bundle.json"
+    assert metadata_path.exists()
+    metadata_payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+    assert metadata_payload["bundle_metadata_version"] == 1
+    assert metadata_payload["bundle_preset"] == "full"
+    assert metadata_payload["json_schema_version"] == JSON_SCHEMA_VERSION
+    assert isinstance(metadata_payload["managed_files"], dict)
+    assert ".github/copilot-instructions.md" in metadata_payload["managed_files"]
+    assert re.fullmatch(r"\d+\.\d+\.\d+|unknown", str(metadata_payload["rqmd_version"]))
     _assert_default_closeout_guidance(
         (repo / ".github" / "copilot-instructions.md").read_text(encoding="utf-8")
     )
     _assert_dual_requirement_guidance(
         (repo / ".github" / "copilot-instructions.md").read_text(encoding="utf-8")
     )
-    assert ".github/agents/rqmd-requirements.agent.md" in first_payload["created_files"]
-    assert ".github/agents/rqmd-docs.agent.md" in first_payload["created_files"]
-    assert ".github/agents/rqmd-history.agent.md" in first_payload["created_files"]
-    assert ".github/agents/rqmd-dev-longrunning.agent.md" in first_payload["created_files"]
-    assert ".github/agents/rqmd-dev-easy.agent.md" in first_payload["created_files"]
+    assert ".github/agents/rqmd-requirements.agent.md" not in first_payload["created_files"]
+    assert ".github/agents/rqmd-docs.agent.md" not in first_payload["created_files"]
+    assert ".github/agents/rqmd-history.agent.md" not in first_payload["created_files"]
+    assert ".github/agents/rqmd-dev-longrunning.agent.md" not in first_payload["created_files"]
+    assert ".github/agents/rqmd-dev-easy.agent.md" not in first_payload["created_files"]
+    assert ".github/agents/README.md" in first_payload["created_files"]
     assert ".github/prompts/brainstorm.prompt.md" in first_payload["created_files"]
     assert ".github/prompts/commit-and-go.prompt.md" in first_payload["created_files"]
     assert ".github/prompts/docs-pass.prompt.md" in first_payload["created_files"]
@@ -1243,7 +1274,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     second_payload = json.loads(second.output)
     _assert_schema_version(second_payload)
     assert second_payload["changed_count"] == 0
-    assert len(second_payload["skipped_existing"]) == 32
+    assert len(second_payload["skipped_existing"]) == 27
 
     custom = repo / ".github" / "copilot-instructions.md"
     custom.write_text("# custom\n", encoding="utf-8")
@@ -1263,9 +1294,11 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     overwrite_payload = json.loads(overwrite.output)
     _assert_schema_version(overwrite_payload)
     assert ".github/copilot-instructions.md" in overwrite_payload["overwritten_files"]
+    assert ".github/rqmd-bundle.json" in overwrite_payload["overwritten_files"]
     assert custom.read_text(encoding="utf-8") != "# custom\n"
     _assert_default_closeout_guidance(custom.read_text(encoding="utf-8"))
     _assert_dual_requirement_guidance(custom.read_text(encoding="utf-8"))
+    _assert_json_output_capture_guidance(custom.read_text(encoding="utf-8"))
 
 
 def test_RQMD_AI_012_install_bundle_without_requirements_docs(tmp_path: Path) -> None:
@@ -1287,7 +1320,7 @@ def test_RQMD_AI_012_install_bundle_without_requirements_docs(tmp_path: Path) ->
     payload = json.loads(result.output)
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
-    assert payload["changed_count"] == 32
+    assert payload["changed_count"] == 26
 
 
 def test_RQMD_AI_012_install_bundle_positional_alias(tmp_path: Path) -> None:
@@ -1313,7 +1346,271 @@ def test_RQMD_AI_012_install_bundle_positional_alias(tmp_path: Path) -> None:
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 25
+    assert payload["changed_count"] == 26
+
+
+def test_RQMD_AI_012_install_bundle_text_output_lists_created_files(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "install",
+            "--bundle-preset",
+            "minimal",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "rqmd-ai mode: install-agent-bundle" in result.output
+    assert "operation: install" in result.output
+    assert "created files:" in result.output
+    assert ".github/rqmd-bundle.json" in result.output
+    assert ".github/copilot-instructions.md" in result.output
+
+
+def test_RQMD_AI_012_install_bundle_text_output_lists_skipped_files(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    first = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "install",
+            "--bundle-preset",
+            "minimal",
+        ],
+    )
+    assert first.exit_code == 0, first.output
+
+    second = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "install",
+            "--bundle-preset",
+            "minimal",
+        ],
+    )
+
+    assert second.exit_code == 0, second.output
+    assert "changed files: 0" in second.output
+    assert "skipped existing files:" in second.output
+    assert "Re-run with `--overwrite-existing` to refresh the managed bundle files." in second.output
+
+
+def test_RQMD_AI_012_reinstall_command_overwrites_existing_bundle(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    initial = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "install",
+        ],
+    )
+    assert initial.exit_code == 0
+
+    reinstall = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "reinstall",
+        ],
+    )
+    assert reinstall.exit_code == 0
+    payload = json.loads(reinstall.output)
+    assert payload["operation"] == "reinstall"
+    assert payload["preset"] == "minimal"
+    assert payload["changed_count"] == 26
+    assert ".github/copilot-instructions.md" in payload["overwritten_files"]
+
+
+def test_RQMD_AI_012_upgrade_command_preserves_installed_preset(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    install_full = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "install",
+            "--bundle-preset",
+            "full",
+        ],
+    )
+    assert install_full.exit_code == 0
+
+    upgrade = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "upgrade",
+        ],
+    )
+    assert upgrade.exit_code == 0
+    payload = json.loads(upgrade.output)
+    assert payload["operation"] == "upgrade"
+    assert payload["preset"] == "full"
+    assert payload["changed_count"] == 27
+
+
+def test_RQMD_AI_012_upgrade_protects_customized_bundle_files(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    install = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "install",
+            "--bundle-preset",
+            "minimal",
+        ],
+    )
+    assert install.exit_code == 0
+
+    custom_file = repo / ".github" / "copilot-instructions.md"
+    custom_file.write_text("# my custom instructions\n", encoding="utf-8")
+
+    upgrade = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "upgrade",
+        ],
+    )
+    assert upgrade.exit_code == 0
+    payload = json.loads(upgrade.output)
+    assert payload["operation"] == "upgrade"
+    assert ".github/copilot-instructions.md" in payload["protected_existing"]
+    assert ".github/copilot-instructions.md" not in payload["overwritten_files"]
+    assert custom_file.read_text(encoding="utf-8") == "# my custom instructions\n"
+
+
+def test_RQMD_AI_012_reinstall_removes_only_rqmd_managed_files(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    install = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "install",
+            "--bundle-preset",
+            "full",
+        ],
+    )
+    assert install.exit_code == 0
+
+    unrelated_file = repo / ".github" / "my-team-notes.md"
+    unrelated_file.parent.mkdir(parents=True, exist_ok=True)
+    unrelated_file.write_text("keep me\n", encoding="utf-8")
+
+    reinstall = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "reinstall",
+            "--bundle-preset",
+            "minimal",
+        ],
+    )
+    assert reinstall.exit_code == 0
+    payload = json.loads(reinstall.output)
+    assert payload["operation"] == "reinstall"
+    assert ".github/agents/README.md" in payload["removed_files"]
+    assert unrelated_file.exists()
+
+
+def test_RQMD_AI_012_installed_bundle_reports_bundle_metadata_and_version_match(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    _write_demo_domain(criteria_dir / "demo.md")
+
+    runner = CliRunner()
+    install_result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--json",
+            "install",
+            "--bundle-preset",
+            "minimal",
+        ],
+    )
+    assert install_result.exit_code == 0
+
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    bundle_installation = payload["bundle_installation"]
+    assert bundle_installation["metadata_file"] == ".github/rqmd-bundle.json"
+    assert bundle_installation["bundle_metadata"]["bundle_preset"] == "minimal"
+    assert bundle_installation["bundle_metadata"]["json_schema_version"] == JSON_SCHEMA_VERSION
+    assert bundle_installation["installed_by_rqmd_version"] == payload["tooling"]["rqmd_version"]
+    assert bundle_installation["matches_running_rqmd_version"] is True
 
 
 def test_RQMD_AI_019_install_bundle_generates_project_dev_and_test_skills(tmp_path: Path) -> None:
@@ -1596,6 +1893,14 @@ def test_RQMD_AI_022b_init_starter_chat_recommends_project_specific_prefix(tmp_p
     assert starter_notes_question["label"] == "Starter scaffold notes"
     assert starter_notes_question["prompt"] == "What notes should guide the first refinement pass after the starter scaffold is created?"
     assert starter_notes_question["custom_answer_prompt"] == "Add another starter note."
+    status_scheme_question = next(
+        item for item in payload["interview"]["questions"] if item["field"] == "status_scheme"
+    )
+    assert status_scheme_question["label"] == "Status scheme"
+    assert status_scheme_question["selection_model"]["allow_custom"] is True
+    assert any(option["value"] == "canonical" and option["recommended"] is True for option in status_scheme_question["options"])
+    assert any(option["value"] == "lean" for option in status_scheme_question["options"])
+    assert any(option["value"] == "delivery" for option in status_scheme_question["options"])
 
 
 def test_RQMD_AI_023_init_legacy_answers_override_plan(tmp_path: Path, monkeypatch) -> None:
@@ -1623,6 +1928,8 @@ def test_RQMD_AI_023_init_legacy_answers_override_plan(tmp_path: Path, monkeypat
             "--answer",
             "id_prefix=AC",
             "--answer",
+            "status_scheme=lean",
+            "--answer",
             "dev_run=python -m demo.app",
             "--answer",
             "issue_backlog=skip-gh-issues",
@@ -1636,6 +1943,7 @@ def test_RQMD_AI_023_init_legacy_answers_override_plan(tmp_path: Path, monkeypat
     _assert_schema_version(payload)
     assert payload["requirements_dir"] == "requirements"
     assert payload["starter_prefix"] == "AC"
+    assert payload["status_scheme"] == "lean"
     assert payload["issue_discovery"]["used"] is False
     assert payload["issue_discovery"]["reason"] == "skipped by bootstrap interview"
     workflow_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == "requirements/developer-workflows.md")
@@ -1648,8 +1956,58 @@ def test_RQMD_AI_023_init_legacy_answers_override_plan(tmp_path: Path, monkeypat
     assert "These files were seeded from the repository's current structure, workflows, and optional issue backlog." in readme_entry["content"]
     assert "Bootstrap Interview Notes" in readme_entry["content"]
     assert "Generated from resources/init/README.md." in readme_entry["content"]
+    assert "## Project Tooling Metadata" in readme_entry["content"]
     assert "## Schema Reference" in readme_entry["content"]
     assert "filter-sub-domain" in readme_entry["content"]
+    config_entry = next(entry for entry in payload["proposed_files"] if entry["path"] == ".rqmd.yml")
+    assert "name: In Progress" in config_entry["content"]
+    assert "name: Janky" not in config_entry["content"]
+
+
+def test_RQMD_AI_022c_init_starter_can_copy_status_scheme_from_existing_file(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+    source = tmp_path / "old-project"
+    source.mkdir(parents=True)
+    source_config = source / ".rqmd.yml"
+    source_config.write_text(
+        """statuses:
+  - name: Planned
+    shortcode: PLN
+    emoji: "📝"
+  - name: QA Verified
+    shortcode: QAV
+    emoji: "🧪"
+priorities:
+  - name: P1 - Important
+    shortcode: P1
+    emoji: "🔥"
+""",
+        encoding="utf-8",
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "--project-root",
+            str(repo),
+            "--json",
+            "init",
+            "--write",
+            "--answer",
+            f"status_scheme={source_config}",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    _assert_schema_version(payload)
+    assert payload["status_scheme"].startswith("copy:")
+    config_text = (repo / ".rqmd.yml").read_text(encoding="utf-8")
+    assert "name: Planned" in config_text
+    assert "name: QA Verified" in config_text
+    assert "name: Proposed" not in config_text
 
 
 def test_RQMD_AI_017_installed_bundle_reports_generated_dev_and_test_skills(tmp_path: Path) -> None:

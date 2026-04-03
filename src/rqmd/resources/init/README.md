@@ -3,6 +3,8 @@
 This document is the source-of-truth index for rqmd requirements.
 Generated from resources/init/README.md.
 
+{{PROJECT_TOOLING_METADATA_SECTION}}
+
 ## How To Use
 
 ### Requirement Structure

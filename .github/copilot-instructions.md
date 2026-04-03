@@ -2,7 +2,7 @@
 
 Purpose:
 - Keep requirement docs, summaries, and status lines synchronized.
-- Prefer machine-readable workflows (`--json`; `--as-json` remains supported) for automation.
+- Prefer machine-readable workflows (`--json`) for automation.
 
 Repository conventions:
 - Requirements index: docs/requirements/README.md
@@ -32,7 +32,6 @@ AI workflow defaults:
 - Prefer the installed Copilot prompts and skills for repeatable workflows, such as `/go`, `/commit-and-go`, `/next`, `/brainstorm`, `/docs-pass`, `/pin`, `/ship-check`, `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-init`, `/rqmd-init-legacy`, `/rqmd-status-maintenance`, `/rqmd-docs`, `/rqmd-doc-sync`, `/rqmd-changelog`, `/rqmd-history`, `/rqmd-pin`, `/rqmd-bundle`, and `/rqmd-verify`.
 - The standard bundle install keeps `rqmd-dev` as the primary implementation agent, adds prompt entrypoints such as `/go` for common actions, and includes specialized agents for exploration, requirements, docs sync, history inspection, and optional advanced development modes. Use `--bundle-preset minimal` when you only want the lean bundle.
 - Bundle install also scaffolds project-local `/dev` and `/test` skills based on detected repository commands so implementation agents have a concrete starting point for build, smoke, and validation workflows.
-- This repository also keeps a local `rqmd-bundle-maintainer` agent for maintaining the bundle source itself; `rqmd-ai install` does not copy that self-maintenance agent into other workspaces.
 - Skills improve workflow discovery and reuse, but they do not bypass terminal/tool approval prompts.
 
 AI output defaults:

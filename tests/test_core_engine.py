@@ -613,6 +613,9 @@ def test_RQMD_core_017_bootstrap_readme_includes_tagline_and_links(tmp_path: Pat
     readme_text = (repo / "docs" / "requirements" / "README.md").read_text(encoding="utf-8")
     assert "This document is the source-of-truth index for rqmd requirements." in readme_text
     assert "Generated from resources/init/README.md." in readme_text
+    assert "## Project Tooling Metadata" in readme_text
+    assert "- `rqmd_version`: `" in readme_text
+    assert "- `json_schema_version`: `1.0.0`" in readme_text
     assert "- `⚠️ Janky`" in readme_text
 
 
@@ -809,12 +812,82 @@ def test_RQMD_core_016_init_scaffold_copies_template_content(tmp_path: Path) -> 
     starter_text = (repo / "docs" / "requirements" / "starter.md").read_text(encoding="utf-8")
 
     assert "Generated from resources/init/README.md." in index_text
+    assert "## Project Tooling Metadata" in index_text
+    assert "rqmd --sync-index-metadata --force-yes" in index_text
     assert "## Schema Reference" in index_text
     assert "This section is intentionally included in the generated requirements index" in index_text
     assert "filter-sub-domain" in index_text
     assert "Prefer pairing a short user story" in index_text
     assert "And this file content is sourced from resources/init/domain-example.md." in starter_text
     assert "I want a starter requirement that demonstrates both intent and acceptance detail" in starter_text
+
+
+def test_RQMD_core_033a_sync_index_metadata_adds_project_tooling_block(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    index_path = criteria_dir / "README.md"
+    index_path.write_text(
+        """# Requirements\n\nThis document is the source-of-truth index for rqmd requirements.\n\n## Requirement Documents\n\n- [Demo](demo.md)\n""",
+        encoding="utf-8",
+    )
+    (criteria_dir / "demo.md").write_text(
+        """# Demo\n\nScope: demo.\n\n### RQMD-DEMO-001: First\n- **Status:** 💡 Proposed\n""",
+        encoding="utf-8",
+    )
+    runner = CliRunner()
+    monkeypatch.setattr(cli.importlib_metadata, "version", lambda _name: "9.9.9")
+    monkeypatch.setattr("rqmd.markdown_io.importlib_metadata.version", lambda _name: "9.9.9")
+
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--sync-index-metadata",
+            "--force-yes",
+        ],
+    )
+
+    assert result.exit_code == 0
+    updated_text = index_path.read_text(encoding="utf-8")
+    assert "## Project Tooling Metadata" in updated_text
+    assert "- `rqmd_version`: `9.9.9`" in updated_text
+    assert "- `json_schema_version`: `1.0.0`" in updated_text
+
+
+def test_RQMD_core_033b_warns_when_requirements_index_metadata_mismatches(tmp_path: Path, monkeypatch) -> None:
+    repo = tmp_path / "repo"
+    criteria_dir = repo / "docs" / "requirements"
+    criteria_dir.mkdir(parents=True)
+    (criteria_dir / "README.md").write_text(
+        """# Requirements\n\nThis document is the source-of-truth index for rqmd requirements.\n\n## Project Tooling Metadata\n\nThis section records the rqmd tooling versions currently expected by this repository.\nRefresh it after upgrading rqmd by running `rqmd --sync-index-metadata --force-yes`.\n\n<!-- rqmd-project-metadata:start -->\n- `rqmd_version`: `0.0.1`\n- `json_schema_version`: `0.0.1`\n<!-- rqmd-project-metadata:end -->\n\n## Requirement Documents\n\n- [Demo](demo.md)\n""",
+        encoding="utf-8",
+    )
+    (criteria_dir / "demo.md").write_text(
+        """# Demo\n\nScope: demo.\n\n### RQMD-DEMO-001: First\n- **Status:** 💡 Proposed\n""",
+        encoding="utf-8",
+    )
+    runner = CliRunner()
+    monkeypatch.setattr(cli.importlib_metadata, "version", lambda _name: "9.9.9")
+    monkeypatch.setattr("rqmd.markdown_io.importlib_metadata.version", lambda _name: "9.9.9")
+
+    result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--docs-dir",
+            "docs/requirements",
+            "--verify-index",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Warning: requirements index metadata mismatch" in result.output
+    assert "run `rqmd --sync-index-metadata --force-yes`".lower() in result.output.lower()
 
 
 def test_RQMD_core_011b_init_scaffold_is_idempotent(tmp_path: Path) -> None:

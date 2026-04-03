@@ -130,6 +130,7 @@ starter_init:
   field_order:
     - requirements_dir
     - id_prefix
+    - status_scheme
     - starter_notes
   fields:
     requirements_dir:
@@ -144,6 +145,15 @@ starter_init:
     id_prefix:
       group: catalog_setup
       prompt: Which requirement ID prefix should the starter scaffold use?
+    status_scheme:
+      group: catalog_setup
+      label: Status scheme
+      prompt: Which default status scheme should rqmd scaffold into .rqmd.yml? You can also paste a prior project path to copy.
+      allow_multiple: false
+      allow_custom: true
+      allow_skip: true
+      first_selected_is_canonical: true
+      custom_answer_prompt: Type a status scheme key (canonical, lean, delivery) or a path like ../old-project/.rqmd.yml.
     starter_notes:
       group: review_notes
       label: Starter scaffold notes
@@ -157,6 +167,7 @@ legacy_init:
   field_order:
     - requirements_dir
     - id_prefix
+    - status_scheme
     - docs_review
     - source_grokking
     - test_grokking
@@ -182,6 +193,15 @@ legacy_init:
       allow_skip: false
       first_selected_is_canonical: true
       custom_answer_prompt: Type a custom requirement ID prefix.
+    status_scheme:
+      group: catalog_setup
+      label: Status scheme
+      prompt: Which default status scheme should legacy-init scaffold into .rqmd.yml? You can also paste a prior project path to copy.
+      allow_multiple: false
+      allow_custom: true
+      allow_skip: true
+      first_selected_is_canonical: true
+      custom_answer_prompt: Type a status scheme key (canonical, lean, delivery) or a path like ../old-project/.rqmd.yml.
     docs_review:
       group: repository_understanding
       label: Docs review strategy

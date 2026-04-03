@@ -10,11 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added prompt-aware bundle support and a bundled prompt suite including `/go`, `/commit-and-go`, `/next`, `/brainstorm`, `/docs-pass`, `/pin`, and `/ship-check` so the installed rqmd AI experience can stay centered on one primary implementation agent with simpler slash-command entrypoints.
+- Added workspace bundle provenance metadata at `.github/rqmd-bundle.json` so installed repositories can report which rqmd version and JSON schema version last generated their local bundle files.
+- Added a visible project tooling metadata block for generated requirements indexes plus `rqmd --sync-index-metadata`, so interactive-only rqmd users can see and refresh the repository's recorded rqmd and JSON schema versions.
+- Added explicit `rqmd-ai reinstall` and `rqmd-ai upgrade` commands for managed bundle lifecycle refreshes, including conservative upgrade protection for customized files.
+- Added bundle-wide guidance for reliable `rqmd-ai --json` automation (foreground execution, stdout-only JSON parsing, separate stderr diagnostics), with Windows shell reliability called out explicitly.
+- Added init-chat status-scheme selection so users can choose built-in default status sets (`canonical`, `lean`, `delivery`) or copy statuses from an existing project config path during bootstrap.
 
 ### Changed
 
 - Reworked the README entrypoint with a clearer top-level install section and a short getting-started flow so first-time users can reach `rqmd init` or `rqmd --verify-summaries` faster.
 - Reframed the bundled AI workflow surface toward a single-agent-first model where `rqmd-dev` stays primary, `/go` handles the most common “just continue” action, and specialized agents remain available as advanced modes.
+- Documented a clearer bundle refresh workflow built around `rqmd --version`, `rqmd-ai --version`, `rqmd-ai --json`, `rqmd-ai upgrade`, and `rqmd-ai reinstall`.
+- rqmd text-mode startup now warns when the requirements index metadata block is missing or records a different rqmd/schema version than the currently running tool.
+- Made `rqmd-ai install` default to the single-agent-first minimal preset and slimmed the full preset so normal installs no longer add specialized agent variants by default.
 
 ## [0.1.0] - 2026-04-02
 

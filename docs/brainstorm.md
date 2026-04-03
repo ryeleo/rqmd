@@ -1,6 +1,13 @@
 # Brainstorm
 
-The gumption you have to say, "I need to take action" and then "I need to focus on requirements" is AMAZING! Can we ensure this kind of religious care for requirements is in all rqmd AI agents? Lol 
+## rqmd ai agent should be VERY well versed in rqmd
+
+The entire CLI, > rqmd-ai install
+rqmd-ai mode: install-agent-bundle
+read-only: no
+> rqmd-ai install --overwrite-existing
+rqmd-ai mode: install-agent-bundle
+read-only: no
 
 ## Agent skill: allow commands for AI agents
 
@@ -86,6 +93,8 @@ This file is now a checkpointed backlog scratchpad rather than a raw dump. Ideas
 - User-story terminology and dual user-story + Given/When/Then guidance: `RQMD-PORTABILITY-019`, `RQMD-AI-034`, and `RQMD-CORE-031`.
 - AI workflow split between brainstorm and implement modes: `RQMD-AI-014` and `RQMD-AI-015`.
 - Agent/skill instruction install bundle: `RQMD-AI-012`.
+- Windows-safe `rqmd-ai --json` capture guidance (foreground + stdout-only parsing + separate stderr): `RQMD-AI-012`.
+- Init status-scheme selection (`canonical`/`lean`/`delivery`) plus copy-from-existing-project path: `RQMD-AI-029`.
 - Combinable filter semantics and `--update-flagged`: `RQMD-AUTOMATION-025`, `RQMD-AUTOMATION-032`, `RQMD-AUTOMATION-034`, and `RQMD-AUTOMATION-035`.
 - Screen-write vs scrolling UI: `RQMD-UI-001` and `RQMD-UI-003`.
 - Undo/redo with persistent history: `RQMD-UNDO-001` and `RQMD-UNDO-002`.

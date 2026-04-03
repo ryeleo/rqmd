@@ -11,6 +11,7 @@ This module provides:
 
 from __future__ import annotations
 
+import hashlib
 import importlib.resources
 import json
 import re
@@ -35,36 +36,27 @@ except ImportError:
     sys.exit(1)
 
 from .batch_inputs import parse_set_entry
-from .config import load_config, load_priorities_file, validate_config
-from .constants import JSON_SCHEMA_VERSION, PRIORITY_ORDER, REQUIREMENTS_INDEX_NAME
+from .config import (load_config, load_priorities_file, load_statuses_file,
+                     validate_config)
+from .constants import (DEFAULT_STATUS_CATALOG, JSON_SCHEMA_VERSION,
+                        PRIORITY_ORDER, REQUIREMENTS_INDEX_NAME)
 from .history import HistoryManager
 from .json_speedups import dumps_json
-from .markdown_io import (
-    discover_project_root,
-    format_path_display,
-    initialize_requirements_scaffold,
-    iter_domain_files,
-    load_init_yaml,
-    preview_project_config_scaffold,
-    preview_requirements_scaffold,
-    render_legacy_issue_domain,
-    render_legacy_source_domain,
-    render_legacy_workflow_domain,
-    render_requirements_index,
-    render_startup_message,
-    resolve_requirements_dir,
-    validate_files_readable,
-)
+from .markdown_io import (discover_project_root, format_path_display,
+                          initialize_requirements_scaffold, iter_domain_files,
+                          load_init_yaml, preview_project_config_scaffold,
+                          preview_requirements_scaffold,
+                          render_legacy_issue_domain,
+                          render_legacy_source_domain,
+                          render_legacy_workflow_domain,
+                          render_requirements_index, render_startup_message,
+                          resolve_requirements_dir, validate_files_readable)
 from .priority_model import configure_priority_catalog
-from .req_parser import (
-    extract_blocking_id,
-    extract_requirement_block_with_lines,
-    find_duplicate_requirement_ids,
-    normalize_id_prefixes,
-    parse_domain_priority_metadata,
-    parse_requirements,
-    resolve_id_prefixes,
-)
+from .req_parser import (extract_blocking_id,
+                         extract_requirement_block_with_lines,
+                         find_duplicate_requirement_ids, normalize_id_prefixes,
+                         parse_domain_priority_metadata, parse_requirements,
+                         resolve_id_prefixes)
 from .status_model import normalize_status_input
 from .status_update import apply_status_change_by_id
 from .summary import process_file
@@ -85,6 +77,169 @@ _GENERATED_PROJECT_SKILL_PATHS = (
     ".github/skills/dev/SKILL.md",
     ".github/skills/test/SKILL.md",
 )
+_BUNDLE_METADATA_RELATIVE = ".github/rqmd-bundle.json"
+
+_STATUS_SCHEME_LIBRARY: dict[str, dict[str, object]] = {
+    "canonical": {
+        "label": "Canonical (Proposed, Implemented, Verified, Janky, Blocked, Deprecated)",
+        "description": "Full rqmd lifecycle with review and migration-friendly statuses.",
+        "statuses": [dict(entry) for entry in DEFAULT_STATUS_CATALOG],
+    },
+    "lean": {
+        "label": "Lean (Proposed, In Progress, Verified, Blocked)",
+        "description": "Smaller day-to-day workflow without Janky/Deprecated states.",
+        "statuses": [
+            {"name": "Proposed", "shortcode": "PRO", "emoji": "💡"},
+            {"name": "In Progress", "shortcode": "WIP", "emoji": "🔧"},
+            {"name": "Verified", "shortcode": "VER", "emoji": "✅"},
+            {"name": "Blocked", "shortcode": "BLK", "emoji": "⛔"},
+        ],
+    },
+    "delivery": {
+        "label": "Delivery (Backlog, In Progress, Done, Blocked)",
+        "description": "Product-delivery oriented status flow optimized for execution tracking.",
+        "statuses": [
+            {"name": "Backlog", "shortcode": "BACK", "emoji": "📥"},
+            {"name": "In Progress", "shortcode": "WIP", "emoji": "🏗️"},
+            {"name": "Done", "shortcode": "DONE", "emoji": "✅"},
+            {"name": "Blocked", "shortcode": "BLK", "emoji": "⛔"},
+        ],
+    },
+}
+_STATUS_SCHEME_ALIASES: dict[str, str] = {
+    "default": "canonical",
+    "expanded": "canonical",
+    "simple": "lean",
+}
+
+
+def _status_scheme_suggested_options(repo_root: Path) -> tuple[dict[str, object], ...]:
+    options: list[dict[str, object]] = []
+    for key, entry in _STATUS_SCHEME_LIBRARY.items():
+        options.append(
+            {
+                "value": key,
+                "label": str(entry["label"]),
+                "description": str(entry["description"]),
+                "recommended": key == "canonical",
+                "safe_default": key == "canonical",
+            }
+        )
+
+    copy_candidates = [
+        repo_root / ".rqmd.yml",
+        repo_root / ".rqmd" / "statuses.yml",
+        repo_root / ".rqmd" / "statuses.yaml",
+        repo_root / ".rqmd" / "statuses.json",
+    ]
+    for candidate in copy_candidates:
+        if candidate.exists() and candidate.is_file():
+            relative = format_path_display(candidate, repo_root)
+            options.append(
+                {
+                    "value": f"copy:{relative}",
+                    "label": f"Copy from {relative}",
+                    "description": "Reuse statuses from an existing local rqmd project file.",
+                }
+            )
+    return tuple(options)
+
+
+def _resolve_status_scheme(
+    repo_root: Path,
+    raw_value: str | None,
+) -> tuple[str, list[dict[str, object]]]:
+    token = str(raw_value or "canonical").strip()
+    if not token:
+        token = "canonical"
+
+    lowered = token.casefold()
+    lowered = _STATUS_SCHEME_ALIASES.get(lowered, lowered)
+    if lowered in _STATUS_SCHEME_LIBRARY:
+        status_entries = _STATUS_SCHEME_LIBRARY[lowered]["statuses"]
+        return lowered, [dict(item) for item in status_entries if isinstance(item, dict)]
+
+    copy_path = token
+    if lowered.startswith("copy:"):
+        copy_path = token.split(":", 1)[1].strip()
+    if not copy_path:
+        raise click.ClickException("status scheme copy source cannot be empty.")
+
+    loaded = load_statuses_file(repo_root, copy_path)
+    if loaded is None:
+        raise click.ClickException(f"Could not load statuses from {copy_path!r}.")
+    return f"copy:{copy_path}", [dict(item) for item in loaded if isinstance(item, dict)]
+
+
+def _installed_rqmd_version() -> str:
+    try:
+        return importlib_metadata.version("rqmd")
+    except importlib_metadata.PackageNotFoundError:
+        return "unknown"
+
+
+def _current_tooling_payload() -> dict[str, str]:
+    return {
+        "rqmd_version": _installed_rqmd_version(),
+        "json_schema_version": JSON_SCHEMA_VERSION,
+    }
+
+
+def _build_bundle_metadata_payload(
+    preset: str,
+    *,
+    managed_file_hashes: dict[str, str],
+) -> dict[str, object]:
+    generated_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return {
+        "bundle_metadata_version": 1,
+        "generated_by": "rqmd-ai install",
+        "rqmd_version": _installed_rqmd_version(),
+        "json_schema_version": JSON_SCHEMA_VERSION,
+        "bundle_preset": preset,
+        "generated_at": generated_at,
+        "managed_files": dict(sorted(managed_file_hashes.items())),
+    }
+
+
+def _read_workspace_bundle_metadata(repo_root: Path) -> dict[str, object] | None:
+    text = _read_text_if_exists((repo_root / _BUNDLE_METADATA_RELATIVE).resolve())
+    if text is None:
+        return None
+
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        return None
+
+    return payload if isinstance(payload, dict) else None
+
+
+def _build_bundle_state_payload(
+    *,
+    installed: bool,
+    preset: str | None,
+    state: str,
+    definition_files: list[str],
+    tooling: dict[str, str],
+    metadata: dict[str, object] | None,
+) -> dict[str, object]:
+    installed_by_version = metadata.get("rqmd_version") if isinstance(metadata, dict) else None
+    matches_running_version = (
+        installed_by_version == tooling["rqmd_version"]
+        if isinstance(installed_by_version, str)
+        else None
+    )
+    return {
+        "installed": installed,
+        "preset": preset,
+        "state": state,
+        "active_definition_files": definition_files,
+        "metadata_file": _BUNDLE_METADATA_RELATIVE if metadata is not None else None,
+        "bundle_metadata": metadata,
+        "installed_by_rqmd_version": installed_by_version if isinstance(installed_by_version, str) else None,
+        "matches_running_rqmd_version": matches_running_version,
+    }
 
 def _editable_source_path_from_distribution() -> Path | None:
     try:
@@ -118,10 +273,7 @@ def _editable_source_path_from_distribution() -> Path | None:
 
 
 def _build_version_output(command_name: str) -> str:
-    try:
-        version = importlib_metadata.version("rqmd")
-    except importlib_metadata.PackageNotFoundError:
-        version = "unknown"
+    version = _installed_rqmd_version()
 
     lines = [f"{command_name} {version}"]
     editable_source = _editable_source_path_from_distribution()
@@ -162,6 +314,37 @@ def _read_text_if_exists(path: Path) -> str | None:
     if not path.exists() or not path.is_file():
         return None
     return path.read_text(encoding="utf-8")
+
+
+def _normalize_bundle_file_content(content: str) -> str:
+    return content.rstrip() + "\n"
+
+
+def _sha256_text(content: str) -> str:
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+
+def _managed_hashes_from_metadata(metadata: dict[str, object] | None) -> dict[str, str]:
+    if not isinstance(metadata, dict):
+        return {}
+    raw = metadata.get("managed_files")
+    if not isinstance(raw, dict):
+        return {}
+
+    managed: dict[str, str] = {}
+    for path, digest in raw.items():
+        if isinstance(path, str) and isinstance(digest, str) and path and digest:
+            managed[path] = digest
+    return managed
+
+
+def _known_bundle_paths() -> set[str]:
+    known_paths: set[str] = set()
+    for preset in ("minimal", "full"):
+        known_paths.update(_read_bundle_manifest(preset))
+    known_paths.update(_GENERATED_PROJECT_SKILL_PATHS)
+    known_paths.add(_BUNDLE_METADATA_RELATIVE)
+    return known_paths
 
 
 def _parse_frontmatter(markdown_text: str) -> dict[str, object]:
@@ -424,6 +607,7 @@ def _build_starter_init_chat_questions(
     inferred_prefix = id_prefixes[0] if id_prefixes else "REQ"
     requirements_dir_config = _STARTER_INIT_FIELD_CONFIGS["requirements_dir"]
     id_prefix_config = _STARTER_INIT_FIELD_CONFIGS["id_prefix"]
+    status_scheme_config = _STARTER_INIT_FIELD_CONFIGS["status_scheme"]
     starter_notes_config = _STARTER_INIT_FIELD_CONFIGS["starter_notes"]
     return [
         _build_interview_question(
@@ -444,6 +628,21 @@ def _build_starter_init_chat_questions(
             group_id=str(id_prefix_config["group"]),
             prompt=str(id_prefix_config["prompt"]),
             inferred_prefix=inferred_prefix,
+        ),
+        _build_interview_question(
+            field="status_scheme",
+            group_id=str(status_scheme_config["group"]),
+            label=str(status_scheme_config["label"]),
+            prompt=str(status_scheme_config["prompt"]),
+            inferred_answers=["canonical"],
+            allow_multiple=bool(status_scheme_config["allow_multiple"]),
+            allow_custom=bool(status_scheme_config["allow_custom"]),
+            allow_skip=bool(status_scheme_config["allow_skip"]),
+            first_selected_is_canonical=bool(status_scheme_config["first_selected_is_canonical"]),
+            custom_answer_prompt=str(status_scheme_config["custom_answer_prompt"]),
+            suggested_options=_status_scheme_suggested_options(repo_root),
+            recommended_values=["canonical"],
+            safe_default_values=["canonical"],
         ),
         _build_interview_question(
             field="starter_notes",
@@ -557,7 +756,14 @@ def _build_starter_init_payload(
         criteria_dir = (repo_root / criteria_dir).resolve()
 
     prefix = id_prefixes[0] if id_prefixes else str(starter_answer_map.get("id_prefix", ["REQ"])[0]).strip().upper().rstrip("-")
-    proposed_files = preview_requirements_scaffold(repo_root, str(criteria_dir), prefix)
+    status_scheme_raw = str(starter_answer_map.get("status_scheme", ["canonical"])[0]).strip()
+    status_scheme_key, selected_statuses = _resolve_status_scheme(repo_root, status_scheme_raw)
+    proposed_files = preview_requirements_scaffold(
+        repo_root,
+        str(criteria_dir),
+        prefix,
+        statuses=selected_statuses,
+    )
     questions = _build_starter_init_chat_questions(repo_root, criteria_dir.relative_to(repo_root), id_prefixes or (prefix,))
     payload = {
         "mode": "starter-init-apply" if apply else "starter-init-plan",
@@ -566,6 +772,7 @@ def _build_starter_init_payload(
         "repo_root": str(repo_root),
         "requirements_dir": criteria_dir.relative_to(repo_root).as_posix(),
         "starter_prefix": prefix,
+        "status_scheme": status_scheme_key,
         "proposed_files": proposed_files,
         "total_files": len(proposed_files),
         "interaction_contract": _build_interview_interaction_contract(),
@@ -576,7 +783,12 @@ def _build_starter_init_payload(
         ),
     }
     if apply:
-        created_files = initialize_requirements_scaffold(repo_root, str(criteria_dir), prefix)
+        created_files = initialize_requirements_scaffold(
+            repo_root,
+            str(criteria_dir),
+            prefix,
+            statuses=selected_statuses,
+        )
         payload["created_files"] = [format_path_display(path, repo_root) for path in created_files]
         payload["changed_count"] = len(created_files)
     return payload
@@ -615,7 +827,7 @@ def _build_bundle_follow_up_command(repo_root: Path, *, json_output_file: Path |
         "rqmd-ai",
         "install",
         "--bundle-preset",
-        "full",
+        "minimal",
         "--chat",
         "--json",
         "--dry-run",
@@ -1533,11 +1745,31 @@ def _build_legacy_init_chat_questions(
             inferred_prefix=inferred_prefix,
         )
     )
+    status_scheme_config = _LEGACY_INIT_FIELD_CONFIGS["status_scheme"]
+    questions.append(
+        _build_interview_question(
+            field="status_scheme",
+            group_id=str(status_scheme_config["group"]),
+            label=str(status_scheme_config["label"]),
+            prompt=str(status_scheme_config["prompt"]),
+            inferred_answers=["canonical"],
+            allow_multiple=bool(status_scheme_config["allow_multiple"]),
+            allow_custom=bool(status_scheme_config["allow_custom"]),
+            allow_skip=bool(status_scheme_config["allow_skip"]),
+            first_selected_is_canonical=bool(status_scheme_config["first_selected_is_canonical"]),
+            custom_answer_prompt=str(status_scheme_config["custom_answer_prompt"]),
+            suggested_options=_status_scheme_suggested_options(repo_root),
+            recommended_values=["canonical"],
+            safe_default_values=["canonical"],
+        )
+    )
 
     questions.extend(_build_bootstrap_chat_questions(command_hints))
 
     issue_mode = "use-gh-if-available" if bool(issue_context.get("used")) or str(issue_context.get("reason") or "") != "gh CLI not found" else "skip-gh-issues"
-    for field in _LEGACY_INIT_CHAT_FIELDS[2:]:
+    for field in _LEGACY_INIT_CHAT_FIELDS:
+        if field in {"requirements_dir", "id_prefix", "status_scheme"}:
+            continue
         inferred_answers: list[str] = []
         suggested_options = _LEGACY_INIT_OPTION_SETS.get(field, ())
         config = _LEGACY_INIT_FIELD_CONFIGS[field]
@@ -1810,6 +2042,8 @@ def _build_legacy_init_files(
     )
 
     prefix = id_prefixes[0] if id_prefixes else str(legacy_answer_map.get("id_prefix", ["REQ"])[0]).strip().upper().rstrip("-")
+    status_scheme_raw = str(legacy_answer_map.get("status_scheme", ["canonical"])[0]).strip()
+    status_scheme_key, selected_statuses = _resolve_status_scheme(repo_root, status_scheme_raw)
     next_number = 1
     command_hints = _apply_command_answers(command_hints, legacy_answer_map)
     source_areas = _match_domain_focus_answers(source_areas, legacy_answer_map.get("domain_focus", []))
@@ -1890,6 +2124,7 @@ def _build_legacy_init_files(
         repo_root,
         requirements_dir.as_posix(),
         prefix,
+        statuses=selected_statuses,
     )
     if config_entry is not None:
         proposed_files.append(config_entry)
@@ -1907,6 +2142,7 @@ def _build_legacy_init_files(
     return {
         "requirements_dir": requirements_dir.as_posix(),
         "starter_prefix": prefix,
+        "status_scheme": status_scheme_key,
         "detected_context": {
             "source_areas": source_areas,
             "detected_command_sources": command_hints["detected_sources"],
@@ -1983,6 +2219,7 @@ def _build_or_apply_legacy_init_payload(
         "repo_root": str(repo_root),
         "requirements_dir": plan["requirements_dir"],
         "starter_prefix": plan["starter_prefix"],
+        "status_scheme": plan["status_scheme"],
         "detected_context": plan["detected_context"],
         "issue_discovery": plan["issue_discovery"],
         "proposed_files": plan["proposed_files"],
@@ -2012,6 +2249,8 @@ def _build_or_apply_legacy_init_payload(
 def _detect_workspace_bundle_state(repo_root: Path) -> dict[str, object]:
     minimal_manifest = _read_bundle_manifest("minimal")
     full_manifest = _read_bundle_manifest("full")
+    tooling = _current_tooling_payload()
+    metadata = _read_workspace_bundle_metadata(repo_root)
 
     def existing_entries(entries: tuple[str, ...]) -> list[str]:
         return [
@@ -2025,32 +2264,40 @@ def _detect_workspace_bundle_state(repo_root: Path) -> dict[str, object]:
     definition_files = _workspace_definition_files(repo_root)
 
     if len(existing_full) == len(full_manifest):
-        return {
-            "installed": True,
-            "preset": "full",
-            "state": "full",
-            "active_definition_files": definition_files,
-        }
+        return _build_bundle_state_payload(
+            installed=True,
+            preset="full",
+            state="full",
+            definition_files=definition_files,
+            tooling=tooling,
+            metadata=metadata,
+        )
     if len(existing_minimal) == len(minimal_manifest):
-        return {
-            "installed": True,
-            "preset": "minimal",
-            "state": "minimal",
-            "active_definition_files": definition_files,
-        }
+        return _build_bundle_state_payload(
+            installed=True,
+            preset="minimal",
+            state="minimal",
+            definition_files=definition_files,
+            tooling=tooling,
+            metadata=metadata,
+        )
     if definition_files:
-        return {
-            "installed": False,
-            "preset": None,
-            "state": "partial",
-            "active_definition_files": definition_files,
-        }
-    return {
-        "installed": False,
-        "preset": None,
-        "state": "absent",
-        "active_definition_files": [],
-    }
+        return _build_bundle_state_payload(
+            installed=False,
+            preset=None,
+            state="partial",
+            definition_files=definition_files,
+            tooling=tooling,
+            metadata=metadata,
+        )
+    return _build_bundle_state_payload(
+        installed=False,
+        preset=None,
+        state="absent",
+        definition_files=[],
+        tooling=tooling,
+        metadata=metadata,
+    )
 
 
 def _build_guide_payload(
@@ -2060,11 +2307,13 @@ def _build_guide_payload(
     workflow_mode: str,
 ) -> dict[str, object]:
     guide = _load_workflow_guide(workflow_mode)
+    tooling = _current_tooling_payload()
     bundle_state = _detect_workspace_bundle_state(repo_root)
     payload = {
         "mode": "guide",
         "workflow_mode": workflow_mode,
         "read_only": read_only,
+        "tooling": tooling,
         "repo_root": str(repo_root),
         "requirements_dir": format_path_display(requirements_dir, repo_root),
         "summary": guide["summary"],
@@ -2299,43 +2548,125 @@ def _build_brainstorm_plan_payload(
 def _install_agent_bundle(
     repo_root: Path,
     preset: str,
+    operation: str,
     overwrite_existing: bool,
     dry_run: bool,
     chat_mode: bool = False,
     interview_answers: tuple[str, ...] = (),
 ) -> dict[str, object]:
+    if operation not in {"install", "reinstall", "upgrade"}:
+        raise click.ClickException(f"Unknown bundle operation: {operation}")
+
     files = _bundle_files_for_preset(preset)
     detected_hints = _detect_project_command_hints(repo_root)
     applied_answers = _collect_interview_answers(interview_answers, _BOOTSTRAP_CHAT_FIELDS)
     resolved_hints = _apply_command_answers(detected_hints, applied_answers)
     generated_skill_files = _render_project_skill_content_from_hints(resolved_hints)
     files.update(generated_skill_files)
+
+    existing_metadata = _read_workspace_bundle_metadata(repo_root)
+    previous_managed_hashes = _managed_hashes_from_metadata(existing_metadata)
+    managed_hashes_after = dict(previous_managed_hashes)
+
+    known_bundle_paths = _known_bundle_paths()
+    desired_paths = set(files)
+
     created_files: list[str] = []
     overwritten_files: list[str] = []
     skipped_existing: list[str] = []
+    protected_existing: list[str] = []
+    removed_files: list[str] = []
+
+    if operation == "reinstall":
+        removal_candidates = {
+            path
+            for path in (set(previous_managed_hashes) | known_bundle_paths)
+            if path != _BUNDLE_METADATA_RELATIVE and path not in desired_paths
+        }
+        for rel_path in sorted(removal_candidates):
+            target = (repo_root / rel_path).resolve()
+            if not target.exists() or not target.is_file():
+                managed_hashes_after.pop(rel_path, None)
+                continue
+            if not dry_run:
+                target.unlink()
+            removed_files.append(rel_path)
+            managed_hashes_after.pop(rel_path, None)
 
     for rel_path, content in files.items():
+        normalized_content = _normalize_bundle_file_content(content)
+        desired_digest = _sha256_text(normalized_content)
         target = (repo_root / rel_path).resolve()
         exists = target.exists()
 
-        if exists and not overwrite_existing:
-            skipped_existing.append(rel_path)
+        should_write = True
+        if exists:
+            if operation == "install":
+                should_write = overwrite_existing
+                if not should_write:
+                    skipped_existing.append(rel_path)
+            elif operation == "reinstall":
+                should_write = True
+            elif operation == "upgrade":
+                current_text = _read_text_if_exists(target)
+                current_digest = _sha256_text(current_text) if current_text is not None else None
+                previous_digest = previous_managed_hashes.get(rel_path)
+                if previous_digest is None:
+                    should_write = False
+                    protected_existing.append(rel_path)
+                elif current_digest != previous_digest:
+                    should_write = False
+                    protected_existing.append(rel_path)
+                else:
+                    should_write = True
+
+        if not should_write:
             continue
 
         if not dry_run:
             target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(content.rstrip() + "\n", encoding="utf-8")
+            target.write_text(normalized_content, encoding="utf-8")
 
         if exists:
             overwritten_files.append(rel_path)
         else:
             created_files.append(rel_path)
+        managed_hashes_after[rel_path] = desired_digest
+
+    metadata_should_write = False
+    metadata_path = (repo_root / _BUNDLE_METADATA_RELATIVE).resolve()
+    metadata_exists = metadata_path.exists()
+    if operation == "reinstall":
+        metadata_should_write = True
+    elif operation == "upgrade":
+        metadata_should_write = True
+    else:
+        metadata_should_write = overwrite_existing or not metadata_exists
+
+    metadata_payload = _build_bundle_metadata_payload(
+        preset,
+        managed_file_hashes=managed_hashes_after,
+    )
+    metadata_content = _normalize_bundle_file_content(json.dumps(metadata_payload, indent=2, sort_keys=True))
+
+    if metadata_should_write:
+        if not dry_run:
+            metadata_path.parent.mkdir(parents=True, exist_ok=True)
+            metadata_path.write_text(metadata_content, encoding="utf-8")
+        if metadata_exists:
+            overwritten_files.append(_BUNDLE_METADATA_RELATIVE)
+        else:
+            created_files.append(_BUNDLE_METADATA_RELATIVE)
+    else:
+        skipped_existing.append(_BUNDLE_METADATA_RELATIVE)
 
     bootstrap_questions = _build_bootstrap_chat_questions(detected_hints)
     return {
         "mode": "install-agent-bundle",
         "read_only": dry_run,
+        "tooling": _current_tooling_payload(),
         "preset": preset,
+        "operation": operation,
         "overwrite_existing": overwrite_existing,
         "dry_run": dry_run,
         "interaction_contract": _build_interview_interaction_contract(),
@@ -2348,6 +2679,9 @@ def _install_agent_bundle(
             },
         ),
         "generated_skill_files": sorted(generated_skill_files),
+        "metadata_file": _BUNDLE_METADATA_RELATIVE,
+        "removed_files": removed_files,
+        "protected_existing": protected_existing,
         "generated_skill_previews": [
             {"path": path, "content": content}
             for path, content in sorted(generated_skill_files.items())
@@ -2461,6 +2795,10 @@ def _emit(payload: dict[str, object], json_output: bool, json_output_file: Path 
     if isinstance(read_only, bool):
         click.echo(f"read-only: {'yes' if read_only else 'no'}")
     if mode == "guide":
+        tooling = payload.get("tooling")
+        if isinstance(tooling, dict):
+            click.echo(f"rqmd version: {tooling.get('rqmd_version', 'unknown')}")
+            click.echo(f"json schema: {tooling.get('json_schema_version', 'unknown')}")
         workflow_mode = payload.get("workflow_mode")
         if workflow_mode:
             click.echo(f"workflow mode: {workflow_mode}")
@@ -2477,11 +2815,67 @@ def _emit(payload: dict[str, object], json_output: bool, json_output_file: Path 
         bundle_installation = payload.get("bundle_installation")
         if isinstance(bundle_installation, dict):
             click.echo(f"workspace bundle: {bundle_installation.get('state', 'unknown')}")
+            installed_by = bundle_installation.get("installed_by_rqmd_version")
+            if isinstance(installed_by, str):
+                click.echo(f"bundle installed by rqmd: {installed_by}")
+            metadata_file = bundle_installation.get("metadata_file")
+            if isinstance(metadata_file, str):
+                click.echo(f"bundle metadata: {metadata_file}")
         bundled_definitions = payload.get("bundled_definitions")
         if isinstance(bundled_definitions, dict):
             files = bundled_definitions.get("files")
             if isinstance(files, list):
                 click.echo(f"packaged definitions embedded: {len(files)}")
+        return
+    if mode == "install-agent-bundle":
+        operation = str(payload.get("operation") or "install")
+        click.echo(f"operation: {operation}")
+        tooling = payload.get("tooling")
+        if isinstance(tooling, dict):
+            click.echo(f"rqmd version: {tooling.get('rqmd_version', 'unknown')}")
+            click.echo(f"json schema: {tooling.get('json_schema_version', 'unknown')}")
+        click.echo(f"bundle preset: {payload.get('preset')}")
+        click.echo(f"changed files: {payload.get('changed_count', 0)}")
+        metadata_file = payload.get("metadata_file")
+        if isinstance(metadata_file, str):
+            click.echo(f"bundle metadata: {metadata_file}")
+        created_files = payload.get("created_files")
+        if isinstance(created_files, list) and created_files:
+            click.echo("created files:")
+            for path in created_files:
+                click.echo(f"- {path}")
+        overwritten_files = payload.get("overwritten_files")
+        if isinstance(overwritten_files, list) and overwritten_files:
+            click.echo("overwritten files:")
+            for path in overwritten_files:
+                click.echo(f"- {path}")
+        removed_files = payload.get("removed_files")
+        if isinstance(removed_files, list) and removed_files:
+            click.echo("removed files:")
+            for path in removed_files:
+                click.echo(f"- {path}")
+        protected_existing = payload.get("protected_existing")
+        if isinstance(protected_existing, list) and protected_existing:
+            click.echo(f"protected existing files: {len(protected_existing)}")
+            preview = [str(path) for path in protected_existing[:5]]
+            for path in preview:
+                click.echo(f"- {path}")
+            remaining = len(protected_existing) - len(preview)
+            if remaining > 0:
+                click.echo(f"- ... and {remaining} more")
+            click.echo("Upgrade only overwrites files still tracked as rqmd-managed and unchanged since install.")
+        skipped_existing = payload.get("skipped_existing")
+        if isinstance(skipped_existing, list) and skipped_existing:
+            click.echo(f"skipped existing files: {len(skipped_existing)}")
+            preview = [str(path) for path in skipped_existing[:5]]
+            for path in preview:
+                click.echo(f"- {path}")
+            remaining = len(skipped_existing) - len(preview)
+            if remaining > 0:
+                click.echo(f"- ... and {remaining} more")
+            click.echo("Re-run with `--overwrite-existing` to refresh the managed bundle files.")
+        if payload.get("dry_run") is True:
+            click.echo("dry run only: no files were written.")
         return
     if mode == "brainstorm-plan":
         click.echo(f"source file: {payload.get('source_file')}")
@@ -3406,7 +3800,7 @@ def _plan_or_apply_updates(
     "--bundle-preset",
     "bundle_preset",
     type=click.Choice(["minimal", "full"], case_sensitive=False),
-    default="full",
+    default="minimal",
     show_default=True,
     help="Bundle preset for `rqmd-ai install` / --install-agent-bundle.",
 )
@@ -3463,10 +3857,20 @@ def main(
 ) -> None:
     repo_root = _resolve_repo_root(repo_root)
     workflow_mode = workflow_mode.lower()
+    install_operation = "install"
     if command_name:
         normalized_command = command_name.strip().lower()
         if normalized_command in {"install", "i"}:
             install_bundle = True
+            install_operation = "install"
+        elif normalized_command in {"reinstall", "ri"}:
+            install_bundle = True
+            overwrite_existing = True
+            install_operation = "reinstall"
+        elif normalized_command in {"upgrade", "up"}:
+            install_bundle = True
+            overwrite_existing = True
+            install_operation = "upgrade"
         elif normalized_command == "init":
             workflow_mode = "init"
         else:
@@ -3481,9 +3885,16 @@ def main(
             raise click.ClickException(
                 "--install-agent-bundle cannot be combined with guide/export/update/apply options."
             )
+        resolved_preset = bundle_preset.lower()
+        if install_operation == "upgrade":
+            existing_state = _detect_workspace_bundle_state(repo_root)
+            existing_preset = existing_state.get("preset")
+            if isinstance(existing_preset, str) and existing_preset in {"minimal", "full"}:
+                resolved_preset = existing_preset
         payload = _install_agent_bundle(
             repo_root=repo_root,
-            preset=bundle_preset.lower(),
+            preset=resolved_preset,
+            operation=install_operation,
             overwrite_existing=overwrite_existing,
             dry_run=dry_run,
             chat_mode=chat_mode,

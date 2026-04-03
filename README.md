@@ -51,8 +51,8 @@ python -m pip install rqmd
 Then verify the install:
 
 ```bash
-rqmd --help
-rqmd-ai --help
+rqmd --version
+rqmd-ai --version
 ```
 
 > **ℹ️ Info:** `reqmd` and `reqmd-ai` remain available as compatibility aliases, but the primary supported commands are `rqmd` and `rqmd-ai`.
@@ -587,19 +587,46 @@ rqmd-ai --json --install-agent-bundle --bundle-preset full
 rqmd-ai --json --install-agent-bundle --bundle-preset full --overwrite-existing
 ```
 
+`rqmd-ai install` now defaults to the single-agent-first `minimal` preset.
+
 Bundle installs are idempotent by default and preserve existing customized instruction files unless `--overwrite-existing` is explicitly passed.
 
 > **ℹ️ Info:** "Idempotent" means you can run the same install command again without duplicating files or changing already-correct output.
 
+Each installed bundle now writes `.github/rqmd-bundle.json` with the rqmd package version, JSON schema version, selected preset, and generation timestamp that produced the local bundle files.
+
+Check what is running and refresh bundle-managed files after an upgrade:
+
+```bash
+rqmd --version
+rqmd-ai --version
+rqmd-ai --json
+rqmd-ai install --bundle-preset minimal --overwrite-existing
+rqmd-ai reinstall
+rqmd-ai upgrade
+```
+
+> **ℹ️ Info:** `rqmd --version` and `rqmd-ai --version` tell you which rqmd package is installed. `rqmd-ai --json` also reports the workspace bundle state, the bundle metadata file path when present, and whether the installed bundle metadata matches the currently running rqmd version.
+
+> **⚠️ Note:** For reliable machine parsing on Windows and CI shells, run `rqmd-ai --json` commands in the foreground and parse stdout only. Keep stderr separate for warnings/diagnostics and check the exit code before parsing.
+
+`rqmd-ai reinstall` is a convenience alias for explicitly resetting the managed bundle files. `rqmd-ai upgrade` preserves the currently installed preset automatically when one is already detected.
+
+`rqmd-ai upgrade` is conservative by default: it updates files only when they are still tracked as rqmd-managed and unchanged since the last managed install. Existing customized files are reported as protected and left untouched.
+
+`rqmd-ai reinstall` is the explicit reset path: it removes and re-installs rqmd-managed files for the selected preset, but does not delete unrelated workspace files.
+
 Bundle install also scaffolds project-local `.github/skills/dev/SKILL.md` and `.github/skills/test/SKILL.md` files based on detected repository commands. Treat those as a starting point: review and tighten the generated build, smoke, and validation commands so future `rqmd-dev` runs can rely on them instead of guessing.
 
-The default bundle shape is now single-agent-first: `rqmd-dev` stays the main implementation agent, the bundled prompts provide the main slash-command entrypoints for common rqmd actions, and the extra full-preset agents stay available as specialized modes when you intentionally want a different execution style.
+The default bundle shape is single-agent-first: `rqmd-dev` stays the main implementation agent, and bundled prompts provide the main slash-command entrypoints for common rqmd actions.
 
 Bundle installation can also be driven through a structured chat-style preview with `rqmd-ai install --json --bundle-preset minimal --chat --dry-run`. That payload now includes grouped interview questions, multi-select command suggestions, custom-answer prompts, skip support, detected command sources, recommended choices, safe defaults, and preview content for the generated `/dev` and `/test` skills. Repeat `--answer FIELD=VALUE` to select multiple suggestions or add custom commands before writing.
 
 ### Use rqmd-ai for new-project onboarding
 
 New-project flow: run `rqmd init`, paste the output into your AI chat, let that chat drive `rqmd-ai init --chat --json`, review the generated requirements catalog and any suggested bundle skill setup, and then start refining the resulting requirements docs.
+
+The init interview now also lets you choose a default status scheme (`canonical`, `lean`, or `delivery`) or copy a status catalog from an existing project path (for example another repository's `.rqmd.yml`) before writing the new scaffold.
 
 Legacy-style repository seeding can still be previewed with `rqmd-ai init --chat --json --legacy`. The grouped interview covers catalog setup, developer workflows, repository understanding, backlog handling, and review notes, and its options include recommended choices, detected-from hints, and safe defaults. The generated starter catalog seeds a requirements index, developer workflow requirements, repository-area seed files, and an issue backlog file when `gh issue list` succeeds.
 
@@ -617,7 +644,7 @@ The installed bundle also includes Copilot skills for `/rqmd-brainstorm`, `/rqmd
 
 For repositories that use `/rqmd-pin`, a practical default is `docs/pins/README.md` as a lightweight index plus one markdown file per topic started from `docs/pins/pin-template.md`.
 
-The full bundle preset also installs specialized agents for exploration, requirement maintenance, docs sync, history investigation, and the `rqmd-dev-longrunning` and `rqmd-dev-easy` implementation variants so teams can opt into a different working style without losing the shared rqmd workflow contract.
+The `full` preset currently keeps the same single-agent execution model and adds extra bundled reference docs (`.github/agents/README.md`) for teams that want broader bundle context in-repo.
 
 Bundle workflows assume the core lifecycle states remain representable in your status catalog. Custom labels are fine, but if you want `rqmd-ai` guidance, examples, and installed skills to work well out of the box, keep lifecycle equivalents for `💡 Proposed`, `🔧 Implemented`, `✅ Verified`, `⛔ Blocked`, and `🗑️ Deprecated`.
 

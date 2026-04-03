@@ -15,6 +15,7 @@ import importlib.resources
 import os
 import re
 import sys
+from importlib import metadata as importlib_metadata
 from pathlib import Path
 
 import yaml
@@ -27,10 +28,91 @@ except ImportError:
     sys.exit(1)
 
 from .constants import (DEFAULT_PRIORITY_CATALOG, DEFAULT_STATUS_CATALOG,
-                        REQUIREMENTS_INDEX_NAME)
+                        JSON_SCHEMA_VERSION, REQUIREMENTS_INDEX_NAME)
 from .summary import process_file
 
 _INIT_RESOURCE_ROOT = ("resources", "init")
+_RQMD_PROJECT_METADATA_START = "<!-- rqmd-project-metadata:start -->"
+_RQMD_PROJECT_METADATA_END = "<!-- rqmd-project-metadata:end -->"
+
+
+def installed_rqmd_version() -> str:
+    try:
+        return importlib_metadata.version("rqmd")
+    except importlib_metadata.PackageNotFoundError:
+        return "unknown"
+
+
+def build_requirements_index_tooling_metadata() -> dict[str, str]:
+    return {
+        "rqmd_version": installed_rqmd_version(),
+        "json_schema_version": JSON_SCHEMA_VERSION,
+    }
+
+
+def render_requirements_index_tooling_metadata_section() -> str:
+    metadata = build_requirements_index_tooling_metadata()
+    return "\n".join(
+        [
+            "## Project Tooling Metadata",
+            "",
+            "This section records the rqmd tooling versions currently expected by this repository.",
+            "Refresh it after upgrading rqmd by running `rqmd --sync-index-metadata --force-yes`.",
+            "",
+            _RQMD_PROJECT_METADATA_START,
+            f"- `rqmd_version`: `{metadata['rqmd_version']}`",
+            f"- `json_schema_version`: `{metadata['json_schema_version']}`",
+            _RQMD_PROJECT_METADATA_END,
+        ]
+    )
+
+
+def parse_requirements_index_tooling_metadata(index_text: str) -> dict[str, str] | None:
+    match = re.search(
+        rf"{re.escape(_RQMD_PROJECT_METADATA_START)}\n(?P<body>.*?)\n{re.escape(_RQMD_PROJECT_METADATA_END)}",
+        index_text,
+        re.DOTALL,
+    )
+    if match is None:
+        return None
+
+    metadata: dict[str, str] = {}
+    for line in match.group("body").splitlines():
+        stripped = line.strip()
+        item_match = re.match(r"^-\s+`(?P<key>[^`]+)`: `(?P<value>[^`]*)`$", stripped)
+        if item_match is None:
+            continue
+        metadata[item_match.group("key")] = item_match.group("value")
+    return metadata or None
+
+
+def sync_requirements_index_tooling_metadata(index_text: str) -> tuple[str, bool]:
+    section_text = render_requirements_index_tooling_metadata_section().strip()
+    existing = parse_requirements_index_tooling_metadata(index_text)
+
+    if existing is not None:
+        pattern = re.compile(
+            rf"\n?## Project Tooling Metadata\n.*?{re.escape(_RQMD_PROJECT_METADATA_START)}\n.*?\n{re.escape(_RQMD_PROJECT_METADATA_END)}\n?",
+            re.DOTALL,
+        )
+        updated_text, count = pattern.subn(f"\n\n{section_text}\n\n", index_text, count=1)
+        if count == 0:
+            updated_text = index_text
+        normalized = updated_text.strip() + "\n"
+        return normalized, normalized != index_text
+
+    lines = index_text.splitlines()
+    insert_at = 1
+    for index, line in enumerate(lines[1:], start=1):
+        if line.startswith("## "):
+            insert_at = index
+            break
+    else:
+        insert_at = len(lines)
+
+    updated_lines = lines[:insert_at] + ["", section_text, ""] + lines[insert_at:]
+    normalized = "\n".join(updated_lines).strip() + "\n"
+    return normalized, normalized != index_text
 
 
 def format_path_display(path: Path, repo_root: Path) -> str:
@@ -67,14 +149,42 @@ def _render_catalog_yaml_section(entries: list[dict[str, str]]) -> str:
     return "\n".join(lines)
 
 
-def render_default_project_config(requirements_dir_input: str, starter_prefix: str) -> str:
+def _normalize_status_entries(statuses: list[dict[str, object]] | None) -> list[dict[str, str]]:
+    if statuses is None:
+        return list(DEFAULT_STATUS_CATALOG)
+
+    normalized: list[dict[str, str]] = []
+    for index, item in enumerate(statuses, start=1):
+        if not isinstance(item, dict):
+            raise ValueError(f"statuses item #{index} must be an object")
+
+        name = str(item.get("name", "")).strip()
+        shortcode = str(item.get("shortcode", "")).strip()
+        emoji = str(item.get("emoji", "")).strip()
+
+        if not name or not shortcode or not emoji:
+            raise ValueError(
+                f"statuses item #{index} must include non-empty name, shortcode, and emoji"
+            )
+
+        normalized.append({"name": name, "shortcode": shortcode, "emoji": emoji})
+
+    return normalized
+
+
+def render_default_project_config(
+    requirements_dir_input: str,
+    starter_prefix: str,
+    statuses: list[dict[str, object]] | None = None,
+) -> str:
     """Render the default project config scaffold for a repository."""
+    status_entries = _normalize_status_entries(statuses)
     return _render_init_template(
         "project-config.yml",
         {
             "REQUIREMENTS_DIR": requirements_dir_input,
             "ID_PREFIX": starter_prefix,
-            "STATUS_SECTION": _render_catalog_yaml_section(DEFAULT_STATUS_CATALOG),
+            "STATUS_SECTION": _render_catalog_yaml_section(status_entries),
             "PRIORITY_SECTION": _render_catalog_yaml_section(DEFAULT_PRIORITY_CATALOG),
         },
     )
@@ -84,6 +194,7 @@ def preview_project_config_scaffold(
     repo_root: Path,
     requirements_dir_input: str,
     starter_prefix: str,
+    statuses: list[dict[str, object]] | None = None,
 ) -> dict[str, str] | None:
     """Preview the default project config scaffold when it is absent."""
     config_path = default_project_config_path(repo_root)
@@ -94,7 +205,11 @@ def preview_project_config_scaffold(
         "path": format_path_display(config_path, repo_root),
         "title": "Project Config",
         "description": "default rqmd project config with canonical statuses and priorities",
-        "content": render_default_project_config(requirements_dir_input, starter_prefix),
+        "content": render_default_project_config(
+            requirements_dir_input,
+            starter_prefix,
+            statuses=statuses,
+        ),
     }
 
 
@@ -102,6 +217,7 @@ def initialize_project_config_scaffold(
     repo_root: Path,
     requirements_dir_input: str,
     starter_prefix: str,
+    statuses: list[dict[str, object]] | None = None,
 ) -> Path | None:
     """Create the default project config scaffold when it is absent."""
     config_path = default_project_config_path(repo_root)
@@ -109,7 +225,11 @@ def initialize_project_config_scaffold(
         return None
 
     config_path.write_text(
-        render_default_project_config(requirements_dir_input, starter_prefix),
+        render_default_project_config(
+            requirements_dir_input,
+            starter_prefix,
+            statuses=statuses,
+        ),
         encoding="utf-8",
     )
     return config_path
@@ -567,6 +687,7 @@ def render_requirements_index(
             "STARTER_DISPLAY": starter_display,
             "CRITERIA_DIR_DISPLAY": criteria_dir_display,
             "STARTER_PREFIX": starter_prefix,
+            "PROJECT_TOOLING_METADATA_SECTION": render_requirements_index_tooling_metadata_section(),
             "INDEX_EXTRA_SECTIONS": extra_section_text,
             "REQUIREMENT_DOCUMENTS_SECTION": _render_requirement_documents_section(document_entries),
         },
@@ -658,6 +779,7 @@ def preview_requirements_scaffold(
     repo_root: Path,
     requirements_dir_input: str,
     starter_prefix: str,
+    statuses: list[dict[str, object]] | None = None,
 ) -> list[dict[str, str]]:
     """Preview the starter requirements scaffold without writing files."""
     criteria_dir = Path(requirements_dir_input)
@@ -698,14 +820,24 @@ def preview_requirements_scaffold(
         },
     ]
 
-    config_entry = preview_project_config_scaffold(repo_root, criteria_dir_display, starter_prefix)
+    config_entry = preview_project_config_scaffold(
+        repo_root,
+        criteria_dir_display,
+        starter_prefix,
+        statuses=statuses,
+    )
     if config_entry is not None:
         entries.insert(0, config_entry)
 
     return entries
 
 
-def initialize_requirements_scaffold(repo_root: Path, requirements_dir_input: str, starter_prefix: str) -> list[Path]:
+def initialize_requirements_scaffold(
+    repo_root: Path,
+    requirements_dir_input: str,
+    starter_prefix: str,
+    statuses: list[dict[str, object]] | None = None,
+) -> list[Path]:
     """Initialize a starter requirements scaffold in a project.
 
     Creates the requirement directory structure and generates starter files
@@ -733,7 +865,12 @@ def initialize_requirements_scaffold(repo_root: Path, requirements_dir_input: st
 
     created_paths: list[Path] = []
 
-    config_path = initialize_project_config_scaffold(repo_root, criteria_dir_display, starter_prefix)
+    config_path = initialize_project_config_scaffold(
+        repo_root,
+        criteria_dir_display,
+        starter_prefix,
+        statuses=statuses,
+    )
     if config_path is not None:
         created_paths.append(config_path)
 

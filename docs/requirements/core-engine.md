@@ -3,7 +3,7 @@
 Scope: parsing, status normalization, summary generation, and requirement discovery.
 
 <!-- acceptance-status-summary:start -->
-Summary: 4💡 15🔧 16✅ 0⚠️ 0⛔ 0🗑️
+Summary: 4💡 16🔧 16✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-CORE-001: Domain file discovery
@@ -330,3 +330,13 @@ Summary: 4💡 15🔧 16✅ 0⚠️ 0⛔ 0🗑️
 - So that runtime code loads those packaged resources through one consistent helper path, similar to the existing bundle-resource pattern, instead of duplicating parallel hard-coded tables and strings.
 - So that init flows, generated requirement indexes, and other scaffold outputs consume the same packaged resource source of truth the application uses internally.
 - So that future default-catalog or template changes are less error-prone because docs, scaffolds, and built-in runtime defaults are less likely to drift.
+
+### RQMD-CORE-036: Requirements index tooling metadata and version-mismatch warning
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- As a rqmd user working only through the standard requirements index and interactive CLI
+- I want the requirements index README to record the project's current rqmd and JSON schema versions and for rqmd to warn when that recorded metadata no longer matches the running tool
+- So that I can tell from the local repository docs which rqmd version last refreshed the tracked requirements metadata without needing AI-specific bundle files or external release notes.
+- So that generated rqmd requirement indexes include a visible project tooling metadata block near the top of the file.
+- So that existing repositories can add or refresh that block with a dedicated `rqmd --sync-index-metadata` migration step instead of hand-editing it.
+- So that text-mode rqmd startup surfaces a clear warning and migration hint when the recorded index metadata is missing or out of date.

@@ -88,17 +88,21 @@ from .config import (load_config, load_priorities_file, load_statuses_file,
                      load_user_config, validate_config)
 from .constants import (DEFAULT_ID_PREFIXES, DEFAULT_REQUIREMENTS_DIR,
                         ID_PREFIX_PATTERN, JSON_SCHEMA_VERSION, PRIORITY_ORDER,
-                        STATUS_ORDER, STATUS_PATTERN, SUMMARY_END,
-                        SUMMARY_START)
+                        REQUIREMENTS_INDEX_NAME, STATUS_ORDER, STATUS_PATTERN,
+                        SUMMARY_END, SUMMARY_START)
 from .history import (HistoryManager, HistoryRestoreError,
                       merge_retention_policies)
 from .json_speedups import dumps_json
-from .markdown_io import (auto_detect_requirements_dir, check_files_writable,
-                          check_index_sync, discover_project_root,
-                          display_name_from_h1, format_path_display,
+from .markdown_io import (auto_detect_requirements_dir,
+                          build_requirements_index_tooling_metadata,
+                          check_files_writable, check_index_sync,
+                          discover_project_root, display_name_from_h1,
+                          format_path_display,
                           initialize_requirements_scaffold, iter_domain_files,
                           iter_requirements_search_roots, parse_index_links,
+                          parse_requirements_index_tooling_metadata,
                           render_startup_message, resolve_requirements_dir,
+                          sync_requirements_index_tooling_metadata,
                           validate_files_readable)
 from .menus import select_from_menu
 from .priority_model import (configure_priority_catalog,
@@ -1550,6 +1554,12 @@ def _filter_timeline_nodes(
     help="Default priority used by --seed-priorities (for example p0, high, medium, low).",
 )
 @click.option(
+    "--sync-index-metadata",
+    "sync_index_metadata",
+    is_flag=True,
+    help="Add or refresh the rqmd tooling metadata block in the requirements index README.",
+)
+@click.option(
     "--session-state-dir",
     "state_dir",
     type=str,
@@ -1686,6 +1696,7 @@ def main(
     restore_status_emojis: bool,
     init_priorities: bool,
     default_priority: str,
+    sync_index_metadata: bool,
     state_dir: str,
     repo_root: Path,
     requirements_dir: str | None,
@@ -1897,6 +1908,76 @@ def main(
     resolved_requirements_dir_input = str(resolved_criteria_dir)
     if criteria_dir_message and not json_output:
         click.echo(criteria_dir_message)
+
+    index_path = resolved_criteria_dir / REQUIREMENTS_INDEX_NAME
+
+    if sync_index_metadata:
+        if not index_path.exists():
+            click.echo(
+                render_startup_message(
+                    "startup-missing-index.md",
+                    {"INDEX_PATH": format_path_display(index_path, repo_root)},
+                ).rstrip(),
+                err=True,
+            )
+            raise SystemExit(1)
+
+        original_text = index_path.read_text(encoding="utf-8")
+        updated_text, changed = sync_requirements_index_tooling_metadata(original_text)
+        metadata = build_requirements_index_tooling_metadata()
+
+        if json_output:
+            payload = {
+                "mode": "sync-index-metadata",
+                "requirements_dir": format_path_display(resolved_criteria_dir, repo_root),
+                "index_path": format_path_display(index_path, repo_root),
+                "dry_run": dry_run,
+                "changed": changed,
+                "rqmd_version": metadata["rqmd_version"],
+                "schema_version": metadata["json_schema_version"],
+            }
+            _emit_json_payload(payload)
+            raise SystemExit(0)
+
+        if changed and not dry_run:
+            index_path.write_text(updated_text, encoding="utf-8")
+
+        verb = "Would update" if dry_run else "Updated"
+        if changed:
+            click.echo(f"{verb} requirements index metadata in {format_path_display(index_path, repo_root)}.")
+        else:
+            click.echo(f"Requirements index metadata already current in {format_path_display(index_path, repo_root)}.")
+        raise SystemExit(0)
+
+    if index_path.exists() and not json_output:
+        recorded_metadata = parse_requirements_index_tooling_metadata(index_path.read_text(encoding="utf-8"))
+        current_metadata = build_requirements_index_tooling_metadata()
+        if recorded_metadata is None:
+            click.echo(
+                (
+                    "Warning: requirements index metadata is missing from "
+                    f"{format_path_display(index_path, repo_root)}. "
+                    "Run `rqmd --sync-index-metadata --force-yes` to record the current rqmd and JSON schema versions."
+                ),
+                err=True,
+            )
+        else:
+            recorded_rqmd_version = str(recorded_metadata.get("rqmd_version") or "unknown")
+            recorded_json_schema = str(recorded_metadata.get("json_schema_version") or "unknown")
+            if (
+                recorded_rqmd_version != current_metadata["rqmd_version"]
+                or recorded_json_schema != current_metadata["json_schema_version"]
+            ):
+                click.echo(
+                    (
+                        "Warning: requirements index metadata mismatch in "
+                        f"{format_path_display(index_path, repo_root)}. "
+                        f"Recorded rqmd={recorded_rqmd_version}, json_schema={recorded_json_schema}; "
+                        f"running rqmd={current_metadata['rqmd_version']}, json_schema={current_metadata['json_schema_version']}. "
+                        "Review migration notes if needed, then run `rqmd --sync-index-metadata --force-yes`."
+                    ),
+                    err=True,
+                )
 
     try:
         id_prefixes = resolve_id_prefixes(repo_root, resolved_requirements_dir_input, id_prefixes)
@@ -3945,5 +4026,4 @@ def main(
 
 
 if __name__ == "__main__":
-    main()
     main()

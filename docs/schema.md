@@ -1,6 +1,8 @@
 # RQMD Data Schema & Contract
 
-This document comprehensively specifies the data structures, parsing rules, and metadata contracts used by rqmd.
+This document comprehensively specifies the markdown/data structures, parsing rules, and metadata contracts used by rqmd.
+
+> **ℹ️ Info:** This page is primarily about the rqmd requirement-markdown and parsed-data contract. The machine-readable JSON API is a separate contract and already carries a top-level `schema_version` field, currently `1.0.0`.
 
 ## Table of Contents
 1. [Requirement (Criterion) Object](#requirement-criterion-object)
@@ -188,27 +190,30 @@ The shipped built-in catalogs are packaged as YAML resources under `src/rqmd/res
 
 ## JSON Export Contracts
 
+rqmd JSON payloads include a top-level `schema_version` so automation can detect the machine-readable contract version independently from the package version or the markdown catalog format.
+
 ### Stable Top-Level Keys By Mode
 
 When `--json` is used, top-level keys are stable by mode:
 
-- `summary`: `mode`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
-- `check`: `mode`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
-- `set` / `set-priority` / `set-flagged`: `mode`, `criteria_dir`, `changed_files`, `totals`, `files`, `updates`
-- `filter-status`: `mode`, `status`, `criteria_dir`, `total`, `files`
-- `filter-priority`: `mode`, `priority`, `criteria_dir`, `total`, `files`
-- `filter-flagged`: `mode`, `flagged`, `criteria_dir`, `total`, `files`
-- `filter-sub-domain`: `mode`, `sub_domain`, `criteria_dir`, `total`, `files`
-- `filter-targets`: `mode`, `targets`, `criteria_dir`, `total`, `files`
-- `rollup`: `mode`, `criteria_dir`, `file_count`, `totals`, optional `rollup_source`, optional `rollup_columns`
-- `init`: `mode`, `criteria_dir`, `starter_prefix`, `created_files`, `created_count`
-- `init-priorities`: `mode`, `criteria_dir`, `default_priority`, `changed_files`, `changed_count`
+- `summary`: `mode`, `schema_version`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
+- `check`: `mode`, `schema_version`, `criteria_dir`, `changed_files`, `totals`, `files`, `ok`
+- `set` / `set-priority` / `set-flagged`: `mode`, `schema_version`, `criteria_dir`, `changed_files`, `totals`, `files`, `updates`
+- `filter-status`: `mode`, `schema_version`, `status`, `criteria_dir`, `total`, `files`
+- `filter-priority`: `mode`, `schema_version`, `priority`, `criteria_dir`, `total`, `files`
+- `filter-flagged`: `mode`, `schema_version`, `flagged`, `criteria_dir`, `total`, `files`
+- `filter-sub-domain`: `mode`, `schema_version`, `sub_domain`, `criteria_dir`, `total`, `files`
+- `filter-targets`: `mode`, `schema_version`, `targets`, `criteria_dir`, `total`, `files`
+- `rollup`: `mode`, `schema_version`, `criteria_dir`, `file_count`, `totals`, optional `rollup_source`, optional `rollup_columns`
+- `init`: `mode`, `schema_version`, `criteria_dir`, `starter_prefix`, `created_files`, `created_count`
+- `init-priorities`: `mode`, `schema_version`, `criteria_dir`, `default_priority`, `changed_files`, `changed_count`
 
 ### Filter Payload Example (Current)
 
 ```json
 {
   "mode": "filter-sub-domain",
+  "schema_version": "1.0.0",
   "sub_domain": "query",
   "requirements_dir": "docs/requirements",
   "total": 2,
@@ -325,4 +330,4 @@ Custom statuses **override** canonical order and aliases. Schema must include `n
 
 - **RQMD-CORE-020+**: Subsection-level body content capture (narrative + optional metadata per subsection)
 - **RQMD-AUTOMATION-032+**: Domain-level body parsing (domain-scope narrative separate from requirements)
-- **Schema versioning**: JSON responses will include `schema_version` field when versioning policy is established
+- **RQMD-CORE-033**: Versioned requirement markdown schema and migration path for the markdown catalog format itself

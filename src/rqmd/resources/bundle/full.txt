@@ -1,7 +1,5 @@
 .github/copilot-instructions.md
 .github/agents/rqmd-dev.agent.md
-.github/agents/rqmd-dev-longrunning.agent.md
-.github/agents/rqmd-dev-easy.agent.md
 .github/prompts/brainstorm.prompt.md
 .github/prompts/commit-and-go.prompt.md
 .github/prompts/docs-pass.prompt.md
@@ -23,8 +21,4 @@
 .github/skills/rqmd-pin/SKILL.md
 .github/skills/rqmd-bundle/SKILL.md
 .github/skills/rqmd-verify/SKILL.md
-.github/agents/rqmd-explore.agent.md
-.github/agents/rqmd-requirements.agent.md
-.github/agents/rqmd-docs.agent.md
-.github/agents/rqmd-history.agent.md
 .github/agents/README.md

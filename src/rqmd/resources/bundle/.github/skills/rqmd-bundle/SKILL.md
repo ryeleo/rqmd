@@ -21,6 +21,7 @@ Use this skill when the work is about Copilot instructions, agents, skills, or b
 Workflow:
 - Preview bundle changes with `rqmd-ai i --json --bundle-preset minimal --dry-run`.
 - For AI-guided onboarding, use `rqmd-ai i --json --bundle-preset minimal --chat --dry-run` to get grouped interview prompts with multi-select suggestions, custom-answer prompts, skip support, recommended choices, safe defaults, and generated `/dev` and `/test` skill previews.
+- For machine-readable automation, run `rqmd-ai --json` commands in the foreground, parse stdout as JSON, and keep stderr separate for warnings or diagnostics.
 - Install the standard bundle with `rqmd-ai install --json`.
 - Repeat `--answer FIELD=VALUE` to select multiple commands or add custom answers when the inferred build, run, smoke, or test commands need correction before writing.
 - Review the generated project-local `/dev` and `/test` skills after install and replace any weak command guesses with the repository's canonical workflows.
