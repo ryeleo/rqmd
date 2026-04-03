@@ -1,11 +1,15 @@
 name: publish-pypi
 
 on:
+  push:
+    tags:
+      - "v*rc*"
   release:
     types: [published]
 
 jobs:
   publish:
+    if: ${{ github.event_name == 'push' || (github.event_name == 'release' && !contains(github.event.release.tag_name, 'rc')) }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -25,9 +29,9 @@ jobs:
       - name: Install build backend
         run: python -m pip install --upgrade build
 
-      - name: Validate release tag matches project version
+      - name: Validate publish tag matches project version
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref_name }}
         run: python scripts/validate_release_tag.py
 
       - name: Build package

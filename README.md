@@ -805,7 +805,7 @@ This package includes GitHub Actions workflows:
 - Runs `bash scripts/local-smoke.sh --skip-install`.
 
 - `.github/workflows/publish-pypi.yml`
-- Triggers when a GitHub release is published.
+- Triggers when a stable GitHub release is published, or when an `rc` tag such as `v0.1.0rcN` is pushed.
 - Validates that the release tag is a stable semver tag or `rc` prerelease tag such as `v0.1.0rcN`, matching `project.version`.
 - Builds with `python -m build` and publishes with GitHub Actions trusted publishing.
 
@@ -899,5 +899,6 @@ When ready for PyPI:
 
 1. Follow semantic versioning policy in `docs/SEMVER.md`.
 2. Follow the release checklist in `docs/releasing.md`.
-3. Create and publish a GitHub Release with a matching tag such as `v0.1.0` or `v0.1.0rcN`.
-4. Let `.github/workflows/publish-pypi.yml` publish through trusted publishing.
+3. For a stable version, create and publish a GitHub Release with a matching tag such as `v0.1.0`.
+4. For an internal release candidate, push a matching tag such as `v0.1.0rcN`; no GitHub Release is required.
+5. Let `.github/workflows/publish-pypi.yml` publish through trusted publishing.

@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simplified the core rqmd surface by removing history/time-machine and undo/redo CLI workflows from `rqmd` and `rqmd-ai` in the 0.x track, and deprecating the Time Machine and Undo requirement domains.
 - Hardened interactive `screen_write` rendering on small terminals by constraining long requirement prefix/panel content to the visible viewport, preventing redraw overflow that could leave stale wrapped lines in scrollback (notably in Windows VS Code terminals).
 - Updated interactive `screen_write` redraws to clear terminal scrollback as well as the visible frame before each render, making the interactive view behave more like a dedicated full-screen surface.
+- Updated PyPI publishing so stable versions still ship from published GitHub Releases, while internal `rc` tags such as `v0.1.1rc1` publish automatically when the tag is pushed.
 
 ## [0.1.0] - 2026-04-02
 

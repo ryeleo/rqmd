@@ -22,5 +22,6 @@ rqmd follows Semantic Versioning (`MAJOR.MINOR.PATCH`).
 ## Prereleases
 
 - Release candidates should use PEP 440 `rc` versions such as `0.1.0rcN`.
-- GitHub release tags for release candidates should use the matching form `v0.1.0rcN`.
+- Release candidate tags should use the matching form `v0.1.0rcN`.
+- Pushing a matching `v0.1.0rcN` tag publishes that prerelease to PyPI without requiring a full GitHub Release.
 - Prereleases are appropriate when you want real PyPI installability without promoting a build as the default stable release.

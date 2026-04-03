@@ -62,13 +62,14 @@ Summary: 0💡 3🔧 9✅ 0⚠️ 0⛔ 0🗑️
 - So that backward-compatible changes use minor/patch bumps
 - So that breaking CLI changes trigger major version bumps.
 
-### RQMD-PACKAGING-008: Publish to PyPI on GitHub release
+### RQMD-PACKAGING-008: Publish to PyPI on stable release or rc tag
 - **Status:** ✅ Verified
 - **Priority:** 🟡 P2 - Medium
-- As a rqmd user when a GitHub release is created for this repository
+- As a rqmd user when a stable release or internal release candidate is cut for this repository
 - I want to run the release workflow
 - So that the tagged package version is published to pypi.org automatically
 - So that publication uses repository automation rather than a manual local upload.
+- So that stable versions publish from a GitHub Release, while PEP 440 `rc` prerelease tags can publish directly from a matching tag push without requiring a full GitHub Release.
 - So that publication only proceeds for stable semver release tags or PEP 440 `rc` prerelease tags, and validates that the release tag matches `project.version` before publishing.
 - So that publication can use GitHub Actions trusted publishing instead of a long-lived PyPI API token.
 - So that release-tag validation logic lives in a repository Python script and can be syntax-checked in CI instead of being embedded inline in workflow YAML.

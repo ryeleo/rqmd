@@ -19,7 +19,7 @@ Do this once before your first release from this repository:
 6. In GitHub, open repository Settings -> Environments and create an environment named `pypi` if it does not already exist.
 7. If you want extra guardrails, add environment protection rules such as restricting deployment to tags or requiring manual approval.
 8. Confirm `.github/workflows/publish-pypi.yml` still requests `id-token: write` and uses the same `pypi` environment name.
-9. Your first successful GitHub Release publish will create the project on PyPI and bind it to that trusted publisher configuration.
+9. Your first successful publish from `.github/workflows/publish-pypi.yml` will create the project on PyPI and bind it to that trusted publisher configuration.
 
 Notes:
 
@@ -43,13 +43,14 @@ Before cutting a stable release or release candidate:
 
 1. Choose a tag that matches `project.version`, such as `v0.1.0` for a stable release or `v0.1.0rcN` for a release candidate.
 2. Ensure that tag exactly matches `project.version` after removing the optional leading `v`.
-3. Push the release commit and create a GitHub Release with that tag.
-4. Publish the GitHub Release.
+3. For a stable release, push the release commit, create a GitHub Release with that tag, and publish the GitHub Release.
+4. For an internal release candidate, push the matching `vX.Y.ZrcN` tag; `.github/workflows/publish-pypi.yml` will publish to PyPI directly from that tag push without requiring a GitHub Release.
 5. Wait for `.github/workflows/publish-pypi.yml` to finish successfully.
 6. Verify the new version appears on PyPI and that `pip install rqmd==<version>` succeeds.
 
 ## Notes
 
 - The publish workflow accepts stable releases and PEP 440 `rc` prereleases such as `0.1.0rcN`.
+- Stable versions publish when a GitHub Release is published; `rc` versions publish when the matching tag is pushed.
 - The publish workflow rejects tags that do not match `project.version` in `pyproject.toml`.
 - Publication uses GitHub Actions trusted publishing via the `pypi` environment instead of a repository-stored `PYPI_API_TOKEN`.
