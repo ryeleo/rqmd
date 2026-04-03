@@ -14,7 +14,6 @@ metadata:
       - rqmd-ai --json --dump-status proposed
       - rqmd-ai --json --dump-id RQMD-CORE-001 --include-requirement-body
       - rqmd-ai --json --dump-file ai-cli.md --include-domain-markdown
-      - rqmd-ai --json --dump-status proposed --history-ref 0
       - rqmd-ai --update RQMD-CORE-001=implemented
       - rqmd-ai --update RQMD-CORE-001=implemented --write
 ---

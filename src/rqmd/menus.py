@@ -36,9 +36,13 @@ _RESIZE_SIGNAL_PENDING = False
 _RENDER_MODE_CONTROLLER = RenderModeController()
 _ARROW_UP_KEYS = ("\x1b[A", "\x1bOA")
 _ARROW_DOWN_KEYS = ("\x1b[B", "\x1bOB")
+_WINDOWS_ARROW_PREFIXES = ("\x00", "\xe0")
+_WINDOWS_ARROW_UP_SUFFIXES = ("H",)
+_WINDOWS_ARROW_DOWN_SUFFIXES = ("P",)
 _CTRL_U = "\x15"
 _CTRL_D = "\x04"
 _HELP_TOGGLE_KEY = ":"
+_SCREEN_WRITE_CLEAR_SEQUENCE = "\x1b[3J\x1b[2J\x1b[H"
 
 
 def set_screen_write_enabled(enabled: bool) -> None:
@@ -116,11 +120,27 @@ def _format_key_label(key: str) -> str:
         return "↑"
     if key in _ARROW_DOWN_KEYS:
         return "↓"
+    if any(key == f"{prefix}{suffix}" for prefix in _WINDOWS_ARROW_PREFIXES for suffix in _WINDOWS_ARROW_UP_SUFFIXES):
+        return "↑"
+    if any(key == f"{prefix}{suffix}" for prefix in _WINDOWS_ARROW_PREFIXES for suffix in _WINDOWS_ARROW_DOWN_SUFFIXES):
+        return "↓"
     if key == _CTRL_U:
         return "^U"
     if key == _CTRL_D:
         return "^D"
     return key
+
+
+def _read_menu_key() -> str:
+    """Read one logical keypress, combining Windows prefixed sequences."""
+    first = click.getchar()
+    if first in _WINDOWS_ARROW_PREFIXES:
+        try:
+            second = click.getchar()
+        except (EOFError, KeyboardInterrupt):
+            return first
+        return f"{first}{second}"
+    return first
 
 
 def _resolve_arrow_navigation(
@@ -133,7 +153,17 @@ def _resolve_arrow_navigation(
             return "nav-next"
         if allow_paging_nav:
             return MENU_NEXT
+    if any(choice == f"{prefix}{suffix}" for prefix in _WINDOWS_ARROW_PREFIXES for suffix in _WINDOWS_ARROW_DOWN_SUFFIXES):
+        if extra_keys and "nav-next" in extra_keys.values():
+            return "nav-next"
+        if allow_paging_nav:
+            return MENU_NEXT
     if choice in _ARROW_UP_KEYS:
+        if extra_keys and "nav-prev" in extra_keys.values():
+            return "nav-prev"
+        if allow_paging_nav:
+            return MENU_PREV
+    if any(choice == f"{prefix}{suffix}" for prefix in _WINDOWS_ARROW_PREFIXES for suffix in _WINDOWS_ARROW_UP_SUFFIXES):
         if extra_keys and "nav-prev" in extra_keys.values():
             return "nav-prev"
         if allow_paging_nav:
@@ -258,6 +288,47 @@ def visible_length(text: str) -> int:
             continue
         width += 1
     return width
+
+
+def _wrapped_row_count(text: str, width: int) -> int:
+    """Estimate terminal rows consumed by a single rendered line."""
+    if width <= 0:
+        return 1
+    line_width = max(1, visible_length(text))
+    return (line_width + width - 1) // width
+
+
+def _fit_prefix_text_for_viewport(prefix_text: str | None, width: int, max_rows: int) -> str | None:
+    """Trim prefix text so the full frame stays within the visible viewport."""
+    if not prefix_text:
+        return prefix_text
+    if max_rows <= 0:
+        return None
+
+    lines = prefix_text.splitlines()
+    kept_lines: list[str] = []
+    used_rows = 0
+
+    for line in lines:
+        line_rows = _wrapped_row_count(line, width)
+        if used_rows + line_rows > max_rows:
+            break
+        kept_lines.append(line)
+        used_rows += line_rows
+
+    if len(kept_lines) == len(lines):
+        return prefix_text
+
+    truncation_note = click.style("... (content truncated to fit terminal)", dim=True)
+    note_rows = _wrapped_row_count(truncation_note, width)
+    while kept_lines and (used_rows + note_rows) > max_rows:
+        removed = kept_lines.pop()
+        used_rows -= _wrapped_row_count(removed, width)
+
+    if (used_rows + note_rows) <= max_rows:
+        kept_lines.append(truncation_note)
+
+    return "\n".join(kept_lines)
 
 
 def truncate_text(text: str, max_len: int) -> str:
@@ -458,7 +529,9 @@ def select_from_menu(
             total_pages = (len(options) + page_size - 1) // page_size
             start = window_start
             page_items = options[start:start + page_size]
-            term_width = shutil.get_terminal_size(fallback=(120, 24)).columns
+            term_size = shutil.get_terminal_size(fallback=(120, 24))
+            term_width = term_size.columns
+            term_height = term_size.lines
             current_page = min((window_start // page_size) + 1, total_pages)
             half_page = max(1, page_size // 2)
 
@@ -469,13 +542,25 @@ def select_from_menu(
                 effective_screen_write = False
 
             if effective_screen_write:
-                # Full-screen redraw mode: clear screen and return cursor to home.
-                click.echo("\x1b[2J\x1b[H", nl=False)
+                # Full-screen redraw mode clears scrollback, clears the visible screen,
+                # and returns the cursor to home so each frame reads like a fresh view.
+                click.echo(_SCREEN_WRITE_CLEAR_SEQUENCE, nl=False)
 
             render_started = time.perf_counter()
 
-            if prefix_text:
-                click.echo(prefix_text)
+            rendered_prefix = prefix_text
+            if rendered_prefix and effective_screen_write:
+                reserved_rows = 1 + 1 + len(page_items) + 1 + 1  # blank, title, menu rows, footer, prompt
+                if show_page_indicator and total_pages > 1:
+                    reserved_rows += 1
+                if help_visible:
+                    wrapped_help = _wrap_help_legend(resolved_help_legend, term_width)
+                    reserved_rows += 1 + len(wrapped_help) + 1
+                available_prefix_rows = max(0, term_height - reserved_rows)
+                rendered_prefix = _fit_prefix_text_for_viewport(rendered_prefix, term_width, available_prefix_rows)
+
+            if rendered_prefix:
+                click.echo(rendered_prefix)
             click.echo("")
             click.echo(title)
             if show_page_indicator and total_pages > 1:
@@ -540,7 +625,7 @@ def select_from_menu(
                 click.echo(click.style("Press : or any invalid key to close help.", dim=True))
             click.echo(resolved_compact_footer)
             click.echo("choice: ", nl=False)
-            raw_choice = click.getchar()
+            raw_choice = _read_menu_key()
             choice = raw_choice.strip()
             click.echo(_format_key_label(choice))
 
@@ -553,7 +638,7 @@ def select_from_menu(
 
             if allow_paging_nav and choice == "g":
                 click.echo("choice: ", nl=False)
-                raw_second_choice = click.getchar()
+                raw_second_choice = _read_menu_key()
                 second_choice = raw_second_choice.strip()
                 click.echo(_format_key_label(second_choice))
                 if second_choice == "\x03":

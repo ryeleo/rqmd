@@ -3,11 +3,11 @@
 Scope: full undo/redo semantics, persistent history across restarts/crashes, branching and "lost changes" recovery, UI affordances, and storage/retention policies.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 11🔧 0✅ 0⚠️ 0⛔ 0🗑️
+Summary: 0💡 0🔧 0✅ 0⚠️ 0⛔ 11🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-UNDO-001: Full undo/redo semantics
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a user makes sequential edits (status changes, reason edits, file updates)
 - I want to request `undo`
@@ -16,7 +16,7 @@ Summary: 0💡 11🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - So that compound user actions (multi-file or multi-field updates performed by one command) are treated atomically for undo/redo.
 
 ### RQMD-UNDO-002: Persistent history across restarts and crashes
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when the application exits normally or crashes unexpectedly
 - I want to restart rqmd
@@ -24,7 +24,7 @@ Summary: 0💡 11🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - So that no acknowledged write is lost due to process exit or crash (durability is guaranteed for committed operations).
 
 ### RQMD-UNDO-003: Branching history and "lost changes" visibility
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a user performs `undo` multiple times and then issues a new change (creating a divergent history)
 - I want the divergence to occur
@@ -33,14 +33,14 @@ Summary: 0💡 11🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - So that the system supports reapplying or cherry-picking individual changes from alternate branches.
 
 ### RQMD-UNDO-004: Interactive reconfirmation when rewriting history
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when the user attempts to perform an action that would lose reachable history (e.g., pruning, garbage-collecting alternate branches, or compacting history beyond retention)
 - I want such an action to require explicit confirmation in interactive mode
 - So that rqmd prompts the user with a concise summary of what will be lost and requires explicit confirmation before proceeding.
 
 ### RQMD-UNDO-005: Storage backend and crash-safety
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when durability and history expressiveness are required
 - I want to implement undo stack storage
@@ -50,7 +50,7 @@ Summary: 0💡 11🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - So that the backend provides atomic commits, durable fsync semantics for acknowledged writes, and a safe compact/garbage-collection path that preserves user-confirmable alternate branches.
 
 ### RQMD-UNDO-006: Metadata, auditability, and provenance
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when teams need traceability for changes
 - I want to record history entries
@@ -59,7 +59,7 @@ Summary: 0💡 11🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - So that the UI and `--verify-summaries` mode can render a human-readable history timeline showing provenance and diffs.
 
 ### RQMD-UNDO-007: UI affordances and commands
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when working in interactive and non-interactive modes
 - I want to expose history controls
@@ -72,7 +72,7 @@ Summary: 0💡 11🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - So that interactive prompts clearly explain consequences and offer to save named snapshots before destructive operations.
 
 ### RQMD-UNDO-008: Size, retention, and compaction policy
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when history can grow indefinitely
 - I want storage to grow beyond configured thresholds
@@ -81,14 +81,14 @@ Summary: 0💡 11🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - So that defaults are conservative (retain 90 days or last 1000 entries) with project and user overrides.
 
 ### RQMD-UNDO-009: Programmatic API and automation
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when CI/automation users may need to inspect or replay history non-interactively
 - I want automation to invoke history APIs
 - So that a machine-friendly interface is available (JSON output, programmatic commands) to list entries, export patches, and apply or revert specific entries.
 
 ### RQMD-UNDO-010: Tests and verification
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when the complexity of persistent undo and branching
 - I want to implement the system
@@ -96,7 +96,7 @@ Summary: 0💡 11🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - So that test fixtures include representative multi-file edits, branching and replay scenarios, and compaction behavior verification.
 
 ### RQMD-UNDO-011: Unified undo and audit capture
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when traceability and recovery guarantees are required
 - I want every rqmd write operation to be recorded in the same `rqmd-history` backend used for undo/redo

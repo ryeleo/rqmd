@@ -79,7 +79,7 @@ Summary: 0💡 42🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - As a compliance-oriented user when AI modifies requirements
 - I want rqmd-ai to emit a structured audit record of inputs, decisions, and outputs
 - So that AI-assisted requirement changes remain traceable and reviewable.
-- So that emitted audit records are sourced from the same local `rqmd-history` backend defined by `RQMD-UNDO-005` and `RQMD-UNDO-011`, rather than a parallel audit store.
+- So that emitted audit records are sourced from one local rqmd-managed audit backend rather than parallel stores.
 
 ### RQMD-AI-011: Domain-body context export for prompts
 - **Status:** 🔧 Implemented

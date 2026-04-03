@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import os
 from unittest.mock import patch
 
 from rqmd import menus as menus_mod
@@ -40,11 +41,50 @@ def test_RQMD_ui_010_row_diff_engine_handles_row_removal() -> None:
 
 def test_RQMD_ui_010_tty_path_emits_screen_write_escape() -> None:
     output = _capture_menu_output(screen_write_enabled=True, is_tty=True)
-    assert "\x1b[2J\x1b[H" in output
+    assert menus_mod._SCREEN_WRITE_CLEAR_SEQUENCE in output
 
 
 def test_RQMD_ui_010_non_tty_path_uses_fallback_without_escape() -> None:
     output = _capture_menu_output(screen_write_enabled=True, is_tty=False)
-    assert "\x1b[2J\x1b[H" not in output
+    assert menus_mod._SCREEN_WRITE_CLEAR_SEQUENCE not in output
     assert "UI-010" in output
     assert "One" in output
+
+
+def test_RQMD_ui_010_fit_prefix_text_for_viewport_truncates_when_needed() -> None:
+    prefix = "\n".join([f"line {i} " + ("x" * 60) for i in range(12)])
+
+    rendered = menus_mod._fit_prefix_text_for_viewport(prefix, width=40, max_rows=6)
+
+    assert rendered is not None
+    assert "content truncated to fit terminal" in rendered
+
+
+def test_RQMD_ui_010_screen_write_truncates_prefix_before_render() -> None:
+    menus_mod.set_screen_write_enabled(True)
+    captured: list[str] = []
+
+    def _capture_echo(message: str = "", *args, **kwargs) -> None:
+        if isinstance(message, str):
+            captured.append(message)
+
+    long_prefix = "\n".join([f"prefix {i} " + ("x" * 80) for i in range(30)])
+    fake_terminal_size = io.StringIO()
+
+    with patch("rqmd.menus.click.echo", side_effect=_capture_echo):
+        with patch("sys.stdout", fake_terminal_size):
+            with patch("sys.stdout.isatty", return_value=True):
+                with patch("rqmd.menus.shutil.get_terminal_size", return_value=os.terminal_size((40, 12))):
+                    with patch("click.getchar", return_value="q"):
+                        menus_mod.select_from_menu(
+                            "UI-010",
+                            ["One", "Two", "Three"],
+                            allow_paging_nav=False,
+                            prefix_text=long_prefix,
+                        )
+
+    menus_mod.set_screen_write_enabled(False)
+
+    rendered_prefixes = [msg for msg in captured if "prefix 0" in msg or "content truncated to fit terminal" in msg]
+    assert rendered_prefixes
+    assert any("content truncated to fit terminal" in msg for msg in rendered_prefixes)

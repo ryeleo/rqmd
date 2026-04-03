@@ -90,8 +90,7 @@ from .constants import (DEFAULT_ID_PREFIXES, DEFAULT_REQUIREMENTS_DIR,
                         ID_PREFIX_PATTERN, JSON_SCHEMA_VERSION, PRIORITY_ORDER,
                         REQUIREMENTS_INDEX_NAME, STATUS_ORDER, STATUS_PATTERN,
                         SUMMARY_END, SUMMARY_START)
-from .history import (HistoryManager, HistoryRestoreError,
-                      merge_retention_policies)
+from .history import HistoryManager, merge_retention_policies
 from .json_speedups import dumps_json
 from .markdown_io import (auto_detect_requirements_dir,
                           build_requirements_index_tooling_metadata,
@@ -1188,161 +1187,6 @@ def _filter_timeline_nodes(
     help="Non-interactive bulk mode: repeat ID=STATUS (for example --update R-FOO-001=implemented).",
 )
 @click.option(
-    "--undo",
-    "undo_last",
-    is_flag=True,
-    help="Non-interactive mode: restore the previous recorded catalog snapshot.",
-)
-@click.option(
-    "--redo",
-    "redo_last",
-    is_flag=True,
-    help="Non-interactive mode: reapply the next recorded catalog snapshot.",
-)
-@click.option(
-    "--timeline",
-    "show_timeline",
-    is_flag=True,
-    help="Display the history timeline showing branches and entry points (useful with --json for automation).",
-)
-@click.option(
-    "--history",
-    "show_history",
-    is_flag=True,
-    help="Display persistent history entries with cursor/head metadata (useful with --json for automation).",
-)
-@click.option(
-    "--history-discard-branch",
-    "history_discard_branch",
-    type=str,
-    default=None,
-    help="Discard an alternate history branch by name (requires confirmation; use --force-yes for non-interactive automation).",
-)
-@click.option(
-    "--history-discard-save-label",
-    "history_discard_save_label",
-    type=str,
-    default=None,
-    help="Optional label to save on a branch immediately before --history-discard-branch removes it from navigation.",
-)
-@click.option(
-    "--history-label-branch",
-    "history_label_branch",
-    type=str,
-    default=None,
-    help="Set or update a human-readable label for a named history branch.",
-)
-@click.option(
-    "--history-branch-label",
-    "history_branch_label",
-    type=str,
-    default=None,
-    help="Label text used with --history-label-branch.",
-)
-@click.option(
-    "--history-gc",
-    "history_gc",
-    is_flag=True,
-    help="Run maintenance garbage collection on the hidden history repository (requires confirmation; use --force-yes for automation).",
-)
-@click.option(
-    "--history-gc-save-label",
-    "history_gc_save_label",
-    type=str,
-    default=None,
-    help="Optional label to save on the current history branch immediately before --history-gc runs.",
-)
-@click.option(
-    "--history-prune-now",
-    "history_prune_now",
-    is_flag=True,
-    help="Used with --history-gc to expire reflogs and prune immediately instead of using Git's default grace period.",
-)
-@click.option(
-    "--history-checkout-branch",
-    "history_checkout_branch",
-    type=str,
-    default=None,
-    help="Checkout a named history branch and restore its HEAD snapshot into the working catalog.",
-)
-@click.option(
-    "--history-cherry-pick",
-    "history_cherry_pick",
-    type=str,
-    default=None,
-    help="Apply a single history entry onto the current or target branch HEAD. Accepts entry index, commit hash/prefix, stable hid: id, or 'head'/'current'.",
-)
-@click.option(
-    "--history-replay-branch",
-    "history_replay_branch",
-    type=str,
-    default=None,
-    help="Replay every commit from a named alternate history branch onto the current or target branch HEAD.",
-)
-@click.option(
-    "--history-target-branch",
-    "history_target_branch",
-    type=str,
-    default=None,
-    help="Optional target branch for --history-cherry-pick or --history-replay-branch.",
-)
-@click.option(
-    "--timeline-branch",
-    "timeline_filter_branch",
-    type=str,
-    default=None,
-    help="Filter --timeline output by branch name (case-insensitive contains match).",
-)
-@click.option(
-    "--timeline-actor",
-    "timeline_filter_actor",
-    type=str,
-    default=None,
-    help="Filter --timeline output by actor metadata (case-insensitive contains match).",
-)
-@click.option(
-    "--timeline-command",
-    "timeline_filter_command",
-    type=str,
-    default=None,
-    help="Filter --timeline output by command/operation type (case-insensitive contains match).",
-)
-@click.option(
-    "--timeline-file",
-    "timeline_filter_file",
-    type=str,
-    default=None,
-    help="Filter --timeline output by changed file path token.",
-)
-@click.option(
-    "--timeline-requirement-id",
-    "timeline_filter_requirement_id",
-    type=str,
-    default=None,
-    help="Filter --timeline output to entries that changed the specified requirement ID.",
-)
-@click.option(
-    "--timeline-transition",
-    "timeline_filter_transition",
-    type=str,
-    default=None,
-    help="Filter --timeline output by transition token (for example 'Proposed->Implemented').",
-)
-@click.option(
-    "--timeline-from",
-    "timeline_filter_from",
-    type=str,
-    default=None,
-    help="Filter --timeline output to entries at/after this ISO-8601 timestamp.",
-)
-@click.option(
-    "--timeline-to",
-    "timeline_filter_to",
-    type=str,
-    default=None,
-    help="Filter --timeline output to entries at/before this ISO-8601 timestamp.",
-)
-@click.option(
     "--update-file",
     "set_file_input",
     type=str,
@@ -1640,29 +1484,6 @@ def main(
     set_requirement_id: str | None,
     set_status: str | None,
     set_updates: tuple[str, ...],
-    undo_last: bool,
-    redo_last: bool,
-    show_timeline: bool,
-    show_history: bool,
-    history_discard_branch: str | None,
-    history_discard_save_label: str | None,
-    history_label_branch: str | None,
-    history_branch_label: str | None,
-    history_gc: bool,
-    history_gc_save_label: str | None,
-    history_prune_now: bool,
-    history_checkout_branch: str | None,
-    history_cherry_pick: str | None,
-    history_replay_branch: str | None,
-    history_target_branch: str | None,
-    timeline_filter_branch: str | None,
-    timeline_filter_actor: str | None,
-    timeline_filter_command: str | None,
-    timeline_filter_file: str | None,
-    timeline_filter_requirement_id: str | None,
-    timeline_filter_transition: str | None,
-    timeline_filter_from: str | None,
-    timeline_filter_to: str | None,
     dry_run: bool,
     set_file_input: str | None,
     rename_id_prefix: str | None,
@@ -1745,40 +1566,6 @@ def main(
     ctx.call_on_close(lambda: configure_priority_catalog(None))
     ctx.call_on_close(lambda: configure_status_catalog(None))
 
-    # 0.x simplification: history/time-machine workflows are intentionally disabled.
-    history_features_requested = any(
-        [
-            bool(undo_last),
-            bool(redo_last),
-            bool(show_timeline),
-            bool(show_history),
-            bool(history_discard_branch),
-            bool(history_discard_save_label),
-            bool(history_label_branch),
-            bool(history_branch_label),
-            bool(history_gc),
-            bool(history_gc_save_label),
-            bool(history_prune_now),
-            bool(history_checkout_branch),
-            bool(history_cherry_pick),
-            bool(history_replay_branch),
-            bool(history_target_branch),
-            bool(timeline_filter_branch),
-            bool(timeline_filter_actor),
-            bool(timeline_filter_command),
-            bool(timeline_filter_file),
-            bool(timeline_filter_requirement_id),
-            bool(timeline_filter_transition),
-            bool(timeline_filter_from),
-            bool(timeline_filter_to),
-        ]
-    )
-    if history_features_requested:
-        raise click.ClickException(
-            "History/time-machine and undo/redo flows are disabled in 0.x simplification mode. "
-            "Use direct status updates (`rqmd --update ...`) or interactive status edits instead."
-        )
-
     # Apply config defaults (CLI flags override config file)
     if not requirements_dir and "requirements_dir" in config:
         requirements_dir = config["requirements_dir"]
@@ -1846,7 +1633,7 @@ def main(
     positional_init_requested = len(targets) == 1 and str(targets[0]).strip().casefold() == "init"
 
     if positional_init_requested:
-        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or undo_last or redo_last or tree or rollup_mode:
+        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode:
             raise click.ClickException(
                 "rqmd init is an onboarding surface and cannot be combined with verify/filter/update/tree or rollup options."
             )
@@ -1904,7 +1691,7 @@ def main(
         raise SystemExit(0)
 
     if init_scaffold:
-        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or undo_last or redo_last or tree or rollup_mode or targets:
+        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or targets:
             raise click.ClickException(
                 "--scaffold cannot be combined with --verify-summaries, --totals, positional ID, --filter-* / --as-tree, or --update-* options."
             )
@@ -2088,16 +1875,6 @@ def main(
             or set_flagged_updates
             or set_file_input
             or set_file
-            or undo_last
-            or redo_last
-            or show_timeline
-            or show_history
-            or history_discard_branch
-            or history_label_branch
-            or history_gc
-            or history_checkout_branch
-            or history_cherry_pick
-            or history_replay_branch
             or tree
             or list_output
             or rollup_mode
@@ -2156,8 +1933,6 @@ def main(
             or set_flagged_updates
             or set_file_input
             or set_file
-            or undo_last
-            or redo_last
             or tree
             or rollup_mode
             or targets
@@ -2253,8 +2028,6 @@ def main(
             or set_flagged_updates
             or set_file_input
             or set_file
-            or undo_last
-            or redo_last
             or tree
             or rollup_mode
             or targets
@@ -2335,7 +2108,7 @@ def main(
 
     if strip_status_emojis or restore_status_emojis:
         _ensure_unique_requirement_ids(repo_root, domain_files, id_prefixes)
-        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or undo_last or redo_last or tree or rollup_mode or targets:
+        if check or filter_status or filter_priority or filter_flagged or filter_no_flag or filter_has_link or filter_no_link or filter_sub_domain or filter_ids_file or set_requirement_id or set_status or set_updates or set_priority_updates or set_flagged_updates or set_file_input or set_file or tree or rollup_mode or targets:
             raise click.ClickException(
                 "Emoji strip/restore modes cannot be combined with --verify-summaries, --totals, positional ID, --filter-* / --as-tree, or --update-* options."
             )
@@ -3295,33 +3068,6 @@ def main(
             )
         )
 
-    timeline_filter_requested = bool(
-        timeline_filter_branch
-        or timeline_filter_actor
-        or timeline_filter_command
-        or timeline_filter_file
-        or timeline_filter_requirement_id
-        or timeline_filter_transition
-        or timeline_filter_from
-        or timeline_filter_to
-    )
-    if timeline_filter_requested and not show_timeline:
-        raise click.ClickException("--timeline-* filters require --timeline.")
-    if history_target_branch and not (history_cherry_pick or history_replay_branch):
-        raise click.ClickException(
-            "--history-target-branch requires --history-cherry-pick or --history-replay-branch."
-        )
-    if history_discard_save_label and not history_discard_branch:
-        raise click.ClickException("--history-discard-save-label requires --history-discard-branch.")
-    if history_gc_save_label and not history_gc:
-        raise click.ClickException("--history-gc-save-label requires --history-gc.")
-    if history_label_branch and not history_branch_label:
-        raise click.ClickException("--history-label-branch requires --history-branch-label.")
-    if history_branch_label and not history_label_branch:
-        raise click.ClickException("--history-branch-label requires --history-label-branch.")
-    if history_prune_now and not history_gc:
-        raise click.ClickException("--history-prune-now requires --history-gc.")
-
     non_interactive_requested = bool(
         set_requirement_id
         or set_status
@@ -3330,16 +3076,6 @@ def main(
         or set_flagged_updates
         or set_file_input
         or set_file
-        or undo_last
-        or redo_last
-        or show_timeline
-        or show_history
-        or history_discard_branch
-        or history_label_branch
-        or history_gc
-        or history_checkout_branch
-        or history_cherry_pick
-        or history_replay_branch
     )
     if non_interactive_requested and positional_domain_file and not set_file and not set_file_input:
         set_file = format_path_display(positional_domain_file, repo_root)
@@ -3356,479 +3092,12 @@ def main(
             + int(bool(set_flagged_updates))
             + int(bool(set_file_input))
             + int(bool(set_requirement_id or set_status))
-            + int(bool(undo_last))
-            + int(bool(redo_last))
-            + int(bool(show_timeline))
-            + int(bool(show_history))
-            + int(bool(history_discard_branch))
-            + int(bool(history_label_branch))
-            + int(bool(history_gc))
-            + int(bool(history_checkout_branch))
-            + int(bool(history_cherry_pick))
-            + int(bool(history_replay_branch))
         )
         if mode_count > 1:
             raise click.ClickException(
-                "Use exactly one non-interactive update mode: --undo, --redo, --timeline, --history, --history-discard-branch, --history-label-branch, --history-gc, --history-checkout-branch, --history-cherry-pick, --history-replay-branch, --update-file, --update ID=STATUS (repeatable), --update-priority ID=PRIORITY (repeatable), --update-flagged ID=true|false (repeatable), or --update-id with --update-status."
+                "Use exactly one non-interactive update mode: --update-file, --update ID=STATUS (repeatable), --update-priority ID=PRIORITY (repeatable), --update-flagged ID=true|false (repeatable), or --update-id with --update-status."
             )
 
-        if history_label_branch:
-            history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
-            branch_name = history_label_branch.strip()
-            label_text = str(history_branch_label or "").strip()
-            branches = history_manager.get_branches()
-            if branch_name not in branches:
-                raise click.ClickException(f"Unknown history branch: {history_label_branch!r}")
-
-            updated = history_manager.label_branch(branch_name, label_text)
-            payload = {
-                "mode": "history-label-branch",
-                "branch": branch_name,
-                "label": label_text,
-                "updated": updated,
-                "branches": history_manager.get_branches(),
-            }
-            if json_output:
-                _emit_json_payload(payload)
-            else:
-                if updated:
-                    click.echo(f"Labeled history branch '{branch_name}' as '{label_text}'.")
-                else:
-                    click.echo(f"No branch label updated for '{branch_name}'.")
-            raise SystemExit(0)
-
-        if history_gc:
-            history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
-            retention_policy = _resolve_history_retention_policy(config, user_config)
-            confirmed = bool(confirm_yes)
-            existing_stats = history_manager.get_storage_stats()
-            saved_label = None
-            if not confirmed:
-                if not sys.stdin.isatty() or json_output:
-                    raise click.ClickException(
-                        "History garbage collection requires confirmation. Re-run with --force-yes."
-                    )
-                prune_label = " with immediate prune" if history_prune_now else ""
-                confirmed = click.confirm(
-                    (
-                        f"Run history garbage collection{prune_label}? "
-                        "This may permanently remove expired reflog objects from .rqmd/history/rqmd-history."
-                    ),
-                    default=False,
-                    show_default=True,
-                )
-
-            if not confirmed:
-                payload = {
-                    "mode": "history-gc",
-                    "ran": False,
-                    "cancelled": True,
-                    "saved_label": None,
-                    "prune_now": history_prune_now,
-                    "before": existing_stats,
-                    "after": existing_stats,
-                }
-                if json_output:
-                    _emit_json_payload(payload)
-                else:
-                    click.echo("History garbage collection cancelled.")
-                raise SystemExit(0)
-
-            if history_gc_save_label:
-                label_text = history_gc_save_label.strip()
-                if label_text:
-                    current_branch = next(
-                        (
-                            name
-                            for name, info in history_manager.get_branches().items()
-                            if bool(info.get("is_current"))
-                        ),
-                        "main",
-                    )
-                    history_manager.label_branch(current_branch, label_text)
-                    saved_label = label_text
-
-            gc_result = history_manager.garbage_collect(
-                prune_now=history_prune_now,
-                retention_policy=retention_policy,
-            )
-            payload = {
-                "mode": "history-gc",
-                "ran": True,
-                "cancelled": False,
-                "saved_label": saved_label,
-                **gc_result,
-            }
-            if json_output:
-                _emit_json_payload(payload)
-            else:
-                before = payload["before"]
-                after = payload["after"]
-                retention = payload.get("retention") if isinstance(payload.get("retention"), dict) else {}
-                saved_text = f" after saving label '{saved_label}'" if saved_label else ""
-                retention_text = ""
-                if isinstance(retention, dict):
-                    retention_text = (
-                        f" retention: kept {retention.get('retained_entries_count', 0)}"
-                        f"/{retention.get('entries_count', 0)} entries"
-                    )
-                click.echo(
-                    "History gc completed"
-                    f"{saved_text} "
-                    f"(loose objects: {before.get('count', 0)} -> {after.get('count', 0)}, "
-                    f"packs: {before.get('packs', 0)} -> {after.get('packs', 0)})."
-                    f"{retention_text}"
-                )
-            raise SystemExit(0)
-
-        if history_cherry_pick:
-            history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
-            source_ref = history_cherry_pick.strip()
-            resolved_entry = history_manager.resolve_ref(source_ref)
-            if resolved_entry is None:
-                raise click.ClickException(f"Unknown history entry reference: {history_cherry_pick!r}")
-
-            target_branch = history_target_branch.strip() if history_target_branch else None
-            if target_branch:
-                branches = history_manager.get_branches()
-                if target_branch not in branches:
-                    raise click.ClickException(f"Unknown history branch: {history_target_branch!r}")
-
-            commit_hash = str(resolved_entry.get("commit") or "")
-            new_commit = history_manager.cherry_pick(commit_hash, target_branch=target_branch)
-            current_branches = history_manager.get_branches()
-            active_branch = next(
-                (
-                    name
-                    for name, branch in current_branches.items()
-                    if branch.get("is_current")
-                ),
-                "main",
-            )
-            payload = {
-                "mode": "history-cherry-pick",
-                "source_ref": source_ref,
-                "source_commit": commit_hash,
-                "source_entry_index": resolved_entry.get("entry_index"),
-                "target_branch": target_branch or active_branch,
-                "changed": new_commit is not None,
-                "commit": new_commit,
-                "branches": current_branches,
-            }
-            if json_output:
-                _emit_json_payload(payload)
-            else:
-                if new_commit is None:
-                    click.echo(f"No cherry-pick applied for history ref '{source_ref}'.")
-                else:
-                    branch_label = payload["target_branch"] or "current"
-                    click.echo(
-                        f"Cherry-picked history ref '{source_ref}' onto '{branch_label}' as {new_commit}."
-                    )
-            raise SystemExit(0)
-
-        if history_replay_branch:
-            history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
-            source_branch = history_replay_branch.strip()
-            branches = history_manager.get_branches()
-            if source_branch not in branches:
-                raise click.ClickException(f"Unknown history branch: {history_replay_branch!r}")
-
-            target_branch = history_target_branch.strip() if history_target_branch else None
-            if target_branch and target_branch not in branches:
-                raise click.ClickException(f"Unknown history branch: {history_target_branch!r}")
-
-            replayed_commits = history_manager.replay_branch(source_branch, onto_branch=target_branch)
-            current_branches = history_manager.get_branches()
-            active_branch = next(
-                (
-                    name
-                    for name, branch in current_branches.items()
-                    if branch.get("is_current")
-                ),
-                "main",
-            )
-            payload = {
-                "mode": "history-replay-branch",
-                "source_branch": source_branch,
-                "target_branch": target_branch or active_branch,
-                "changed": bool(replayed_commits),
-                "replayed_commits": replayed_commits or [],
-                "replayed_count": len(replayed_commits or []),
-                "branches": current_branches,
-            }
-            if json_output:
-                _emit_json_payload(payload)
-            else:
-                if not replayed_commits:
-                    click.echo(f"No replay applied from history branch '{source_branch}'.")
-                else:
-                    click.echo(
-                        f"Replayed {len(replayed_commits)} history commits from '{source_branch}' onto '{payload['target_branch']}'."
-                    )
-            raise SystemExit(0)
-
-        if history_checkout_branch:
-            history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
-            branch_name = history_checkout_branch.strip()
-            branches = history_manager.get_branches()
-            if branch_name not in branches:
-                raise click.ClickException(f"Unknown history branch: {history_checkout_branch!r}")
-
-            commit_hash = history_manager.checkout_branch(branch_name)
-            payload = {
-                "mode": "history-checkout-branch",
-                "branch": branch_name,
-                "changed": commit_hash is not None,
-                "commit": commit_hash,
-                "branches": history_manager.get_branches(),
-            }
-            if json_output:
-                _emit_json_payload(payload)
-            else:
-                if commit_hash is None:
-                    click.echo(f"No checkout performed for history branch '{branch_name}'.")
-                else:
-                    click.echo(f"Checked out history branch '{branch_name}' at {commit_hash}.")
-            raise SystemExit(0)
-
-        if history_discard_branch:
-            history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
-            branches = history_manager.get_branches()
-            branch_name = history_discard_branch.strip()
-            if branch_name not in branches:
-                raise click.ClickException(f"Unknown history branch: {history_discard_branch!r}")
-
-            branch_info = branches[branch_name]
-            confirmed = bool(confirm_yes)
-            if not confirmed:
-                if not sys.stdin.isatty() or json_output:
-                    raise click.ClickException(
-                        "Discarding history branches requires confirmation. Re-run with --force-yes."
-                    )
-                confirmed = click.confirm(
-                    (
-                        f"Discard history branch '{branch_name}' "
-                        f"({branch_info.get('entry_count', 0)} entries)? This cannot be undone."
-                    ),
-                    default=False,
-                    show_default=True,
-                )
-
-            if not confirmed:
-                payload = {
-                    "mode": "history-discard-branch",
-                    "branch": branch_name,
-                    "saved_label": None,
-                    "discarded": False,
-                    "cancelled": True,
-                    "branches": history_manager.get_branches(),
-                }
-                if json_output:
-                    _emit_json_payload(payload)
-                else:
-                    click.echo("Branch discard cancelled.")
-                raise SystemExit(0)
-
-            saved_label = None
-            if history_discard_save_label:
-                label_text = history_discard_save_label.strip()
-                if label_text:
-                    history_manager.label_branch(branch_name, label_text)
-                    saved_label = label_text
-
-            discarded = history_manager.discard_branch(branch_name)
-            payload = {
-                "mode": "history-discard-branch",
-                "branch": branch_name,
-                "saved_label": saved_label,
-                "discarded": discarded,
-                "cancelled": False,
-                "branches": history_manager.get_branches(),
-            }
-            if json_output:
-                _emit_json_payload(payload)
-            else:
-                if discarded:
-                    if saved_label:
-                        click.echo(
-                            f"Saved label '{saved_label}' and discarded history branch '{branch_name}'."
-                        )
-                    else:
-                        click.echo(f"Discarded history branch '{branch_name}'.")
-                else:
-                    click.echo(f"No branch discarded for '{branch_name}'.")
-            raise SystemExit(0)
-
-        if show_history:
-            history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
-            retention_policy = _resolve_history_retention_policy(config, user_config)
-            entries = history_manager.list_entries()
-            timeline_graph = history_manager.get_timeline_graph()
-            retention_plan = history_manager.get_retention_plan(retention_policy)
-            storage_stats = history_manager.get_storage_stats()
-            cursor = int(timeline_graph.get("cursor", -1))
-            current_branch = str(timeline_graph.get("current_branch") or "main")
-
-            entries_payload: list[dict[str, object]] = []
-            for index, entry in enumerate(entries):
-                commit = str(entry.get("commit") or "")
-                entries_payload.append(
-                    {
-                        "entry_index": index,
-                        "commit": commit,
-                        "stable_id": history_manager.build_stable_history_id(commit) if commit else None,
-                        "timestamp": entry.get("timestamp"),
-                        "command": entry.get("command"),
-                        "actor": entry.get("actor"),
-                        "reason": entry.get("reason"),
-                        "branch": entry.get("branch"),
-                        "parent_commit": entry.get("parent_commit"),
-                        "files": list(entry.get("files") or []),
-                        "delta": entry.get("delta"),
-                        "is_current_head": index == cursor,
-                    }
-                )
-
-            payload = {
-                "mode": "history-log",
-                "requirements_dir": format_path_display(resolved_criteria_dir, repo_root),
-                "entries_count": len(entries_payload),
-                "cursor": cursor,
-                "current_branch": current_branch,
-                "can_undo": history_manager.can_undo(),
-                "can_redo": history_manager.can_redo(),
-                "storage": storage_stats,
-                "retention": retention_plan,
-                "entries": entries_payload,
-            }
-
-            if json_output:
-                _emit_json_payload(payload)
-            else:
-                click.echo("=== History ===", err=False)
-                click.echo(f"Entries: {payload['entries_count']}", err=False)
-                click.echo(f"Current branch: {payload['current_branch']}", err=False)
-                click.echo(f"Cursor: {payload['cursor']}", err=False)
-                click.echo(
-                    "Retention: "
-                    f"last {retention_plan['policy'].get('retain_last')} | "
-                    f"{retention_plan['policy'].get('retain_days')}d | "
-                    f"size {retention_plan['repo_size_kib']} KiB",
-                    err=False,
-                )
-                for item in entries_payload:
-                    marker = " [HEAD]" if item["is_current_head"] else ""
-                    delta = item.get("delta") if isinstance(item.get("delta"), dict) else {}
-                    additions = int(delta.get("additions", 0)) if isinstance(delta, dict) else 0
-                    deletions = int(delta.get("deletions", 0)) if isinstance(delta, dict) else 0
-                    files_changed = int(delta.get("files_changed", 0)) if isinstance(delta, dict) else 0
-                    reason = f": {item['reason']}" if item.get("reason") else ""
-                    click.echo(
-                        f"  {item['entry_index']}: {item['command']}{reason} ({item['branch']}) {item['commit']} +{additions}/-{deletions} {files_changed}f{marker}",
-                        err=False,
-                    )
-            raise SystemExit(0)
-
-        if undo_last or redo_last:
-            if set_file or set_file_input or set_blocked_reason or set_deprecated_reason:
-                raise click.ClickException("--undo/--redo cannot be combined with file-scoped update inputs or status note options.")
-
-            history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
-            try:
-                commit_hash = history_manager.undo() if undo_last else history_manager.redo()
-            except HistoryRestoreError as exc:
-                raise click.ClickException(str(exc)) from exc
-
-            mode_name = "undo" if undo_last else "redo"
-            payload = {
-                "mode": mode_name,
-                "requirements_dir": format_path_display(resolved_criteria_dir, repo_root),
-                "changed": commit_hash is not None,
-                "commit": commit_hash,
-                "can_undo": history_manager.can_undo(),
-                "can_redo": history_manager.can_redo(),
-                "history_depth": len(history_manager.list_entries()),
-            }
-            if json_output:
-                _emit_json_payload(payload)
-            else:
-                if commit_hash is None:
-                    click.echo(f"No {mode_name} history available.")
-                else:
-                    verb = "Undid" if undo_last else "Redid"
-                    click.echo(f"{verb} catalog to history commit {commit_hash}.")
-            raise SystemExit(0)
-
-        if show_timeline:
-            history_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
-            timeline_graph = history_manager.get_timeline_graph()
-            timeline_nodes = {
-                commit: dict(node)
-                for commit, node in timeline_graph.get("nodes", {}).items()
-            }
-
-            _enrich_timeline_nodes_with_change_metadata(
-                history_manager,
-                timeline_nodes,
-                id_prefixes=id_prefixes,
-            )
-
-            from_filter = _parse_iso8601_filter(timeline_filter_from, "--timeline-from") if timeline_filter_from else None
-            to_filter = _parse_iso8601_filter(timeline_filter_to, "--timeline-to") if timeline_filter_to else None
-            filtered_nodes = _filter_timeline_nodes(
-                timeline_nodes,
-                branch_filter=timeline_filter_branch,
-                actor_filter=timeline_filter_actor,
-                command_filter=timeline_filter_command,
-                file_filter=timeline_filter_file,
-                requirement_id_filter=timeline_filter_requirement_id,
-                transition_filter=timeline_filter_transition,
-                from_filter=from_filter,
-                to_filter=to_filter,
-            )
-
-            timeline_graph["nodes"] = filtered_nodes
-            timeline_graph["entries_count_filtered"] = len(filtered_nodes)
-            timeline_graph["filters"] = {
-                "branch": timeline_filter_branch,
-                "actor": timeline_filter_actor,
-                "command": timeline_filter_command,
-                "file": timeline_filter_file,
-                "requirement_id": timeline_filter_requirement_id,
-                "transition": timeline_filter_transition,
-                "from": timeline_filter_from,
-                "to": timeline_filter_to,
-            }
-
-            branches = history_manager.get_branches()
-            payload = {
-                "timeline": timeline_graph,
-                "branches": branches,
-            }
-            if json_output:
-                _emit_json_payload(payload)
-            else:
-                # Display timeline in human-readable format
-                click.echo("=== Timeline ===", err=False)
-                click.echo(f"Entries: {timeline_graph['entries_count']}", err=False)
-                click.echo(f"Entries (filtered): {timeline_graph['entries_count_filtered']}", err=False)
-                click.echo(f"Current branch: {timeline_graph['current_branch']}", err=False)
-                click.echo(f"Current head: {timeline_graph['cursor']}", err=False)
-                click.echo("\n=== Branches ===", err=False)
-                for branch_name, branch_info in branches.items():
-                    marker = " (current)" if branch_info["is_current"] else ""
-                    click.echo(f"  {branch_name}: {branch_info['entry_count']} entries{marker}", err=False)
-                click.echo("\n=== Timeline Entries ===", err=False)
-                ordered_nodes = sorted(
-                    timeline_graph["nodes"].items(),
-                    key=lambda item: int(item[1].get("entry_index", -1)),
-                )
-                for _commit, node in ordered_nodes:
-                    marker = " [HEAD]" if node["is_current_head"] else ""
-                    branch_label = f" ({node['branch']})" if node['branch'] != "main" else ""
-                    click.echo(f"  {node['entry_index']}: {node['command']}{branch_label}{marker}", err=False)
-            raise SystemExit(0)
         if set_updates:
             update_requests = [
                 {

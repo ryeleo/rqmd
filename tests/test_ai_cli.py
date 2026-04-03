@@ -9,7 +9,6 @@ from click.testing import CliRunner
 
 from rqmd import ai_cli
 from rqmd.ai_cli import _parse_frontmatter, _parse_skill_frontmatter, main
-from rqmd.cli import main as rqmd_main
 from rqmd.constants import JSON_SCHEMA_VERSION
 from rqmd.history import HistoryManager
 
@@ -1163,7 +1162,7 @@ def test_RQMD_AI_012_install_bundle_dry_run_preview(tmp_path: Path) -> None:
     assert payload["mode"] == "install-agent-bundle"
     assert payload["dry_run"] is True
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 26
+    assert payload["changed_count"] == 25
     assert payload["metadata_file"] == ".github/rqmd-bundle.json"
     assert payload["generated_skill_files"] == [
         ".github/skills/dev/SKILL.md",
@@ -1191,7 +1190,6 @@ def test_RQMD_AI_012_install_bundle_dry_run_preview(tmp_path: Path) -> None:
     assert ".github/skills/rqmd-docs/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-doc-sync/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-changelog/SKILL.md" in payload["created_files"]
-    assert ".github/skills/rqmd-history/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-pin/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-bundle/SKILL.md" in payload["created_files"]
     assert ".github/skills/rqmd-verify/SKILL.md" in payload["created_files"]
@@ -1221,7 +1219,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     )
     assert first.exit_code == 0
     first_payload = json.loads(first.output)
-    assert first_payload["changed_count"] == 27
+    assert first_payload["changed_count"] == 26
     assert (repo / ".github" / "copilot-instructions.md").exists()
     metadata_path = repo / ".github" / "rqmd-bundle.json"
     assert metadata_path.exists()
@@ -1274,7 +1272,7 @@ def test_RQMD_AI_012_install_bundle_idempotent_and_overwrite_controls(tmp_path: 
     second_payload = json.loads(second.output)
     _assert_schema_version(second_payload)
     assert second_payload["changed_count"] == 0
-    assert len(second_payload["skipped_existing"]) == 27
+    assert len(second_payload["skipped_existing"]) == 26
 
     custom = repo / ".github" / "copilot-instructions.md"
     custom.write_text("# custom\n", encoding="utf-8")
@@ -1320,7 +1318,7 @@ def test_RQMD_AI_012_install_bundle_without_requirements_docs(tmp_path: Path) ->
     payload = json.loads(result.output)
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
-    assert payload["changed_count"] == 26
+    assert payload["changed_count"] == 25
 
 
 def test_RQMD_AI_012_install_bundle_positional_alias(tmp_path: Path) -> None:
@@ -1346,7 +1344,7 @@ def test_RQMD_AI_012_install_bundle_positional_alias(tmp_path: Path) -> None:
     _assert_schema_version(payload)
     assert payload["mode"] == "install-agent-bundle"
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 26
+    assert payload["changed_count"] == 25
 
 
 def test_RQMD_AI_012_install_bundle_text_output_lists_created_files(tmp_path: Path) -> None:
@@ -1448,7 +1446,7 @@ def test_RQMD_AI_012_reinstall_command_overwrites_existing_bundle(tmp_path: Path
     payload = json.loads(reinstall.output)
     assert payload["operation"] == "reinstall"
     assert payload["preset"] == "minimal"
-    assert payload["changed_count"] == 26
+    assert payload["changed_count"] == 25
     assert ".github/copilot-instructions.md" in payload["overwritten_files"]
 
 
@@ -1485,7 +1483,7 @@ def test_RQMD_AI_012_upgrade_command_preserves_installed_preset(tmp_path: Path) 
     payload = json.loads(upgrade.output)
     assert payload["operation"] == "upgrade"
     assert payload["preset"] == "full"
-    assert payload["changed_count"] == 27
+    assert payload["changed_count"] == 26
 
 
 def test_RQMD_AI_012_upgrade_protects_customized_bundle_files(tmp_path: Path) -> None:
@@ -2054,335 +2052,3 @@ def test_RQMD_AI_017_installed_bundle_reports_generated_dev_and_test_skills(tmp_
     assert ".github/skills/test/SKILL.md" in payload["bundle_installation"]["active_definition_files"]
 
 
-def test_RQMD_TIME_001_export_context_from_history_entry(tmp_path: Path) -> None:
-    repo = tmp_path / "repo"
-    criteria_dir = repo / "docs" / "requirements"
-    criteria_dir.mkdir(parents=True)
-    domain = criteria_dir / "demo.md"
-    _write_demo_domain(domain)
-
-    runner = CliRunner()
-    applied = runner.invoke(
-        rqmd_main,
-        [
-            "--project-root",
-            str(repo),
-            "--docs-dir",
-            "docs/requirements",
-            "--update-id",
-            "RQMD-DEMO-001",
-            "--update-status",
-            "verified",
-            "--no-walk",
-            "--no-table",
-        ],
-    )
-    assert applied.exit_code == 0
-
-    result = runner.invoke(
-        main,
-        [
-            "--project-root",
-            str(repo),
-            "--docs-dir",
-            "docs/requirements",
-            "--as-json",
-            "--dump-status",
-            "proposed",
-            "--history-ref",
-            "0",
-        ],
-    )
-
-    assert result.exit_code == 0
-    payload = json.loads(result.output)
-    _assert_schema_version(payload)
-    assert payload["mode"] == "export-context"
-    assert payload["history_source"]["detached"] is True
-    assert payload["history_source"]["entry_index"] == 0
-    assert str(payload["history_source"]["stable_id"]).startswith("hid:")
-    assert payload["total"] == 1
-    assert payload["files"][0]["requirements"][0]["status"] == "💡 Proposed"
-    assert "✅ Verified" in domain.read_text(encoding="utf-8")
-
-
-def test_RQMD_TIME_008_history_ref_accepts_stable_id(tmp_path: Path) -> None:
-    repo = tmp_path / "repo"
-    criteria_dir = repo / "docs" / "requirements"
-    criteria_dir.mkdir(parents=True)
-    domain = criteria_dir / "demo.md"
-    _write_demo_domain(domain)
-
-    runner = CliRunner()
-    applied = runner.invoke(
-        rqmd_main,
-        [
-            "--project-root",
-            str(repo),
-            "--docs-dir",
-            "docs/requirements",
-            "--update-id",
-            "RQMD-DEMO-001",
-            "--update-status",
-            "verified",
-            "--no-walk",
-            "--no-table",
-        ],
-    )
-    assert applied.exit_code == 0
-
-    first_payload_result = runner.invoke(
-        main,
-        [
-            "--project-root",
-            str(repo),
-            "--docs-dir",
-            "docs/requirements",
-            "--as-json",
-            "--dump-status",
-            "proposed",
-            "--history-ref",
-            "0",
-        ],
-    )
-    assert first_payload_result.exit_code == 0
-    first_payload = json.loads(first_payload_result.output)
-    stable_id = str(first_payload["history_source"]["stable_id"])
-
-    stable_ref_result = runner.invoke(
-        main,
-        [
-            "--project-root",
-            str(repo),
-            "--docs-dir",
-            "docs/requirements",
-            "--as-json",
-            "--dump-status",
-            "proposed",
-            "--history-ref",
-            stable_id,
-        ],
-    )
-    assert stable_ref_result.exit_code == 0
-    stable_payload = json.loads(stable_ref_result.output)
-    assert stable_payload["history_source"]["entry_index"] == 0
-    assert stable_payload["history_source"]["stable_id"] == stable_id
-
-
-def test_RQMD_TIME_009_history_report_honors_json_output_file(tmp_path: Path) -> None:
-    repo = tmp_path / "repo"
-    criteria_dir = repo / "docs" / "requirements"
-    criteria_dir.mkdir(parents=True)
-    domain = criteria_dir / "demo.md"
-    _write_demo_domain(domain)
-    output_path = repo / "tmp" / "history-report.json"
-
-    runner = CliRunner()
-    applied = runner.invoke(
-        rqmd_main,
-        [
-            "--project-root",
-            str(repo),
-            "--docs-dir",
-            "docs/requirements",
-            "--update-id",
-            "RQMD-DEMO-001",
-            "--update-status",
-            "verified",
-            "--no-walk",
-            "--no-table",
-        ],
-    )
-    assert applied.exit_code == 0
-
-    result = runner.invoke(
-        main,
-        [
-            "--project-root",
-            str(repo),
-            "--docs-dir",
-            "docs/requirements",
-            "--history-ref",
-            "0",
-            "--history-report",
-            "--json-output-file",
-            str(output_path),
-        ],
-    )
-
-    assert result.exit_code == 0, result.output
-    assert "History Report" in result.output
-    assert output_path.exists()
-    payload = json.loads(output_path.read_text(encoding="utf-8"))
-    assert payload["report_type"] == "state"
-    assert payload["source"]["requested_ref"] == "0"
-    assert payload["source"]["detached"] is True
-    _assert_schema_version(payload)
-
-
-def test_RQMD_TIME_001_rejects_unknown_history_ref(tmp_path: Path) -> None:
-    repo = tmp_path / "repo"
-    criteria_dir = repo / "docs" / "requirements"
-    criteria_dir.mkdir(parents=True)
-    _write_demo_domain(criteria_dir / "demo.md")
-
-    runner = CliRunner()
-    result = runner.invoke(
-        main,
-        [
-            "--project-root",
-            str(repo),
-            "--docs-dir",
-            "docs/requirements",
-            "--as-json",
-            "--dump-status",
-            "proposed",
-            "--history-ref",
-            "999",
-        ],
-    )
-
-    assert result.exit_code != 0
-    assert "Unknown --history-ref target" in result.output
-
-
-def test_RQMD_TIME_003_history_ref_rejects_write_mode(tmp_path: Path) -> None:
-    repo = tmp_path / "repo"
-    criteria_dir = repo / "docs" / "requirements"
-    criteria_dir.mkdir(parents=True)
-    _write_demo_domain(criteria_dir / "demo.md")
-
-    runner = CliRunner()
-    bootstrap = runner.invoke(
-        rqmd_main,
-        [
-            "--project-root",
-            str(repo),
-            "--docs-dir",
-            "docs/requirements",
-            "--update-id",
-            "RQMD-DEMO-001",
-            "--update-status",
-            "verified",
-            "--no-walk",
-            "--no-table",
-        ],
-    )
-    assert bootstrap.exit_code == 0
-
-    result = runner.invoke(
-        main,
-        [
-            "--project-root",
-            str(repo),
-            "--docs-dir",
-            "docs/requirements",
-            "--history-ref",
-            "0",
-            "--write",
-            "--update",
-            "RQMD-DEMO-001=implemented",
-        ],
-    )
-
-    assert result.exit_code != 0
-    assert "--history-ref cannot be combined with --write" in result.output
-
-
-def test_RQMD_TIME_003_history_ref_rejects_update_mode(tmp_path: Path) -> None:
-    repo = tmp_path / "repo"
-    criteria_dir = repo / "docs" / "requirements"
-    criteria_dir.mkdir(parents=True)
-    _write_demo_domain(criteria_dir / "demo.md")
-
-    runner = CliRunner()
-    bootstrap = runner.invoke(
-        rqmd_main,
-        [
-            "--project-root",
-            str(repo),
-            "--docs-dir",
-            "docs/requirements",
-            "--update-id",
-            "RQMD-DEMO-001",
-            "--update-status",
-            "verified",
-            "--no-walk",
-            "--no-table",
-        ],
-    )
-    assert bootstrap.exit_code == 0
-
-    result = runner.invoke(
-        main,
-        [
-            "--project-root",
-            str(repo),
-            "--docs-dir",
-            "docs/requirements",
-            "--history-ref",
-            "0",
-            "--update",
-            "RQMD-DEMO-001=implemented",
-        ],
-    )
-
-    assert result.exit_code != 0
-    assert "--history-ref cannot be combined with --update; historical exports are read-only." in result.output
-
-
-def test_RQMD_TIME_004_history_activity_shows_before_after_and_neighbors(tmp_path: Path) -> None:
-    repo = tmp_path / "repo"
-    criteria_dir = repo / "docs" / "requirements"
-    criteria_dir.mkdir(parents=True)
-    domain = criteria_dir / "demo.md"
-    _write_demo_domain(domain)
-
-    runner = CliRunner()
-    applied = runner.invoke(
-        rqmd_main,
-        [
-            "--project-root",
-            str(repo),
-            "--docs-dir",
-            "docs/requirements",
-            "--update-id",
-            "RQMD-DEMO-001",
-            "--update-status",
-            "verified",
-            "--no-walk",
-            "--no-table",
-        ],
-    )
-    assert applied.exit_code == 0
-
-    result = runner.invoke(
-        main,
-        [
-            "--project-root",
-            str(repo),
-            "--docs-dir",
-            "docs/requirements",
-            "--as-json",
-            "--dump-id",
-            "RQMD-DEMO-001",
-            "--history-ref",
-            "1",
-        ],
-    )
-
-    assert result.exit_code == 0
-    payload = json.loads(result.output)
-    _assert_schema_version(payload)
-
-    activity = payload["history_activity"]
-    assert activity is not None
-    assert activity["entry"]["entry_index"] == 1
-    assert activity["neighbors"]["previous"]["entry_index"] == 0
-    assert activity["neighbors"]["next"]["entry_index"] is None
-
-    changed = activity["changed_requirements"]
-    assert len(changed) == 1
-    assert changed[0]["id"] == "RQMD-DEMO-001"
-    assert changed[0]["before"]["status"] == "💡 Proposed"
-    assert changed[0]["after"]["status"] == "✅ Verified"

@@ -202,6 +202,22 @@ class TestCursorNavigationConsistency:
                     except:
                         pass
 
+    def test_RQMD_ui_005_windows_prefixed_arrow_navigation_preserves_focus(self):
+        """Verify Windows-style arrow key prefixes are treated as arrow navigation."""
+        options = [f"Entry {i}" for i in range(1, 26)]
+
+        with patch("rqmd.menus.click.echo"):
+            with patch("sys.stdout.isatty", return_value=False):
+                with patch("click.getchar", side_effect=['\xe0', 'P', '\xe0', 'H', 'q']):
+                    try:
+                        menus_mod.select_from_menu(
+                            "Entries", options,
+                            allow_paging_nav=True,
+                            selected_option_index=3
+                        )
+                    except:
+                        pass
+
     def test_RQMD_ui_005_selection_survives_page_transitions(self):
         """Verify selection state doesn't reset during page changes."""
         options = [f"Item {i:03d}" for i in range(200)]  # 200 items

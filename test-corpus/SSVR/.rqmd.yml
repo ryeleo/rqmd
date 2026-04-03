@@ -15,9 +15,9 @@ statuses:
   - name: Done
     shortcode: D
     emoji: "✅"
-  - name: "Janky"
+  - name: " Janky"
     shortcode: J
-    emoji: "⚠️"
+    emoji: "⚠️  "
   - name: Blocked
     shortcode: B
     emoji: "⛔"

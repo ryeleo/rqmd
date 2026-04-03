@@ -42,7 +42,6 @@ Installed workflow skills:
 - `/rqmd-docs`
 - `/rqmd-doc-sync`
 - `/rqmd-changelog`
-- `/rqmd-history`
 - `/rqmd-pin`
 - `/rqmd-bundle`
 - `/rqmd-verify`
@@ -54,7 +53,6 @@ Installed agents in the full preset:
 - `rqmd-explore`: read-only codebase and requirement discovery agent
 - `rqmd-requirements`: backlog, status, priority, and requirement-doc maintenance agent
 - `rqmd-docs`: README, changelog, and requirement-doc sync agent
-- `rqmd-history`: timeline, history-ref, compare-refs, and recovery-planning agent
 
 Recommended default:
 - Start with `rqmd-dev` plus prompts such as `/go`.

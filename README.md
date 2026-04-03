@@ -303,7 +303,7 @@ In non-interactive modes, a positional domain file path scopes operations to tha
 rqmd docs/requirements/interactive-ux.md --update RQ-001=verified
 ```
 
-> **⚠️ Note:** History/time-machine and undo/redo workflows are disabled in the current 0.x simplification track. Use direct status updates (`rqmd --update ...`) or interactive status edits instead.
+> **⚠️ Note:** History/time-machine and undo/redo workflows have been removed in the current 0.x simplification track. Use direct status updates (`rqmd --update ...`) or interactive status edits instead.
 
 ### Choose how interactive lists are ordered
 
@@ -586,7 +586,7 @@ Installed prompt shortcuts:
 - `/pin`: capture durable context or decision notes into a maintainable pinned note
 - `/ship-check`: run a release or handoff readiness pass and call out blockers
 
-The installed bundle also includes Copilot skills for `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-init`, `/rqmd-init-legacy`, `/rqmd-status-maintenance`, `/rqmd-docs`, `/rqmd-doc-sync`, `/rqmd-changelog`, `/rqmd-history`, `/rqmd-pin`, `/rqmd-bundle`, and `/rqmd-verify` so teams can reuse the core planning, backlog selection, context export, implementation, unified init, compatibility legacy bootstrap, documentation-quality, docs-sync, changelog-authoring, history, pinning durable project context, bundle-management, and verification loops without rewriting those instructions in every workspace. Prompts and skills help with discovery and consistency, but they do not auto-approve terminal commands or bypass Copilot tool approval prompts.
+The installed bundle also includes Copilot skills for `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-init`, `/rqmd-init-legacy`, `/rqmd-status-maintenance`, `/rqmd-docs`, `/rqmd-doc-sync`, `/rqmd-changelog`, `/rqmd-pin`, `/rqmd-bundle`, and `/rqmd-verify` so teams can reuse the core planning, backlog selection, context export, implementation, unified init, compatibility legacy bootstrap, documentation-quality, docs-sync, changelog-authoring, pinning durable project context, bundle-management, and verification loops without rewriting those instructions in every workspace. Prompts and skills help with discovery and consistency, but they do not auto-approve terminal commands or bypass Copilot tool approval prompts.
 
 For repositories that use `/rqmd-pin`, a practical default is `docs/pins/README.md` as a lightweight index plus one markdown file per topic started from `docs/pins/pin-template.md`.
 

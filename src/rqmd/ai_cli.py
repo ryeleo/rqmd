@@ -3773,10 +3773,6 @@ def _plan_or_apply_updates(
 @click.option("--dump-id", "export_ids", multiple=True, default=(), help="Export requirement context for one or more IDs.")
 @click.option("--dump-file", "export_files", multiple=True, default=(), help="Export context only from one or more domain files.")
 @click.option("--dump-status", "export_status", type=str, default=None, help="Export context filtered by status label or slug.")
-@click.option("--history-ref", "history_ref", type=str, default=None, help="Export context from a detached history entry index or commit ref instead of the current working tree.")
-@click.option("--compare-refs", "compare_refs", type=str, default=None, help="Compare two history entries by diff-oriented comparison. Format: 'A..B' or 'A B' where A and B are entry indices, commit refs, or 'head'/'latest'.")
-@click.option("--history-action", "history_action", type=str, default=None, help="Preview restore/replay/cherry-pick actions. Format: restore:REF | replay:A..B | cherry-pick:REF1,REF2.")
-@click.option("--history-report", "history_report", is_flag=True, help="Emit temporal report payloads for a selected --history-ref or --compare-refs range.")
 @click.option("--include-requirement-body/--no-include-requirement-body", "include_body", default=True, help="Include requirement body markdown in exports.")
 @click.option(
     "--include-domain-markdown/--no-include-domain-markdown",
@@ -3837,10 +3833,6 @@ def main(
     export_ids: tuple[str, ...],
     export_files: tuple[str, ...],
     export_status: str | None,
-    history_ref: str | None,
-    compare_refs: str | None,
-    history_action: str | None,
-    history_report: bool,
     include_body: bool,
     include_domain_body: bool,
     max_domain_body_chars: int,
@@ -3923,9 +3915,9 @@ def main(
     if workflow_mode == "init":
         if brainstorm_file is not None:
             raise click.ClickException("--brainstorm-file cannot be combined with --workflow-mode init.")
-        if set_entries or export_ids or export_files or export_status or history_ref or compare_refs or history_action or history_report:
+        if set_entries or export_ids or export_files or export_status:
             raise click.ClickException(
-                "--workflow-mode init is an onboarding surface and cannot be combined with export, update, or history options."
+                "--workflow-mode init is an onboarding surface and cannot be combined with export or update options."
             )
         payload = _build_or_apply_init_payload(
             repo_root=repo_root,
@@ -3942,9 +3934,9 @@ def main(
     if workflow_mode == "init-legacy":
         if brainstorm_file is not None:
             raise click.ClickException("--brainstorm-file cannot be combined with --workflow-mode init-legacy.")
-        if set_entries or export_ids or export_files or export_status or history_ref or compare_refs or history_action or history_report:
+        if set_entries or export_ids or export_files or export_status:
             raise click.ClickException(
-                "--workflow-mode init-legacy is a bootstrap surface and cannot be combined with export, update, or history options."
+                "--workflow-mode init-legacy is a bootstrap surface and cannot be combined with export or update options."
             )
         payload = _build_or_apply_legacy_init_payload(
             repo_root=repo_root,
@@ -3964,66 +3956,9 @@ def main(
     except ValueError as exc:
         raise click.ClickException(str(exc)) from exc
 
-    if history_report:
-        if guide or apply or set_entries or workflow_mode != "general":
-            raise click.ClickException("--history-report is read-only and cannot be combined with --show-guide, --write, or --update.")
-        if not history_ref and not compare_refs:
-            raise click.ClickException("--history-report requires either --history-ref or --compare-refs.")
-
-    if history_action:
-        if apply or set_entries or guide or workflow_mode != "general":
-            raise click.ClickException("--history-action is read-only and cannot be combined with --show-guide, --write, or --update.")
-        if history_ref or compare_refs or history_report:
-            raise click.ClickException("--history-action cannot be combined with --history-ref, --compare-refs, or --history-report.")
-        manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
-        payload = _build_history_action_preview_payload(
-            manager=manager,
-            action_spec=history_action,
-            id_prefixes=id_prefixes,
-        )
-        _emit(payload, json_output=json_output, json_output_file=json_output_file)
-        return
-
-    if compare_refs:
-        if apply or set_entries or workflow_mode != "general":
-            raise click.ClickException("--compare-refs is read-only; it cannot be combined with --write or --update.")
-        # Parse "A..B" or "A B" format
-        raw = compare_refs.strip()
-        if ".." in raw:
-            parts = raw.split("..", 1)
-        else:
-            parts = raw.split(None, 1)
-        if len(parts) != 2 or not parts[0].strip() or not parts[1].strip():
-            raise click.ClickException(
-                "--compare-refs requires two refs separated by '..' or a space, "
-                f"for example '0..2' or '0 head'. Got: {compare_refs!r}"
-            )
-        ref_a, ref_b = parts[0].strip(), parts[1].strip()
-        _compare_manager = HistoryManager(repo_root=repo_root, requirements_dir=resolved_criteria_dir)
-        payload = _build_compare_payload(
-            manager=_compare_manager,
-            ref_a=ref_a,
-            ref_b=ref_b,
-            id_prefixes=id_prefixes,
-        )
-        if history_report:
-            _emit_history_report(
-                _build_history_compare_report_payload(payload, ref_a=ref_a, ref_b=ref_b),
-                json_output=json_output,
-                json_output_file=json_output_file,
-            )
-        else:
-            _emit(payload, json_output=json_output, json_output_file=json_output_file)
-        return
-
-    effective_repo_root, domain_files, history_source, history_tempdir, history_manager, resolved_history_entry = _resolve_history_view(
-        repo_root=repo_root,
-        requirements_dir=resolved_criteria_dir,
-        history_ref=history_ref,
-    )
+    effective_repo_root = repo_root
     effective_requirements_dir = resolved_criteria_dir
-    if history_source is not None:
-        effective_requirements_dir = effective_repo_root / resolved_criteria_dir.relative_to(repo_root)
+    domain_files = iter_domain_files(effective_repo_root, str(effective_requirements_dir))
     if not domain_files:
         raise click.ClickException(
             f"No requirement markdown files found under: {format_path_display(resolved_criteria_dir, repo_root)}"
@@ -4035,26 +3970,10 @@ def main(
 
     if apply and not set_entries:
         raise click.ClickException("rqmd-ai --write requires at least one --update ID=STATUS update.")
-    if workflow_mode != "general" and (apply or set_entries or export_ids or export_files or export_status or history_ref):
+    if workflow_mode != "general" and (apply or set_entries or export_ids or export_files or export_status):
         raise click.ClickException(
-            "--workflow-mode brainstorm|implement is a guidance surface and cannot be combined with export, update, history, or apply options."
+            "--workflow-mode brainstorm|implement is a guidance surface and cannot be combined with export, update, or apply options."
         )
-    if history_ref and apply:
-        raise click.ClickException("--history-ref cannot be combined with --write.")
-    if history_ref and set_entries:
-        raise click.ClickException("--history-ref cannot be combined with --update; historical exports are read-only.")
-    if history_report:
-        payload = _build_history_state_report_payload(
-            repo_root=effective_repo_root,
-            requirements_dir=effective_requirements_dir,
-            domain_files=domain_files,
-            id_prefixes=id_prefixes,
-            history_source=history_source,
-        )
-        _emit_history_report(payload, json_output=json_output, json_output_file=json_output_file)
-        if history_tempdir is not None:
-            history_tempdir.cleanup()
-        return
 
     if workflow_mode == "brainstorm":
         brainstorm_path = _resolve_brainstorm_file(repo_root, brainstorm_file)
@@ -4065,14 +3984,10 @@ def main(
             id_prefixes=id_prefixes,
             brainstorm_path=brainstorm_path,
         )
-        if history_tempdir is not None:
-            history_tempdir.cleanup()
         _emit(payload, json_output=json_output, json_output_file=json_output_file)
         return
 
     if guide:
-        if history_tempdir is not None:
-            history_tempdir.cleanup()
         _emit(
             _build_guide_payload(
                 repo_root,
@@ -4086,8 +4001,6 @@ def main(
         return
 
     if set_entries:
-        if history_tempdir is not None:
-            history_tempdir.cleanup()
         payload = _plan_or_apply_updates(
             repo_root=repo_root,
             requirements_dir=resolved_criteria_dir,
@@ -4101,13 +4014,6 @@ def main(
         return
 
     if export_ids or export_files or export_status:
-        history_activity = _build_history_activity_payload(
-            manager=history_manager,
-            resolved_entry=resolved_history_entry,
-            current_domain_files=domain_files,
-            current_repo_root=effective_repo_root,
-            id_prefixes=id_prefixes,
-        )
         payload = _export_context(
             repo_root=effective_repo_root,
             requirements_dir=effective_requirements_dir,
@@ -4119,16 +4025,12 @@ def main(
             include_body=include_body,
             include_domain_body=include_domain_body,
             max_domain_body_chars=max_domain_body_chars,
-            history_source=history_source,
-            history_activity=history_activity,
+            history_source=None,
+            history_activity=None,
         )
         _emit(payload, json_output=json_output, json_output_file=json_output_file)
-        if history_tempdir is not None:
-            history_tempdir.cleanup()
         return
 
-    if history_tempdir is not None:
-        history_tempdir.cleanup()
     _emit(
         _build_guide_payload(
             repo_root,

@@ -105,6 +105,18 @@ def test_RQMD_interactive_004b_arrow_nav_shortcuts(monkeypatch) -> None:
     assert result == "nav-next"
 
 
+def test_RQMD_interactive_004c_windows_arrow_nav_shortcuts(monkeypatch) -> None:
+    keys = iter(["\xe0", "P"])
+    monkeypatch.setattr(cli.click, "getchar", lambda: next(keys))
+    result = cli.select_from_menu(
+        "Status",
+        ["A", "B"],
+        allow_paging_nav=False,
+        extra_keys={"j": "nav-next", "k": "nav-prev"},
+    )
+    assert result == "nav-next"
+
+
 def test_RQMD_interactive_004a_next_prev_stack_semantics(monkeypatch, tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     criteria_dir = repo / "docs" / "requirements"

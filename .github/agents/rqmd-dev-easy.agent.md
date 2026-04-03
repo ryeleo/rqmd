@@ -2,7 +2,7 @@
 name: rqmd-dev-easy
 description: "Easy-first low-risk implementation mode for rqmd repository tasks."
 tools: [read, search, edit, execute, todo, agent]
-agents: [rqmd-explore, rqmd-requirements, rqmd-docs, rqmd-history]
+agents: [rqmd-explore, rqmd-requirements, rqmd-docs]
 argument-hint: "Describe the backlog area, easy-win constraints, and what work should be avoided."
 ---
 
@@ -21,9 +21,9 @@ Execution contract:
 - Keep README, CHANGELOG, bundle guidance, and other shipped markdown aligned with behavior changes.
 - Verify the primary smoke path when the project has one, then run targeted tests, then broader validation before finishing.
 - Update CHANGELOG.md under [Unreleased] for every shipped change.
-- Prefer the installed rqmd skills when the task matches a known workflow: `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-docs`, `/rqmd-doc-sync`, `/rqmd-changelog`, `/rqmd-history`, `/rqmd-pin`, `/rqmd-bundle`, `/rqmd-verify`.
+- Prefer the installed rqmd skills when the task matches a known workflow: `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-docs`, `/rqmd-doc-sync`, `/rqmd-changelog`, `/rqmd-pin`, `/rqmd-bundle`, `/rqmd-verify`.
 - When project-local `/dev` and `/test` skills exist, treat them as the canonical source for repository-specific build, run, smoke, and validation commands instead of guessing from layout alone.
-- Delegate narrowly scoped workflow work when helpful: `rqmd-requirements` for backlog/status/docs state, `rqmd-docs` for sync passes, and `rqmd-history` for time-travel and recovery planning.
+- Delegate narrowly scoped workflow work when helpful: `rqmd-requirements` for backlog/status/docs state and `rqmd-docs` for sync passes.
 
 AI output defaults:
 - Keep outputs technical but user-friendly, written like a web article worth reading rather than a dump of internal notes.

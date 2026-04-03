@@ -211,7 +211,7 @@ Summary: 4💡 16🔧 16✅ 0⚠️ 0⛔ 0🗑️
 - I want a one-time bulk rename command
 - So that all requirement headers, links, and citations are updated consistently across all domain files
 - So that the tool validates that the new prefix is unique and does not conflict with existing IDs in other domains
-- So that the operation is reversible via undo (once RQMD-UNDO is implemented)
+- So that the operation remains deterministic and safe under direct update workflows
 - So that a summary report shows all changed files and rename counts.
 
 ### RQMD-CORE-024: Generated top-level README from requirement domains

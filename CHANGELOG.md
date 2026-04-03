@@ -23,7 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documented a clearer bundle refresh workflow built around `rqmd --version`, `rqmd-ai --version`, `rqmd-ai --json`, `rqmd-ai upgrade`, and `rqmd-ai reinstall`.
 - rqmd text-mode startup now warns when the requirements index metadata block is missing or records a different rqmd/schema version than the currently running tool.
 - Made `rqmd-ai install` default to the single-agent-first minimal preset and slimmed the full preset so normal installs no longer add specialized agent variants by default.
-- Simplified the core rqmd surface by disabling history/time-machine and undo/redo CLI workflows in the 0.x track, and deprecating the Time Machine requirement domain.
+- Simplified the core rqmd surface by removing history/time-machine and undo/redo CLI workflows from `rqmd` and `rqmd-ai` in the 0.x track, and deprecating the Time Machine and Undo requirement domains.
+- Hardened interactive `screen_write` rendering on small terminals by constraining long requirement prefix/panel content to the visible viewport, preventing redraw overflow that could leave stale wrapped lines in scrollback (notably in Windows VS Code terminals).
+- Updated interactive `screen_write` redraws to clear terminal scrollback as well as the visible frame before each render, making the interactive view behave more like a dedicated full-screen surface.
 
 ## [0.1.0] - 2026-04-02
 
