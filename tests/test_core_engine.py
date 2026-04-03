@@ -662,6 +662,7 @@ def test_RQMD_core_011e_init_yes_json_payload_is_idempotent(tmp_path: Path) -> N
         ],
     )
     assert second.exit_code == 0
+    assert second.output.strip().endswith("Requirement scaffold already present; no files created.")
     second_payload = json.loads(second.output)
     assert second_payload["mode"] == "init"
     assert second_payload["created_count"] == 0
@@ -922,7 +923,34 @@ def test_RQMD_core_011b_init_scaffold_is_idempotent(tmp_path: Path) -> None:
         input="\n",
     )
     assert second.exit_code == 0
-    assert second.output.strip().endswith("Requirement scaffold already present; no files created.")
+
+
+def test_RQMD_core_037_history_flags_disabled_in_simplification_mode(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir(parents=True)
+    runner = CliRunner()
+
+    history_result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--history",
+        ],
+    )
+    assert history_result.exit_code != 0
+    assert "History/time-machine and undo/redo flows are disabled" in history_result.output
+
+    undo_result = runner.invoke(
+        cli.main,
+        [
+            "--project-root",
+            str(repo),
+            "--undo",
+        ],
+    )
+    assert undo_result.exit_code != 0
+    assert "History/time-machine and undo/redo flows are disabled" in undo_result.output
 
 
 def test_RQMD_core_011c_init_scaffold_supports_custom_criteria_dir(tmp_path: Path) -> None:

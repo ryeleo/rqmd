@@ -3,11 +3,11 @@
 Scope: branch-aware temporal navigation, historical inspection, detached point-in-time views, replay from past states, and timeline-oriented UX for requirement catalogs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 10🔧 0✅ 0⚠️ 0⛔ 0🗑️
+Summary: 0💡 0🔧 0✅ 0⚠️ 0⛔ 10🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-TIME-001: Point-in-time catalog browsing
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a requirements catalog with recorded history
 - I want to select a prior timestamp, revision, or history entry
@@ -15,7 +15,7 @@ Summary: 0💡 10🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - So that the user can inspect files, requirement statuses, reasons, and summaries exactly as recorded for that historical point.
 
 ### RQMD-TIME-002: Branch-aware historical timeline
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when history may diverge into multiple branches after undo, replay, or alternate edits
 - I want rqmd to render timeline history
@@ -23,7 +23,7 @@ Summary: 0💡 10🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - So that each node identifies parent lineage, branch name or generated label, timestamp, and affected scope.
 
 ### RQMD-TIME-003: Detached historical view mode
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a user wants to inspect prior state safely
 - I want to enter a historical point from the timeline
@@ -31,7 +31,7 @@ Summary: 0💡 10🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - So that status changes or edits are blocked until the user returns to a writable head or explicitly starts a replay/apply flow.
 
 ### RQMD-TIME-004: Historical context and activity inspection
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a user is viewing a prior revision
 - I want rqmd to render that historical state
@@ -39,7 +39,7 @@ Summary: 0💡 10🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - So that the user can move backward or forward through neighboring entries while preserving orientation in the same branch.
 
 ### RQMD-TIME-005: Compare historical points and branches
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when users need to understand how the catalog evolved
 - I want to select two points in time, two branches, or a branch point and current head
@@ -47,7 +47,7 @@ Summary: 0💡 10🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - So that the comparison highlights additions, removals, and status transitions in a machine-readable and human-readable form.
 
 ### RQMD-TIME-006: Replay and restore from historical points
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when a user finds a useful historical point
 - I want to choose to restore, replay, or cherry-pick from that point
@@ -55,7 +55,7 @@ Summary: 0💡 10🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - So that each action previews the resulting branch topology and file effects before writes occur.
 
 ### RQMD-TIME-007: Timeline filters and queryable navigation
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when long-lived projects may accumulate dense history
 - I want to browse the timeline
@@ -63,7 +63,7 @@ Summary: 0💡 10🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - So that filtered navigation still preserves branch lineage so users understand where matching events sit in the larger history graph.
 
 ### RQMD-TIME-008: Stable historical identifiers and deep links
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when users may need to share or automate a historical view
 - I want rqmd to expose a timeline node or detached historical view
@@ -71,7 +71,7 @@ Summary: 0💡 10🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - So that identifiers remain valid across process restarts unless history has been explicitly pruned with confirmation.
 
 ### RQMD-TIME-009: Exportable temporal reports
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when teams may need audit or review artifacts from historical states
 - I want automation to request a historical export
@@ -79,7 +79,7 @@ Summary: 0💡 10🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - So that exports clearly indicate the selected historical source and whether the view is detached, restored, or current head.
 
 ### RQMD-TIME-010: Verification coverage for temporal navigation
-- **Status:** 🔧 Implemented
+- **Status:** 🗑️ Deprecated
 - **Priority:** 🟡 P2 - Medium
 - As a rqmd user when time-travel workflows combine persistence, branching, and presentation logic
 - I want to implement the time-machine feature set

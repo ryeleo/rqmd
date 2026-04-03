@@ -288,9 +288,6 @@ Interactive file and requirement menus now support:
 - `s` to cycle sort columns
 - `d` to toggle ascending/descending
 - `r` to refresh/rescan while preserving the active sort
-- `z` to undo the last recorded history step from a requirement action menu
-- `y` to redo the next recorded history step from a requirement action menu
-- `h` to open the paged history browser from a requirement action menu
 
 ### Open or scope to one file
 
@@ -306,58 +303,7 @@ In non-interactive modes, a positional domain file path scopes operations to tha
 rqmd docs/requirements/interactive-ux.md --update RQ-001=verified
 ```
 
-### Recover, inspect, and maintain history
-
-Inside the history browser, selecting an entry opens a detail view where you can:
-
-- press `c` to checkout the selected entry's branch
-- press `l` to save a human-readable label for the selected entry's branch
-- press `x` to discard the selected entry's alternate branch, with an option to save a label first
-- press `p` to cherry-pick the selected commit onto the current branch
-- press `r` to replay the selected entry's branch onto the current branch
-- press `g` to run history gc with confirmation
-- press `G` to run history gc with immediate prune
-
-Both interactive gc actions can optionally save a human-readable label on the current history branch before maintenance runs.
-
-> **⚠️ Note:** `gc` here means garbage collection: cleanup of old history data and Git internals, not Python memory cleanup.
-
-> **ℹ️ Info:** `checkout`, `cherry-pick`, and `replay` are Git operations. In short: `checkout` switches to another branch state, `cherry-pick` reapplies one specific change, and `replay` reapplies a sequence of changes.
-
-History retention now uses a conservative default policy of retaining the last 1000 entries or the last 90 days of history metadata before running pack/prune maintenance. You can override that policy in project or user config with a top-level `history_retention` object:
-
-```json
-{
-	"history_retention": {
-		"retain_last": 500,
-		"retain_days": 30,
-		"max_size_kib": 2048
-	}
-}
-```
-
-`retain_last` and `retain_days` decide which persisted history entries remain navigable after `--history-gc`; `max_size_kib` records when the hidden history repo has crossed a size threshold so maintenance reports can surface it alongside the pack/prune result.
-
-Long options also accept unique prefixes, so invocations such as `--proj`, `--docs`, and `--as-j` work when they resolve unambiguously.
-
-History operations available in non-interactive mode include:
-
-- `rqmd --history`
-- `rqmd --timeline`
-- `rqmd --undo`
-- `rqmd --redo`
-- `rqmd --history-label-branch <branch-name> --history-branch-label <label>`
-- `rqmd --history-discard-branch <branch-name> --history-discard-save-label <label> --force-yes`
-- `rqmd --history-gc --history-gc-save-label <label> --force-yes`
-- `rqmd --history-gc --force-yes`
-- `rqmd --history-gc --history-prune-now --force-yes`
-- `rqmd --history-checkout-branch <branch-name>`
-- `rqmd --history-cherry-pick <entry-index-or-ref> [--history-target-branch <branch-name>]`
-- `rqmd --history-replay-branch <branch-name> [--history-target-branch <branch-name>]`
-
-`--history-gc` requires explicit confirmation because it runs maintenance against the hidden `.rqmd/history/rqmd-history` repository. Add `--history-prune-now` to expire reflogs (Git's internal reference history) and prune immediately instead of using Git's default grace period.
-
-> **🚨 Warning:** History cleanup and branch-discard commands are destructive maintenance operations. Read the prompt carefully before confirming them, especially if you have not saved a branch label first.
+> **⚠️ Note:** History/time-machine and undo/redo workflows are disabled in the current 0.x simplification track. Use direct status updates (`rqmd --update ...`) or interactive status edits instead.
 
 ### Choose how interactive lists are ordered
 

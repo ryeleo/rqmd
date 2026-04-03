@@ -1745,6 +1745,40 @@ def main(
     ctx.call_on_close(lambda: configure_priority_catalog(None))
     ctx.call_on_close(lambda: configure_status_catalog(None))
 
+    # 0.x simplification: history/time-machine workflows are intentionally disabled.
+    history_features_requested = any(
+        [
+            bool(undo_last),
+            bool(redo_last),
+            bool(show_timeline),
+            bool(show_history),
+            bool(history_discard_branch),
+            bool(history_discard_save_label),
+            bool(history_label_branch),
+            bool(history_branch_label),
+            bool(history_gc),
+            bool(history_gc_save_label),
+            bool(history_prune_now),
+            bool(history_checkout_branch),
+            bool(history_cherry_pick),
+            bool(history_replay_branch),
+            bool(history_target_branch),
+            bool(timeline_filter_branch),
+            bool(timeline_filter_actor),
+            bool(timeline_filter_command),
+            bool(timeline_filter_file),
+            bool(timeline_filter_requirement_id),
+            bool(timeline_filter_transition),
+            bool(timeline_filter_from),
+            bool(timeline_filter_to),
+        ]
+    )
+    if history_features_requested:
+        raise click.ClickException(
+            "History/time-machine and undo/redo flows are disabled in 0.x simplification mode. "
+            "Use direct status updates (`rqmd --update ...`) or interactive status edits instead."
+        )
+
     # Apply config defaults (CLI flags override config file)
     if not requirements_dir and "requirements_dir" in config:
         requirements_dir = config["requirements_dir"]
