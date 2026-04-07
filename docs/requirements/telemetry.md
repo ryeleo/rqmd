@@ -3,7 +3,7 @@
 Scope: agent-facing telemetry infrastructure for capturing AI workflow friction, improvement suggestions, and session diagnostics — enabling rqmd's own AI agents to report how rqmd can be improved.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 8🔧 0✅ 0⚠️ 0⛔ 0🗑️
+Summary: 3💡 8🔧 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-TELEMETRY-001: Local telemetry development stack
@@ -101,3 +101,39 @@ Summary: 0💡 8🔧 0✅ 0⚠️ 0⛔ 0🗑️
 - And when neither source provides an endpoint, telemetry is silently disabled
 - And the `submit_event` client includes the resolved API key as a `Bearer` token in the `Authorization` header on every request
 - And the `rqmd-ai telemetry` status command reports whether an API key is configured (without revealing the key value).
+
+### RQMD-TELEMETRY-009: Agent struggling to run rqmd reporting
+- **Status:** 💡 Proposed
+- **Priority:** 🔴 P0 - Critical
+- As a developer who wants rqmd to be reliably invocable by AI agents
+- I want agents to report a specific telemetry event when they fail to invoke `rqmd` or `rqmd-ai` and fall back to directly reading or writing requirement files
+- So that command-resolution failures are tracked as a distinct, high-signal friction category rather than being lost in generic struggle reports.
+- Given an AI agent attempts to run an rqmd or rqmd-ai command
+- When the command is not found, exits with a non-zero status due to invocation issues (wrong Python, missing entrypoint, missing extras), or the agent tries multiple invocation variants before succeeding
+- Then the agent submits a telemetry event with event_type "struggle", a new detail field `"category": "command_discovery"`, the exact commands attempted, and the fallback action taken
+- And the event severity is "high" because CLI unreachability undermines the entire rqmd workflow contract
+- And the telemetry skill guidance explicitly teaches agents to recognize and report this pattern rather than silently working around it.
+
+### RQMD-TELEMETRY-010: Telemetry feedback loop — time-window review and proposals
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a developer returning to the project after time away
+- I want to run a single command that fetches telemetry events from a given time window, clusters them by pattern, and produces actionable improvement proposals
+- So that accumulated agent friction turns into concrete changes instead of sitting unread in a database.
+- Given a developer runs a feedback-loop command with a time window (e.g. `rqmd-ai telemetry review --since 7d`)
+- When the command queries stored events from the gateway
+- Then it groups events by category, command, and recurrence count
+- And it produces a ranked list of improvement proposals with suggested patches, skill edits, or requirement updates
+- And the developer can accept, reject, or refine each proposal before any changes are applied.
+
+### RQMD-TELEMETRY-011: Automated weekly telemetry triage via GitHub Actions
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- As a maintainer who wants telemetry insights to surface automatically
+- I want a scheduled GitHub Actions workflow that runs the telemetry feedback loop weekly and opens a PR when it finds worthwhile improvements
+- So that the project benefits from agent-reported friction even when no human actively checks the telemetry dashboard.
+- Given a `telemetry-triage` workflow is scheduled to run weekly
+- When the workflow queries the previous week's telemetry events
+- Then it runs the feedback-loop review, filters for proposals above a configurable confidence threshold, and applies accepted patches to a new branch
+- And it opens a pull request with a summary of the telemetry patterns found, the changes proposed, and links back to the originating events
+- And the PR is labeled for human review so no changes merge without approval.

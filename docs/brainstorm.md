@@ -1,5 +1,16 @@
 # Brainstorm
 
+## Telemetry Local Dev
+
+Oh yeah, start setting me up so that I can run some basic docker containers locally that give me easy access to the backend of the telemetry services...
+
+## Telemetry Feedback Loop
+
+When I come back to this project to do any development, I want to have an easy way to have AI take all the input. 
+
+Eventually, I would like a weekly GitHub Action job that runs this script, and makes a PR if there is worthwhile changes to be made automatically.
+
+
 ## Make Telemetry opt-out
 
 Telemetry on by default, but user can opt out.
