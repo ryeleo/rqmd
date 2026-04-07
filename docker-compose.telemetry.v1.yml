@@ -71,6 +71,7 @@ services:
       MINIO_BUCKET: ${MINIO_BUCKET:-rqmd-telemetry}
       MINIO_REGION: us-east-1
       MINIO_SECURE: "false"
+      TELEMETRY_API_KEY: ${TELEMETRY_API_KEY:?set TELEMETRY_API_KEY in .env.telemetry.v1}
     ports:
       - "${TELEMETRY_PORT:-18080}:8080"
 

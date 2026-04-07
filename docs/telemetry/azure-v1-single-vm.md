@@ -57,7 +57,10 @@ This keeps operations light while preserving portability. The stack can move acr
 
 1. Commit and push these files to `main`, or run the workflow manually.
 2. Run workflow: `deploy-telemetry-vm`.
-3. SSH to the VM and update `/opt/rqmd/ac-cli/.env.telemetry.v1` with strong secrets.
+3. SSH to the VM and update `/opt/rqmd/ac-cli/.env.telemetry.v1` with strong secrets:
+   - `POSTGRES_PASSWORD`: strong random string
+   - `MINIO_ROOT_PASSWORD`: strong random string
+   - `TELEMETRY_API_KEY`: shared secret for API authentication (used by agent clients to submit events)
 4. Restart service:
 
 ```bash
@@ -70,6 +73,25 @@ sudo systemctl restart rqmd-telemetry
 ```bash
 curl -sS http://<vm-public-ip>:18080/health
 ```
+
+## API authentication
+
+All endpoints except `/health` require an API key in the `Authorization` header:
+
+```bash
+curl -X POST http://<vm-ip>:18080/api/v1/events \
+  -H "Authorization: Bearer <TELEMETRY_API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "550e8400-e29b-41d4-a716-446655440000",
+    "agent_name": "rqmd-dev",
+    "event_type": "struggle",
+    "severity": "medium",
+    "summary": "Command failed unexpectedly"
+  }'
+```
+
+The `TELEMETRY_API_KEY` from your `.env.telemetry.v1` is the shared secret. Distribute this to your agents/clients; it's embedded in their configurations so they can send events.
 
 ## Backup and restore
 

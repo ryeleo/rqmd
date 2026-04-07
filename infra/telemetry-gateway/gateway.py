@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 
 import asyncpg
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
 # ---------------------------------------------------------------------------
@@ -31,6 +31,7 @@ MINIO_SECRET_KEY = os.environ.get("MINIO_SECRET_KEY", "minioadmin_dev_pw")
 MINIO_BUCKET = os.environ.get("MINIO_BUCKET", "rqmd-telemetry")
 MINIO_REGION = os.environ.get("MINIO_REGION", "us-east-1")
 MINIO_SECURE = os.environ.get("MINIO_SECURE", "false").lower() == "true"
+TELEMETRY_API_KEY = os.environ.get("TELEMETRY_API_KEY", "changeme-dev-only")
 
 # ---------------------------------------------------------------------------
 # Database schema (applied on startup)
@@ -133,6 +134,23 @@ def _get_minio_client():
     return _minio_client
 
 
+def _verify_api_key(authorization: str = Header(None)) -> None:
+    """Verify the API key from the Authorization header.
+    
+    Expects: Authorization: Bearer <api-key>
+    """
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    
+    parts = authorization.split(" ")
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        raise HTTPException(status_code=401, detail="Invalid Authorization header format")
+    
+    token = parts[1]
+    if token != TELEMETRY_API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global _pool
@@ -181,7 +199,7 @@ async def health():
 
 
 @app.post("/api/v1/events", response_model=EventResponse, status_code=201)
-async def create_event(event: EventCreate):
+async def create_event(event: EventCreate, _: None = Depends(_verify_api_key)):
     if not _pool:
         raise HTTPException(status_code=503, detail="Database not available")
 
@@ -229,6 +247,7 @@ async def upload_artifact(
     session_id: str = Form(...),
     event_id: str = Form(...),
     file: UploadFile = File(...),
+    _: None = Depends(_verify_api_key),
 ):
     if not _pool:
         raise HTTPException(status_code=503, detail="Database not available")
@@ -295,6 +314,7 @@ async def list_events(
     severity: str | None = None,
     limit: int = 50,
     offset: int = 0,
+    _: None = Depends(_verify_api_key),
 ):
     """Query stored telemetry events with optional filters."""
     if not _pool:
