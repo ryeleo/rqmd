@@ -1,0 +1,17 @@
+[Unit]
+Description=rqmd telemetry stack
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/rqmd/ac-cli
+ExecStart=/usr/bin/docker compose --env-file .env.telemetry.v1 -f docker-compose.telemetry.v1.yml up --build --remove-orphans
+ExecStop=/usr/bin/docker compose --env-file .env.telemetry.v1 -f docker-compose.telemetry.v1.yml down
+Restart=always
+RestartSec=5
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

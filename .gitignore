@@ -10,3 +10,9 @@ build/
 test-corpus/NSM/
 .postgres-data/
 .minio-data/
+.env.telemetry.v1
+.terraform/
+*.tfstate
+*.tfstate.*
+infra/azure/telemetry-vm/.terraform.lock.hcl
+infra/azure/telemetry-vm/terraform.tfvars

@@ -17,6 +17,7 @@ AI workflow defaults:
 - Preserve the requirement-first flow of context export -> requirements/docs updates -> preview -> apply -> verify instead of inventing ad hoc sequences for each repository.
 - When drafting or editing requirement text, prefer a short user-story block (`As a ...`, `I want ...`, `So that ...`) plus Given/When/Then acceptance bullets when both add value.
 - Treat the user-story and Given/When/Then sections as complementary views of the same requirement and keep them semantically aligned rather than letting one drift.
+- When a requirement has related external resources (GitHub issues, PRs, Jira tickets, etc.), add a `- **Links:**` metadata field directly below the Status/Priority/Flagged lines. Each link entry is an indented sub-item (`  - [label](url)` for labeled links or `  - https://...` for plain URLs). The Links field is a first-class parsed metadata field; the parser extracts it into a `links` array in JSON exports. Requirements without links simply omit the field.
 - For implementation work, use `rqmd-ai --workflow-mode implement` and take the highest-priority 1-3 proposed requirements at a time.
 - After each implementation batch, make sure rqmd runs, summaries verify, tests pass, and priorities are re-checked before continuing.
 - Use the same rqmd output conventions across projects where possible: concise markdown closeouts, consistent lifecycle emoji/labels, and the standard Info/Note/Warning block-quote style when callouts help readability.

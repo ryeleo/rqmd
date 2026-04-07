@@ -1,0 +1,90 @@
+name: deploy-telemetry-vm
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/deploy-telemetry-vm.yml
+      - infra/azure/telemetry-vm/**
+      - infra/telemetry-gateway/**
+      - docker-compose.telemetry.v1.yml
+      - .env.telemetry.v1.example
+      - ops/telemetry/**
+      - ops/systemd/rqmd-telemetry.service
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  TF_WORKING_DIR: infra/azure/telemetry-vm
+
+jobs:
+  provision-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init
+
+      - name: Terraform apply
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        env:
+          TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_vm_admin_ssh_public_key: ${{ secrets.AZURE_VM_SSH_PUBLIC_KEY }}
+          TF_VAR_allowed_ssh_cidr: ${{ secrets.AZURE_ALLOWED_SSH_CIDR }}
+          TF_VAR_vm_admin_username: ${{ vars.AZURE_VM_ADMIN_USERNAME || 'azureuser' }}
+          TF_VAR_resource_group_name: ${{ vars.AZURE_VM_RESOURCE_GROUP || 'rqmd-telemetry-vm-rg' }}
+          TF_VAR_prefix: ${{ vars.AZURE_VM_PREFIX || 'rqmdtelemetry' }}
+          TF_VAR_location: ${{ vars.AZURE_VM_LOCATION || 'eastus' }}
+          TF_VAR_vm_size: ${{ vars.AZURE_VM_SIZE || 'Standard_B2s' }}
+          TF_VAR_telemetry_public_port: ${{ vars.AZURE_TELEMETRY_PORT || '18080' }}
+        run: terraform apply -auto-approve
+
+      - name: Read VM IP
+        id: vm
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          echo "public_ip=$(terraform output -raw vm_public_ip)" >> "$GITHUB_OUTPUT"
+
+      - name: Push telemetry bundle to VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ steps.vm.outputs.public_ip }}
+          username: ${{ vars.AZURE_VM_ADMIN_USERNAME || 'azureuser' }}
+          key: ${{ secrets.AZURE_VM_SSH_PRIVATE_KEY }}
+          source: ".env.telemetry.v1.example,docker-compose.telemetry.v1.yml,infra/telemetry-gateway,ops/telemetry,ops/systemd"
+          target: "/opt/rqmd/ac-cli"
+          overwrite: true
+
+      - name: Deploy telemetry services
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ steps.vm.outputs.public_ip }}
+          username: ${{ vars.AZURE_VM_ADMIN_USERNAME || 'azureuser' }}
+          key: ${{ secrets.AZURE_VM_SSH_PRIVATE_KEY }}
+          script: |
+            set -euo pipefail
+            cd /opt/rqmd/ac-cli
+            chmod +x ops/telemetry/deploy.sh ops/telemetry/backup.sh ops/telemetry/restore.sh
+            ./ops/telemetry/deploy.sh
+
+      - name: Deployment summary
+        run: |
+          echo "Telemetry endpoint should be reachable at: http://${{ steps.vm.outputs.public_ip }}:${{ vars.AZURE_TELEMETRY_PORT || '18080' }}"

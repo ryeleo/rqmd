@@ -1,0 +1,15 @@
+subscription_id          = "00000000-0000-0000-0000-000000000000"
+location                 = "westus2"
+resource_group_name      = "rqmd-telemetry-vm-rg"
+prefix                   = "rqmdtelemetry"
+
+vm_size                  = "Standard_B2s"
+os_disk_size_gb          = 64
+vm_admin_username        = "azureuser"
+vm_admin_ssh_public_key  = "ssh-ed25519 AAAA..."
+
+# Restrict to your office/home static IP for tighter security.
+allowed_ssh_cidr         = "0.0.0.0/0"
+
+# Keep this private behind a reverse proxy for internet-facing setups.
+telemetry_public_port    = "18080"

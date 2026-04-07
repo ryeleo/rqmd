@@ -40,6 +40,8 @@ Each parsed requirement is represented as a dictionary with the following fields
 | `deprecated_reason_line` | int \| null | `null` | Line number of deprecated reason. |
 | `flagged` | bool \| null | `null` | Binary marker for triage/attention (true/false). Parsed from `- **Flagged:** true\|false`. |
 | `flagged_line` | int \| null | `null` | Line number of flagged line. |
+| `links` | list \| null | `null` | Optional list of external link dicts. Each entry has `url` (string, required) and `label` (string \| null). Parsed from `- **Links:**` followed by indented `  - [label](url)` or `  - https://...` items. |
+| `links_line` | int \| null | `null` | Line number of `- **Links:**` header. |
 
 ### Subsection Field (Wave 1)
 
@@ -109,6 +111,9 @@ Details about this subsection go here (optional).
 - **Status:** ✅ Verified
 - **Priority:** 🟠 P1 - High
 - **Flagged:** false
+- **Links:**
+  - [GitHub Issue](https://github.com/org/repo/issues/42)
+  - https://jira.example.com/browse/PROJ-100
 - Given a valid user ID
 - When the API endpoint is called
 - Then the user object is returned with all fields

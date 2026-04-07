@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added agent-facing telemetry infrastructure so AI agents can self-report workflow friction, improvement suggestions, and errors back to rqmd developers — implemented as a new `RQMD-TELEMETRY` requirement domain with Postgres + MinIO local dev stack, a FastAPI gateway, a Python telemetry client, and an `/rqmd-telemetry` bundle skill that teaches agents when and how to submit events.
+- Added an Azure single-VM telemetry deployment blueprint with Terraform provisioning (`infra/azure/telemetry-vm`), a GitHub Actions workflow (`deploy-telemetry-vm`), a production compose stack (`docker-compose.telemetry.v1.yml`), systemd wiring, and backup/restore scripts for best-effort developer-server hosting.
 - Added `rqmd-ai telemetry` command for checking endpoint configuration and health.
 - Added prompt-aware bundle support and a bundled prompt suite including `/go`, `/commit-and-go`, `/next`, `/brainstorm`, `/docs-pass`, `/pin`, and `/ship-check` so the installed rqmd AI experience can stay centered on one primary implementation agent with simpler slash-command entrypoints.
 - Added workspace bundle provenance metadata at `.github/rqmd-bundle.json` so installed repositories can report which rqmd version and JSON schema version last generated their local bundle files.
