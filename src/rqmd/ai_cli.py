@@ -36,48 +36,28 @@ except ImportError:
     sys.exit(1)
 
 from .batch_inputs import parse_set_entry
-from .config import (
-    load_config,
-    load_priorities_file,
-    load_statuses_file,
-    validate_config,
-)
-from .constants import (
-    DEFAULT_STATUS_CATALOG,
-    JSON_SCHEMA_VERSION,
-    PRIORITY_ORDER,
-    REQUIREMENTS_INDEX_NAME,
-)
+from .config import (load_config, load_priorities_file, load_statuses_file,
+                     validate_config)
+from .constants import (DEFAULT_STATUS_CATALOG, JSON_SCHEMA_VERSION,
+                        PRIORITY_ORDER, REQUIREMENTS_INDEX_NAME)
 from .history import HistoryManager
 from .json_speedups import dumps_json
-from .markdown_io import (
-    discover_project_root,
-    format_path_display,
-    initialize_requirements_scaffold,
-    iter_domain_files,
-    load_init_yaml,
-    preview_project_config_scaffold,
-    preview_requirements_scaffold,
-    render_legacy_issue_domain,
-    render_legacy_source_domain,
-    render_legacy_workflow_domain,
-    render_requirements_index,
-    render_startup_message,
-    resolve_requirements_dir,
-    validate_files_readable,
-)
+from .markdown_io import (discover_project_root, format_path_display,
+                          initialize_requirements_scaffold, iter_domain_files,
+                          load_init_yaml, preview_project_config_scaffold,
+                          preview_requirements_scaffold,
+                          render_legacy_issue_domain,
+                          render_legacy_source_domain,
+                          render_legacy_workflow_domain,
+                          render_requirements_index, render_startup_message,
+                          resolve_requirements_dir, validate_files_readable)
 from .priority_model import configure_priority_catalog
-from .req_parser import (
-    detect_domain_prefix,
-    extract_blocking_id,
-    extract_requirement_block_with_lines,
-    find_duplicate_requirement_ids,
-    next_domain_requirement_id,
-    normalize_id_prefixes,
-    parse_domain_priority_metadata,
-    parse_requirements,
-    resolve_id_prefixes,
-)
+from .req_parser import (detect_domain_prefix, extract_blocking_id,
+                         extract_requirement_block_with_lines,
+                         find_duplicate_requirement_ids,
+                         next_domain_requirement_id, normalize_id_prefixes,
+                         parse_domain_priority_metadata, parse_requirements,
+                         resolve_id_prefixes)
 from .status_model import normalize_status_input
 from .status_update import apply_status_change_by_id
 from .summary import process_file
@@ -4465,7 +4445,8 @@ def _handle_telemetry_command(
     repo_root: Path, json_output: bool = False
 ) -> dict[str, object]:
     """Handle the `rqmd-ai telemetry` command — report endpoint status."""
-    from .telemetry import resolve_telemetry_api_key, resolve_telemetry_endpoint
+    from .telemetry import (resolve_telemetry_api_key,
+                            resolve_telemetry_endpoint)
 
     endpoint = resolve_telemetry_endpoint(repo_root)
     api_key = resolve_telemetry_api_key(repo_root)
@@ -4510,12 +4491,9 @@ def _handle_telemetry_test_command(
     repo_root: Path, json_output: bool = False
 ) -> dict[str, object]:
     """Handle `rqmd-ai telemetry-test` — send a test event and artifact, report results."""
-    from .telemetry import (
-        resolve_telemetry_api_key,
-        resolve_telemetry_endpoint,
-        submit_artifact,
-        submit_event,
-    )
+    from .telemetry import (resolve_telemetry_api_key,
+                            resolve_telemetry_endpoint, submit_artifact,
+                            submit_event)
 
     endpoint = resolve_telemetry_endpoint(repo_root)
     api_key = resolve_telemetry_api_key(repo_root)
