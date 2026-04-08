@@ -45,6 +45,11 @@ AI output defaults:
 - Introduce acronyms and jargon on first use, and add Info, Note, and Warning callouts when readers may need extra context.
 - Prefer descriptive hyperlinks over raw pasted URLs.
 - Use ordered or unordered lists to break up dense prose when they improve scanning.
+  - Nest bullet lists when items have sub-detail, sub-steps, or grouped facets — flat lists that could benefit from hierarchy should gain it.
+  - Use the **Subject:** pattern (`- **Subject:** description`) to give list items a scannable bold lead.
+- When a topic deserves more emphasis than a bold lead, promote it to a subheading — subheadings improve navigation for *all* readers (screen readers, ToC generators, quick scrollers), not just those who spot bold text.
+- Use **strong** text to highlight key terms, names, or outcomes; *emphasis* for nuance or caveats; ***strong emphasis*** sparingly for truly critical points.
+- Use emoji consistently to convey meaning at a glance (e.g., lifecycle labels like 💡 Proposed / 🔧 Implemented, callout icons). Emoji should add signal, not decoration — pick a small consistent set and reuse it.
 - Use Info, Note, and Warning callouts deliberately to separate optional context, important reminders, and critical warnings.
 - Use this exact markdown shape for callouts when examples or authored output need one: `> **ℹ️ Info:** ...`, `> **⚠️ Note:** ...`, `> **🚨 Warning:** ...`.
 

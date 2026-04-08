@@ -24,6 +24,11 @@ Workflow:
 - Introduce acronyms and jargon on first use, and add Info-style callouts when readers may need extra context.
 - Prefer descriptive hyperlinks over raw pasted URLs.
 - Use ordered or unordered lists to break up dense prose when they improve scanning.
+  - **Nest bullet lists** when items have sub-detail, sub-steps, or grouped facets — flat lists that could benefit from hierarchy should be restructured into nested lists.
+  - Use the **Subject:** pattern (`- **Subject:** description or detail`) to call out key items within a list so readers can scan the bold lead and skip the detail if they already know it.
+- When a topic needs enough emphasis that a bold lead is not sufficient, promote it to a subheading instead — subheadings improve navigation for *all* readers (screen readers, table-of-contents generators, quick scrollers), not just those who notice bold text.
+- Use **strong** text to highlight key terms, names, or outcomes; use *emphasis* for nuance, caveats, or softer callouts; use ***strong emphasis*** sparingly for truly critical points.
+- Use emoji consistently to convey meaning at a glance (e.g., lifecycle labels like 💡 Proposed / 🔧 Implemented, callout icons like ℹ️ / ⚠️ / 🚨). Emoji should add signal, not decoration — pick a small consistent set and reuse it rather than scattering random emoji.
 - Use Info, Note, and Warning callouts deliberately to separate optional context, important reminders, and critical warnings.
 - Keep documentation technical but user-friendly, written like a web article worth reading rather than a dump of internal notes.
 - Never include secrets in documentation or code examples.

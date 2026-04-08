@@ -24,6 +24,11 @@ Workflow:
 - When a bullet mainly records that a tracked requirement shipped, prefer wording like `Implemented RQMD-UNDO-008: size, retention, and compaction policy for persisted history` instead of `Updated requirement status to mark RQMD-UNDO-008 as Implemented ...`.
 - Keep low-signal implementation detail out of the primary bullets; if the detail matters, group it under a nested `AI Development` heading instead of mixing it into the main narrative.
 - Prefer concise bullets that a human reviewer can scan quickly during release prep.
+- Structure changelog entries with the same rich formatting from `/rqmd-docs`:
+  - **Nest bullet lists** under top-level entries when a feature has multiple sub-points, shipped components, or grouped details — avoid long flat lists that bury context.
+  - Use the **Subject:** pattern (`- **Subject:** description`) for entries that benefit from a scannable bold lead.
+  - Use subheadings (e.g., `#### Telemetry`, `#### Performance`) to group related entries when a release is large enough that a flat `### Added` list becomes hard to navigate.
+  - Use **strong**, *emphasis*, and emoji consistently to match the project’s documentation voice (see `/rqmd-docs` for the full style guide).
 - Keep the changelog aligned with the affected requirement docs, README guidance, and bundle workflow text when those surfaces changed too.
 
 Constraints:
