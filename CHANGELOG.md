@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tracked `/feedback` requirements for user-driven rqmd improvement feedback (`RQMD-AI-053`, `RQMD-AI-054`, `RQMD-AI-055`, `RQMD-TELEMETRY-015`).
 - `feedback` event type added to `EventType` in `src/rqmd/telemetry.py` (`RQMD-TELEMETRY-015`).
 - `/feedback` prompt (`RQMD-AI-053`): interactive user-driven improvement feedback session with iterative telemetry submission. Installed in `.github/prompts/` and the rqmd bundle.
+- `/rqmd-feedback` skill (`RQMD-AI-054`): teaches agents the full feedback workflow — payload schema, valid categories, submission mechanics, and session lifecycle.
+- GitHub issue creation from feedback sessions (`RQMD-AI-055`): the `/feedback` prompt now offers to file a `gh issue create --repo ryeleo/rqmd` when feedback is concrete enough, capturing the issue URL in telemetry.
 
 ## [0.2.0] - 2026-04-08
 

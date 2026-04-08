@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 5💡 45🔧 2✅ 0⚠️ 0⛔ 3🗑️
+Summary: 3💡 47🔧 2✅ 0⚠️ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -506,7 +506,7 @@ Summary: 5💡 45🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - And the prompt file lives at `.github/prompts/feedback.prompt.md` in the workspace and in the bundle at `src/rqmd/resources/bundle/.github/prompts/feedback.prompt.md`.
 
 ### RQMD-AI-054: `/rqmd-feedback` skill teaching agents the feedback workflow
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a maintainer who installs the rqmd AI bundle into a repository
 - I want an `/rqmd-feedback` skill that teaches agents how to conduct a structured feedback session
@@ -520,7 +520,7 @@ Summary: 5💡 45🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - And the skill file lives at `.github/skills/rqmd-feedback/SKILL.md` in the workspace and in the bundle at `src/rqmd/resources/bundle/.github/skills/rqmd-feedback/SKILL.md`.
 
 ### RQMD-AI-055: GitHub issue creation from feedback sessions
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - As an rqmd developer who notices a concrete bug or gap during a feedback session
 - I want the `/feedback` prompt to offer creating a GitHub issue on the `ryeleo/rqmd` repository when the feedback describes an actionable issue

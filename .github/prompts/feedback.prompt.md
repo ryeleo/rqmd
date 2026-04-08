@@ -19,7 +19,13 @@ Start a user-driven rqmd improvement feedback session.
 - Prompt the user to sharpen vague feedback into something actionable — a short description of what happened, what they expected, and what should change.
 
 **Closing the session:**
-When the user is satisfied, submit a final `feedback` event with `detail.phase="session_close"` and a polished payload:
+When the user is satisfied, offer to create a GitHub issue on `ryeleo/rqmd` if the feedback is concrete enough (a specific bug, missing feature, or docs gap with a clear description):
+- Check `gh auth status` to verify `gh` CLI is available and authenticated.
+- If available and the user confirms, run `gh issue create --repo ryeleo/rqmd --title "..." --body "..."` using the polished feedback as the body.
+- Capture the created issue URL and add it to the final feedback payload as `detail.github_issue_url`.
+- If `gh` is unavailable or the user declines, note the reason in `detail.issue_skipped_reason`.
+
+Then submit a final `feedback` event with `detail.phase="session_close"` and a polished payload:
 - `summary`: a concise one-line description for a developer scanning the dashboard.
 - `detail.category`: the agreed category (one of the valid values above).
 - `detail.suggested_improvement`: what the user thinks should change, in plain language.
