@@ -5,17 +5,24 @@ argument-hint: Describe whether you need the primary test command, integration c
 user-invocable: true
 metadata:
   guide:
-    summary: Use the repository's canonical validation commands instead of guessing test workflows.
+    summary: Use the repository's canonical agent workflow validation interface instead of guessing test workflows.
     workflow:
-      - Start with the primary automated test command.
-      - Use any dedicated integration or lint/check commands when the task calls for them.
+      - Start with `bash ./agent-workflow.sh preflight` if repository readiness is uncertain.
+      - Prefer `bash ./agent-workflow.sh validate` and its focused profiles before falling back to raw test commands.
+      - Use any dedicated integration or lint/check commands below when customizing or debugging the validation flow.
       - Update this generated skill if the repository's real validation workflow differs from the scaffold.
     examples:
-      - Ask for the canonical test command for this repository.
+      - Ask which `bash ./agent-workflow.sh validate --profile ...` mode matches the current batch.
       - Ask for integration or lint commands before finishing a change.
 ---
 
 Use this skill when work needs the repository's actual automated validation commands.
+
+Canonical validation entry point:
+- `bash ./agent-workflow.sh validate`
+- `bash ./agent-workflow.sh validate --profile test`
+- `bash ./agent-workflow.sh validate --profile integration`
+- `bash ./agent-workflow.sh validate --profile docs`
 
 Detected sources:
 - pyproject.toml
@@ -24,17 +31,16 @@ Detected sources:
 Primary automated test commands:
 - `uv run --extra dev pytest -q`
 
-Lint and check commands:
-- `uv run ruff format --check src/ tests/`
-- `uv run ruff check --select I src/ tests/`
+Integration or end-to-end test commands:
+- No dedicated integration or end-to-end test command was detected yet. Add one here if the repository has it.
 
-Run both together before committing:
-- `uv run ruff format src/ tests/ && uv run ruff check --select I --fix src/ tests/ && uv run pytest -q`
+Lint and check commands:
+- No lint or check command was detected yet. Add one here if the repository uses it.
 
 Notes:
 - Smoke coverage was detected under the development skill; keep `/test` focused on repeatable automated checks.
 - Review the generated commands and tighten them to the repository's canonical workflows before relying on them in automation.
 
 Constraints:
-- Prefer these repository-specific validation commands over generic guesses.
+- Prefer the canonical agent workflow validation interface first; use the raw commands below when debugging or refining that interface.
 - Review and edit this generated skill after bootstrap if the detected commands are incomplete or stale.
