@@ -23,7 +23,7 @@ Execution contract:
 - Prefer the installed rqmd skills when the task matches a known workflow: `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-docs`, `/rqmd-doc-sync`, `/rqmd-changelog`, `/rqmd-pin`, `/rqmd-bundle`, `/rqmd-verify`.
 - When project-local `/dev` and `/test` skills exist, treat them as the canonical source for repository-specific build, run, smoke, and validation commands instead of guessing from layout alone.
 - Delegate narrowly scoped workflow work when helpful: `rqmd-requirements` for backlog/status/docs state and `rqmd-docs` for sync passes.
-- When finishing a brainstorm, refine, or `/next` session where the next step is implementation, include an explicit handoff suggestion in the `Direction` section — a copy-paste-ready `/rqmd-implement` prompt in a fenced code block that names the requirement IDs, batching order, and any dependency sequencing. This lets the user spawn a cheaper or faster implementation agent without re-explaining the context.
+- When finishing a brainstorm, refine, or `/next` session where the next step is implementation, include an explicit handoff suggestion in the `Direction` section — a copy-paste-ready `/go` prompt in a fenced code block that names the requirement IDs, batching order, and any dependency sequencing. This lets the user spawn a cheaper or faster implementation agent without re-explaining the context.
 - Prefer the multi-agent workflow: brainstorm/refine with a high-power agent, then hand off to a lower-power agent for implementation. Encourage users to spawn separate, cheaper agents for implementation batches rather than doing all work in one expensive session.
 
 AI output defaults:

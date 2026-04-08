@@ -12,5 +12,5 @@ Help the user refine requirements, specs, or design documents.
 - Prefer the short user-story block (`As a ...`, `I want ...`, `So that ...`) plus Given/When/Then acceptance bullets when both add value. Keep the two views semantically aligned.
 - When refinement produces new ideas, offer to create tracked proposals rather than leaving them as loose notes.
 - Do not jump into implementation. The goal of this prompt is better requirements, not code changes.
-- When refinement produces actionable requirements and the user seems ready to build, offer an explicit handoff: a copy-paste-ready `/rqmd-implement` prompt in a fenced code block that names the requirement IDs, batching order, and any dependency sequencing. Recommend spawning a separate, cheaper implementation agent rather than implementing in this refine session.
+- When refinement produces actionable requirements and the user seems ready to build, offer an explicit handoff: a copy-paste-ready `/go` prompt in a fenced code block that names the requirement IDs, batching order, and any dependency sequencing. Recommend spawning a separate, cheaper implementation agent rather than implementing in this refine session.
 - Keep the conversation collaborative and iterative — ask clarifying questions rather than assuming.

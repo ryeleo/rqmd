@@ -13,4 +13,4 @@ Brainstorm mode — think broadly and creatively.
 - When a promising idea solidifies, offer to draft it as a tracked proposal so it does not get lost in chat history.
 - Prefer promoting ideas into tracked requirements before implementation instead of jumping straight to code.
 - Keep the output concise and concrete enough to act on in a follow-up implementation pass.
-- When the user seems ready to implement, offer an explicit handoff: a copy-paste-ready `/rqmd-implement` prompt in a fenced code block that names the requirement IDs, batching order, and any dependency sequencing. Recommend spawning a separate, cheaper implementation agent rather than doing implementation in this brainstorm session.
+- When the user seems ready to implement, offer an explicit handoff: a copy-paste-ready `/go` prompt in a fenced code block that names the requirement IDs, batching order, and any dependency sequencing. Recommend spawning a separate, cheaper implementation agent rather than doing implementation in this brainstorm session.

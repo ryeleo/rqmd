@@ -47,7 +47,7 @@ New primary **mult-agent** workflow for users when they are using rqmd-ai: `brai
 - Explicit Handoff Suggestions: If the user seems keen to implement the refined/brainstormed requirements, then provide them a simple prompt they can easily copy-paste into another `implmentation` agent. Even put it in a code block to make it easier to copy, like:
     > Ready to implement? Copy the following prompt and paste it into your implementation agent to get started:
     > ```
-    > /rqmd-implement Start with REQ-005 (one-line EventType change) and REQ-053 (prompt file creation) as the first batch, then REQ-067 (skill) and REQ-042 (gh integration) as the second. The telemetry type change unblocks everything else.
+    > /go Start with REQ-005 (one-line EventType change) and REQ-053 (prompt file creation) as the first batch, then REQ-067 (skill) and REQ-042 (gh integration) as the second. The telemetry type change unblocks everything else.
     > ```
 - `implement` can be done by a lower-power agent that is more focused on execution and making smaller code changes. It can be done in the same prompt window of technically with the same power AI agent, but we should recommend that the user should prefer spawning new cheaper / quicker agents to implement work instead of doing all their work with the one costly / slower / bigger agent!
 
