@@ -18,8 +18,7 @@ New primary **mult-agent** workflow for users when they are using rqmd-ai: `brai
     > ```
 - `implement` can be done by a lower-power agent that is more focused on execution and making smaller code changes. It can be done in the same prompt window of technically with the same power AI agent, but we should recommend that the user should prefer spawning new cheaper / quicker agents to implement work instead of doing all their work with the one costly / slower / bigger agent!
 
-
-
+Promoted into multi-agent workflow guidance shipped in `copilot-instructions.md`, `/brainstorm`, `/refine` prompts, `rqmd-dev` agent, and the bundle README.
 
 ## Prompts
 

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Multi-agent workflow guidance across all rqmd AI surfaces — `copilot-instructions.md`, `/brainstorm`, `/refine` prompts, and the `rqmd-dev` agent now recommend brainstorming/refining with a high-power agent, then handing off to a cheaper agent for implementation via a copy-paste-ready `/rqmd-implement` prompt in the `Direction` closeout section.
 - Tracked `/feedback` requirements for user-driven rqmd improvement feedback (`RQMD-AI-053`, `RQMD-AI-054`, `RQMD-AI-055`, `RQMD-TELEMETRY-015`).
 - `feedback` event type added to `EventType` in `src/rqmd/telemetry.py` (`RQMD-TELEMETRY-015`).
 - `/feedback` prompt (`RQMD-AI-053`): interactive user-driven improvement feedback session with iterative telemetry submission. Installed in `.github/prompts/` and the rqmd bundle.

@@ -60,7 +60,9 @@ Installed agents in the full preset:
 - `rqmd-docs`: README, changelog, and requirement-doc sync agent
 
 Recommended default:
-- Start with `rqmd-dev` plus prompts such as `/go`.
+- The recommended workflow is **brainstorm/refine with a high-power agent → hand off to a lower-power agent for implementation → repeat**.
+- Use `/brainstorm` or `/refine` with a stronger model to shape requirements and explore trade-offs.
+- When requirements are ready, the agent will offer a copy-paste-ready `/rqmd-implement` handoff prompt. Spawn a separate, cheaper agent session for the implementation work.
 - Use `/go 10`-style numeric arguments when you want one prompt run to cover multiple validated slices without enabling automatic commits.
 - Use `/commit-and-go 10` when you explicitly want the agent to commit each validated slice during a longer unattended run.
 - Treat the extra full-preset agents as specialized or advanced modes when you want a materially different execution style.
