@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rqmd"
-version = "0.1.1rc4"
+version = "0.2.0"
 description = "Requirements Markdown manager CLI tool, `rqmd`. GitHub Copilot AI integration supported via `rqmd-ai init`."
 readme = "README.md"
 requires-python = ">=3.10"

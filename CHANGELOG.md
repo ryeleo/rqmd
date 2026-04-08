@@ -7,44 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-08
+
 ### Added
 
-- Short-lived session tokens via gateway token exchange (`RQMD-TELEMETRY-012`). The client no longer ships a plaintext API key in source — instead it sends a public client ID to `POST /api/v1/token` and receives a short-lived Bearer token (1 hour TTL) cached in-process with transparent refresh.
-- Gateway rate limiting (`RQMD-TELEMETRY-013`). In-memory sliding-window limiters protect the event ingestion endpoint (60 req/min per-IP, 600 req/min global) and the token exchange endpoint (10 req/min per-IP). Exceeded limits return `429 Too Many Requests` with a `Retry-After` header.
-- Built-in production telemetry defaults so agents report friction out of the box without any manual endpoint or key configuration. The telemetry client falls back to the production gateway (`20.94.227.192:18080`) when no env var or `.rqmd.yml` override is set.
-- `RQMD_TELEMETRY_DISABLED=1` opt-out mechanism for users who do not want telemetry sent to external services.
-- `RQMD-TELEMETRY-012` requirement tracking the move from plaintext hardcoded API key to a secure distribution mechanism.
-- Lazy import strategy for the rqmd package init so that `rqmd-ai` and other non-interactive entry points no longer pay the ~90ms cost of eagerly importing the full interactive CLI module chain (`RQMD-CORE-037`). Measured improvement: `rqmd-ai --json --dump-status proposed` dropped from ~155ms to ~81ms (warm).
-- Non-interactive latency budget tests gating warm full-catalog parse and single-ID lookup performance, plus a regression test verifying lazy init does not eagerly load `rqmd.cli` (`RQMD-CORE-039`).
-- Five new performance-focused requirements promoted from brainstorm: `RQMD-CORE-037` (lazy imports), `RQMD-CORE-038` (filesystem parse cache), `RQMD-CORE-039` (non-interactive latency budget), `RQMD-CORE-040` (native Rust/C acceleration roadmap), and `RQMD-AUTOMATION-038` (multi-query batch mode for rqmd-ai).
-- In-process mtime+size-keyed parse cache (`parse_cache.py`) so repeat `parse_requirements` and `read_text` calls within the same process skip re-parsing unchanged requirement files (`RQMD-CORE-038`). Measured 1.6x speedup on parse+body-extract paths.
-- Multi-query `--batch` mode for `rqmd-ai` that reads a JSON array of query objects from stdin and executes all of them against one loaded catalog in a single invocation (`RQMD-AUTOMATION-038`). Supports `dump-status`, `dump-id`, `dump-file`, and `dump-all` query types with per-query error isolation. Measured 26% faster for 2 queries vs separate invocations, with savings scaling linearly.
+#### Telemetry
 
-- Added agent-facing telemetry infrastructure so AI agents can self-report workflow friction, improvement suggestions, and errors back to rqmd developers — implemented as a new `RQMD-TELEMETRY` requirement domain with Postgres + MinIO local dev stack, a FastAPI gateway, a Python telemetry client, and an `/rqmd-telemetry` bundle skill that teaches agents when and how to submit events.
-- Added an Azure single-VM telemetry deployment blueprint with Terraform provisioning (`infra/azure/telemetry-vm`), a GitHub Actions workflow (`deploy-telemetry-vm`), a production compose stack (`docker-compose.telemetry.v1.yml`), systemd wiring, and backup/restore scripts for best-effort developer-server hosting.
-- Added `rqmd-ai telemetry` command for checking endpoint configuration and health.
-- Added `rqmd-ai telemetry-test` command for sending a test event to verify the telemetry pipeline is working end-to-end from any project.
-- Added agent telemetry configuration discovery (`RQMD_TELEMETRY_API_KEY` env var and `telemetry.api_key` config) so agents can authenticate with the gateway via Bearer token without ad-hoc credential handling.
-- Added command-discovery struggle reporting so agents explicitly report when `rqmd` or `rqmd-ai` cannot be invoked and they fall back to direct file manipulation — tracked as a distinct high-severity `"category": "command_discovery"` telemetry event with the exact commands attempted and the fallback action taken.
-- Added prompt-aware bundle support and a bundled prompt suite including `/go`, `/commit-and-go`, `/next`, `/brainstorm`, `/docs-pass`, `/pin`, and `/ship-check` so the installed rqmd AI experience can stay centered on one primary implementation agent with simpler slash-command entrypoints.
-- Added workspace bundle provenance metadata at `.github/rqmd-bundle.json` so installed repositories can report which rqmd version and JSON schema version last generated their local bundle files.
-- Added a generated `agent-workflow.sh` scaffold during bundle install so repositories get one canonical agent-facing entry point for machine-readable `preflight` and `validate` workflows alongside the generated `/dev` and `/test` skills.
-- Added a visible project tooling metadata block for generated requirements indexes plus `rqmd --sync-index-metadata`, so interactive-only rqmd users can see and refresh the repository's recorded rqmd and JSON schema versions.
-- Added explicit `rqmd-ai reinstall` and `rqmd-ai upgrade` commands for managed bundle lifecycle refreshes, including conservative upgrade protection for customized files.
-- Added bundle-wide guidance for reliable `rqmd-ai --json` automation (foreground execution, stdout-only JSON parsing, separate stderr diagnostics), with Windows shell reliability called out explicitly.
-- Added init-chat status-scheme selection so users can choose built-in default status sets (`canonical`, `lean`, `delivery`) or copy statuses from an existing project config path during bootstrap.
+- Agent-facing telemetry infrastructure so AI agents can self-report workflow friction, improvement suggestions, and errors back to rqmd developers — implemented as a new `RQMD-TELEMETRY` requirement domain with a Postgres + MinIO local dev stack, a FastAPI gateway, a Python telemetry client, and an `/rqmd-telemetry` bundle skill that teaches agents when and how to submit events.
+- Short-lived session tokens via gateway token exchange (`RQMD-TELEMETRY-012`). The client sends a public client ID to `POST /api/v1/token` and receives a short-lived Bearer token (1-hour TTL) cached in-process with transparent refresh. No plaintext API key is shipped in source.
+- Gateway rate limiting (`RQMD-TELEMETRY-013`). In-memory sliding-window limiters protect event ingestion (60 req/min per-IP, 600 req/min global) and token exchange (10 req/min per-IP). Exceeded limits return `429 Too Many Requests` with a `Retry-After` header.
+- Built-in production telemetry defaults — agents report friction out of the box without manual endpoint configuration. `RQMD_TELEMETRY_DISABLED=1` opts out entirely.
+- `rqmd-ai telemetry` command for checking endpoint configuration and health.
+- `rqmd-ai telemetry-test` command for verifying the telemetry pipeline end-to-end from any project.
+- Command-discovery struggle reporting so agents explicitly report when `rqmd` or `rqmd-ai` cannot be invoked — tracked as a distinct high-severity telemetry event with the exact commands attempted and the fallback action taken.
+- Azure single-VM telemetry deployment blueprint with Terraform provisioning, a GitHub Actions workflow, a production compose stack, systemd wiring, and backup/restore scripts.
+
+#### Performance
+
+- Lazy import strategy for the rqmd package init so `rqmd-ai` and other non-interactive entry points skip eagerly importing the full interactive CLI module chain (`RQMD-CORE-037`). Measured: ~155ms → ~81ms (warm).
+- In-process mtime+size-keyed parse cache so repeat `parse_requirements` and `read_text` calls skip re-parsing unchanged requirement files (`RQMD-CORE-038`). Measured 1.6× speedup on parse+body-extract paths.
+- Non-interactive latency budget tests gating warm parse and single-ID lookup performance (`RQMD-CORE-039`).
+- Multi-query `--batch` mode for `rqmd-ai` that reads a JSON array of query objects from stdin and executes them against one loaded catalog (`RQMD-AUTOMATION-038`). Measured 26% faster for 2 queries vs separate invocations, scaling linearly.
+
+#### Bundle and AI workflow
+
+- Prompt-aware bundle support and a bundled prompt suite including `/go`, `/commit-and-go`, `/next`, `/brainstorm`, `/docs-pass`, `/pin`, and `/ship-check`.
+- Workspace bundle provenance metadata at `.github/rqmd-bundle.json`.
+- Generated `agent-workflow.sh` scaffold during bundle install for machine-readable `preflight` and `validate` workflows.
+- Visible project tooling metadata block for requirements indexes plus `rqmd --sync-index-metadata`.
+- Explicit `rqmd-ai reinstall` and `rqmd-ai upgrade` commands for managed bundle lifecycle refreshes, with conservative upgrade protection for customized files.
+- Bundle-wide guidance for reliable `rqmd-ai --json` automation, with Windows shell reliability called out explicitly.
+- Init-chat status-scheme selection (`canonical`, `lean`, `delivery`) or copy-from-existing during bootstrap.
 
 ### Changed
 
-- Reworked the README entrypoint with a clearer top-level install section and a short getting-started flow so first-time users can reach `rqmd init` or `rqmd --verify-summaries` faster.
-- Reframed the bundled AI workflow surface toward a single-agent-first model where `rqmd-dev` stays primary, `/go` handles the most common “just continue” action, and specialized agents remain available as advanced modes.
-- Documented a clearer bundle refresh workflow built around `rqmd --version`, `rqmd-ai --version`, `rqmd-ai --json`, `rqmd-ai upgrade`, and `rqmd-ai reinstall`.
-- rqmd text-mode startup now warns when the requirements index metadata block is missing or records a different rqmd/schema version than the currently running tool.
-- Made `rqmd-ai install` default to the single-agent-first minimal preset and slimmed the full preset so normal installs no longer add specialized agent variants by default.
-- Simplified the core rqmd surface by removing history/time-machine and undo/redo CLI workflows from `rqmd` and `rqmd-ai` in the 0.x track, and deprecating the Time Machine and Undo requirement domains.
-- Hardened interactive `screen_write` rendering on small terminals by constraining long requirement prefix/panel content to the visible viewport, preventing redraw overflow that could leave stale wrapped lines in scrollback (notably in Windows VS Code terminals).
-- Updated interactive `screen_write` redraws to clear terminal scrollback as well as the visible frame before each render, making the interactive view behave more like a dedicated full-screen surface.
-- Updated PyPI publishing so stable versions still ship from published GitHub Releases, while internal `rc` tags such as `v0.1.1rc1` publish automatically when the tag is pushed.
+- Reworked the README entrypoint with a clearer install section and a short getting-started flow.
+- Reframed the bundled AI workflow surface toward a single-agent-first model where `rqmd-dev` stays primary and `/go` handles the most common "just continue" action.
+- Made `rqmd-ai install` default to the minimal preset so normal installs no longer add specialized agent variants.
+- Simplified the core rqmd surface by removing history/time-machine and undo/redo CLI workflows from the 0.x track, deprecating the Time Machine and Undo requirement domains.
+- Hardened interactive `screen_write` rendering on small terminals to prevent redraw overflow on wrapped lines (notably in Windows VS Code terminals).
+- Updated `screen_write` redraws to clear terminal scrollback as well as the visible frame before each render.
+- Updated PyPI publishing so stable versions ship from GitHub Releases while `rc` tags publish automatically on push.
 
 ## [0.1.0] - 2026-04-02
 
