@@ -3,7 +3,7 @@
 Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
 
 <!-- acceptance-status-summary:start -->
-Summary: 3💡 44🔧 2✅ 0⚠️ 0⛔ 3🗑️
+Summary: 6💡 44🔧 2✅ 0⚠️ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -489,3 +489,45 @@ Summary: 3💡 44🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - And rqmd should allow repositories to omit separate `/dev` and `/test` skills entirely when the unified entry point is sufficient and explicitly chosen
 - And the bundle guidance should make clear when those skills remain useful as thin wrappers or discovery aids versus when they should be treated as redundant
 - And the guidance should remain technology-neutral, supporting shell scripts, Makefiles, justfiles, or other task-runner conventions without forcing one choice.
+
+### RQMD-AI-053: `/feedback` prompt for user-driven rqmd improvement feedback
+- **Status:** 💡 Proposed
+- **Priority:** 🔴 P0 - Critical
+- As an rqmd developer using rqmd agents in other projects
+- I want a `/feedback` prompt that starts an interactive feedback session focused on improving rqmd itself
+- So that I can accumulate actionable feedback and improvement ideas from real-world usage across all my rqmd-managed repositories.
+- Given a user invokes `/feedback` in any repository where the rqmd bundle is installed
+- When the prompt activates
+- Then the agent immediately submits a telemetry event of type `feedback` with severity `low` to record that a feedback session was started, including the repository name, agent name, and a generated session ID
+- And the agent asks the user what friction, idea, or observation they want to report
+- And as the user describes their feedback, the agent iteratively refines a structured feedback payload (summary, category, severity, detail, and optional suggested improvement)
+- And the agent submits updated telemetry events of type `feedback` as the payload evolves, so partial feedback is never lost even if the session is interrupted
+- And the final feedback event includes a polished summary, the refined detail payload, and a severity chosen collaboratively with the user
+- And the prompt file lives at `.github/prompts/feedback.prompt.md` in the workspace and in the bundle at `src/rqmd/resources/bundle/.github/prompts/feedback.prompt.md`.
+
+### RQMD-AI-054: `/rqmd-feedback` skill teaching agents the feedback workflow
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- As a maintainer who installs the rqmd AI bundle into a repository
+- I want an `/rqmd-feedback` skill that teaches agents how to conduct a structured feedback session
+- So that the `/feedback` prompt has clear workflow guidance including payload structure, telemetry submission mechanics, and iterative refinement steps.
+- Given the rqmd bundle is installed in a repository
+- When the `/rqmd-feedback` skill is loaded by an agent
+- Then it describes the feedback event schema (summary, category, severity, detail fields, suggested improvement)
+- And it teaches the agent to submit an initial `feedback` event on session start, update events as the payload evolves, and submit a final polished event on session close
+- And it documents valid feedback categories: `ux_friction`, `missing_feature`, `docs_gap`, `workflow_confusion`, `performance`, and `other`
+- And it explains how to use `submit_event()` from `src/rqmd/telemetry.py` with `event_type="feedback"` for all feedback telemetry
+- And the skill file lives at `.github/skills/rqmd-feedback/SKILL.md` in the workspace and in the bundle at `src/rqmd/resources/bundle/.github/skills/rqmd-feedback/SKILL.md`.
+
+### RQMD-AI-055: GitHub issue creation from feedback sessions
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- As an rqmd developer who notices a concrete bug or gap during a feedback session
+- I want the `/feedback` prompt to offer creating a GitHub issue on the `ryeleo/rqmd` repository when the feedback describes an actionable issue
+- So that concrete issues are tracked in GitHub without requiring me to context-switch away from the feedback session.
+- Given a feedback session has produced a refined payload that describes a concrete bug, missing feature, or docs gap
+- When the agent determines the feedback is specific enough to be an issue and the user confirms they want to file one
+- Then the agent checks whether `gh` CLI is installed and authenticated (`gh auth status`)
+- And if `gh` is available, the agent drafts an issue title and body from the feedback payload and runs `gh issue create --repo ryeleo/rqmd --title "..." --body "..."` to create the issue
+- And the created issue URL is included in the final feedback telemetry event under `detail.github_issue_url`
+- And if `gh` is not available or the user declines, the agent skips issue creation gracefully and notes it in the feedback payload as `detail.issue_skipped_reason`.

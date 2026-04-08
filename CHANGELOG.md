@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Tracked `/feedback` requirements for user-driven rqmd improvement feedback (`RQMD-AI-053`, `RQMD-AI-054`, `RQMD-AI-055`, `RQMD-TELEMETRY-015`).
+
 ## [0.2.0] - 2026-04-08
 
 ### Added

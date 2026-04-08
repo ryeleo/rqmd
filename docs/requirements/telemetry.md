@@ -3,7 +3,7 @@
 Scope: agent-facing telemetry infrastructure for capturing AI workflow friction, improvement suggestions, and session diagnostics — enabling rqmd's own AI agents to report how rqmd can be improved.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 11🔧 0✅ 0⚠️ 0⛔ 1🗑️
+Summary: 3💡 11🔧 0✅ 0⚠️ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-TELEMETRY-001: Local telemetry development stack
@@ -173,3 +173,18 @@ Summary: 2💡 11🔧 0✅ 0⚠️ 0⛔ 1🗑️
 - **Status:** 🗑️ Deprecated
 - **Priority:** 🟢 P3 - Low
 - Deprecated: Adds client-side compute latency (~50-200ms) to every token exchange with no way to eliminate it. Rate limiting on the token endpoint (RQMD-TELEMETRY-013) achieves the same anti-abuse goal server-side at zero client cost. Not worth the latency trade-off for a developer telemetry service.
+
+### RQMD-TELEMETRY-015: `feedback` event type for user-driven improvement telemetry
+- **Status:** 💡 Proposed
+- **Priority:** 🔴 P0 - Critical
+- As a developer reviewing telemetry to prioritize rqmd improvements
+- I want a dedicated `feedback` event type that captures user-driven improvement feedback separately from autonomous agent reports
+- So that feedback submitted through `/feedback` sessions is distinguishable from autonomous struggle and suggestion events, enabling focused triage of human-intentional input.
+- Given `EventType` in `src/rqmd/telemetry.py` currently defines `"struggle" | "suggestion" | "error" | "success" | "workflow_step"`
+- When the `feedback` event type is added
+- Then `EventType` includes `"feedback"` as a valid literal value
+- And `submit_event()` accepts `event_type="feedback"` without modification
+- And the telemetry skill and `/rqmd-feedback` skill document the `feedback` event type and its expected detail fields
+- And feedback events include a `detail.category` field with one of: `ux_friction`, `missing_feature`, `docs_gap`, `workflow_confusion`, `performance`, `other`
+- And feedback events optionally include `detail.suggested_improvement` as a freeform text field describing what the user thinks should change
+- And the gateway accepts `feedback` events without requiring a schema migration (the event_type column is already extensible per RQMD-TELEMETRY-002).

@@ -2,10 +2,13 @@
 
 ## Prompts
 
-/improve-rqmd: Send telemetry data to rqmd telemetry server based on the current users context. 
+/feedback: Send feedback aimed at improving rqmd.
 - First, send some telemetry whenever this is invoked
 - Then, work with the user to craft the telemetry payload to be as useful as possible for future development/improvement of rqmd. Send updates to the telemetry server as the payload evolves based on user feedback and input.
-- Developer commentary: This will probably become one of my (rqmd's primary developer's) primary development workflows to make changes to rqmd. As I go use rqmd in many other projects with a mind on making improvements to rqmd itself.
+- Developer commentary: This will probably become one of my (rqmd's primary developer's) primary development workflows to make changes to rqmd. I will go use rqmd in many other projects with a mind on making improvements to rqmd itself, and will use "/feedback" to start actaully accumulating actionable feedback and telemetry on how rqmd is being used, where it is falling short, and what improvements would be most valuable to users in the future. This will help me prioritize my work on rqmd and make sure I am building the most useful features and improvements for users based on real-world usage and feedback.
+- Consider submitting gh issue to ryeleo/rqmd repo direcly if there is an actual issue noticed during this feedback session (and the user has gh cli installed and authenticated)
+
+Promoted into tracked requirements: `RQMD-AI-053` (/feedback prompt), `RQMD-AI-054` (/rqmd-feedback skill), `RQMD-AI-055` (GitHub issue creation from feedback), `RQMD-TELEMETRY-015` (feedback event type).
 
 ---
 
