@@ -13,6 +13,7 @@ except ModuleNotFoundError:
 
 
 TAG_PATTERN = re.compile(r"v?\d+\.\d+\.\d+(?:rc\d+)?")
+RC_SUFFIX_PATTERN = re.compile(r"rc\d+$")
 
 
 def parse_args() -> argparse.Namespace:
@@ -29,6 +30,12 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=Path("pyproject.toml"),
         help="Path to pyproject.toml.",
+    )
+    parser.add_argument(
+        "--changelog",
+        type=Path,
+        default=Path("CHANGELOG.md"),
+        help="Path to CHANGELOG.md to verify versioned entry exists.",
     )
     return parser.parse_args()
 
@@ -57,6 +64,19 @@ def load_project_version(pyproject_path: Path) -> str:
     return version_match.group(1)
 
 
+def check_changelog_version(changelog_path: Path, version: str) -> None:
+    """Assert CHANGELOG.md has a versioned section header for *version*."""
+    if not changelog_path.exists():
+        raise SystemExit(f"Changelog not found: {changelog_path}")
+    text = changelog_path.read_text(encoding="utf-8")
+    pattern = re.compile(r"^##\s+\[" + re.escape(version) + r"\]", re.MULTILINE)
+    if not pattern.search(text):
+        raise SystemExit(
+            f"{changelog_path} does not contain a versioned entry for {version!r}.\n"
+            f"Did you forget to roll [Unreleased] → [{version}] before tagging?"
+        )
+
+
 def main() -> int:
     args = parse_args()
     tag = resolve_tag(args.tag)
@@ -72,6 +92,11 @@ def main() -> int:
             f"Release tag {tag!r} does not match project.version {version!r} in {args.pyproject}"
         )
 
+    # Changelog check only applies to stable releases — rc tags precede the roll.
+    if not RC_SUFFIX_PATTERN.search(tag):
+        check_changelog_version(args.changelog, version)
+
+    print(f"OK: tag {tag!r} matches project.version {version!r}")
     return 0
 
 
