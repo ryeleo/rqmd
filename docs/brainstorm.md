@@ -1,5 +1,120 @@
 # Brainstorm
 
+## Systems Analysis Skill
+
+Oh man, "systems analysis" would be awesome skill to make part of rqmd.
+
+There is equiations such that if you provide the 'MTTF" for all your components you can estimate your systems availability. I did those at some point in grad school and they were immensely powerful. That would be a good skill to be independent of diagramming probably, but diagraming could certainly be done as part of it!
+
+## Diagrams should be core in rqmd docs
+
+```
+---
+name: rqmd-diagrams
+description: Author, lint, and fix Mermaid diagrams in markdown docs so they render correctly in both VS Code and mmdc. Use whenever creating or editing stateDiagram-v2 or flowchart diagrams.
+argument-hint: Name the markdown file(s) containing diagrams to validate or describe the diagram you need to create.
+user-invocable: true
+metadata:
+  guide:
+    summary: Produce Mermaid diagrams that pass mmdc validation and render cleanly in VS Code.
+    workflow:
+      - Author the diagram following the syntax rules below.
+      - Run `mmdc -i <file.md>` to validate. Fix any parse errors and re-run until all charts show ✅.
+      - Treat mmdc as the authoritative linter — VS Code's renderer is stricter than the CLI, so CLI passes are necessary but not always sufficient.
+    examples:
+      - mmdc -i docs/state-machines.md
+      - mmdc -i docs/game-flows.md
+---
+
+Use this skill when creating, editing, or reviewing Mermaid diagrams in any markdown file.
+
+## Validation command
+
+```bash
+mmdc -i <path/to/file.md>
+```
+
+Run after every edit. All charts must show ✅ before the work is done. If mmdc is not
+installed: `npm install -g @mermaid-js/mermaid-cli` (requires Node 18+).
+
+## Syntax rules (learned from VS Code + mmdc compatibility)
+
+### Multi-line labels — use `<br>`, never `\n`
+Both the VS Code renderer and mmdc require `<br>` for line breaks inside node labels and
+transition descriptions. Literal `\n` is not rendered.
+
+```
+✅  A --> B : First line<br>Second line
+❌  A --> B : First line\nSecond line
+```
+
+### No double quotes inside node labels
+Double quotes inside `[]`, `()`, `{}` node labels cause a parse error in flowcharts.
+Use single quotes, backtick-style prose, or simply omit the quotes.
+
+```
+✅  K -- Yes --> L[awaitingScorecardAccept = true<br>CHOOSE then GO]
+❌  K -- Yes --> L[awaitingScorecardAccept = true<br>"CHOOSE then GO"]
+```
+
+### No second colon inside stateDiagram-v2 transition labels
+In `stateDiagram-v2`, the first `:` after a state name starts the transition label.
+A second `:` in the label body is parsed as a state-description separator and raises a
+`DESCR` parse error in the stricter VS Code renderer.
+
+```
+✅  A --> B : implicit — no back handler in rogue mode
+❌  A --> B : (implicit: same back handler not shown)
+```
+
+This restriction applies only to `stateDiagram-v2`. Flowchart (`flowchart TD/LR`) edge
+labels do not have this limitation.
+
+### Arrow style in flowcharts
+Use `-->` for normal edges and `-- label -->` or `-- label -->` for labelled edges.
+Avoid mixing `->` (single dash) with `-->`.
+
+### Note blocks in stateDiagram-v2
+Notes must reference an existing state name and use the exact keyword form:
+
+
+
+```
+note right of StateName
+    Free-form text here
+end note
+```
+
+The `note right of` / `note left of` form is required — inline note shorthand is not
+supported in `stateDiagram-v2`.
+
+## Diagram types used in this repo
+
+| Type | Keyword | Best for |
+|---|---|---|
+| State machine | `stateDiagram-v2` | Boolean flags, mode transitions, lifecycle states |
+| Call graph / flow | `flowchart TD` or `flowchart LR` | Execution paths, call chains, save/restore flows |
+
+## Workflow checklist
+
+- [ ] `<br>` used for all label line breaks (no `\n`)
+- [ ] No double quotes inside node label brackets
+- [ ] No second `:` inside `stateDiagram-v2` transition labels
+- [ ] `mmdc -i <file>` exits 0 with all charts showing ✅
+- [ ] Diagrams render without errors in the VS Code Mermaid preview
+
+```
+
+## BrokenPipe Error handling for AI ease
+
+AI loves using head and tail, but this can break apps/tools with long outputs (like ours with --json flag!)
+
+Add this code to just accept the head/tail and not make stderr noise with BrokenPipeError:
+
+    except BrokenPipeError:
+        pass  # normal when piping to head/tail/less etc.
+
+
 
 ## Provide GitHub CICD Examples
 

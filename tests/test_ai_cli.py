@@ -2725,7 +2725,7 @@ def test_RQMD_automation_039_export_includes_type_and_affects(tmp_path: Path) ->
 
 
 # ---------------------------------------------------------------------------
-# RQMD-PACKAGING-015: deprecation warning for rqmd-ai query flags
+# RQMD-PACKAGING-015: rqmd-ai entrypoint deprecation warning
 # ---------------------------------------------------------------------------
 
 
@@ -2758,7 +2758,7 @@ def test_RQMD_packaging_015_dump_status_emits_deprecation_warning(
     assert payload["mode"] == "export-context"
     dep_warnings = [w for w in caught if issubclass(w.category, DeprecationWarning)]
     assert len(dep_warnings) >= 1
-    assert "rqmd-ai query flags are deprecated" in str(dep_warnings[0].message)
+    assert "rqmd-ai is deprecated" in str(dep_warnings[0].message)
 
 
 def test_RQMD_packaging_015_dump_type_emits_deprecation_warning(
@@ -2788,7 +2788,7 @@ def test_RQMD_packaging_015_dump_type_emits_deprecation_warning(
     assert result.exit_code == 0
     dep_warnings = [w for w in caught if issubclass(w.category, DeprecationWarning)]
     assert len(dep_warnings) >= 1
-    assert "rqmd-ai query flags are deprecated" in str(dep_warnings[0].message)
+    assert "rqmd-ai is deprecated" in str(dep_warnings[0].message)
 
 
 def test_RQMD_packaging_015_batch_mode_emits_deprecation_warning(
@@ -2819,11 +2819,11 @@ def test_RQMD_packaging_015_batch_mode_emits_deprecation_warning(
     assert result.exit_code == 0
     dep_warnings = [w for w in caught if issubclass(w.category, DeprecationWarning)]
     assert len(dep_warnings) >= 1
-    assert "rqmd-ai query flags are deprecated" in str(dep_warnings[0].message)
+    assert "rqmd-ai is deprecated" in str(dep_warnings[0].message)
 
 
-def test_RQMD_packaging_015_no_warning_for_non_query_flags(tmp_path: Path) -> None:
-    """rqmd-ai without query flags should NOT emit a deprecation warning."""
+def test_RQMD_packaging_015_any_invocation_emits_deprecation_warning(tmp_path: Path) -> None:
+    """rqmd-ai without query flags should ALSO emit the entrypoint deprecation warning."""
     repo = tmp_path / "repo"
     domain_dir = repo / "docs" / "requirements"
     domain_dir.mkdir(parents=True)
@@ -2844,5 +2844,5 @@ def test_RQMD_packaging_015_no_warning_for_non_query_flags(tmp_path: Path) -> No
         )
     assert result.exit_code == 0
     dep_warnings = [w for w in caught if issubclass(w.category, DeprecationWarning)
-                    and "rqmd-ai query flags are deprecated" in str(w.message)]
-    assert len(dep_warnings) == 0
+                    and "rqmd-ai is deprecated" in str(w.message)]
+    assert len(dep_warnings) >= 1

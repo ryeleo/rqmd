@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+<a id="unreleased"></a>
 ## [Unreleased]
+
+<a id="v0-2-1"></a>
+## [0.2.1] - 2026-04-09
 
 ### Added
 
@@ -14,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Packaged bug-report template (`RQMD-CORE-043`) with Steps to Reproduce / Expected / Actual / Root Cause sections. The `/brainstorm` and `/refine` prompts now detect defect descriptions and offer this template instead of the user-story + Given/When/Then shape.
 - `/bug` prompt (`RQMD-AI-060`): type `/bug` in chat to instantly file a tracked bug requirement from conversation context. The agent drafts the requirement using the bug template, writes it directly to the appropriate domain file, and reports the new ID — zero-friction bug filing for frustrated developers.
 - `rqmd-ai` query flags folded into the `rqmd` CLI (`RQMD-PACKAGING-014`): `--dump-status`, `--dump-type`, `--dump-id`, `--dump-file`, `--include-domain-markdown`, `--max-domain-markdown-chars`, `--write`, and `--batch` are now available on `rqmd` directly. Agents can call `rqmd --dump-status proposed` instead of `rqmd-ai --json --dump-status proposed`.
+- `rqmd-vscode` extension scaffolded (`RQMD-PACKAGING-013`): the rqmd AI bundle (12 prompts, 16 skills, 2 agents) is now distributed as a VS Code extension via declarative `chatPromptFiles`, `chatSkills`, and `chatAgents` contribution points. No files are written to `.github/`; upgrading the bundle is a VS Code extension update.
+- **"rqmd: Initialize Project"** command palette action added to the `rqmd-vscode` extension (`RQMD-PACKAGING-016`). Opens an integrated terminal running `rqmd init` and prompts the user to paste the output into Copilot Chat to complete guided project setup. Only project-specific files are written to `.github/`; shared rqmd defaults remain in the extension.
+
 
 ### Fixed
 
@@ -22,8 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
-- `rqmd-ai` query flags (`--dump-status`, `--dump-type`, `--dump-id`, `--dump-file`, `--batch`, `--update`+`--write`) now emit a `DeprecationWarning` pointing to the equivalent `rqmd` flags (`RQMD-PACKAGING-015`). All commands still work; the warning is informational only.
+- `rqmd-ai` entrypoint now emits a `DeprecationWarning` on every invocation: *"rqmd-ai is deprecated. Use `rqmd --json` instead."* (`RQMD-PACKAGING-015`). The entrypoint still executes normally; the warning is informational only.
 
+<a id="v0-2-0"></a>
 ## [0.2.0] - 2026-04-08
 
 ### Added

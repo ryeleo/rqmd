@@ -4962,20 +4962,14 @@ def main(
 ) -> None:
     repo_root = _resolve_repo_root(repo_root)
 
-    # RQMD-PACKAGING-015: deprecation warning for query flags now available on rqmd
-    _deprecated_query = bool(
-        batch_mode or export_ids or export_files or export_status or export_type
-        or (set_entries and apply)
-    )
-    if _deprecated_query:
-        import warnings
+    # RQMD-PACKAGING-015: rqmd-ai entrypoint is deprecated; warn on every invocation
+    import warnings
 
-        warnings.warn(
-            "rqmd-ai query flags are deprecated. "
-            "Use rqmd --dump-status/--dump-id/--dump-type/--batch instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
+    warnings.warn(
+        "rqmd-ai is deprecated. Use `rqmd --json` instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     if batch_mode:
         payload = _handle_batch(

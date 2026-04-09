@@ -3,7 +3,7 @@
 Scope: package layout, installability, module entrypoints, and publication readiness.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 5🔧 9✅ 0⚠️ 0⛔ 0🗑️
+Summary: 0💡 7🔧 9✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PACKAGING-001: src-layout package structure
@@ -111,7 +111,7 @@ Summary: 2💡 5🔧 9✅ 0⚠️ 0⛔ 0🗑️
 - So that the package can ship `reqmd` and `reqmd-ai` as pre-release console-script aliases while keeping `rqmd` and `rqmd-ai` as the canonical commands until a future rename decision is finalized.
 
 ### RQMD-PACKAGING-013: Distribute rqmd AI bundle as a VS Code extension
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As an rqmd user who uses AI agents across multiple projects
 - I want the rqmd agent bundle (prompts, skills, agent definitions, copilot-instructions) distributed as a VS Code extension named "rqmd" on the Marketplace instead of files written into each project's `.github/` folder
@@ -126,7 +126,7 @@ Summary: 2💡 5🔧 9✅ 0⚠️ 0⛔ 0🗑️
 - And `rqmd-ai install` is no longer needed — the extension replaces the file-based bundle entirely.
 
 ### RQMD-PACKAGING-014: Fold rqmd-ai query flags into rqmd CLI
-- **Status:** � Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟠 P1 - High
 - As a user or AI agent querying requirements in machine-readable format
 - I want the structured JSON export and query flags currently on `rqmd-ai` (e.g., `--json`, `--dump-status`, `--dump-type`, `--dump-id`, `--dump-file`, `--include-requirement-body`, `--include-domain-markdown`, batch mode) folded into the `rqmd` CLI itself
@@ -139,7 +139,7 @@ Summary: 2💡 5🔧 9✅ 0⚠️ 0⛔ 0🗑️
 - And `rqmd --json` includes `next_id` per domain file, the same schema version, and all existing export fields.
 
 ### RQMD-PACKAGING-015: Deprecate and remove rqmd-ai CLI entrypoint
-- **Status:** � Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - **Blocked by:** RQMD-PACKAGING-013
 - As the rqmd maintainer after the VS Code extension ships and query flags are folded into `rqmd`
@@ -152,7 +152,7 @@ Summary: 2💡 5🔧 9✅ 0⚠️ 0⛔ 0🗑️
 - And after the removal version, the `rqmd-ai` entrypoint is no longer registered in the package.
 
 ### RQMD-PACKAGING-016: VS Code extension project scaffolding via command palette
-- **Status:** 💡 Proposed
+- **Status:** 🔧 Implemented
 - **Priority:** 🟡 P2 - Medium
 - **Blocked by:** RQMD-PACKAGING-013
 - As a developer setting up rqmd in a new project

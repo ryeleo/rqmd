@@ -123,7 +123,7 @@ telemetry:
 Run the built-in status check to confirm the agent can reach the gateway:
 
 ```bash
-rqmd-ai telemetry --json
+rqmd telemetry --json
 ```
 
 This reports whether the endpoint is configured, reachable, and whether an API key is present.

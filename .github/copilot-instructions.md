@@ -10,17 +10,17 @@ Repository conventions:
 - Verify-only pass: rqmd --verify-summaries --non-interactive
 
 AI workflow defaults:
-- Start with read-only context export via rqmd-ai.
+- Start with read-only context export via `rqmd --json`.
 - Propose updates before apply (`--update ...` without `--write`).
 - Apply only after review with `--write`.
-- For `rqmd-ai --json` workflows, run commands in the foreground and parse stdout as JSON while keeping stderr separate for diagnostics.
+- For `rqmd --json` workflows, run commands in the foreground and parse stdout as JSON while keeping stderr separate for diagnostics.
 - On Windows shells, avoid mixing or reformatting streams when parsing JSON output; check the process exit code before JSON parsing.
 - Keep the shared rqmd workflow shape recognizable across projects unless the repository intentionally overrides it.
 - Preserve the requirement-first flow of context export -> requirements/docs updates -> preview -> apply -> verify instead of inventing ad hoc sequences for each repository.
 - When drafting or editing requirement text, prefer a short user-story block (`As a ...`, `I want ...`, `So that ...`) plus Given/When/Then acceptance bullets when both add value.
 - Treat the user-story and Given/When/Then sections as complementary views of the same requirement and keep them semantically aligned rather than letting one drift.
-- For implementation work, use `rqmd-ai --workflow-mode implement` and take the highest-priority 1-3 proposed requirements at a time.
-- **Use `next_id` from the `rqmd-ai --json` output to allocate new requirement IDs.** Each domain file includes a `next_id` field (e.g., `"next_id": "RQMD-CORE-044"`) that tells you the next safe sequential ID. ***Never*** calculate the next ID manually by grepping or counting — always read it from the JSON output to avoid duplicate ID collisions.
+- For implementation work, use `rqmd --json --workflow-mode implement` and take the highest-priority 1-3 proposed requirements at a time.
+- **Use `next_id` from the `rqmd --json` output to allocate new requirement IDs.** Each domain file includes a `next_id` field (e.g., `"next_id": "RQMD-CORE-044"`) that tells you the next safe sequential ID. ***Never*** calculate the next ID manually by grepping or counting — always read it from the JSON output to avoid duplicate ID collisions.
 - After each implementation batch, make sure rqmd runs, summaries verify, tests pass, and priorities are re-checked before continuing.
 - Use the same rqmd output conventions across projects where possible: concise markdown closeouts, consistent lifecycle emoji/labels, and the standard Info/Note/Warning block-quote style when callouts help readability.
 - Prefer final markdown closeouts that use these exact sections in order:
@@ -55,9 +55,9 @@ AI output defaults:
 - Use this exact markdown shape for callouts when examples or authored output need one: `> **ℹ️ Info:** ...`, `> **⚠️ Note:** ...`, `> **🚨 Warning:** ...`.
 
 Useful commands:
-- rqmd-ai install --json
-- rqmd-ai i --json --bundle-preset minimal --dry-run
-- rqmd-ai --json --workflow-mode implement
+- rqmd install --json
+- rqmd i --json --bundle-preset minimal --dry-run
+- rqmd --json --workflow-mode implement
 - rqmd --dump-status proposed
 - rqmd --dump-id RQMD-CORE-001 --include-requirement-body
 - rqmd --dump-type bug --dump-status proposed
