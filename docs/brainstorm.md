@@ -2,10 +2,6 @@
 
 Active ideas and untracked nuggets. Items move out once promoted to `docs/requirements/` or shipped.
 
-## Intelligent Discovery of requirements
-
-rqmd agent should lazily ensure that tools are installed before/as running rqmd. If a tool is missing, it should immediately attempt to rectify/install for the user using uv. If uv is missing, install that. Hopefully, this can be done automatically... I guess it could be just wrap every invocation of `rqmd` with `which rqmd || uv install rqmd` but that seems hacky. Maybe a better approach is to have a lightweight shim script that does this check and then execs the real `rqmd` CLI.
-
 ---
 
 ## Architecture
@@ -125,8 +121,9 @@ Items promoted from this file — see `docs/requirements/` for details:
 
 | Area | IDs |
 |------|-----|
-| @rqmd chat participant | RQMD-PACKAGING-017, 018, 019 |
-| VS Code extension | RQMD-PACKAGING-013–016 |
+| @rqmd chat participant | RQMD-EXT-053, 054 |
+| VS Code extension | RQMD-EXT-051, 052, 055 |
+| Self-healing bootstrap | RQMD-EXT-056–060 |
 | Performance | RQMD-CORE-037–040, RQMD-AUTOMATION-038 |
 | Bug tracking | RQMD-CORE-041–043, RQMD-AUTOMATION-039, RQMD-AI-059–060 |
 | Agent workflow | RQMD-AI-039, 041, 042, 053–058 |
