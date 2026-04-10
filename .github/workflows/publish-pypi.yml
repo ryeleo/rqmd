@@ -29,10 +29,10 @@ jobs:
       - name: Install build backend
         run: python -m pip install --upgrade build
 
-      - name: Validate release tag matches project version
+      - name: Ensure release tag and project metadata match
         env:
           RELEASE_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref_name }}
-        run: python scripts/validate_release_tag.py
+        run: python scripts/ensure_release_tag.py
 
       - name: Build package
         run: python -m build

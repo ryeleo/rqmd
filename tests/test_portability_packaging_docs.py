@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -635,35 +636,53 @@ def test_RQMD_packaging_010_readme_documents_shell_completion_activation() -> No
 def test_RQMD_packaging_008_release_publish_workflow_present() -> None:
     project_root = Path(__file__).resolve().parents[1]
     workflow_path = project_root / ".github" / "workflows" / "publish-pypi.yml"
-    validation_script_path = project_root / "scripts" / "validate_release_tag.py"
+    ensure_script_path = project_root / "scripts" / "ensure_release_tag.py"
 
     assert workflow_path.exists()
-    assert validation_script_path.exists()
+    assert ensure_script_path.exists()
     workflow_text = workflow_path.read_text(encoding="utf-8")
-    validation_script_text = validation_script_path.read_text(encoding="utf-8")
+    ensure_script_text = ensure_script_path.read_text(encoding="utf-8")
     assert "release:" in workflow_text
     assert "types: [published]" in workflow_text
     assert "python -m build" in workflow_text
-    assert "Validate release tag matches project version" in workflow_text
-    assert "python scripts/validate_release_tag.py" in workflow_text
+    assert "Ensure release tag and project metadata match" in workflow_text
+    assert "python scripts/ensure_release_tag.py" in workflow_text
     assert "python - <<'PY'" not in workflow_text
     assert "id-token: write" in workflow_text
     assert "gh-action-pypi-publish" in workflow_text
-    assert "rc\\d+" in validation_script_text
-    assert "v1.2.3rc1" in validation_script_text
+    assert "rc\\d+" in ensure_script_text
+    assert "v1.2.3rc1" in ensure_script_text
 
 
-def test_RQMD_packaging_008_release_tag_validation_script_accepts_matching_rc_version() -> (
-    None
-):
+def test_RQMD_packaging_008_release_tag_validation_script_accepts_matching_rc_version(
+    tmp_path: Path,
+) -> None:
     project_root = Path(__file__).resolve().parents[1]
-    script_path = project_root / "scripts" / "validate_release_tag.py"
+    script_path = project_root / "scripts" / "ensure_release_tag.py"
     project_version = tomllib.loads(
         (project_root / "pyproject.toml").read_text(encoding="utf-8")
     )["project"]["version"]
+    base_version = re.sub(r"rc\d+$", "", project_version)
+    rc_version = f"{base_version}rc1"
+    pyproject_copy = tmp_path / "pyproject.toml"
+    changelog_copy = tmp_path / "CHANGELOG.md"
+
+    pyproject_copy.write_text(
+        (project_root / "pyproject.toml").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    changelog_copy.write_text("## [Unreleased]\n", encoding="utf-8")
 
     result = subprocess.run(
-        [sys.executable, str(script_path), f"v{project_version}"],
+        [
+            sys.executable,
+            str(script_path),
+            f"v{rc_version}",
+            "--pyproject",
+            str(pyproject_copy),
+            "--changelog",
+            str(changelog_copy),
+        ],
         cwd=project_root,
         capture_output=True,
         text=True,
@@ -671,11 +690,57 @@ def test_RQMD_packaging_008_release_tag_validation_script_accepts_matching_rc_ve
     )
 
     assert result.returncode == 0, result.stderr
+    updated_version = tomllib.loads(pyproject_copy.read_text(encoding="utf-8"))["project"][
+        "version"
+    ]
+    assert updated_version == rc_version
+
+
+def test_RQMD_packaging_008_ensure_release_tag_script_updates_project_version_for_stable_tag(
+    tmp_path: Path,
+) -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    script_path = project_root / "scripts" / "ensure_release_tag.py"
+    pyproject_copy = tmp_path / "pyproject.toml"
+    changelog_copy = tmp_path / "CHANGELOG.md"
+    pyproject_text = (project_root / "pyproject.toml").read_text(encoding="utf-8")
+    current_version = tomllib.loads(pyproject_text)["project"]["version"]
+
+    pyproject_copy.write_text(
+        pyproject_text.replace(f'version = "{current_version}"', 'version = "0.0.0"', 1),
+        encoding="utf-8",
+    )
+    changelog_copy.write_text(
+        "## [Unreleased]\n\n## [9.9.9] - 2026-04-09\n",
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(script_path),
+            "v9.9.9",
+            "--pyproject",
+            str(pyproject_copy),
+            "--changelog",
+            str(changelog_copy),
+        ],
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    updated_version = tomllib.loads(pyproject_copy.read_text(encoding="utf-8"))["project"][
+        "version"
+    ]
+    assert updated_version == "9.9.9"
 
 
 def test_RQMD_packaging_008_release_tag_validation_script_rejects_invalid_tag() -> None:
     project_root = Path(__file__).resolve().parents[1]
-    script_path = project_root / "scripts" / "validate_release_tag.py"
+    script_path = project_root / "scripts" / "ensure_release_tag.py"
 
     result = subprocess.run(
         [sys.executable, str(script_path), "release-please"],

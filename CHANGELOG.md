@@ -5,8 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-<a id="unreleased"></a>
 ## [Unreleased]
+
+### Added
+
+- CLI `bug` command (`rqmd bug "title"`) to quickly generate a bug requirement boilerplate, append it to `docs/requirements/bugs.md`, and open VS Code at the new requirement (`RQMD-AI-061`).
+- Improved `/bug` prompt for agents that leverages the `rqmd bug` CLI for reliable ID allocation and file creation, followed by drafting the bug body from chat context (`RQMD-AI-060`).
+
+<a id="v0-2-2"></a>
+## [0.2.2] - 2026-04-09
+
+### Changed
+
+- Release-tag preparation now uses `scripts/ensure_release_tag.py` (with `scripts/validate_release_tag.py` retained as a compatibility wrapper). The ensure script updates `pyproject.toml` `project.version` to match the release tag before build/publish.
+- Stable release runs still enforce that `CHANGELOG.md` already contains a matching `## [x.y.z]` section before publish.
 
 <a id="v0-2-1"></a>
 ## [0.2.1] - 2026-04-09
