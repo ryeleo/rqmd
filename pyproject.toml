@@ -9,7 +9,7 @@ description = "Requirements Markdown manager CLI tool, `rqmd`. GitHub Copilot AI
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-  { name = "RQMD Contributors" }
+  { name = "ryeleo" }
 ]
 license = "MIT"
 classifiers = [

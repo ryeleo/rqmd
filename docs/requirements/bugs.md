@@ -1,58 +1,18 @@
 # Bugs
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 0🔧 0✅ 0⚠️ 0⛔ 0🗑️
+Summary: 0💡 0🔧 0✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 
-This file tracks project defects as requirements.
+This file is the runtime bug backlog for concrete rqmd defects that need fixing.
 
-### RQMD-BUG-001: Verify CLI bug command works
-- **Status:** 💡 Proposed
-- **Type:** bug
-- **Priority:** 🟠 P1 - High
+- File real bugs here as backlog entries (symptom, impact, repro steps, expected vs actual).
+- Do **not** define bug-tracking policy here.
+- Bug-tracking behavior requirements live in [Bug Tracking](bug-tracking.md).
 
-#### Description
-As a user, I encountered [problem] so that [impact].
+Quick rule:
 
-#### Steps to Reproduce
-1. 
-2. 
+- "rqmd is broken in this specific way" -> this file.
+- "rqmd should support this bug-tracking capability" -> [Bug Tracking](bug-tracking.md).
 
-#### Expected Behavior
-- 
-
-#### Actual Behavior
-- 
-
-#### Root Cause
-- 
-
-#### Acceptance Criteria
-- [ ] Bug is fixed
-- [ ] Regression test added
-
-### RQMD-BUG-002: Verify CLI bug command works
-- **Status:** 💡 Proposed
-- **Type:** bug
-- **Priority:** 🟠 P1 - High
-
-#### Description
-As a user, I encountered [problem] so that [impact].
-
-#### Steps to Reproduce
-1. 
-2. 
-
-#### Expected Behavior
-- 
-
-#### Actual Behavior
-- 
-
-#### Root Cause
-- 
-
-#### Acceptance Criteria
-- [ ] Bug is fixed
-- [ ] Regression test added

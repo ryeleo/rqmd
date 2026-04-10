@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Added a dedicated `docs/requirements/bug-tracking.md` requirements domain and moved `RQMD-BUG-001` and `RQMD-BUG-002` into it so bug-tracking behavior is a first-class domain.
+- Repurposed `docs/requirements/bugs.md` as the runtime bug backlog file for filed bug instances (separate from behavior requirements).
+
 <a id="v0-2-4"></a>
 ## [0.2.4] - 2026-04-09
 

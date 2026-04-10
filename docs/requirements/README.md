@@ -40,6 +40,8 @@ Status workflow:
 
 Each requirement document can represent a domain, user story, feature area, or another project-specific grouping. rqmd uses "domain" internally for some parser and API names, but the markdown contract itself is intentionally flexible.
 
+Bug note: [Bug Tracking](bug-tracking.md) is for meta-requirements about how bug tracking works; [Bugs](bugs.md) is the live backlog of concrete rqmd defects to fix.
+
 ### AC CLI
 - [Core Engine](core-engine.md) - parsing, normalization, summaries, requirements extraction
 - [Interactive UX](interactive-ux.md) - keyboard-driven status update flows
@@ -51,6 +53,8 @@ Each requirement document can represent a domain, user story, feature area, or a
 - [Portability](portability.md) - repo root, requirements directory, cross-project assumptions
 - [Packaging](packaging.md) - package layout, entrypoints, install/run behavior
 - [Telemetry](telemetry.md) - agent-facing telemetry for capturing AI workflow friction, improvement suggestions, and session diagnostics
+- [Bug Tracking (meta-requirements)](bug-tracking.md) - first-class bug tracking requirements, metadata, templates, and workflow behavior
+- [Bugs (rqmd bugs themselves)](bugs.md) - runtime bug backlog and filed bug instances
 
 ## Verification
 
@@ -70,6 +74,7 @@ Each requirement document can represent a domain, user story, feature area, or a
 | RQMD-PORTABILITY-* | Portability |
 | RQMD-PACKAGING-* | Packaging |
 | RQMD-TELEMETRY-* | Telemetry |
+| RQMD-BUG-* | Bug Tracking |
 
 ## Tracking Rule
 
