@@ -1,9 +1,9 @@
-# AI CLI Requirement
+# AI CLI Requirements
 
-Scope: a companion rqmd-ai CLI for AI-oriented requirement workflows that are distinct from the shared automation contract, including prompt-context export, guarded apply flows, onboarding guidance, and auditability over rqmd-managed docs.
+Scope: CLI machinery for AI: `--json` export, `--dump-*`, `--update`, `rqmd bug` command, non-interactive guarantees, and audit reporting.
 
 <!-- acceptance-status-summary:start -->
-Summary: 8💡 50🔧 2✅ 0⚠️ 0⛔ 3🗑️
+Summary: 1💡 9🔧 0✅ 0⚠️ 0⛔ 3🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-AI-001: Dedicated rqmd-ai entrypoint
@@ -89,493 +89,52 @@ Summary: 8💡 50🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - So that model prompts can include architecture/rationale notes without embedding those notes into individual requirement bodies.
 - So that domain-body inclusion is explicit and bounded (for example size-capped or section-filtered) to keep prompt payloads stable and cost-aware.
 
-### RQMD-AI-012: Installable AI agent/skill instruction bundle
-- **Status:** 🔧 Implemented
-- **Priority:** 🟡 P2 - Medium
-- As a team maintainer when onboarding AI-assisted contributors
-- I want rqmd to install a standard agent/skill instruction bundle into the workspace
-- So that AI agents have a consistent contract for JSON modes, workflow sequencing, and requirement/doc update expectations
-- So that installation supports a dry-run preview and idempotent re-run behavior
-- So that teams can choose a minimal or full preset while preserving existing customized instruction files unless explicit overwrite is requested
-- So that installed guidance references local commands and requirement file conventions in this repository layout.
-- So that bundled guidance explicitly teaches foreground `rqmd-ai --json` execution with stdout-only parsing and separate stderr handling for cross-shell reliability, including Windows-heavy workflows.
 
-### RQMD-AI-013: Requirement-first AI workflow guidance
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer when handing brainstorm items to an AI agent
-- I want rqmd-ai guidance and docs to prescribe a requirement-first workflow before code is applied
-- So that brainstorm ideas are promoted into tracked requirements, index updates, and changelog entries before implementation starts.
-- So that the recommended loop stays explicit: export focused context, update requirements/docs, preview the patch, apply only with explicit write mode, and run verification afterward.
 
-### RQMD-AI-014: Brainstorm-to-requirements planning mode
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer when early planning lives in `docs/brainstorm.md` or similar scratch notes
-- I want rqmd-ai to support a dedicated brainstorm workflow that turns raw notes into ranked requirement proposals
-- So that loose brainstorming can be promoted into concrete requirement entries before implementation begins.
-- So that the workflow can recommend target requirement documents, proposed IDs, statuses, and priorities without applying code changes.
-- So that `rqmd-ai --workflow-mode brainstorm` reads `docs/brainstorm.md` by default and can also accept a custom markdown note file via `--brainstorm-file`.
 
-### RQMD-AI-015: Proposal-batch implementation mode
-- **Status:** 🔧 Implemented
-- **Priority:** 🔴 P0 - Critical
-- As a maintainer when asking an AI agent to execute backlog work
-- I want rqmd-ai guidance to define an explicit implement mode that works the highest-priority proposed requirements in small validated batches
-- So that the agent updates requirements, tests, and changelog entries as details become concrete rather than deferring documentation until the end.
-- So that each batch re-checks that `rqmd` still runs, the test suite passes, and the remaining proposal priorities are reviewed before continuing.
-- So that `rqmd-ai --workflow-mode implement` exposes this loop as an explicit read-only guide payload instead of burying it in generic onboarding text.
 
-### RQMD-AI-016: Resource-backed AI UX source of truth
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer evolving rqmd-ai onboarding and workflow guidance
-- I want the user-facing AI UX text for rqmd-ai to be sourced from editable package resource markdown/metadata instead of embedded Python constants
-- So that workflow summaries, examples, validation checks, and other guide text can be updated in one central resources/bundle location without code edits.
-- So that the shipped bundle skill files act as the primary editable source of truth for the AI guidance experience exposed by rqmd-ai.
 
-### RQMD-AI-017: Default bundled skill-definition export when bundle is absent
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer or AI operator invoking rqmd-ai in a workspace that has not installed the rqmd bundle
-- I want default rqmd-ai output to include the packaged skill and agent YAML/markdown definitions directly from resources
-- So that an AI consumer can bootstrap from the shipped definitions immediately without requiring a prior bundle-install step.
-- So that the default guidance payload can surface the exact resource-backed skill contracts that rqmd ships, rather than only summarizing them indirectly.
 
-### RQMD-AI-018: Bundle-aware suppression of duplicate default skill exports
-- **Status:** 🔧 Implemented
-- **Priority:** 🟡 P2 - Medium
-- As a user running rqmd-ai in a workspace where the rqmd bundle is already installed
-- I want rqmd-ai to detect the installed bundle and avoid redundantly embedding the packaged skill and agent definitions in default output
-- So that guidance stays concise and does not duplicate definitions that are already present in the local workspace.
-- So that bundle-aware default output can still explain which local skill or agent files are active without emitting the full packaged definitions again.
 
-### RQMD-AI-019: Project-specific dev and test skill scaffolding
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer installing the rqmd AI bundle into a real project
-- I want bundle bootstrap to help generate project-local `dev` and `test` skills tailored to that repository's actual commands and workflows
-- So that the installed `rqmd-dev` agent can delegate build, run, smoke-test, and test behavior to project-specific skills instead of relying on generic assumptions.
-- So that generated skill definitions can capture the repository's actual build/test/smoke commands, validation expectations, and any required environment setup.
-- So that teams can review and edit those generated skill files after bootstrap rather than keeping that project knowledge buried in agent prose.
 
-### RQMD-AI-020: Agent-driven bundle bootstrap chat
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer onboarding AI workflows in a new repository
-- I want the rqmd bundle bootstrap flow to be driveable through an AI-guided chat session
-- So that bundle install can interview the user about the project's build, run, dev, and test commands instead of forcing all customization through manual file edits.
-- So that the bootstrap chat can propose `dev` and `test` skill content, preview the generated files, and only write them after explicit review.
-- So that teams can adopt the bundle through a guided conversation even when they have not yet learned the exact customization file formats.
-- So that the bootstrap chat can present grouped multiple-choice suggestions, allow multi-select answers, let users skip sections, and accept custom text alongside the inferred commands.
-- So that each interview option can carry richer UX hints such as recommended choices, detected-from provenance, and safe defaults.
 
-### RQMD-AI-021: rqmd-dev delegation to project dev and test skills
-- **Status:** 🔧 Implemented
-- **Priority:** 🟡 P2 - Medium
-- As a maintainer using the installed `rqmd-dev` agent in a repository with project-local AI skills
-- I want `rqmd-dev` guidance to explicitly depend on repository-specific `dev` and `test` skills when they exist
-- So that implementation agents know where to find the canonical project commands for building, running, smoke-testing, and validating the work under development.
-- So that `rqmd-dev` can stay generally reusable while still becoming concretely useful once a repository has generated or customized those project-local skills.
 
-### RQMD-AI-022: Legacy-repo init skill and workflow
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer introducing rqmd into a repository that has never used it before
-- I want an `init-legacy` AI skill or workflow that helps bootstrap rqmd from the repository's existing reality
-- So that adoption can start from the current codebase, docs, backlog, and conventions instead of requiring a blank-slate scaffold.
-- So that rqmd-ai can guide the user through a legacy-init flow focused on first-use setup rather than generic bundle installation alone.
-- So that the legacy-init flow can reuse the same grouped interview UX as bundle bootstrap, including suggested choices, multi-select answers, and custom notes.
-- So that legacy-init interview options can surface recommended choices, detected source provenance, and safe defaults for the generated starter catalog.
 
-### RQMD-AI-023: Useful first-pass requirements folder for legacy repos
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer initializing rqmd in an established repository
-- I want the legacy-init flow to produce a useful first-pass `requirements/` folder that I can immediately start editing and using
-- So that the resulting requirements docs reflect the repository's current product areas, workflows, and likely work streams instead of only a generic starter example.
-- So that the flow can propose an initial requirements structure, starter domain files, and seed content for review before writing.
-- So that interview answers about catalog location, ID prefix, starter domains, docs review, and workflow commands can directly shape the generated starter catalog.
 
-### RQMD-AI-024: Optional GitHub issue discovery during legacy init
-- **Status:** 🔧 Implemented
-- **Priority:** 🟡 P2 - Medium
-- As a maintainer bootstrapping rqmd in a repository that uses GitHub issues
-- I want the legacy-init workflow to try using `gh` to inspect repository issues when the GitHub CLI is available and authenticated
-- So that rqmd can incorporate the existing issue backlog into its first-pass requirement suggestions instead of ignoring a major source of project intent.
-- So that the workflow remains optional and graceful when `gh` is missing, unauthenticated, or the repository has no accessible issue data.
 
-### RQMD-AI-025: Init-chat AI handoff prompt generation
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer who wants another AI chat to drive rqmd init on my behalf
-- I want `rqmd-ai` init workflows to emit a ready-to-paste handoff prompt for an external AI assistant
-- So that I can start the guided bootstrap experience by pasting one concise prompt instead of manually explaining the expected command flow.
-- So that the handoff prompt is tailored to the active workflow, such as bundle install onboarding versus legacy-init onboarding, instead of using one generic script.
-- So that the handoff prompt tells the receiving AI to run the corresponding `rqmd-ai init --chat --json` or `rqmd-ai install --chat --json` command, inspect the interview payload, ask grouped follow-up questions, and rerun with `--answer` values before any write step.
 
-### RQMD-AI-026: Concise copy/paste init prompt UX
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer invoking `rqmd-ai` init workflows directly in my terminal
-- I want `rqmd-ai` to print a concise human-facing “paste this into your AI chat” prompt when requested
-- So that the init-chat flow is understandable even when the user has not yet learned the JSON interview protocol.
-- So that the output includes a short explanatory lead-in plus the exact copy/paste prompt text rather than only a large raw JSON payload.
-- So that the generated prompt can mention the current repository path, the intended init/install mode, and the exact `rqmd-ai ... --chat --json` command the receiving AI should run.
-- So that the prompt stays aligned with the richer grouped interview contract, including grouped questions, selectable suggestions, custom answers, and explicit write confirmation.
 
-### RQMD-AI-027: Unified init workflow with heuristic routing
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer starting rqmd in a repository
-- I want `rqmd-ai` to expose a single `init` workflow name instead of forcing me to choose between a "new" and "legacy" mental model up front
-- So that init entry feels simple even when the tool needs to choose a different setup path behind the scenes.
-- So that `rqmd-ai init` or `--workflow-mode init` can detect whether the repository already looks established and route to the appropriate bootstrap strategy using reasonable heuristics.
-- So that the heuristic can consider signals such as existing source folders, test folders, README/docs volume, build metadata, and issue/backlog availability instead of only whether rqmd docs already exist.
-- So that the chosen path is reported clearly in the payload and user-facing output rather than silently hiding which init strategy was selected.
 
-### RQMD-AI-028: Explicit legacy-init compatibility and override flag
-- **Status:** 🔧 Implemented
-- **Priority:** 🟡 P2 - Medium
-- As a maintainer working in an unusual repository that may confuse bootstrap heuristics
-- I want an explicit compatibility path to force legacy-style initialization when needed
-- So that repositories with strange layouts or incomplete heuristics are still easy to initialize intentionally.
-- So that rqmd-ai can keep a `--legacy` style override or equivalent explicit selector even after the main entrypoint is unified under `init`.
-- So that existing `init-legacy` workflows can remain supported as a compatibility alias during a transition period instead of breaking current docs, prompts, or installed skills immediately.
 
-### RQMD-AI-029: Chat-first init entrypoint for new projects
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer setting up rqmd in a new or existing repository with AI help
-- I want `rqmd-ai init --chat` to be the canonical AI-facing onboarding entrypoint
-- So that the recommended startup path is one clear command instead of a mix of `install`, `init-legacy`, and hand-written guidance.
-- So that `rqmd-ai init --chat` emits the concise AI handoff prompt plus the machine-readable interview payload needed for a receiving chat agent to drive the rest of initialization.
-- So that the command can route through the unified `init` heuristics and still report which strategy it selected for the repository.
-- So that users who do want to stay fully inside terminal automation can still run explicit non-chat variants when needed.
-- So that init-chat onboarding includes a first-class status-scheme choice with built-in defaults (for example canonical, lean, delivery) and an option to copy statuses from an existing project config path.
 
-### RQMD-AI-030: Default init guidance favors AI chat flow
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a new rqmd user who wants the fastest successful onboarding path
-- I want the default help, onboarding guide output, and initialization hints to recommend the AI-chat workflow first
-- So that the product teaches the strongest end-to-end flow by default instead of expecting users to discover it from scattered flags and examples.
-- So that messages about initialization point users toward `rqmd init` or `rqmd-ai init --chat` as the primary path and relegate lower-level compatibility forms to secondary documentation.
-- So that the suggested flow is explicit: run the init command, paste the generated prompt into an AI chat, answer the grouped interview, let the agent apply the bootstrap, and then begin refining the generated requirements catalog.
 
-### RQMD-AI-031: Init interview recommends a project-specific ID prefix
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer initializing rqmd in a new or existing repository
-- I want the `rqmd-ai init` interview to strongly recommend a short project-specific ID prefix instead of only generic fallbacks such as `REQ`, `RQMD`, or `AC`
-- So that requirement IDs are easier to recognize, less likely to collide with other catalogs, and more meaningful in discussion and documentation.
-- So that the init payload can still expose generic fallback prefixes, but clearly frame them as secondary options when a project-specific short key can be inferred or typed.
-- So that the custom-answer guidance and prompt text make the project-specific recommendation obvious to any receiving AI or user reviewing the JSON interview payload.
 
-### RQMD-AI-032: Init interview exposes default-checked suggested choices
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer reviewing the `rqmd-ai init` interview through another AI chat or structured prompt UI
-- I want multi-select init questions to declare which suggested or recommended options should start checked by default
-- So that users can plainly see what the workflow intends to pick unless they actively uncheck those defaults.
-- So that the init payload does not force those values silently, but instead exposes explicit preselected choices alongside the existing recommended and safe-default metadata.
-- So that receiving tools can render consistent multi-choice prompts where suggested or recommended init options begin selected while still allowing opt-out before any write step.
 
-### RQMD-AI-033: Explicit interactive interview contract for receiving agents
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer pasting `rqmd-ai init --chat --json` output into another AI system
-- I want the payload to explicitly declare that the receiver should switch into a structured interactive interview mode
-- So that the receiving AI presents a real one-question-at-a-time multi-choice session instead of summarizing the JSON and asking for freeform answers after every step.
-- So that the payload can expose machine-readable instructions for presentation style, checked-default behavior, rerun timing, and recap timing rather than leaving those behaviors implicit in `question_groups` alone.
-- So that the payload can also expose a precomputed interview flow with ordered groups and questions, making the intended question order and UI style explicit for agents that do not want to infer it themselves.
 
-### RQMD-AI-034: Encourage dual user-story and Given/When/Then requirement authoring
-- **Status:** ✅ Verified
-- **Priority:** 🟠 P1 - High
-- As a maintainer using `rqmd-ai` to draft, refine, or implement requirements
-- I want rqmd-ai guidance and editing workflows to actively encourage requirements that include both a user story and a Given/When/Then acceptance block when both are useful
-- So that generated or edited requirements are easier to understand at both the product-intent and implementation-detail levels.
-- So that rqmd-ai can treat the two blocks as related views of the same requirement and help keep them semantically aligned instead of letting them drift silently.
-- So that AI-facing prompts, review flows, and requirement-edit suggestions nudge contributors toward maintaining both blocks together rather than treating one style as disposable prose.
 
-### RQMD-AI-035: Default markdown closeout styling for installed AI guidance
-- **Status:** ✅ Verified
-- **Priority:** 🟠 P1 - High
-- As a maintainer initializing rqmd AI guidance with `rqmd-ai init`
-- I want the installed default agent instructions to prefer a concise markdown closeout structure such as `# What got done`, `# Up next`, and `# Direction`
-- So that implementation updates are easier to scan quickly in AI chat transcripts and review handoffs.
-- So that `What got done` summarizes the completed work in polished markdown instead of ad hoc prose.
-- So that `Up next` includes the full markdown bodies of the highest-priority proposed requirements rather than only listing requirement IDs as rendered markdown and not code blocks -- do not put each requirement within "```" blocks!!!
-- So that `Direction` gives a concrete next recommendation derived from the active backlog state instead of a vague generic follow-up.
-- So that this formatting becomes the default style installed by `rqmd-ai init` while still allowing repositories to customize the final instructions after install.
 
-### RQMD-AI-036: Long-running priority-first development agent
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer when I want an AI agent to keep working through the backlog for an extended session
-- I want rqmd to ship a `rqmd-dev-longrunning` agent variant that explicitly tries to continue making progress for as long as feasible
-- So that the agent works proposed requirements in priority order, keeps reassessing the backlog after each validated batch, and stops only when it reaches a real blocker, exhausts feasible work, or completes the active slice.
-- So that the long-running mode remains requirement-first and still updates requirements, tests, verification results, and changelog entries as it goes instead of treating persistence as permission to skip quality gates.
-- So that the guidance explicitly favors autonomous follow-through and repeated re-triage over early handoff when there is still clear work available.
-- So that its outputs, closeout structure, and workflow language still feel recognizably rqmd across projects instead of becoming a project-specific one-off personality.
 
-### RQMD-AI-037: Easy-first low-hanging-fruit development agent
-- **Status:** 🔧 Implemented
-- **Priority:** 🟡 P2 - Medium
-- As a maintainer when I want quick backlog progress without sending an AI agent into the hardest architectural work immediately
-- I want rqmd to ship a `rqmd-dev-easy` agent variant that focuses on low-risk, high-confidence requirement slices first
-- So that the agent preferentially picks low-hanging-fruit proposed requirements where it can make clean progress with minimal exploratory risk.
-- So that the easy-first mode can still respect overall requirement priority order, but only within the subset of items that appear straightforward enough to implement, validate, and document in small batches.
-- So that maintainers can choose between a broad long-running executor and a conservative easy-wins executor depending on how much autonomy or risk they want in a given session.
-- So that the easy-first mode still follows the same core rqmd output conventions and workflow shape as other shipped agents even when its selection strategy differs.
 
-### RQMD-AI-038: Legacy-init installs local schema guidance into generated requirement indexes
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer bootstrapping rqmd in an existing repository through `rqmd-ai init`
-- I want the generated `docs/requirements/README.md` or `requirements/README.md` to include the current local rqmd schema guidance that AI agents need during follow-up work
-- So that the initialized repository contains a nearby, tool-owned schema reference instead of forcing humans or AI agents to rely on memory, external docs, or a missing side file.
-- So that legacy-init and other init apply paths install or embed the schema content deterministically as part of the generated requirements index experience rather than treating schema visibility as optional tribal knowledge.
-- So that the generated requirements index clearly points at the local schema source of truth and keeps that source synchronized with the shipped rqmd contract templates.
-- So that AI agents working only from local repository files can reliably discover the requirement markdown contract during later implementation and review sessions.
 
-### RQMD-AI-039: Authored changelog maintenance skill
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer using the shipped rqmd AI bundle to prepare releases and pre-releases
-- I want rqmd to ship a dedicated `/rqmd-changelog` skill for maintaining `CHANGELOG.md`
-- So that changelog work becomes a first-class authored workflow instead of an implicit side effect of generic docs cleanup.
-- So that top-level changelog entries stay focused on human-directed decisions, user-visible behavior, and other release-relevant changes instead of turning into a raw dump of every AI implementation step.
-- So that supporting AI implementation detail can still be recorded under a nested heading such as `AI Development` when that context is useful without crowding the primary narrative.
-- So that maintainers get consistent guidance for updating `Unreleased`, tightening noisy recent entries, and preserving Keep a Changelog structure across repositories that install the bundle.
 
-### RQMD-AI-040: General documentation-quality skill
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer improving repository documentation with the shipped rqmd AI bundle
-- I want rqmd to ship a dedicated `/rqmd-docs` skill for documentation quality and structure work beyond simple drift correction
-- So that README, requirement docs, bundle guidance, and other markdown can be improved using explicit standards for headings, clarity, jargon handling, page splitting, hyperlinks, and callouts instead of only being kept mechanically in sync.
-- So that `rqmd-doc-sync` can stay focused on alignment and follow-up cleanup after behavior changes rather than trying to own all documentation craft decisions.
-- So that repositories installing the bundle get a reusable authored documentation workflow that is broader than changelog curation but more specific than generic implementation guidance.
-- So that documentation improvements can stay technical but user-friendly, with readable structure and smaller linked pages when content grows too long.
 
-### RQMD-AI-041: Consistent cross-project AI workflow experience
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer using rqmd agents across multiple repositories
-- I want shipped rqmd agents and skills to behave consistently across projects even when the requirement catalogs and priorities differ
-- So that users build trust and familiarity with the AI workflows instead of relearning a different style in every repository.
-- So that outputs, closeout structure, status formatting, and workflow sequencing remain recognizably rqmd unless a repository intentionally overrides them.
-- So that reusable documentation, training material, and best practices can describe one stable rqmd agent experience instead of many near-miss variants.
-- So that project-local customization still fits inside a consistent shared contract rather than silently changing the overall workflow shape.
 
-### RQMD-AI-042: Pinned context and decision notes workflow
-- **Status:** 🔧 Implemented
-- **Priority:** 🟡 P2 - Medium
-- As a maintainer or collaborator working with rqmd over multiple sessions
-- I want an `rqmd-pin` workflow for capturing important context, decisions, and quick-reference notes that should remain easy to find later
-- So that useful insights do not disappear into chat history or scattered documentation during brainstorming and implementation.
-- So that the workflow can help teams choose an appropriate home for pinned notes, such as a dedicated markdown file, a README section, or a `docs/pins/` folder with one note per topic, defaulting to `docs/pins/` when the best location is unclear for maintainability.
-- So that larger pin collections can grow into an indexed notes area without turning into another hard-to-navigate dump, with `/rqmd-docs` handling any follow-on structure and navigation cleanup when needed.
-- So that pinned information can follow a readable, reviewable format instead of becoming ad hoc scratch text.
-- So that rqmd can grow a lightweight memory or note-pinning workflow without forcing one storage layout on every repository.
 
-### RQMD-AI-043: Prompt-first single-agent bundle entrypoints
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer using the installed rqmd AI bundle in day-to-day work
-- I want rqmd to install focused prompt entrypoints such as `/go` alongside one primary implementation agent
-- So that the default user experience can stay centered on `rqmd` instead of forcing users to choose among several agent variants up front.
-- So that bundled prompt files are exported, detected, and installed as first-class definitions alongside instructions, skills, and agents.
-- So that specialized agent variants can remain available as advanced modes without becoming the main discovery surface for common implementation work.
 
-### RQMD-AI-044: Installed prompt suite for common rqmd actions
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer using the rqmd AI bundle day to day
-- I want rqmd to ship a visible suite of focused prompts for common actions such as go, next, brainstorm, docs passes, pinning, and ship checks
-- So that I can discover and invoke the most common rqmd workflows quickly without memorizing the lower-level skill names or choosing among multiple agents up front.
-- So that the installed prompts feel like ergonomic entrypoints layered on top of the primary `rqmd` agent and the underlying rqmd workflow skills.
-- So that the README and bundle docs list the installed prompt set clearly enough for users to browse the available shortcuts in one place.
 
-### RQMD-AI-045: Count-aware go prompts and commit-per-slice variant
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer driving rqmd through prompt shortcuts such as `/go`
-- I want prompt arguments like `/go 10` to mean “work through up to 10 validated slices” and a separate `/commit-and-go` prompt for explicitly commit-authorized long runs
-- So that long-running prompt usage can be more expressive than a single slice without forcing me to switch to a different agent variant.
-- So that `/go` remains the non-commit default while `/commit-and-go` clearly opts into creating a clean commit after each validated slice.
-- So that users returning after a long unattended run can inspect the resulting commit history and understand how the work progressed over time.
 
-### RQMD-AI-046: Workspace bundle provenance and refresh metadata
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer installing or refreshing the rqmd AI bundle across multiple repositories
-- I want each workspace bundle install to record which rqmd version and JSON schema version generated the local bundle files
-- So that I can tell at a glance which rqmd release last installed or refreshed the prompts, skills, and instructions in that repository.
-- So that `rqmd-ai` guide and install output can surface the running rqmd version alongside the installed bundle metadata instead of forcing me to infer it from file timestamps or changelog guesses.
-- So that upgrading rqmd has a clear follow-up workflow: run `rqmd-ai upgrade` to refresh confidently managed files while leaving customized files untouched by default.
 
-### RQMD-AI-047: Single-agent-first bundle install defaults with explicit reinstall/upgrade commands
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer expecting rqmd AI setup to feel prompt-and-skill-first instead of agent-heavy
-- I want default `rqmd-ai install` behavior to keep one primary implementation agent and offer explicit `reinstall`/`upgrade` commands for bundle lifecycle operations
-- So that normal bundle installs avoid surprising users with extra specialized agent files when they wanted the default single-agent experience.
-- So that `rqmd-ai reinstall` and `rqmd-ai upgrade` provide obvious command-level workflows for refreshing managed bundle files without forcing users to remember flag combinations.
-- So that `upgrade` can preserve the currently installed preset by default while still allowing explicit preset selection when needed.
-- So that `upgrade` only overwrites files that rqmd can confidently identify as managed and unchanged since install, while `reinstall` remains the explicit reset path for rqmd-managed files only.
 
-### RQMD-AI-048: Bundle bootstrap asks whether `/dev` and `/test` skills should support multiple platforms
-- **Status:** 💡 Proposed
-- **Priority:** 🟡 P2 - Medium
-- As a maintainer installing the rqmd bundle in a repository where contributors may use different operating systems
-- I want bundle bootstrap to ask whether generated `/dev` and `/test` skills should include cross-platform guidance
-- So that rqmd does not silently lock a team into one shell or platform assumption when the repository actually needs broader support.
-- Given a maintainer is generating repository-local `/dev` and `/test` skills through rqmd bundle bootstrap
-- When the bootstrap interview determines or suspects that more than one platform may be relevant
-- Then it should explicitly ask whether cross-platform support should be enabled for those generated skills unless the maintainer is confident the repository only targets a single platform
-- And the generated guidance should either include the agreed cross-platform commands and caveats or clearly record that the repository is intentionally single-platform
-- And Windows-oriented environments such as Git Bash should be treated as first-class cases rather than implicit Unix-only fallbacks.
 
-### RQMD-AI-049: Agent preflight verifies repository readiness before implementation
-- **Status:** 🔧 Implemented
-- **Priority:** 🟡 P2 - Medium
-- As a maintainer when handing a repository to one or more AI agents for implementation work
-- I want a canonical agent-facing workflow entry point that exposes a `preflight` readiness check
-- So that missing prerequisites are surfaced before an agent burns time failing inside the middle of a batch.
-- Given a developer wants to hand the repository to one or more AI agents for implementation work
-- When the repository's agent workflow entry point is run in `preflight` mode at the start of that workflow
-- Then it should verify the canonical repository prerequisites such as expected shell tooling, rqmd availability, generated or maintained workspace guidance files, and any project-specific validation hooks
-- And the workflow surface should be simple enough that agents and humans can treat it as the single obvious starting point instead of hunting across multiple scripts or tasks
-- And it should report missing or stale prerequisites with precise fixes instead of letting the failure surface later inside an agent run
-- And it should exit with a machine-readable success or failure result, including per-check status and remediation guidance, so prompts, tasks, and automation can gate on the same readiness check.
 
-### RQMD-AI-050: Agent workflow metadata has one source of truth
-- **Status:** 💡 Proposed
-- **Priority:** 🟠 P3 - Low
-- As a maintainer when workflow details are documented across prompts, skills, settings, scripts, and markdown guidance
-- I want canonical agent-workflow metadata to live in one maintained source of truth
-- So that workflow instructions do not drift across the derived surfaces that humans and agents actually consume.
-- Given the repository documents AI development workflow details across prompts, skills, settings, scripts, and markdown guidance
-- When a maintainer updates a canonical workflow detail such as the preferred validation command, bootstrap path, or required toolchain
-- Then that detail should be defined in one maintained source of truth and propagated to the derived docs or configuration surfaces that need it
-- And the repository should include a repeatable check or generation path that catches drift before stale workflow instructions reach developers or agents.
 
-### RQMD-AI-051: Generated agent workflow entry point is the canonical agent execution surface
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer when enabling AI agents in a repository
-- I want one generated agent-workflow entry point to be the canonical surface for routine agent actions
-- So that agents do not need to discover or memorize a scattered set of shell commands, tasks, and skill-local conventions.
-- Given a repository adopts rqmd-managed agent workflows
-- When an agent needs to perform its primary repository tasks
-- Then the repository should expose one stable agent-facing entry point with subcommands such as `preflight` and `validate`
-- And repository-specific operations such as compile, focused test, broader test, docs verification, or other primary workflows should be reachable through that same maintained interface rather than ad hoc standalone commands
-- And the interface should stay stable enough that prompts, skills, tasks, and automation can treat it as the primary execution contract for agent work.
 
-### RQMD-AI-052: `/dev` and `/test` skills can defer to a canonical agent-invocable interface
-- **Status:** 💡 Proposed
-- **Priority:** 🟡 P2 - Medium
-- As a maintainer when a repository adopts a single canonical agent-facing interface such as a shell script (`agent-workflow.sh`), a Makefile, a `just` justfile, or another task-runner technology
-- I want rqmd bundle guidance to allow `/dev` and `/test` skills to defer to that one interface instead of teaching agents a sprawl of individual shell commands
-- So that the repository can avoid maintaining two competing sources of truth for agent execution behavior.
-- So that users can blanket-allow the single canonical interface in their tool-approval settings instead of playing whack-a-mole approving every distinct command an AI agent tries to run.
-- Given a repository has a maintained agent-workflow entry point that already covers preflight, validation, and primary development tasks
-- When rqmd generates or refreshes repository-local `/dev` and `/test` skills
-- Then those skills should direct agents to invoke the canonical interface rather than restating the raw command set in parallel
-- And the canonical interface should be designed for easy blanket-allow in IDE or tool-approval configurations, for example by keeping all agent actions routed through one executable path that approval systems can trust once
-- And rqmd should allow repositories to omit separate `/dev` and `/test` skills entirely when the unified entry point is sufficient and explicitly chosen
-- And the bundle guidance should make clear when those skills remain useful as thin wrappers or discovery aids versus when they should be treated as redundant
-- And the guidance should remain technology-neutral, supporting shell scripts, Makefiles, justfiles, or other task-runner conventions without forcing one choice.
 
-### RQMD-AI-053: `/feedback` prompt for user-driven rqmd improvement feedback
-- **Status:** 🔧 Implemented
-- **Priority:** 🔴 P0 - Critical
-- As an rqmd developer using rqmd agents in other projects
-- I want a `/feedback` prompt that starts an interactive feedback session focused on improving rqmd itself
-- So that I can accumulate actionable feedback and improvement ideas from real-world usage across all my rqmd-managed repositories.
-- Given a user invokes `/feedback` in any repository where the rqmd bundle is installed
-- When the prompt activates
-- Then the agent immediately submits a telemetry event of type `feedback` with severity `low` to record that a feedback session was started, including the repository name, agent name, and a generated session ID
-- And the agent asks the user what friction, idea, or observation they want to report
-- And as the user describes their feedback, the agent iteratively refines a structured feedback payload (summary, category, severity, detail, and optional suggested improvement)
-- And the agent submits updated telemetry events of type `feedback` as the payload evolves, so partial feedback is never lost even if the session is interrupted
-- And the final feedback event includes a polished summary, the refined detail payload, and a severity chosen collaboratively with the user
-- And the prompt file lives at `.github/prompts/feedback.prompt.md` in the workspace and in the bundle at `src/rqmd/resources/bundle/.github/prompts/feedback.prompt.md`.
 
-### RQMD-AI-054: `/rqmd-feedback` skill teaching agents the feedback workflow
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a maintainer who installs the rqmd AI bundle into a repository
-- I want an `/rqmd-feedback` skill that teaches agents how to conduct a structured feedback session
-- So that the `/feedback` prompt has clear workflow guidance including payload structure, telemetry submission mechanics, and iterative refinement steps.
-- Given the rqmd bundle is installed in a repository
-- When the `/rqmd-feedback` skill is loaded by an agent
-- Then it describes the feedback event schema (summary, category, severity, detail fields, suggested improvement)
-- And it teaches the agent to submit an initial `feedback` event on session start, update events as the payload evolves, and submit a final polished event on session close
-- And it documents valid feedback categories: `ux_friction`, `missing_feature`, `docs_gap`, `workflow_confusion`, `performance`, and `other`
-- And it explains how to use `submit_event()` from `src/rqmd/telemetry.py` with `event_type="feedback"` for all feedback telemetry
-- And the skill file lives at `.github/skills/rqmd-feedback/SKILL.md` in the workspace and in the bundle at `src/rqmd/resources/bundle/.github/skills/rqmd-feedback/SKILL.md`.
 
-### RQMD-AI-055: GitHub issue creation from feedback sessions
-- **Status:** 🔧 Implemented
-- **Priority:** 🟡 P2 - Medium
-- As an rqmd developer who notices a concrete bug or gap during a feedback session
-- I want the `/feedback` prompt to offer creating a GitHub issue on the `ryeleo/rqmd` repository when the feedback describes an actionable issue
-- So that concrete issues are tracked in GitHub without requiring me to context-switch away from the feedback session.
-- Given a feedback session has produced a refined payload that describes a concrete bug, missing feature, or docs gap
-- When the agent determines the feedback is specific enough to be an issue and the user confirms they want to file one
-- Then the agent checks whether `gh` CLI is installed and authenticated (`gh auth status`)
-- And if `gh` is available, the agent drafts an issue title and body from the feedback payload and runs `gh issue create --repo ryeleo/rqmd --title "..." --body "..."` to create the issue
-- And the created issue URL is included in the final feedback telemetry event under `detail.github_issue_url`
-- And if `gh` is not available or the user declines, the agent skips issue creation gracefully and notes it in the feedback payload as `detail.issue_skipped_reason`.
 
-### RQMD-AI-056: Rename primary agent from `rqmd-dev` to `rqmd`
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As an rqmd user
-- I want the primary agent to be named `rqmd` instead of `rqmd-dev`, since it is the agent I interact with 95% of the time and the `-dev` suffix makes it sound like a secondary internal tool
-- So that `rqmd` becomes the obvious, default agent name across all projects that install the bundle.
-- So that the bundle install renames `rqmd-dev.agent.md` to `rqmd.agent.md` and updates all internal references (copilot-instructions, prompts, skill files, agents README).
-- So that existing workspaces with `rqmd-dev.agent.md` are migrated cleanly during `rqmd-ai reinstall` or `rqmd-ai upgrade`, with the old file removed after the new one is confirmed.
 
-### RQMD-AI-057: Auto-draft requirements during brainstorm and refine sessions
-- **Status:** 💡 Proposed
-- **Priority:** 🟠 P1 - High
-- As a user brainstorming or refining requirements with the rqmd agent
-- I want the agent to automatically write solidified ideas into `docs/requirements/` as 💡 Proposed entries rather than asking me for permission each time
-- So that when I copy-paste a `/go` handoff prompt into a cheaper agent, the requirements it references already exist in the tracked docs and the implementation agent has a clear contract to work from.
-- So that the agent tells me what it drafted and where (e.g., "I added RQMD-CORE-041 through RQMD-CORE-043 to core-engine.md") so I can review and adjust.
-- So that the agent picks the right domain file based on the requirement's subject matter and uses the next available ID in that domain.
 
-### RQMD-AI-058: Brainstorm and refine modes resist jumping to implementation
-- **Status:** 💡 Proposed
-- **Priority:** 🟡 P2 - Medium
-- As a user in a `/brainstorm` or `/refine` session
-- I want the agent to actively resist writing code, tests, or implementation changes and instead focus on shaping, clarifying, and tracking requirements
-- So that the brainstorm/refine workflow stays focused on *what* to build and *why*, with implementation deferred to a `/go` handoff in a separate (typically cheaper) agent session.
-- So that the agent declines implementation requests with a brief explanation and redirects toward requirement refinement or a `/go` handoff.
-
-### RQMD-AI-059: Brainstorm and refine skills detect bug reports and offer bug template
-- **Status:** 💡 Proposed
-- **Priority:** 🟡 P2 - Medium
-- As a user describing a defect during a brainstorm or refine session
-- I want the agent to recognize that I am describing a bug (keywords like "broken", "regression", "doesn't work", "used to work") and offer the Steps to Reproduce / Expected / Actual / Root Cause template from RQMD-CORE-043 instead of the user-story template
-- So that bugs are drafted with the right shape from the start, with `type: bug` and an `affects:` cross-reference pre-filled when the parent requirement is identifiable.
-
-### RQMD-AI-060: `/bug` prompt for quick bug filing from chat context
-- **Status:** 🔧 Implemented
-- **Priority:** 🟠 P1 - High
-- As a user who has been debugging a problem in a chat session
-- I want to type `/bug` and have the agent automatically draft a tracked bug requirement from the conversation context
-- So that filing a bug is zero-friction — no template hunting, no manual ID allocation, no asking permission — the agent just writes it to the appropriate domain file and tells me the ID.
-- Given a chat session where a defect was discussed
-- When the user invokes `/bug`
-- Then the agent reviews conversation context, runs `rqmd-ai --json` to discover the next available ID and best-fit domain file, and writes a complete bug requirement using the Steps to Reproduce / Expected / Actual / Root Cause template with `type: bug` and an `affects:` cross-reference when identifiable.
-- And the agent appends the requirement directly to the domain file without asking for confirmation.
-- And the prompt file lives at `.github/prompts/bug.prompt.md` in the workspace and in the bundle at `src/rqmd/resources/bundle/.github/prompts/bug.prompt.md`.
 
 ### RQMD-AI-061: CLI bug filing command with VS Code handoff
 - **Status:** 🔧 Implemented
@@ -591,19 +150,7 @@ Summary: 8💡 50🔧 2✅ 0⚠️ 0⛔ 3🗑️
 - And it prints a brief confirmation with the requirement ID and file path
 - And the command keeps CLI interaction short — no interactive prompts, no full editor experience in-terminal.
 
-### RQMD-AI-062: Feedback and telemetry are rqmd product features, not project skills
-- **Status:** 💡 Proposed
-- **Priority:** 🟡 P2 - Medium
-- As a user reading rqmd documentation or skill descriptions
-- I want it to be immediately clear that `/feedback`, `/rqmd-feedback`, and `/rqmd-telemetry` exist to improve **rqmd itself** — not to track bugs or feedback about my own project
-- So that I understand the difference between:
-  - **Project bugs:** filed as requirements in `docs/requirements/` via `/bug` or `rqmd bug`
-  - **rqmd product feedback:** sent to the rqmd telemetry service to help the rqmd developer prioritize improvements
-- Given a user invokes `/feedback` or reads the `rqmd-telemetry` skill description
-- When they see the skill documentation
-- Then it explicitly states "This skill is for reporting issues with **rqmd itself**, not your project" or equivalent framing
-- And the `/bug` prompt documentation clarifies that bugs filed with `/bug` are **project requirements**, not rqmd product feedback
-- And copilot-instructions.md and related AI guidance repeat the distinction so agents do not conflate the two.
+
 
 ### RQMD-AI-063: Domain-aware `rqmd bug` with positional domain argument and tab completion
 - **Status:** 💡 Proposed

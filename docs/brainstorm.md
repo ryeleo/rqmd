@@ -2,6 +2,10 @@
 
 Active ideas and untracked nuggets. Items move out once promoted to `docs/requirements/` or shipped.
 
+## Intelligent Discovery of requirements
+
+rqmd agent should lazily ensure that tools are installed before/as running rqmd. If a tool is missing, it should immediately attempt to rectify/install for the user using uv. If uv is missing, install that. Hopefully, this can be done automatically... I guess it could be just wrap every invocation of `rqmd` with `which rqmd || uv install rqmd` but that seems hacky. Maybe a better approach is to have a lightweight shim script that does this check and then execs the real `rqmd` CLI.
+
 ---
 
 ## Architecture
