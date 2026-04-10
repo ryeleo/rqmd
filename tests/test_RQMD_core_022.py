@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
+
 from rqmd.req_parser import extract_blocking_id
 
 

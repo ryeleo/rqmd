@@ -4,12 +4,13 @@ import json
 import re
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 import click
 import pytest
-import tomllib
 from click.testing import CliRunner
+
 from rqmd import cli
 from rqmd.markdown_io import display_name_from_h1
 

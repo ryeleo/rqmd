@@ -3,7 +3,7 @@
 Scope: package layout, installability, module entrypoints, and publication readiness.
 
 <!-- acceptance-status-summary:start -->
-Summary: 0💡 6🔧 10✅ 0⚠️ 0⛔ 0🗑️
+Summary: 2💡 6🔧 11✅ 0⚠️ 0⛔ 0🗑️
 <!-- acceptance-status-summary:end -->
 
 ### RQMD-PACKAGING-001: src-layout package structure
@@ -163,3 +163,41 @@ Summary: 0💡 6🔧 10✅ 0⚠️ 0⛔ 0🗑️
 - When the interview flow completes
 - Then only project-specific files are written to `.github/` (e.g., `/dev` and `/test` skills, project copilot-instructions overrides).
 - And shared rqmd defaults (prompts, skills, agent defs) remain in the extension, not written to the workspace.
+
+### RQMD-PACKAGING-017: Register @rqmd chat participant for unified command surface
+- **Status:** 💡 Proposed
+- **Priority:** 🟠 P1 - High
+- **Blocked by:** RQMD-PACKAGING-013
+- As a user invoking rqmd workflows in Copilot Chat
+- I want to type `@rqmd brainstorm`, `@rqmd go`, `@rqmd next` instead of picking between `/brainstorm` and `/rqmd-brainstorm`
+- So that all rqmd commands live under one `@rqmd` namespace with clear extension attribution.
+- So that users see `@rqmd` in autocomplete like they see `@terminal` or `@mermaid-chart` from other extensions.
+- So that skills remain agent-internal (loaded by handler code) and never clutter user autocomplete.
+- Given a user who types `@rqmd ` in Copilot Chat
+- When autocomplete appears
+- Then subcommands like `brainstorm`, `go`, `next`, `commit`, `refine` are shown.
+- And invoking `@rqmd brainstorm` loads the `/rqmd-brainstorm` skill internally and runs the workflow.
+
+### RQMD-PACKAGING-018: Migrate /prompts to @rqmd subcommands
+- **Status:** 💡 Proposed
+- **Priority:** 🟡 P2 - Medium
+- **Blocked by:** RQMD-PACKAGING-017
+- As the rqmd maintainer after the @rqmd chat participant ships
+- I want to deprecate or remove the separate `/brainstorm`, `/go`, `/next` prompts from chatPromptFiles contribution
+- So that users have one entry point (`@rqmd <command>`) instead of choosing between `/brainstorm` and `@rqmd brainstorm`.
+- So that the extension surface is clean: one chat participant, zero user-visible prompts, zero user-visible skills.
+- Given a user who types `/` in Copilot Chat after migration
+- When autocomplete appears
+- Then no rqmd prompts appear (only `@rqmd` in the `@` namespace).
+
+### RQMD-PACKAGING-019: Skills hidden from user autocomplete via user-invocable flag
+- **Status:** ✅ Verified
+- **Priority:** 🟠 P1 - High
+- As a user typing `/` in Copilot Chat
+- I want to see only the 12 clean rqmd prompts, not the 17 internal skills
+- So that autocomplete is not cluttered with duplicate `/brainstorm` + `/rqmd-brainstorm` entries.
+- So that skills remain loadable by agents internally while hidden from direct user invocation.
+- Given all skill SKILL.md files have `user-invocable: false` in frontmatter
+- When a user types `/rqmd-` in Copilot Chat
+- Then no skill completions appear.
+- And agents can still reference `/rqmd-brainstorm` internally and load the skill.

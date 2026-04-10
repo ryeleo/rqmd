@@ -9,16 +9,11 @@ from threading import Thread
 from unittest.mock import patch
 
 import pytest
-from rqmd.telemetry import (
-    _CLIENT_ID,
-    _DEFAULT_ENDPOINT,
-    report_error,
-    report_struggle,
-    report_suggestion,
-    resolve_telemetry_api_key,
-    resolve_telemetry_endpoint,
-    submit_event,
-)
+
+from rqmd.telemetry import (_CLIENT_ID, _DEFAULT_ENDPOINT, report_error,
+                            report_struggle, report_suggestion,
+                            resolve_telemetry_api_key,
+                            resolve_telemetry_endpoint, submit_event)
 
 
 class TestResolveTelemetryEndpoint:
@@ -124,6 +119,7 @@ class TestFileBasedTokenCache:
     def test_reads_token_from_disk_cache(self, tmp_path: Path):
         """Cached token on disk is reused without hitting the gateway."""
         import time
+
         import rqmd.telemetry as _tmod
 
         (tmp_path / "docs" / "requirements").mkdir(parents=True)
