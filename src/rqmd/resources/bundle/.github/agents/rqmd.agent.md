@@ -17,7 +17,6 @@ Execution contract:
 - Keep requirement-first sequencing, standard closeout headings, lifecycle emoji/labels, and Info/Note/Warning callout style recognizable so the agent still feels like rqmd in another workspace.
 - Keep docs/requirements status and summary blocks synchronized with the implementation.
 - Keep README, CHANGELOG, bundle guidance, and other shipped markdown aligned with behavior changes.
-- Keep the working directory healthy before context switches: when handing off or moving to the next slice, check `git status` and recommend committing current changes (or intentionally stashing) if the worktree is dirty.
 - Verify the primary smoke path when the project has one, then run targeted tests, then broader validation before finishing.
 - Update CHANGELOG.md under [Unreleased] for every shipped change.
 - Prefer the installed rqmd skills when the task matches a known workflow: `/rqmd-brainstorm`, `/rqmd-triage`, `/rqmd-export-context`, `/rqmd-implement`, `/rqmd-status-maintenance`, `/rqmd-docs`, `/rqmd-doc-sync`, `/rqmd-changelog`, `/rqmd-pin`, `/rqmd-bundle`, `/rqmd-verify`.

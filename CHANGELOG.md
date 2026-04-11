@@ -7,33 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+<a id="v0-2-4"></a>
+## [0.2.4] - 2026-04-10
+
 ### Added
 
 - `- **Summary:**` field: requirements now carry an optional one-line summary parsed by the requirement engine and included in JSON exports. Pattern: `- **Summary:** <description>`.
 - `SUMMARY_PATTERN` added to `constants.py`; `summary` and `summary_line` keys added to all parsed requirement dicts.
 - `JSON_SCHEMA_VERSION` bumped to `1.1.0` — new `summary`/`summary_line` fields added to the requirement object schema (backward-compatible; existing requirements without a summary field parse with `summary: null`).
+- `scripts/rqmd-bundle-cleanup.sh` — portable cleanup script for removing rqmd-ai–installed bundle files from any project's `.github/`. Keeps `skills/dev/` and `skills/test/`; removes `agents/`, `prompts/`, rqmd-managed skills, `rqmd-bundle.json`, and `copilot-instructions.md` only when it was installed by rqmd (identified by rqmd header).
 
 ### Changed
 
 - All 16 requirement files (14 in rqmd-cli, 2 in rqmd-vscode) migrated from verbose `- As a... / - I want... / - So that...` user-story format to a single `- **Summary:** <description>` bullet. Given/When/Then acceptance criteria are preserved unchanged.
 - `docs/schema.md` updated: `summary` and `summary_line` added to the Optional Metadata Fields table; full requirement example updated; schema version reference bumped to `1.1.0`.
-- Brainstorm entry "Summary field instead of user stories" promoted and removed from `docs/brainstorm.md`.
-
-
-<a id="v0-2-4"></a>
-## [0.2.4] - 2026-04-09
-
-### Changed
-
 - Repository cleanup after extension rollout: removed bundled `.github/agents`, `.github/prompts`, rqmd-managed skills, `copilot-instructions.md`, and `rqmd-bundle.json` from `.github/`, preserving only project-local `.github/skills/dev` and `.github/skills/test`.
 - Removed entire `src/rqmd/resources/bundle/` from the Python package — the packaged bundle source (agents, prompts, skills, templates, preset manifests) is no longer shipped with the CLI, since the VS Code extension now owns that surface.
 - `/next` prompt reworked to prefer planning and `/go` handoff over immediate implementation; now reminds users to commit before switching slices when the worktree is dirty.
 - Agent-level worktree-health rule added to both `rqmd.agent.md` variants: check `git status` and recommend committing (or stashing) before handing off to the next slice.
 - `RQMD-PACKAGING-015` marked ✅ Verified — `rqmd-ai` entrypoint fully removed.
-
-### Added
-
-- `scripts/rqmd-bundle-cleanup.sh` — portable cleanup script for removing rqmd-ai–installed bundle files from any project's `.github/`. Keeps `skills/dev/` and `skills/test/`; removes `agents/`, `prompts/`, rqmd-managed skills, `rqmd-bundle.json`, and `copilot-instructions.md` only when it was installed by rqmd (identified by rqmd header).
 
 ### Removed
 
