@@ -481,11 +481,16 @@ async def list_events(
     session_id: str | None = None,
     event_type: str | None = None,
     severity: str | None = None,
+    since: str | None = None,
     limit: int = 50,
     offset: int = 0,
     _: None = Depends(_verify_api_key),
 ):
-    """Query stored telemetry events with optional filters."""
+    """Query stored telemetry events with optional filters.
+
+    ``since`` is an ISO-8601 datetime string (e.g. ``2026-04-23T00:00:00Z``).
+    When provided, only events with ``created_at >= since`` are returned.
+    """
     if not _pool:
         raise HTTPException(status_code=503, detail="Database not available")
 
@@ -493,6 +498,17 @@ async def list_events(
     params: list[Any] = []
     idx = 1
 
+    if since:
+        try:
+            since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
+        except ValueError:
+            raise HTTPException(
+                status_code=422,
+                detail="'since' must be a valid ISO-8601 datetime string",
+            )
+        conditions.append(f"created_at >= ${idx}")
+        params.append(since_dt)
+        idx += 1
     if session_id:
         conditions.append(f"session_id = ${idx}::uuid")
         params.append(session_id)

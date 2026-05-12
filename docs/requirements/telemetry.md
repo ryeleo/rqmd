@@ -3,7 +3,7 @@
 Scope: agent-facing telemetry infrastructure for capturing AI workflow friction, improvement suggestions, and session diagnostics — enabling rqmd's own AI agents to report how rqmd can be improved.
 
 <!-- acceptance-status-summary:start -->
-Summary: 2💡 14🔧 0✅ 0⚠️ 0⛔ 1🗑️
+Summary: 2💡 17🔧 0✅ 0⚠️ 0⛔ 1🗑️
 <!-- acceptance-status-summary:end -->
 
 
@@ -224,3 +224,50 @@ Summary: 2💡 14🔧 0✅ 0⚠️ 0⛔ 1🗑️
 - And the gateway stores `model_id` in a queryable column so telemetry reviews can group events by model
 - And `model_id` is treated as a plain identifier string and passes through the scrubbing pipeline defined in RQMD-TELEMETRY-016 without special handling (no redaction expected for model names).
 - **Related:** RQMD-AI-FEEDBACK-007 [spec](../../rqmd-vscode/docs/requirements/feedback.md) — hard-wrap complaint telemetry uses `model_id` to attribute style violations to specific models.
+
+
+<a id="rqmd-telemetry-018"></a>
+### RQMD-TELEMETRY-018: `scripts/telemetry-review.py` — standalone developer script for event triage
+
+<!-- sourced from brainstorm session 2026-05-07; design decision to eliminate direct SQL/HTTP access requirement from AI agents; re-scoped 2026-05-12 from rqmd CLI subcommand to internal dev script -->
+
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- **Summary:** A standalone Python script at `scripts/telemetry-review.py` (internal, not distributed with the rqmd package) that fetches events from the gateway HTTP API using the stored session token and outputs structured JSON, so the developer running `/telemetry-review` needs only Python stdlib — no SQL access, no credential env vars, no rqmd package import.
+- Given `python3 scripts/telemetry-review.py [DAYS]` is invoked from the rqmd-cli project root
+- When the script runs
+- Then it reads the session token from `.rqmd-telemetry-token` in the project root (falling back to a fresh token exchange with the gateway)
+- And it calls `GET /api/v1/events?since=<ISO cutoff>&limit=500` on the configured gateway URL (default `http://localhost:18080`; overridable via `RQMD_TELEMETRY_URL` or `RQMD_TELEMETRY_ENDPOINT` env vars)
+- And it pages through results if the response is at the limit, collecting all events within the window
+- And it prints the full event array as pretty-printed JSON to stdout
+- And if the token is absent/expired and exchange fails, or the gateway is unreachable, it exits non-zero with a clear human-readable error and a one-line fix hint
+- **Not distributed:** this script lives in `scripts/` and is excluded from the published rqmd package.
+
+
+<a id="rqmd-telemetry-019"></a>
+### RQMD-TELEMETRY-019: Gateway date-range filter on `GET /api/v1/events`
+
+<!-- sourced from brainstorm session 2026-05-07; prerequisite for RQMD-TELEMETRY-018 -->
+
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- **Summary:** The `GET /api/v1/events` endpoint accepts a `since` query parameter (ISO-8601 datetime) so callers can retrieve only events within a specific time window without fetching and discarding unrelated data.
+- Given `GET /api/v1/events?since=2026-04-23T00:00:00Z` is called
+- When the gateway processes the request
+- Then it returns only events where `created_at >= since`
+- And an invalid `since` value returns HTTP 422 with a descriptive message
+- And the parameter is optional; omitting it returns all events (existing behaviour unchanged).
+
+
+<a id="rqmd-telemetry-020"></a>
+### RQMD-TELEMETRY-020: SSH tunnel includes gateway HTTP port 18080
+
+<!-- sourced from brainstorm session 2026-05-07; prerequisite for RQMD-TELEMETRY-018 -->
+
+- **Status:** 🔧 Implemented
+- **Priority:** 🟠 P1 - High
+- **Summary:** The `telemetry-tunnel.sh` script tunnels port 18080 (gateway HTTP) in addition to the existing Postgres and MinIO ports, so `rqmd telemetry-review` and any other HTTP-based tooling can reach the gateway without a separate tunnel setup.
+- Given `./scripts/telemetry-tunnel.sh <vm-ip>` is run
+- When the SSH connection is established
+- Then `localhost:18080` is forwarded to the VM's `127.0.0.1:18080` (the gateway container's published port)
+- And the tunnel banner lists all four forwarded addresses including the gateway.

@@ -25,6 +25,7 @@ fi
 
 echo "Opening SSH tunnels to $VM_IP..."
 echo ""
+echo "  localhost:18080 → Telemetry gateway HTTP"
 echo "  localhost:55432 → Postgres"
 echo "  localhost:19000 → MinIO API"
 echo "  localhost:19001 → MinIO Console"
@@ -49,6 +50,7 @@ echo ""
 echo "Press Ctrl+C to close all tunnels."
 
 ssh "${SSH_OPTS[@]}" \
+  -L 18080:127.0.0.1:18080 \
   -L 55432:127.0.0.1:55432 \
   -L 19000:127.0.0.1:19000 \
   -L 19001:127.0.0.1:19001 \

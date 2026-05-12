@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rqmd"
-version = "0.3.0"
+version = "0.3.1"
 description = "Local-first CLI tool for Requirements Driven Development (RDD). Scans, normalizes, and manages requirement markdown files."
 readme = "README.md"
 requires-python = ">=3.10"

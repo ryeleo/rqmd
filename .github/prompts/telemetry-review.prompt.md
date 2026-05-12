@@ -11,37 +11,17 @@ Triage recent telemetry signal into proposed requirements for rqmd-cli.
 - Ensure the SSH tunnel is running: start the `Tunnel to Az TeleVM` VS Code task if not active.
 - Default query window: last 14 days. Use the argument to override.
 
-**Query** — run this inline Python to fetch events:
+**Query** — run in the terminal to fetch events:
 
-```python
-import psycopg2, json, os
-from datetime import datetime, timedelta, timezone
-
-WINDOW_DAYS = 14  # override from argument if provided
-cutoff = datetime.now(timezone.utc) - timedelta(days=WINDOW_DAYS)
-
-conn = psycopg2.connect(
-    host="localhost", port=55432,
-    user=os.environ["POSTGRES_USER"],
-    password=os.environ["POSTGRES_PASSWORD"],
-    dbname="rqmd_telemetry",
-)
-cur = conn.cursor()
-cur.execute(
-    "SELECT event_type, severity, summary, detail, agent_name, created_at "
-    "FROM telemetry_events WHERE created_at >= %s ORDER BY created_at DESC",
-    (cutoff,),
-)
-rows = [
-    {"event_type": r[0], "severity": r[1], "summary": r[2],
-     "detail": r[3], "agent_name": r[4], "created_at": str(r[5])}
-    for r in cur.fetchall()
-]
-print(json.dumps(rows, indent=2, default=str))
-conn.close()
+```
+python3 scripts/telemetry-review.py [DAYS]
 ```
 
-> **⚠️ Note:** Requires `POSTGRES_USER` and `POSTGRES_PASSWORD` env vars (production credentials). Never hardcode them.
+Replace `[DAYS]` with the argument if provided (e.g. `python3 scripts/telemetry-review.py 30`); omit for the 14-day default.
+Capture stdout as the event JSON array for the clustering step below.
+
+> **⚠️ Note:** Requires the SSH tunnel to be active so `localhost:18080` reaches the gateway.
+> If the script exits non-zero, follow the fix hint it prints.
 
 **Cluster** the returned events:
 - Group by `(event_type, detail.category, root_cause_from_summary)`.

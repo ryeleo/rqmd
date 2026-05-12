@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-05-12
+
+### Added
+
+- [RQMD-TELEMETRY-018](docs/requirements/telemetry.md#L229): `scripts/telemetry-review.py` — internal standalone script (stdlib-only, not distributed) that fetches events from the gateway HTTP API using the cached session token and prints them as pretty-printed JSON.
+Defaults to a 14-day window; pass an integer argument to override.
+Pages automatically through results at the 500-event limit.
+Exits non-zero with a human-readable error and fix hint on token/gateway failure.
+Gateway URL overridable via `RQMD_TELEMETRY_URL` or `RQMD_TELEMETRY_ENDPOINT`.
+- [RQMD-TELEMETRY-019](docs/requirements/telemetry.md#L260): `GET /api/v1/events` now accepts a `?since=<ISO-8601>` query parameter in the telemetry gateway; only events with `created_at >= since` are returned. Invalid values return HTTP 422.
+- [RQMD-TELEMETRY-020](docs/requirements/telemetry.md#L273): `scripts/telemetry-tunnel.sh` now forwards `localhost:18080` to the gateway in addition to Postgres and MinIO ports; banner updated to list all four forwarded addresses.
+
+### Changed
+
+- `.github/prompts/telemetry-review.prompt.md`: query block replaced — psycopg2 Python snippet and credential env-var requirement removed; replaced with `python3 scripts/telemetry-review.py [DAYS]` one-liner.
+
 ## [0.3.0] - 2026-05-07
 
 ### Added
