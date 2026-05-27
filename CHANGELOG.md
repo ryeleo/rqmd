@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-27
+
+### Changed
+
+- Project archived. This is the final release — no new features or bug fixes are planned.
+- Updated `Development Status` PyPI classifier to `7 - Inactive`.
+- Fixed project URLs in `pyproject.toml` (placeholder `github.com/example/rqmd` → `github.com/ryeleo/rqmd`).
+- Updated README with archival notice.
+
 ## [0.3.1] - 2026-05-12
 
 ### Added

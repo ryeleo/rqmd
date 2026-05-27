@@ -1,11 +1,15 @@
 # rqmd
 
+> **⚠️ Archived:** This project is no longer actively maintained.
+> rqmd was a learning project in local-first requirements tracking — it was useful and fun to build, but AI agent tooling is evolving faster than I want to keep up with for a side project.
+> The final release is **v0.4.0**. The PyPI package remains available but receives no updates.
+
 `rqmd` is a *local-first* CLI tool for Requirements Driven Development (RDD).
 
 > See also [Local-First Software: You Own Your Data, in spite of the Cloud](https://martin.kleppmann.com/papers/local-first.pdf)
 
 Project links:
-- [GitHub repository](https://github.com/example/rqmd)
+- [GitHub repository](https://github.com/ryeleo/rqmd)
 - [PyPI package](https://pypi.org/project/rqmd/)
 
 ## Getting started

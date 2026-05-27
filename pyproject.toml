@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rqmd"
-version = "0.3.1"
+version = "0.4.0"
 description = "Local-first CLI tool for Requirements Driven Development (RDD). Scans, normalizes, and manages requirement markdown files."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -13,7 +13,7 @@ authors = [
 ]
 license = "MIT"
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 7 - Inactive",
   "Intended Audience :: Developers",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
@@ -31,10 +31,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/example/rqmd"
-Repository = "https://github.com/example/rqmd"
-Issues = "https://github.com/example/rqmd/issues"
-Changelog = "https://github.com/example/rqmd/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/ryeleo/rqmd"
+Repository = "https://github.com/ryeleo/rqmd"
+Issues = "https://github.com/ryeleo/rqmd/issues"
+Changelog = "https://github.com/ryeleo/rqmd/blob/main/CHANGELOG.md"
 
 [project.scripts]
 rqmd = "rqmd.cli:main"
